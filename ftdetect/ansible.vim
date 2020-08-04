@@ -4,6 +4,7 @@ autocmd BufNewFile,BufRead *.ans set filetype=ansible
 " HACK: YAML file are usually suffixed .yml, but for suffix .yaml we'll treat
 "       the 'a' as meaning ansible!
 autocmd BufNewFile,BufRead *.yaml set filetype=ansible
+autocmd BufNewFile,BufRead *.yml if match(getline(1),"---") >= 0 | set filetype=ansible | endif
 
 " Does not work in this file; needs to be in ../scripts.vim to see contents.
 "if getline(1) =~ '^---$' | setfiletype ansible | endif

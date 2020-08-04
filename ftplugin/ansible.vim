@@ -21,7 +21,7 @@ setl omnifunc=rocannon#CompleteAnsible
 setl complete+=k
 " Not sure where to safely put this dict file, so hackishly abs-pathing it
 "setl dict=anskeywords.txt
-setl dict=~/.vim/bundle/Rocannon/dict/anskeywords.txt
+setl dict=~/.vim/plugged/Rocannon/dict/anskeywords.txt
 
 " Bulk commenting is usually without spaces; doc comments are intentional and
 " don't need commentary.
@@ -30,11 +30,12 @@ setl commentstring=#%s
 let b:commentary_format = '#%s'
 
 " Gets typed so often
-iab n: - name:
+iab na: - name:
+iab no: notify:
 iab r: register:
-iab w: with_items:
+iab l: loop:
 iab e: environment:
-iab t: tags: [
+iab t: tags:
 iab #v # vim:ft=ansible:<C-r>=rocannon#Eatchar('\s')<CR>
 
 
@@ -71,7 +72,7 @@ command! RIncludes exe act . expand('%:p:h') . '/main.yaml'
 
 " Top level
 command! Rglobals    split group_vars/all.yaml
-command! Rsite       split site.yaml
+command! Rsite       split site.yml
 command! Rinventory  split hosts
 command! Rhosts      split hosts
 command! Rrhosts     split ~/.ssh/config
