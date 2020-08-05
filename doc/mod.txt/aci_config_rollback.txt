@@ -1,0 +1,470 @@
+SYNOPSIS                   *aci_config_rollback*
+
+     • Provides rollback and rollback preview functionality for Cisco ACI fabrics.
+     • Config Rollbacks are done using snapshots aci_snapshot with the configImportP class.
+
+Parameters¶
+
+         Parameter       Choices/Defaults                                                                           Comments
+                                           The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
+   certificate_name                        If a private_key filename was provided, this defaults to the private_key basename, without extension.
+   string                                  If PEM-formatted content was provided for private_key, this defaults to the username value.
+                                           aliases: cert_name
+   compare_export_policy                   The export policy that the compare_snapshot is associated to.
+   string
+   compare_snapshot                        The name of the snapshot to compare with snapshot.
+   string
+   description                             The description for the Import Policy.
+   string                                  aliases: descr
+   export_policy                           The export policy that the snapshot is associated to.
+   string / required
+   fail_on_decrypt         Choices:        Determines if the APIC should fail the rollback if unable to decrypt secured data.
+   boolean                 • no            The APIC defaults to yes when unset.
+                           • yes
+   host                                    IP Address or hostname of APIC resolvable by Ansible control host.
+   string / required                       aliases: hostname
+   import_mode             Choices:        Determines how the import should be handled by the APIC.
+   string                  • atomic        The APIC defaults to atomic when unset.
+                           • best-effort
+   import_policy                           The name of the Import Policy to use for config rollback.
+   string
+   import_type             Choices:        Determines how the current and snapshot configuration should be compared for replacement.
+   string                  • merge         The APIC defaults to replace when unset.
+                           • replace
+                           Choices:        Influence the output of this ACI module.
+   output_level            • debug         normal means the standard output, incl. current dict
+   string                  • info          info adds informational output, incl. previous, proposed and sent dicts
+                           • normal ←      debug adds debugging output, incl. filter_string, method, response, status and url information
+   password                                The password to use for authentication.
+   string / required                       This option is mutual exclusive with private_key. If private_key is provided too, it will be used instead.
+   port                                    Port number to be used for REST connection.
+   integer                                 The default value depends on parameter use_ssl.
+                                           Either a PEM-formatted private key file or the private key content used for signature-based authentication.
+   private_key                             This value also influences the default certificate_name that is used.
+   string / required                       This option is mutual exclusive with password. If password is provided too, it will be ignored.
+                                           aliases: cert_key
+   snapshot                                The name of the snapshot to rollback to, or the base snapshot to use for comparison.
+   string / required                       The aci_snapshot module can be used to query the list of available snapshots.
+   state                   Choices:        Use preview for previewing the diff between two snapshots.
+   string                  • preview       Use rollback for reverting the configuration to a previous snapshot.
+                           • rollback ←
+   timeout               Default:          The socket level timeout in seconds.
+   integer               30
+   use_proxy               Choices:
+   boolean                 • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                           • yes ←
+   use_ssl                 Choices:
+   boolean                 • no            If no, an HTTP connection will be used instead of the default HTTPS connection.
+                           • yes ←
+   username              Default:          The username to use for authentication.
+   string                "admin"           aliases: user
+   validate_certs          Choices:        If no, SSL certificates will not be validated.
+   boolean                 • no            This should only set to no when used on personally controlled sites using self-signed certificates.
+                           • yes ←
+
+See Also¶
+
+   See also
+
+   aci_config_snapshot – Manage Config Snapshots (config:Snapshot, config:ExportP)
+   The official documentation on the aci_config_snapshot module.
+
+   APIC Management Information Model reference
+   More information about the internal APIC class config:ImportP.
+
+   Cisco ACI Guide
+   Detailed information on how to manage your ACI infrastructure using Ansible.
+
+   Developing Cisco ACI modules
+   Detailed guide on how to write your own Cisco ACI modules to contribute.
+
+Examples¶
+
+ ---
+ - name: Create a Snapshot
+   aci_config_snapshot:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     state: present
+   delegate_to: localhost
+
+ - name: Query Existing Snapshots
+   aci_config_snapshot:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     state: query
+   delegate_to: localhost
+
+ - name: Compare Snapshot Files
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     compare_export_policy: config_backup
+     compare_snapshot: run-2017-08-27T23-43-56
+     state: preview
+   delegate_to: localhost
+
+ - name: Rollback Configuration
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     import_policy: rollback_config
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     state: rollback
+   delegate_to: localhost
+
+ - name: Rollback Configuration
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     import_policy: rollback_config
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     description: Rollback 8-27 changes
+     import_mode: atomic
+     import_type: replace
+     fail_on_decrypt: yes
+     state: rollback
+   delegate_to: localhost
+
+Return Values¶
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key            Returned                                                                                 Description
+   error                               The error information as returned from the APIC
+   dictionary    failure               Sample:
+                                       {'code': '122', 'text': 'unknown managed object class foo'}
+   filter_string                       The filter string used for the request
+   string        failure or debug      Sample:
+                                       ?rsp-prop-include=config-only
+   method                              The HTTP method used for the request to the APIC
+   string        failure or debug      Sample:
+                                       POST
+   preview       when state is preview A preview between two snapshots
+   string
+   raw                                 The raw output returned by the APIC REST API (xml or json)
+   string        parse error           Sample:
+                                       <?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>
+   response                            The HTTP response from the APIC
+   string        failure or debug      Sample:
+                                       OK (30 bytes)
+   status                              The HTTP status from the APIC
+   integer       failure or debug      Sample:
+                                       200
+   url                                 The HTTP url used for the request to the APIC
+   string        failure or debug      Sample:
+                                       https://10.11.12.13/api/mo/uni/tn-production.json
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+  Authors¶
+
+     • Jacob McGill (@jmcgill298)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS                   *aci_config_rollback-requirements*
+
+PARAMETERS                   *aci_config_rollback-parameters*
+
+         Parameter       Choices/Defaults                                                                           Comments
+                                           The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
+   certificate_name                        If a private_key filename was provided, this defaults to the private_key basename, without extension.
+   string                                  If PEM-formatted content was provided for private_key, this defaults to the username value.
+                                           aliases: cert_name
+   compare_export_policy                   The export policy that the compare_snapshot is associated to.
+   string
+   compare_snapshot                        The name of the snapshot to compare with snapshot.
+   string
+   description                             The description for the Import Policy.
+   string                                  aliases: descr
+   export_policy                           The export policy that the snapshot is associated to.
+   string / required
+   fail_on_decrypt         Choices:        Determines if the APIC should fail the rollback if unable to decrypt secured data.
+   boolean                 • no            The APIC defaults to yes when unset.
+                           • yes
+   host                                    IP Address or hostname of APIC resolvable by Ansible control host.
+   string / required                       aliases: hostname
+   import_mode             Choices:        Determines how the import should be handled by the APIC.
+   string                  • atomic        The APIC defaults to atomic when unset.
+                           • best-effort
+   import_policy                           The name of the Import Policy to use for config rollback.
+   string
+   import_type             Choices:        Determines how the current and snapshot configuration should be compared for replacement.
+   string                  • merge         The APIC defaults to replace when unset.
+                           • replace
+                           Choices:        Influence the output of this ACI module.
+   output_level            • debug         normal means the standard output, incl. current dict
+   string                  • info          info adds informational output, incl. previous, proposed and sent dicts
+                           • normal ←      debug adds debugging output, incl. filter_string, method, response, status and url information
+   password                                The password to use for authentication.
+   string / required                       This option is mutual exclusive with private_key. If private_key is provided too, it will be used instead.
+   port                                    Port number to be used for REST connection.
+   integer                                 The default value depends on parameter use_ssl.
+                                           Either a PEM-formatted private key file or the private key content used for signature-based authentication.
+   private_key                             This value also influences the default certificate_name that is used.
+   string / required                       This option is mutual exclusive with password. If password is provided too, it will be ignored.
+                                           aliases: cert_key
+   snapshot                                The name of the snapshot to rollback to, or the base snapshot to use for comparison.
+   string / required                       The aci_snapshot module can be used to query the list of available snapshots.
+   state                   Choices:        Use preview for previewing the diff between two snapshots.
+   string                  • preview       Use rollback for reverting the configuration to a previous snapshot.
+                           • rollback ←
+   timeout               Default:          The socket level timeout in seconds.
+   integer               30
+   use_proxy               Choices:
+   boolean                 • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                           • yes ←
+   use_ssl                 Choices:
+   boolean                 • no            If no, an HTTP connection will be used instead of the default HTTPS connection.
+                           • yes ←
+   username              Default:          The username to use for authentication.
+   string                "admin"           aliases: user
+   validate_certs          Choices:        If no, SSL certificates will not be validated.
+   boolean                 • no            This should only set to no when used on personally controlled sites using self-signed certificates.
+                           • yes ←
+
+See Also¶
+
+   See also
+
+   aci_config_snapshot – Manage Config Snapshots (config:Snapshot, config:ExportP)
+   The official documentation on the aci_config_snapshot module.
+
+   APIC Management Information Model reference
+   More information about the internal APIC class config:ImportP.
+
+   Cisco ACI Guide
+   Detailed information on how to manage your ACI infrastructure using Ansible.
+
+   Developing Cisco ACI modules
+   Detailed guide on how to write your own Cisco ACI modules to contribute.
+
+Examples¶
+
+ ---
+ - name: Create a Snapshot
+   aci_config_snapshot:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     state: present
+   delegate_to: localhost
+
+ - name: Query Existing Snapshots
+   aci_config_snapshot:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     state: query
+   delegate_to: localhost
+
+ - name: Compare Snapshot Files
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     compare_export_policy: config_backup
+     compare_snapshot: run-2017-08-27T23-43-56
+     state: preview
+   delegate_to: localhost
+
+ - name: Rollback Configuration
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     import_policy: rollback_config
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     state: rollback
+   delegate_to: localhost
+
+ - name: Rollback Configuration
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     import_policy: rollback_config
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     description: Rollback 8-27 changes
+     import_mode: atomic
+     import_type: replace
+     fail_on_decrypt: yes
+     state: rollback
+   delegate_to: localhost
+
+Return Values¶
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key            Returned                                                                                 Description
+   error                               The error information as returned from the APIC
+   dictionary    failure               Sample:
+                                       {'code': '122', 'text': 'unknown managed object class foo'}
+   filter_string                       The filter string used for the request
+   string        failure or debug      Sample:
+                                       ?rsp-prop-include=config-only
+   method                              The HTTP method used for the request to the APIC
+   string        failure or debug      Sample:
+                                       POST
+   preview       when state is preview A preview between two snapshots
+   string
+   raw                                 The raw output returned by the APIC REST API (xml or json)
+   string        parse error           Sample:
+                                       <?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>
+   response                            The HTTP response from the APIC
+   string        failure or debug      Sample:
+                                       OK (30 bytes)
+   status                              The HTTP status from the APIC
+   integer       failure or debug      Sample:
+                                       200
+   url                                 The HTTP url used for the request to the APIC
+   string        failure or debug      Sample:
+                                       https://10.11.12.13/api/mo/uni/tn-production.json
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+  Authors¶
+
+     • Jacob McGill (@jmcgill298)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+NOTES                   *aci_config_rollback-notes*
+
+EXAMPLES                   *aci_config_rollback-examples*
+
+ ---
+ - name: Create a Snapshot
+   aci_config_snapshot:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     state: present
+   delegate_to: localhost
+
+ - name: Query Existing Snapshots
+   aci_config_snapshot:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     state: query
+   delegate_to: localhost
+
+ - name: Compare Snapshot Files
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     compare_export_policy: config_backup
+     compare_snapshot: run-2017-08-27T23-43-56
+     state: preview
+   delegate_to: localhost
+
+ - name: Rollback Configuration
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     import_policy: rollback_config
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     state: rollback
+   delegate_to: localhost
+
+ - name: Rollback Configuration
+   aci_config_rollback:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     import_policy: rollback_config
+     export_policy: config_backup
+     snapshot: run-2017-08-28T06-24-01
+     description: Rollback 8-27 changes
+     import_mode: atomic
+     import_type: replace
+     fail_on_decrypt: yes
+     state: rollback
+   delegate_to: localhost
+
+RETURN VALUES                   *aci_config_rollback-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key            Returned                                                                                 Description
+   error                               The error information as returned from the APIC
+   dictionary    failure               Sample:
+                                       {'code': '122', 'text': 'unknown managed object class foo'}
+   filter_string                       The filter string used for the request
+   string        failure or debug      Sample:
+                                       ?rsp-prop-include=config-only
+   method                              The HTTP method used for the request to the APIC
+   string        failure or debug      Sample:
+                                       POST
+   preview       when state is preview A preview between two snapshots
+   string
+   raw                                 The raw output returned by the APIC REST API (xml or json)
+   string        parse error           Sample:
+                                       <?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>
+   response                            The HTTP response from the APIC
+   string        failure or debug      Sample:
+                                       OK (30 bytes)
+   status                              The HTTP status from the APIC
+   integer       failure or debug      Sample:
+                                       200
+   url                                 The HTTP url used for the request to the APIC
+   string        failure or debug      Sample:
+                                       https://10.11.12.13/api/mo/uni/tn-production.json
+
+STATUS                   *aci_config_rollback-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Jacob McGill (@jmcgill298)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aci_config_rollback-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aci_config_rollback_module.html

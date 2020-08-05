@@ -1,0 +1,138 @@
+SYNOPSIS                   *acme_certificate_revoke*
+
+     • Allows to revoke certificates issued by a CA supporting the ACME protocol, such as Let’s Encrypt.
+
+REQUIREMENTS                   *acme_certificate_revoke-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • either openssl or cryptography >= 1.5
+
+PARAMETERS                   *acme_certificate_revoke-parameters*
+
+         Parameter                         Choices/Defaults                                                                          Comments
+                                                                              Content of the ACME account RSA or Elliptic Curve key.
+                                                                              Note that exactly one of account_key_src, account_key_content, private_key_src or private_key_content must be
+   account_key_content                                                        specified.
+   string                                                                     Warning: the content will be written into a temporary file, which will be deleted by Ansible when the module completes.
+   added in 2.5                                                               Since this is an important private key — it can be used to change the account key, or to revoke your certificates
+                                                                              without knowing their private keys —, this might not be acceptable.
+                                                                              In case cryptography is used, the content is not written into a temporary file. It can still happen that it is written
+                                                                              to disk by Ansible in the process of moving the module with its argument to the node where it is executed.
+                                                                              Path to a file containing the ACME account RSA or Elliptic Curve key.
+                                                                              RSA keys can be created with openssl rsa .... Elliptic curve keys can be created with openssl ecparam -genkey .... Any
+   account_key_src                                                            other tool creating private keys in PEM format can be used as well.
+   path                                                                       Mutually exclusive with account_key_content.
+                                                                              Required if account_key_content is not used.
+                                                                              aliases: account_key
+   account_uri                                                                If specified, assumes that the account URI is as given. If the account key does not match this account, or an account
+   string                                                                     with this URI does not exist, the module fails.
+   added in 2.7
+                                                                              The ACME directory to use. This is the entry point URL to access CA server API.
+                                                                              For safety reasons the default is set to the Let's Encrypt staging server (for the ACME v1 protocol). This will create
+                                                                              technically correct, but untrusted certificates.
+                                                                              For Let's Encrypt, all staging endpoints can be found here: https://letsencrypt.org/docs/staging-environment/. For
+   acme_directory        Default:                                             Buypass, all endpoints can be found here: https://community.buypass.com/t/63d4ay/buypass-go-ssl-endpoints
+   string                "https://acme-staging.api.letsencrypt.org/directory" For Let's Encrypt, the production directory URL for ACME v1 is https://acme-v01.api.letsencrypt.org/directory, and the
+                                                                              production directory URL for ACME v2 is https://acme-v02.api.letsencrypt.org/directory.
+                                                                              For Buypass, the production directory URL for ACME v2 and v1 is https://api.buypass.com/acme/directory.
+                                                                              Warning: So far, the module has only been tested against Let's Encrypt (staging and production), Buypass (staging and
+                                                                              production), and Pebble testing server.
+   acme_version            Choices:                                           The ACME version of the endpoint.
+   integer                 • 1 ←                                              Must be 1 for the classic Let's Encrypt and Buypass ACME endpoints, or 2 for standardized ACME v2 endpoints.
+   added in 2.5            • 2
+   certificate                                                                Path to the certificate to revoke.
+   path / required
+                                                                              Content of the certificate's private key.
+                                                                              Note that exactly one of account_key_src, account_key_content, private_key_src or private_key_content must be
+                                                                              specified.
+   private_key_content                                                        Warning: the content will be written into a temporary file, which will be deleted by Ansible when the module completes.
+   string                                                                     Since this is an important private key — it can be used to change the account key, or to revoke your certificates
+                                                                              without knowing their private keys —, this might not be acceptable.
+                                                                              In case cryptography is used, the content is not written into a temporary file. It can still happen that it is written
+                                                                              to disk by Ansible in the process of moving the module with its argument to the node where it is executed.
+   private_key_src                                                            Path to the certificate's private key.
+   path                                                                       Note that exactly one of account_key_src, account_key_content, private_key_src or private_key_content must be
+                                                                              specified.
+   revoke_reason                                                              One of the revocation reasonCodes defined in Section 5.3.1 of RFC5280.
+   integer                                                                    Possible values are 0 (unspecified), 1 (keyCompromise), 2 (cACompromise), 3 (affiliationChanged), 4 (superseded), 5
+                                                                              (cessationOfOperation), 6 (certificateHold), 8 (removeFromCRL), 9 (privilegeWithdrawn), 10 (aACompromise)
+   select_crypto_backend   Choices:                                           Determines which crypto backend to use.
+   string                  • auto ←                                           The default choice is auto, which tries to use cryptography if available, and falls back to openssl.
+   added in 2.7            • cryptography                                     If set to openssl, will try to use the openssl binary.
+                           • openssl                                          If set to cryptography, will try to use the cryptography library.
+   validate_certs          Choices:                                           Whether calls to the ACME directory will validate TLS certificates.
+   boolean                 • no                                               Warning: Should only ever be set to no for testing purposes, for example when testing against a local Pebble server.
+   added in 2.5            • yes ←
+
+NOTES                   *acme_certificate_revoke-notes*
+
+   Note
+
+     • Exactly one of account_key_src, account_key_content, private_key_src or private_key_content must be specified.
+     • Trying to revoke an already revoked certificate should result in an unchanged status, even if the revocation reason was different than the one specified here. Also, depending on the server,
+       it can happen that some other error is returned if the certificate has already been revoked.
+     • If a new enough version of the cryptography library is available (see Requirements for details), it will be used instead of the openssl binary. This can be explicitly disabled or enabled
+       with the select_crypto_backend option. Note that using the openssl binary will be slower and less secure, as private key contents always have to be stored on disk (see account_key_content).
+     • Although the defaults are chosen so that the module can be used with the Let’s Encrypt CA, the module can in principle be used with any CA providing an ACME endpoint, such as Buypass Go SSL.
+
+See Also¶
+
+   See also
+
+   The Let’s Encrypt documentation
+   Documentation for the Let’s Encrypt Certification Authority. Provides useful information for example on rate limits.
+
+   Automatic Certificate Management Environment (ACME)
+   The specification of the ACME protocol (RFC 8555).
+
+   acme_inspect – Send direct requests to an ACME server
+   Allows to debug problems.
+
+EXAMPLES                   *acme_certificate_revoke-examples*
+
+ - name: Revoke certificate with account key
+   acme_certificate_revoke:
+     account_key_src: /etc/pki/cert/private/account.key
+     certificate: /etc/httpd/ssl/sample.com.crt
+
+ - name: Revoke certificate with certificate's private key
+   acme_certificate_revoke:
+     private_key_src: /etc/httpd/ssl/sample.com.key
+     certificate: /etc/httpd/ssl/sample.com.crt
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+  Authors¶
+
+     • Felix Fontein (@felixfontein)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+RETURN VALUES                   *acme_certificate_revoke-return values*
+
+STATUS                   *acme_certificate_revoke-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Fontein (@felixfontein)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *acme_certificate_revoke-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/acme_certificate_revoke_module.html

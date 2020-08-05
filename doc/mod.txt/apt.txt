@@ -1,47 +1,213 @@
-SYNOPSIS                           *apt*
+SYNOPSIS                   *apt*
 
-Manages apt packages (such as for Debian/Ubuntu).
+     • Manages apt packages (such as for Debian/Ubuntu).
 
-EXAMPLES                           *apt-examples*
->
-    # Update repositories cache and install "foo" package
-    - apt: name=foo update_cache=yes
-   
-    # Remove "foo" package
-    - apt: name=foo state=absent
-   
-    # Install the package "foo"
-    - apt: name=foo state=present
-   
-    # Install the version '1.00' of package "foo"
-    - apt: name=foo=1.00 state=present
-   
-    # Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
-    - apt: name=nginx state=latest default_release=squeeze-backports update_cache=yes
-   
-    # Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
-    - apt: name=openjdk-6-jdk state=latest install_recommends=no
-   
-    # Update all packages to the latest version
-    - apt: upgrade=dist
-   
-    # Run the equivalent of "apt-get update" as a separate step
-    - apt: update_cache=yes
-   
-    # Only run "update_cache=yes" if the last one is more than 3600 seconds ago
-    - apt: update_cache=yes cache_valid_time=3600
-   
-    # Pass options to dpkg on run
-    - apt: upgrade=dist update_cache=yes dpkg_options='force-confold,force-confdef'
-   
-    # Install a .deb package
-    - apt: deb=/tmp/mypackage.deb
-   
-      Note
-   
-      Three of the upgrade modes (full, safe and its alias yes) require aptitude, otherwise apt-get suffices.
-   
+REQUIREMENTS                   *apt-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-apt (python 2)
+     • python3-apt (python 3)
+     • aptitude (before 2.4)
+
+PARAMETERS                   *apt-parameters*
+
+         Parameter             Choices/Defaults                                                                           Comments
+   allow_unauthenticated   Choices:                    Ignore if packages cannot be authenticated. This is useful for bootstrapping environments that manage their own apt-key setup.
+   boolean                 • no ←                      allow_unauthenticated is only supported with state: install/present
+                           • yes
+   autoclean               Choices:
+   boolean                 • no ←                      If yes, cleans the local repository of retrieved package files that can no longer be downloaded.
+   added in 2.4            • yes
+   autoremove              Choices:                    If yes, remove unused dependency packages for all module states except build-dep. It can also be used as the only option.
+   boolean                 • no ←                      Previous to version 2.4, autoclean was also an alias for autoremove, now it is its own separate command. See documentation for further
+                           • yes                       information.
+   cache_valid_time      Default:                      Update the apt cache if its older than the cache_valid_time. This option is set in seconds.
+   -                     0                             As of Ansible 2.4, if explicitly set, this sets update_cache=yes.
+   deb                                                 Path to a .deb package on the remote machine.
+   -                                                   If :// in the path, ansible will attempt to download deb before installing. (Version added 2.1)
+                                                       Requires the xz-utils package to extract the control file of the deb package to install.
+   default_release                                     Corresponds to the -t option for apt and sets pin priorities
+   -
+   dpkg_options          Default:                      Add dpkg options to apt command. Defaults to '-o "Dpkg::Options::=--force-confdef" -o "Dpkg::Options::=--force-confold"'
+   -                     "force-confdef,force-confold" Options should be supplied as comma separated list
+                                                       Corresponds to the --force-yes to apt-get and implies allow_unauthenticated: yes
+   force                   Choices:                    This option will disable checking both the packages' signatures and the certificates of the web servers they are downloaded from.
+   boolean                 • no ←                      This option *is not* the equivalent of passing the -f flag to apt-get on the command line
+                           • yes                       **This is a destructive operation with the potential to destroy your system, and it should almost never be used.** Please also see man apt-get
+                                                       for more information.
+   force_apt_get           Choices:
+   boolean                 • no ←                      Force usage of apt-get instead of aptitude
+   added in 2.4            • yes
+   install_recommends      Choices:                    Corresponds to the --no-install-recommends option for apt. yes installs recommended packages. no does not install recommended packages. By
+   boolean                 • no                        default, Ansible will use the same defaults as the operating system. Suggested packages are never installed.
+                           • yes                       aliases: install-recommends
+   name                                                A list of package names, like foo, or package specifier with version, like foo=1.0. Name wildcards (fnmatch) like apt* and version wildcards
+   -                                                   like foo=1.0* are also supported.
+                                                       aliases: package, pkg
+   only_upgrade            Choices:
+   boolean                 • no ←                      Only upgrade a package if it is already installed.
+                           • yes
+   policy_rc_d                                         Force the exit code of /usr/sbin/policy-rc.d.
+   integer               Default:                      For example, if policy_rc_d=101 the installed package will not trigger a service start.
+   added in 2.8          null                          If /usr/sbin/policy-rc.d already exist, it is backed up and restored after the package installation.
+                                                       If null, the /usr/sbin/policy-rc.d isn't created/changed.
+   purge                   Choices:
+   boolean                 • no ←                      Will force purging of configuration files if the module state is set to absent.
+                           • yes
+                           Choices:
+                           • absent
+   state                   • build-dep                 Indicates the desired package state. latest ensures that the latest version is installed. build-dep ensures the package build dependencies are
+   -                       • latest                    installed. fixed attempt to correct a system with broken dependencies in place.
+                           • present ←
+                           • fixed
+   update_cache            Choices:
+   boolean                 • no ←                      Run the equivalent of apt-get update before the operation. Can be run as part of the package installation or as a separate step.
+                           • yes
+                           Choices:                    If yes or safe, performs an aptitude safe-upgrade.
+                           • dist                      If full, performs an aptitude full-upgrade.
+   upgrade                 • full                      If dist, performs an apt-get dist-upgrade.
+   -                       • no ←                      Note: This does not upgrade a specific package, use state=latest for that.
+                           • safe                      Note: Since 2.4, apt-get is used as a fall-back if aptitude is not present.
+                           • yes
+
+NOTES                   *apt-notes*
+
+   Note
+
+     • Three of the upgrade modes (full, safe and its alias yes) required aptitude up to 2.3, since 2.4 apt-get is used as a fall-back.
+     • In most cases, packages installed with apt will start newly installed services by default. Most distributions have mechanisms to avoid this. For example when installing Postgresql-9.5 in
+       Debian 9, creating an excutable shell script (/usr/sbin/policy-rc.d) that throws a return code of 101 will stop Postgresql 9.5 starting up after install. Remove the file or remove its
+       execute permission afterwards.
+     • The apt-get commandline supports implicit regex matches here but we do not because it can let typos through easier (If you typo foo as fo apt-get would install packages that have “fo” in
+       their name with a warning and a prompt for the user. Since we don’t have warnings and prompts before installing we disallow this.Use an explicit fnmatch pattern if you want wildcarding)
+     • When used with a loop: each package will be processed individually, it is much more efficient to pass the list directly to the name option.
+
+EXAMPLES                   *apt-examples*
+
+ - name: Install apache httpd  (state=present is optional)
+   apt:
+     name: apache2
+     state: present
+
+ - name: Update repositories cache and install "foo" package
+   apt:
+     name: foo
+     update_cache: yes
+
+ - name: Remove "foo" package
+   apt:
+     name: foo
+     state: absent
+
+ - name: Install the package "foo"
+   apt:
+     name: foo
+
+ - name: Install a list of packages
+   apt:
+     pkg:
+     - foo
+     - foo-tools
+
+ - name: Install the version '1.00' of package "foo"
+   apt:
+     name: foo=1.00
+
+ - name: Update the repository cache and update package "nginx" to latest version using default release squeeze-backport
+   apt:
+     name: nginx
+     state: latest
+     default_release: squeeze-backports
+     update_cache: yes
+
+ - name: Install latest version of "openjdk-6-jdk" ignoring "install-recommends"
+   apt:
+     name: openjdk-6-jdk
+     state: latest
+     install_recommends: no
+
+ - name: Upgrade all packages to the latest version
+   apt:
+     name: "*"
+     state: latest
+
+ - name: Update all packages to the latest version
+   apt:
+     upgrade: dist
+
+ - name: Run the equivalent of "apt-get update" as a separate step
+   apt:
+     update_cache: yes
+
+ - name: Only run "update_cache=yes" if the last one is more than 3600 seconds ago
+   apt:
+     update_cache: yes
+     cache_valid_time: 3600
+
+ - name: Pass options to dpkg on run
+   apt:
+     upgrade: dist
+     update_cache: yes
+     dpkg_options: 'force-confold,force-confdef'
+
+ - name: Install a .deb package
+   apt:
+     deb: /tmp/mypackage.deb
+
+ - name: Install the build dependencies for package "foo"
+   apt:
+     pkg: foo
+     state: build-dep
+
+ - name: Install a .deb package from the internet.
+   apt:
+     deb: https://example.com/python-ppq_0.1-1_all.deb
+
+ - name: Remove useless packages from the cache
+   apt:
+     autoclean: yes
+
+ - name: Remove dependencies that are no longer required
+   apt:
+     autoremove: yes
+
+RETURN VALUES                   *apt-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key               Returned                                                                               Description
+   cache_update_time                        time of the last cache update (0 if unknown)
+   integer           success, in some cases Sample:
+                                            1425828348000
+   cache_updated                            if the cache was updated or not
+   boolean           success, in some cases Sample:
+                                            True
+   stderr                                   error output from apt
+   string            success, when needed   Sample:
+                                            AH00558: apache2: Could not reliably determine the server's fully qualified domain name, using 127.0.1.1. Set the 'ServerName' directive globally to ...
+   stdout                                   output from apt
+   string            success, when needed   Sample:
+                                            Reading package lists... Building dependency tree... Reading state information... The following extra packages will be installed: apache2-bin ...
+
+STATUS                   *apt-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+  Red Hat Support¶
+
+   More information about Red Hat’s support of this module is available from this Red Hat Knowledge Base article.
+
+     • Matthew Williams (@mgwilliams)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *apt-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/apt_module.html
+https://docs.ansible.com/ansible/latest/modules/apt_module.html

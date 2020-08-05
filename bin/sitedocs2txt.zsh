@@ -53,11 +53,11 @@ vimhelp() {
       if (( $i == 1 )); then
         print "${titles[$i]:u}                   *$mod*\n" >>$modtxt
         sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
-          sed -n '3,$p' |sed '$d'  >>$modtxt
+          sed -n '3,$p' | sed '$d' | sed 's/\*/"/g'  >>$modtxt
       elif (($i > 1 && $i < ${#titles[@]} )); then
         print "${titles[$i]:u}                   *$mod-${titles[$i]:l}*\n" >>$modtxt
         sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
-          sed -n '3,$p' |sed '$d'  >>$modtxt
+          sed -n '3,$p' | sed '$d' | sed 's/\*/"/g'  >>$modtxt
       else
         sed -nr "/^\ {0,2}${titles[$i]}/,/^\ *=*}/ p" $modtmp |
           sed -n '3,$p' |sed '$d' >>$modtxt

@@ -1,32 +1,409 @@
-SYNOPSIS                           *authorized_key*
+SYNOPSIS                   *authorized_key*
 
-Adds or removes authorized keys for particular user accounts
+     • Adds or removes SSH authorized keys for particular user accounts.
 
-EXAMPLES                           *authorized_key-examples*
->
-    # Example using key data from a local file on the management machine
-    - authorized_key: user=charlie key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
-   
-    # Using alternate directory locations:
-    - authorized_key: user=charlie
-                      key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
-                      path='/etc/ssh/authorized_keys/charlie'
-                      manage_dir=no
-   
-    # Using with_file
-    - name: Set up authorized_keys for the deploy user
-      authorized_key: user=deploy
-                      key="{{ item }}"
-      with_file:
-        - public_keys/doe-jane
-        - public_keys/doe-john
-   
-    # Using key_options:
-    - authorized_key: user=charlie
-                      key="{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
-                      key_options='no-port-forwarding,host="10.0.1.1"'
-   
+Parameters¶
+
+       Parameter     Choices/Defaults                                                                            Comments
+   comment                            Change the comment on the public key.
+   string                             Rewriting the comment is useful in cases such as fetching it from GitHub or GitLab.
+   added in 2.4                       If no comment is specified, the existing comment will be kept.
+                       Choices:       Whether to remove all other non-specified keys from the authorized_keys file.
+   exclusive           • no ←         Multiple keys can be specified in a single key string value by separating them by newlines.
+   boolean             • yes          This option is not loop aware, so if you use with_ , it will be exclusive per iteration of the loop.
+                                      If you want multiple keys in the file you need to pass them all to key in a single batch as mentioned above.
+   follow              Choices:
+   boolean             • no ←         Follow path symlink instead of replacing it.
+   added in 2.7        • yes
+   key                                The SSH public key(s), as a string or (since Ansible 1.9) url (https://github.com/username.keys).
+   string / required
+   key_options                        A string of ssh key options to be prepended to the key in the authorized_keys file.
+   -
+                       Choices:       Whether this module should manage the directory of the authorized key file.
+   manage_dir          • no           If set to yes, the module will create the directory, as well as set the owner and permissions of an existing directory.
+   boolean             • yes ←        Be sure to set manage_dir=no if you are using an alternate directory for authorized_keys, as set with path, since you could lock yourself out of SSH access.
+                                      See the example below.
+   path                               Alternate path to the authorized_keys file.
+   path                               When unset, this value defaults to ~/.ssh/authorized_keys.
+   state               Choices:
+   string              • absent       Whether the given key (with the given key_options) should or should not be in the file.
+                       • present ←
+   user                               The username on the remote host whose authorized_keys file will be modified.
+   string / required
+                       Choices:       This only applies if using a https url as the source of the keys.
+   validate_certs      • no           If set to no, the SSL certificates will not be validated.
+   boolean             • yes ←        This should only set to no used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+                                      Prior to 2.1 the code worked as if this was set to yes.
+
+Examples¶
+
+ - name: Set authorized key taken from file
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+
+ - name: Set authorized keys taken from url
+   authorized_key:
+     user: charlie
+     state: present
+     key: https://github.com/charlie.keys
+
+ - name: Set authorized key in alternate location
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+     path: /etc/ssh/authorized_keys/charlie
+     manage_dir: False
+
+ - name: Set up multiple authorized keys
+   authorized_key:
+     user: deploy
+     state: present
+     key: '{{ item }}'
+   with_file:
+     - public_keys/doe-jane
+     - public_keys/doe-john
+
+ - name: Set authorized key defining key options
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+     key_options: 'no-port-forwarding,from="10.0.1.1"'
+
+ - name: Set authorized key without validating the TLS/SSL certificates
+   authorized_key:
+     user: charlie
+     state: present
+     key: https://github.com/user.keys
+     validate_certs: False
+
+ - name: Set authorized key, removing all the authorized keys already set
+   authorized_key:
+     user: root
+     key: '{{ item }}'
+     state: present
+     exclusive: True
+   with_file:
+     - public_keys/doe-jane
+
+ - name: Set authorized key for user ubuntu copying it from current user
+   authorized_key:
+     user: ubuntu
+     state: present
+     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+Return Values¶
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   exclusive      success  If the key has been forced to be exclusive or not.
+   boolean
+   key                     The key that the module was running against.
+   string         success  Sample:
+                           https://github.com/user.keys
+   key_option     success  Key options related to the key.
+   string
+   keyfile                 Path for authorized key file.
+   string         success  Sample:
+                           /home/user/.ssh/authorized_keys
+   manage_dir              Whether this module managed the directory of the authorized key file.
+   boolean        success  Sample:
+                           True
+   path           success  Alternate path to the authorized_keys file
+   string
+   state                   Whether the given key (with the given key_options) should or should not be in the file
+   string         success  Sample:
+                           present
+   unique         success  Whether the key is unique
+   boolean
+   user                    The username on the remote host whose authorized_keys file will be modified
+   string         success  Sample:
+                           user
+   validate_certs          This only applies if using a https url as the source of the keys. If set to no, the SSL certificates will not be validated.
+   boolean        success  Sample:
+                           True
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+  Red Hat Support¶
+
+   More information about Red Hat’s support of this module is available from this Red Hat Knowledge Base article.
+
+  Authors¶
+
+     • Ansible Core Team
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS                   *authorized_key-requirements*
+
+PARAMETERS                   *authorized_key-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   comment                            Change the comment on the public key.
+   string                             Rewriting the comment is useful in cases such as fetching it from GitHub or GitLab.
+   added in 2.4                       If no comment is specified, the existing comment will be kept.
+                       Choices:       Whether to remove all other non-specified keys from the authorized_keys file.
+   exclusive           • no ←         Multiple keys can be specified in a single key string value by separating them by newlines.
+   boolean             • yes          This option is not loop aware, so if you use with_ , it will be exclusive per iteration of the loop.
+                                      If you want multiple keys in the file you need to pass them all to key in a single batch as mentioned above.
+   follow              Choices:
+   boolean             • no ←         Follow path symlink instead of replacing it.
+   added in 2.7        • yes
+   key                                The SSH public key(s), as a string or (since Ansible 1.9) url (https://github.com/username.keys).
+   string / required
+   key_options                        A string of ssh key options to be prepended to the key in the authorized_keys file.
+   -
+                       Choices:       Whether this module should manage the directory of the authorized key file.
+   manage_dir          • no           If set to yes, the module will create the directory, as well as set the owner and permissions of an existing directory.
+   boolean             • yes ←        Be sure to set manage_dir=no if you are using an alternate directory for authorized_keys, as set with path, since you could lock yourself out of SSH access.
+                                      See the example below.
+   path                               Alternate path to the authorized_keys file.
+   path                               When unset, this value defaults to ~/.ssh/authorized_keys.
+   state               Choices:
+   string              • absent       Whether the given key (with the given key_options) should or should not be in the file.
+                       • present ←
+   user                               The username on the remote host whose authorized_keys file will be modified.
+   string / required
+                       Choices:       This only applies if using a https url as the source of the keys.
+   validate_certs      • no           If set to no, the SSL certificates will not be validated.
+   boolean             • yes ←        This should only set to no used on personally controlled sites using self-signed certificates as it avoids verifying the source site.
+                                      Prior to 2.1 the code worked as if this was set to yes.
+
+Examples¶
+
+ - name: Set authorized key taken from file
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+
+ - name: Set authorized keys taken from url
+   authorized_key:
+     user: charlie
+     state: present
+     key: https://github.com/charlie.keys
+
+ - name: Set authorized key in alternate location
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+     path: /etc/ssh/authorized_keys/charlie
+     manage_dir: False
+
+ - name: Set up multiple authorized keys
+   authorized_key:
+     user: deploy
+     state: present
+     key: '{{ item }}'
+   with_file:
+     - public_keys/doe-jane
+     - public_keys/doe-john
+
+ - name: Set authorized key defining key options
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+     key_options: 'no-port-forwarding,from="10.0.1.1"'
+
+ - name: Set authorized key without validating the TLS/SSL certificates
+   authorized_key:
+     user: charlie
+     state: present
+     key: https://github.com/user.keys
+     validate_certs: False
+
+ - name: Set authorized key, removing all the authorized keys already set
+   authorized_key:
+     user: root
+     key: '{{ item }}'
+     state: present
+     exclusive: True
+   with_file:
+     - public_keys/doe-jane
+
+ - name: Set authorized key for user ubuntu copying it from current user
+   authorized_key:
+     user: ubuntu
+     state: present
+     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+Return Values¶
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   exclusive      success  If the key has been forced to be exclusive or not.
+   boolean
+   key                     The key that the module was running against.
+   string         success  Sample:
+                           https://github.com/user.keys
+   key_option     success  Key options related to the key.
+   string
+   keyfile                 Path for authorized key file.
+   string         success  Sample:
+                           /home/user/.ssh/authorized_keys
+   manage_dir              Whether this module managed the directory of the authorized key file.
+   boolean        success  Sample:
+                           True
+   path           success  Alternate path to the authorized_keys file
+   string
+   state                   Whether the given key (with the given key_options) should or should not be in the file
+   string         success  Sample:
+                           present
+   unique         success  Whether the key is unique
+   boolean
+   user                    The username on the remote host whose authorized_keys file will be modified
+   string         success  Sample:
+                           user
+   validate_certs          This only applies if using a https url as the source of the keys. If set to no, the SSL certificates will not be validated.
+   boolean        success  Sample:
+                           True
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+  Red Hat Support¶
+
+   More information about Red Hat’s support of this module is available from this Red Hat Knowledge Base article.
+
+  Authors¶
+
+     • Ansible Core Team
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+NOTES                   *authorized_key-notes*
+
+EXAMPLES                   *authorized_key-examples*
+
+ - name: Set authorized key taken from file
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+
+ - name: Set authorized keys taken from url
+   authorized_key:
+     user: charlie
+     state: present
+     key: https://github.com/charlie.keys
+
+ - name: Set authorized key in alternate location
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+     path: /etc/ssh/authorized_keys/charlie
+     manage_dir: False
+
+ - name: Set up multiple authorized keys
+   authorized_key:
+     user: deploy
+     state: present
+     key: '{{ item }}'
+   with_file:
+     - public_keys/doe-jane
+     - public_keys/doe-john
+
+ - name: Set authorized key defining key options
+   authorized_key:
+     user: charlie
+     state: present
+     key: "{{ lookup('file', '/home/charlie/.ssh/id_rsa.pub') }}"
+     key_options: 'no-port-forwarding,from="10.0.1.1"'
+
+ - name: Set authorized key without validating the TLS/SSL certificates
+   authorized_key:
+     user: charlie
+     state: present
+     key: https://github.com/user.keys
+     validate_certs: False
+
+ - name: Set authorized key, removing all the authorized keys already set
+   authorized_key:
+     user: root
+     key: '{{ item }}'
+     state: present
+     exclusive: True
+   with_file:
+     - public_keys/doe-jane
+
+ - name: Set authorized key for user ubuntu copying it from current user
+   authorized_key:
+     user: ubuntu
+     state: present
+     key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
+
+RETURN VALUES                   *authorized_key-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   exclusive      success  If the key has been forced to be exclusive or not.
+   boolean
+   key                     The key that the module was running against.
+   string         success  Sample:
+                           https://github.com/user.keys
+   key_option     success  Key options related to the key.
+   string
+   keyfile                 Path for authorized key file.
+   string         success  Sample:
+                           /home/user/.ssh/authorized_keys
+   manage_dir              Whether this module managed the directory of the authorized key file.
+   boolean        success  Sample:
+                           True
+   path           success  Alternate path to the authorized_keys file
+   string
+   state                   Whether the given key (with the given key_options) should or should not be in the file
+   string         success  Sample:
+                           present
+   unique         success  Whether the key is unique
+   boolean
+   user                    The username on the remote host whose authorized_keys file will be modified
+   string         success  Sample:
+                           user
+   validate_certs          This only applies if using a https url as the source of the keys. If set to no, the SSL certificates will not be validated.
+   boolean        success  Sample:
+                           True
+
+STATUS                   *authorized_key-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+  Red Hat Support¶
+
+   More information about Red Hat’s support of this module is available from this Red Hat Knowledge Base article.
+
+     • Ansible Core Team
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *authorized_key-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/authorized_key_module.html
+https://docs.ansible.com/ansible/latest/modules/authorized_key_module.html

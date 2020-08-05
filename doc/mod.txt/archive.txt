@@ -1,0 +1,338 @@
+SYNOPSIS                   *archive*
+
+     • Packs an archive.
+     • It is the opposite of unarchive.
+     • By default, it assumes the compression source exists on the target.
+     • It will not copy the source file from the local system to the target before archiving.
+     • Source files can be deleted after archival by specifying remove=True.
+
+Parameters¶
+
+     Parameter   Choices/Defaults                                                                              Comments
+                                  The attributes the resulting file or directory should have.
+   attributes                     To get supported flags look at the man page for chattr on the target system.
+   string                         This string should contain the attributes in the same order as the one displayed by lsattr.
+                                  The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                  aliases: attr
+   dest                           The file name of the destination archive.
+   path                           This is required when path refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
+   exclude_path
+   list                           Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive.
+   added in 2.4
+   force_archive   Choices:       Allow you to force the module to treat this as an archive even if only a single file is specified.
+   boolean         • no ←         By default behaviour is maintained. i.e A when a single file is specified it is compressed only (not archived).
+   added in 2.8    • yes
+                   Choices:
+                   • bz2
+   format          • gz ←         The type of compression to use.
+   string          • tar          Support for xz was added in Ansible 2.5.
+                   • xz
+                   • zip
+   group                          Name of the group that should own the file/directory, as would be fed to chown.
+   string
+                                  The permissions the resulting file or directory should have.
+                                  For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                           octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                         Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                  As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                  As of Ansible 2.6, the mode may also be the special string preserve.
+                                  When set to preserve the file will be given the same permissions as the source file.
+   owner                          Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path
+   list /                         Remote absolute path, glob, or list of paths or globs for the file or files to compress or archive.
+   required
+   remove          Choices:
+   boolean         • no ←         Remove any added source files and trees after adding to archive.
+                   • yes
+   selevel       Default:         The level part of the SELinux file context.
+   string        "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                  When set to _default, it will use the level portion of the policy if available.
+   serole                         The role part of the SELinux file context.
+   string                         When set to _default, it will use the role portion of the policy if available.
+   setype                         The type part of the SELinux file context.
+   string                         When set to _default, it will use the type portion of the policy if available.
+   seuser                         The user part of the SELinux file context.
+   string                         By default it uses the system policy, where applicable.
+                                  When set to _default, it will use the user portion of the policy if available.
+                                  Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                  By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or just
+   unsafe_writes   Choices:       broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written in an
+   boolean         • no ←         unsafe manner.
+                   • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                  writes).
+                                  IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+
+Notes¶
+
+   Note
+
+     • Requires tarfile, zipfile, gzip and bzip2 packages on target host.
+     • Requires lzma or backports.lzma if using xz format.
+     • Can produce gzip, bzip2, lzma and zip compressed files or archives.
+
+See Also¶
+
+   See also
+
+   unarchive – Unpacks an archive after (optionally) copying it from the local machine
+   The official documentation on the unarchive module.
+
+Examples¶
+
+ - name: Compress directory /path/to/foo/ into /path/to/foo.tgz
+   archive:
+     path: /path/to/foo
+     dest: /path/to/foo.tgz
+
+ - name: Compress regular file /path/to/foo into /path/to/foo.gz and remove it
+   archive:
+     path: /path/to/foo
+     remove: yes
+
+ - name: Create a zip archive of /path/to/foo
+   archive:
+     path: /path/to/foo
+     format: zip
+
+ - name: Create a bz2 archive of multiple files, rooted at /path
+   archive:
+     path:
+     - /path/to/foo
+     - /path/wong/foo
+     dest: /path/file.tar.bz2
+     format: bz2
+
+ - name: Create a bz2 archive of a globbed path, while excluding specific dirnames
+   archive:
+     path:
+     - /path/to/foo/*
+     dest: /path/file.tar.bz2
+     exclude_path:
+     - /path/to/foo/bar
+     - /path/to/foo/baz
+     format: bz2
+
+ - name: Create a bz2 archive of a globbed path, while excluding a glob of dirnames
+   archive:
+     path:
+     - /path/to/foo/*
+     dest: /path/file.tar.bz2
+     exclude_path:
+     - /path/to/foo/ba*
+     format: bz2
+
+ - name: Use gzip to compress a single archive (i.e don't archive it first with tar)
+   archive:
+     path: /path/to/foo/single.file
+     dest: /path/file.gz
+     format: gz
+
+ - name: Create a tar.gz archive of a single file.
+   archive:
+     path: /path/to/foo/single.file
+     dest: /path/file.tar.gz
+     format: gz
+     force_archive: true
+
+Return Values¶
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   archived               success  Any files that were compressed or added to the archive.
+   list
+   arcroot                always   The archive root.
+   string
+   expanded_exclude_paths always   The list of matching exclude paths from the exclude_path argument.
+   list
+   expanded_paths         always   The list of matching paths from paths argument.
+   list
+   missing                success  Any files that were missing from the source.
+   list
+   state                           The current state of the archived file. If 'absent', then no source files were found and the archive does not exist. If 'compress', then the file source file is
+   string                 always   in the compressed state. If 'archive', then the source file or paths are currently archived. If 'incomplete', then an archive was created, but not all source
+                                   paths were found.
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+  Authors¶
+
+     • Ben Doherty (@bendoh)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS                   *archive-requirements*
+
+PARAMETERS                   *archive-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+                                  The attributes the resulting file or directory should have.
+   attributes                     To get supported flags look at the man page for chattr on the target system.
+   string                         This string should contain the attributes in the same order as the one displayed by lsattr.
+                                  The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                  aliases: attr
+   dest                           The file name of the destination archive.
+   path                           This is required when path refers to multiple files by either specifying a glob, a directory or multiple paths in a list.
+   exclude_path
+   list                           Remote absolute path, glob, or list of paths or globs for the file or files to exclude from the archive.
+   added in 2.4
+   force_archive   Choices:       Allow you to force the module to treat this as an archive even if only a single file is specified.
+   boolean         • no ←         By default behaviour is maintained. i.e A when a single file is specified it is compressed only (not archived).
+   added in 2.8    • yes
+                   Choices:
+                   • bz2
+   format          • gz ←         The type of compression to use.
+   string          • tar          Support for xz was added in Ansible 2.5.
+                   • xz
+                   • zip
+   group                          Name of the group that should own the file/directory, as would be fed to chown.
+   string
+                                  The permissions the resulting file or directory should have.
+                                  For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                           octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                         Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                  As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                  As of Ansible 2.6, the mode may also be the special string preserve.
+                                  When set to preserve the file will be given the same permissions as the source file.
+   owner                          Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path
+   list /                         Remote absolute path, glob, or list of paths or globs for the file or files to compress or archive.
+   required
+   remove          Choices:
+   boolean         • no ←         Remove any added source files and trees after adding to archive.
+                   • yes
+   selevel       Default:         The level part of the SELinux file context.
+   string        "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                  When set to _default, it will use the level portion of the policy if available.
+   serole                         The role part of the SELinux file context.
+   string                         When set to _default, it will use the role portion of the policy if available.
+   setype                         The type part of the SELinux file context.
+   string                         When set to _default, it will use the type portion of the policy if available.
+   seuser                         The user part of the SELinux file context.
+   string                         By default it uses the system policy, where applicable.
+                                  When set to _default, it will use the user portion of the policy if available.
+                                  Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                  By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or just
+   unsafe_writes   Choices:       broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written in an
+   boolean         • no ←         unsafe manner.
+                   • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                  writes).
+                                  IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+
+NOTES                   *archive-notes*
+
+   Note
+
+     • Requires tarfile, zipfile, gzip and bzip2 packages on target host.
+     • Requires lzma or backports.lzma if using xz format.
+     • Can produce gzip, bzip2, lzma and zip compressed files or archives.
+
+See Also¶
+
+   See also
+
+   unarchive – Unpacks an archive after (optionally) copying it from the local machine
+   The official documentation on the unarchive module.
+
+EXAMPLES                   *archive-examples*
+
+ - name: Compress directory /path/to/foo/ into /path/to/foo.tgz
+   archive:
+     path: /path/to/foo
+     dest: /path/to/foo.tgz
+
+ - name: Compress regular file /path/to/foo into /path/to/foo.gz and remove it
+   archive:
+     path: /path/to/foo
+     remove: yes
+
+ - name: Create a zip archive of /path/to/foo
+   archive:
+     path: /path/to/foo
+     format: zip
+
+ - name: Create a bz2 archive of multiple files, rooted at /path
+   archive:
+     path:
+     - /path/to/foo
+     - /path/wong/foo
+     dest: /path/file.tar.bz2
+     format: bz2
+
+ - name: Create a bz2 archive of a globbed path, while excluding specific dirnames
+   archive:
+     path:
+     - /path/to/foo/*
+     dest: /path/file.tar.bz2
+     exclude_path:
+     - /path/to/foo/bar
+     - /path/to/foo/baz
+     format: bz2
+
+ - name: Create a bz2 archive of a globbed path, while excluding a glob of dirnames
+   archive:
+     path:
+     - /path/to/foo/*
+     dest: /path/file.tar.bz2
+     exclude_path:
+     - /path/to/foo/ba*
+     format: bz2
+
+ - name: Use gzip to compress a single archive (i.e don't archive it first with tar)
+   archive:
+     path: /path/to/foo/single.file
+     dest: /path/file.gz
+     format: gz
+
+ - name: Create a tar.gz archive of a single file.
+   archive:
+     path: /path/to/foo/single.file
+     dest: /path/file.tar.gz
+     format: gz
+     force_archive: true
+
+RETURN VALUES                   *archive-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   archived               success  Any files that were compressed or added to the archive.
+   list
+   arcroot                always   The archive root.
+   string
+   expanded_exclude_paths always   The list of matching exclude paths from the exclude_path argument.
+   list
+   expanded_paths         always   The list of matching paths from paths argument.
+   list
+   missing                success  Any files that were missing from the source.
+   list
+   state                           The current state of the archived file. If 'absent', then no source files were found and the archive does not exist. If 'compress', then the file source file is
+   string                 always   in the compressed state. If 'archive', then the source file or paths are currently archived. If 'incomplete', then an archive was created, but not all source
+                                   paths were found.
+
+STATUS                   *archive-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ben Doherty (@bendoh)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *archive-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/archive_module.html

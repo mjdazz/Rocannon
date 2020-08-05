@@ -1,0 +1,538 @@
+SYNOPSIS                   *aci_bd_subnet*
+
+     • Manage Subnets on Cisco ACI fabrics.
+
+Parameters¶
+
+        Parameter       Choices/Defaults                                                                           Comments
+   bd                                     The name of the Bridge Domain.
+   string                                 aliases: bd_name
+                                          The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
+   certificate_name                       If a private_key filename was provided, this defaults to the private_key basename, without extension.
+   string                                 If PEM-formatted content was provided for private_key, this defaults to the username value.
+                                          aliases: cert_name
+   description                            The description for the Subnet.
+   string                                 aliases: descr
+   enable_vip             Choices:        Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
+   boolean                • no            The APIC defaults to no when unset during creation.
+                          • yes
+   gateway                                The IPv4 or IPv6 gateway address for the Subnet.
+   string                                 aliases: gateway_ip
+   host                                   IP Address or hostname of APIC resolvable by Ansible control host.
+   string / required                      aliases: hostname
+                                          The subnet mask for the Subnet.
+   mask                                   This is the number associated with CIDR notation.
+   integer                                For IPv4 addresses, accepted values range between 0 and 32.
+                                          For IPv6 addresses, accepted Values range between 0 and 128.
+                                          aliases: subnet_mask
+   nd_prefix_policy                       The IPv6 Neighbor Discovery Prefix Policy to associate with the Subnet.
+   string
+                          Choices:        Influence the output of this ACI module.
+   output_level           • debug         normal means the standard output, incl. current dict
+   string                 • info          info adds informational output, incl. previous, proposed and sent dicts
+                          • normal ←      debug adds debugging output, incl. filter_string, method, response, status and url information
+   password                               The password to use for authentication.
+   string / required                      This option is mutual exclusive with private_key. If private_key is provided too, it will be used instead.
+   port                                   Port number to be used for REST connection.
+   integer                                The default value depends on parameter use_ssl.
+   preferred              Choices:        Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6). can be preferred in the Bridge Domain.
+   boolean                • no            The APIC defaults to no when unset during creation.
+                          • yes
+                                          Either a PEM-formatted private key file or the private key content used for signature-based authentication.
+   private_key                            This value also influences the default certificate_name that is used.
+   string / required                      This option is mutual exclusive with password. If password is provided too, it will be ignored.
+                                          aliases: cert_key
+   route_profile                          The Route Profile to the associate with the Subnet.
+   string
+   route_profile_l3_out                   The L3 Out that contains the associated Route Profile.
+   string
+                                          Determines the scope of the Subnet.
+                          Choices:        The private option only allows communication with hosts in the same VRF.
+   scope                  • private       The public option allows the Subnet to be advertised outside of the ACI Fabric, and allows communication with hosts in other VRFs.
+   list                   • public        The shared option limits communication to hosts in either the same VRF or the shared VRF.
+                          • shared        The value is a list of options, private and public are mutually exclusive, but both can be used with shared.
+                                          The APIC defaults to private when unset during creation.
+                          Choices:
+   state                  • absent        Use present or absent for adding or removing.
+   string                 • present ←     Use query for listing an object or multiple objects.
+                          • query
+                          Choices:        Determines the Subnet's Control State.
+   subnet_control         • nd_ra         The querier_ip option is used to treat the gateway_ip as an IGMP querier source IP.
+   string                 • no_gw         The nd_ra option is used to treat the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
+                          • querier_ip    The no_gw option is used to remove default gateway functionality from the gateway address.
+                          • unspecified   The APIC defaults to nd_ra when unset during creation.
+   subnet_name                            The name of the Subnet.
+   string                                 aliases: name
+   tenant                                 The name of the Tenant.
+   string                                 aliases: tenant_name
+   timeout              Default:          The socket level timeout in seconds.
+   integer              30
+   use_proxy              Choices:
+   boolean                • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                          • yes ←
+   use_ssl                Choices:
+   boolean                • no            If no, an HTTP connection will be used instead of the default HTTPS connection.
+                          • yes ←
+   username             Default:          The username to use for authentication.
+   string               "admin"           aliases: user
+   validate_certs         Choices:        If no, SSL certificates will not be validated.
+   boolean                • no            This should only set to no when used on personally controlled sites using self-signed certificates.
+                          • yes ←
+
+Notes¶
+
+   Note
+
+     • The gateway parameter is the root key used to access the Subnet (not name), so the gateway is required when the state is absent or present.
+     • The tenant and bd used must exist before using this module in your playbook. The aci_tenant module and aci_bd can be used for these.
+
+See Also¶
+
+   See also
+
+   aci_bd – Manage Bridge Domains (BD) objects (fv:BD)
+   The official documentation on the aci_bd module.
+
+   aci_tenant – Manage tenants (fv:Tenant)
+   The official documentation on the aci_tenant module.
+
+   APIC Management Information Model reference
+   More information about the internal APIC class fv:Subnet.
+
+   Cisco ACI Guide
+   Detailed information on how to manage your ACI infrastructure using Ansible.
+
+   Developing Cisco ACI modules
+   Detailed guide on how to write your own Cisco ACI modules to contribute.
+
+Examples¶
+
+ - name: Create a tenant
+   aci_tenant:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     state: present
+   delegate_to: localhost
+
+ - name: Create a bridge domain
+   aci_bd:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     state: present
+   delegate_to: localhost
+
+ - name: Create a subnet
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     state: present
+   delegate_to: localhost
+
+ - name: Create a subnet with options
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     subnet_name: sql
+     gateway: 10.1.2.1
+     mask: 23
+     description: SQL Servers
+     scope: public
+     route_profile_l3_out: corp
+     route_profile: corp_route_profile
+     state: present
+   delegate_to: localhost
+
+ - name: Update a subnets scope to private and shared
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     scope: [private, shared]
+     state: present
+   delegate_to: localhost
+
+ - name: Get all subnets
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     state: query
+   delegate_to: localhost
+
+ - name: Get all subnets of specific gateway in specified tenant
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     gateway: 10.1.1.1
+     mask: 24
+     state: query
+   delegate_to: localhost
+   register: query_result
+
+ - name: Get specific subnet
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     state: query
+   delegate_to: localhost
+   register: query_result
+
+ - name: Delete a subnet
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     state: absent
+   delegate_to: localhost
+
+Return Values¶
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key         Returned                                                                                 Description
+   current                      The existing configuration from the APIC after the module has finished
+   list          success        Sample:
+                                [{'fvTenant': {'attributes': {'descr': 'Production environment', 'dn': 'uni/tn-production', 'name': 'production', 'nameAlias': '', 'ownerKey': '', 'ownerTag': ''}}}]
+   error                        The error information as returned from the APIC
+   dictionary    failure        Sample:
+                                {'code': '122', 'text': 'unknown managed object class foo'}
+   filter_string failure or     The filter string used for the request
+   string        debug          Sample:
+                                ?rsp-prop-include=config-only
+   method        failure or     The HTTP method used for the request to the APIC
+   string        debug          Sample:
+                                POST
+   previous                     The original configuration from the APIC before the module has started
+   list          info           Sample:
+                                [{'fvTenant': {'attributes': {'descr': 'Production', 'dn': 'uni/tn-production', 'name': 'production', 'nameAlias': '', 'ownerKey': '', 'ownerTag': ''}}}]
+   proposed                     The assembled configuration from the user-provided parameters
+   dictionary    info           Sample:
+                                {'fvTenant': {'attributes': {'descr': 'Production environment', 'name': 'production'}}}
+   raw                          The raw output returned by the APIC REST API (xml or json)
+   string        parse error    Sample:
+                                <?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>
+   response      failure or     The HTTP response from the APIC
+   string        debug          Sample:
+                                OK (30 bytes)
+   sent                         The actual/minimal configuration pushed to the APIC
+   list          info           Sample:
+                                {'fvTenant': {'attributes': {'descr': 'Production environment'}}}
+   status        failure or     The HTTP status from the APIC
+   integer       debug          Sample:
+                                200
+   url           failure or     The HTTP url used for the request to the APIC
+   string        debug          Sample:
+                                https://10.11.12.13/api/mo/uni/tn-production.json
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+  Authors¶
+
+     • Jacob McGill (@jmcgill298)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS                   *aci_bd_subnet-requirements*
+
+PARAMETERS                   *aci_bd_subnet-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   bd                                     The name of the Bridge Domain.
+   string                                 aliases: bd_name
+                                          The X.509 certificate name attached to the APIC AAA user used for signature-based authentication.
+   certificate_name                       If a private_key filename was provided, this defaults to the private_key basename, without extension.
+   string                                 If PEM-formatted content was provided for private_key, this defaults to the username value.
+                                          aliases: cert_name
+   description                            The description for the Subnet.
+   string                                 aliases: descr
+   enable_vip             Choices:        Determines if the Subnet should be treated as a VIP; used when the BD is extended to multiple sites.
+   boolean                • no            The APIC defaults to no when unset during creation.
+                          • yes
+   gateway                                The IPv4 or IPv6 gateway address for the Subnet.
+   string                                 aliases: gateway_ip
+   host                                   IP Address or hostname of APIC resolvable by Ansible control host.
+   string / required                      aliases: hostname
+                                          The subnet mask for the Subnet.
+   mask                                   This is the number associated with CIDR notation.
+   integer                                For IPv4 addresses, accepted values range between 0 and 32.
+                                          For IPv6 addresses, accepted Values range between 0 and 128.
+                                          aliases: subnet_mask
+   nd_prefix_policy                       The IPv6 Neighbor Discovery Prefix Policy to associate with the Subnet.
+   string
+                          Choices:        Influence the output of this ACI module.
+   output_level           • debug         normal means the standard output, incl. current dict
+   string                 • info          info adds informational output, incl. previous, proposed and sent dicts
+                          • normal ←      debug adds debugging output, incl. filter_string, method, response, status and url information
+   password                               The password to use for authentication.
+   string / required                      This option is mutual exclusive with private_key. If private_key is provided too, it will be used instead.
+   port                                   Port number to be used for REST connection.
+   integer                                The default value depends on parameter use_ssl.
+   preferred              Choices:        Determines if the Subnet is preferred over all available Subnets. Only one Subnet per Address Family (IPv4/IPv6). can be preferred in the Bridge Domain.
+   boolean                • no            The APIC defaults to no when unset during creation.
+                          • yes
+                                          Either a PEM-formatted private key file or the private key content used for signature-based authentication.
+   private_key                            This value also influences the default certificate_name that is used.
+   string / required                      This option is mutual exclusive with password. If password is provided too, it will be ignored.
+                                          aliases: cert_key
+   route_profile                          The Route Profile to the associate with the Subnet.
+   string
+   route_profile_l3_out                   The L3 Out that contains the associated Route Profile.
+   string
+                                          Determines the scope of the Subnet.
+                          Choices:        The private option only allows communication with hosts in the same VRF.
+   scope                  • private       The public option allows the Subnet to be advertised outside of the ACI Fabric, and allows communication with hosts in other VRFs.
+   list                   • public        The shared option limits communication to hosts in either the same VRF or the shared VRF.
+                          • shared        The value is a list of options, private and public are mutually exclusive, but both can be used with shared.
+                                          The APIC defaults to private when unset during creation.
+                          Choices:
+   state                  • absent        Use present or absent for adding or removing.
+   string                 • present ←     Use query for listing an object or multiple objects.
+                          • query
+                          Choices:        Determines the Subnet's Control State.
+   subnet_control         • nd_ra         The querier_ip option is used to treat the gateway_ip as an IGMP querier source IP.
+   string                 • no_gw         The nd_ra option is used to treat the gateway_ip address as a Neighbor Discovery Router Advertisement Prefix.
+                          • querier_ip    The no_gw option is used to remove default gateway functionality from the gateway address.
+                          • unspecified   The APIC defaults to nd_ra when unset during creation.
+   subnet_name                            The name of the Subnet.
+   string                                 aliases: name
+   tenant                                 The name of the Tenant.
+   string                                 aliases: tenant_name
+   timeout              Default:          The socket level timeout in seconds.
+   integer              30
+   use_proxy              Choices:
+   boolean                • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                          • yes ←
+   use_ssl                Choices:
+   boolean                • no            If no, an HTTP connection will be used instead of the default HTTPS connection.
+                          • yes ←
+   username             Default:          The username to use for authentication.
+   string               "admin"           aliases: user
+   validate_certs         Choices:        If no, SSL certificates will not be validated.
+   boolean                • no            This should only set to no when used on personally controlled sites using self-signed certificates.
+                          • yes ←
+
+NOTES                   *aci_bd_subnet-notes*
+
+   Note
+
+     • The gateway parameter is the root key used to access the Subnet (not name), so the gateway is required when the state is absent or present.
+     • The tenant and bd used must exist before using this module in your playbook. The aci_tenant module and aci_bd can be used for these.
+
+See Also¶
+
+   See also
+
+   aci_bd – Manage Bridge Domains (BD) objects (fv:BD)
+   The official documentation on the aci_bd module.
+
+   aci_tenant – Manage tenants (fv:Tenant)
+   The official documentation on the aci_tenant module.
+
+   APIC Management Information Model reference
+   More information about the internal APIC class fv:Subnet.
+
+   Cisco ACI Guide
+   Detailed information on how to manage your ACI infrastructure using Ansible.
+
+   Developing Cisco ACI modules
+   Detailed guide on how to write your own Cisco ACI modules to contribute.
+
+EXAMPLES                   *aci_bd_subnet-examples*
+
+ - name: Create a tenant
+   aci_tenant:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     state: present
+   delegate_to: localhost
+
+ - name: Create a bridge domain
+   aci_bd:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     state: present
+   delegate_to: localhost
+
+ - name: Create a subnet
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     state: present
+   delegate_to: localhost
+
+ - name: Create a subnet with options
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     subnet_name: sql
+     gateway: 10.1.2.1
+     mask: 23
+     description: SQL Servers
+     scope: public
+     route_profile_l3_out: corp
+     route_profile: corp_route_profile
+     state: present
+   delegate_to: localhost
+
+ - name: Update a subnets scope to private and shared
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     scope: [private, shared]
+     state: present
+   delegate_to: localhost
+
+ - name: Get all subnets
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     state: query
+   delegate_to: localhost
+
+ - name: Get all subnets of specific gateway in specified tenant
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     gateway: 10.1.1.1
+     mask: 24
+     state: query
+   delegate_to: localhost
+   register: query_result
+
+ - name: Get specific subnet
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     state: query
+   delegate_to: localhost
+   register: query_result
+
+ - name: Delete a subnet
+   aci_bd_subnet:
+     host: apic
+     username: admin
+     password: SomeSecretPassword
+     tenant: production
+     bd: database
+     gateway: 10.1.1.1
+     mask: 24
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *aci_bd_subnet-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key         Returned                                                                                 Description
+   current                      The existing configuration from the APIC after the module has finished
+   list          success        Sample:
+                                [{'fvTenant': {'attributes': {'descr': 'Production environment', 'dn': 'uni/tn-production', 'name': 'production', 'nameAlias': '', 'ownerKey': '', 'ownerTag': ''}}}]
+   error                        The error information as returned from the APIC
+   dictionary    failure        Sample:
+                                {'code': '122', 'text': 'unknown managed object class foo'}
+   filter_string failure or     The filter string used for the request
+   string        debug          Sample:
+                                ?rsp-prop-include=config-only
+   method        failure or     The HTTP method used for the request to the APIC
+   string        debug          Sample:
+                                POST
+   previous                     The original configuration from the APIC before the module has started
+   list          info           Sample:
+                                [{'fvTenant': {'attributes': {'descr': 'Production', 'dn': 'uni/tn-production', 'name': 'production', 'nameAlias': '', 'ownerKey': '', 'ownerTag': ''}}}]
+   proposed                     The assembled configuration from the user-provided parameters
+   dictionary    info           Sample:
+                                {'fvTenant': {'attributes': {'descr': 'Production environment', 'name': 'production'}}}
+   raw                          The raw output returned by the APIC REST API (xml or json)
+   string        parse error    Sample:
+                                <?xml version="1.0" encoding="UTF-8"?><imdata totalCount="1"><error code="122" text="unknown managed object class foo"/></imdata>
+   response      failure or     The HTTP response from the APIC
+   string        debug          Sample:
+                                OK (30 bytes)
+   sent                         The actual/minimal configuration pushed to the APIC
+   list          info           Sample:
+                                {'fvTenant': {'attributes': {'descr': 'Production environment'}}}
+   status        failure or     The HTTP status from the APIC
+   integer       debug          Sample:
+                                200
+   url           failure or     The HTTP url used for the request to the APIC
+   string        debug          Sample:
+                                https://10.11.12.13/api/mo/uni/tn-production.json
+
+STATUS                   *aci_bd_subnet-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Jacob McGill (@jmcgill298)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aci_bd_subnet-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aci_bd_subnet_module.html

@@ -1,0 +1,175 @@
+SYNOPSIS                   *acme_account_info*
+
+     • Allows to retrieve information on accounts a CA supporting the ACME protocol, such as Let’s Encrypt.
+     • This module only works with the ACME v2 protocol.
+
+   Aliases: acme_account_facts
+
+REQUIREMENTS                   *acme_account_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • either openssl or cryptography >= 1.5
+
+PARAMETERS                   *acme_account_info-parameters*
+
+         Parameter                         Choices/Defaults                                                                          Comments
+                                                                              Content of the ACME account RSA or Elliptic Curve key.
+                                                                              Mutually exclusive with account_key_src.
+   account_key_content                                                        Required if account_key_src is not used.
+   string                                                                     Warning: the content will be written into a temporary file, which will be deleted by Ansible when the module completes.
+   added in 2.5                                                               Since this is an important private key — it can be used to change the account key, or to revoke your certificates
+                                                                              without knowing their private keys —, this might not be acceptable.
+                                                                              In case cryptography is used, the content is not written into a temporary file. It can still happen that it is written
+                                                                              to disk by Ansible in the process of moving the module with its argument to the node where it is executed.
+                                                                              Path to a file containing the ACME account RSA or Elliptic Curve key.
+                                                                              RSA keys can be created with openssl genrsa .... Elliptic curve keys can be created with openssl ecparam -genkey ....
+   account_key_src                                                            Any other tool creating private keys in PEM format can be used as well.
+   path                                                                       Mutually exclusive with account_key_content.
+                                                                              Required if account_key_content is not used.
+                                                                              aliases: account_key
+   account_uri                                                                If specified, assumes that the account URI is as given. If the account key does not match this account, or an account
+   string                                                                     with this URI does not exist, the module fails.
+   added in 2.7
+                                                                              The ACME directory to use. This is the entry point URL to access CA server API.
+                                                                              For safety reasons the default is set to the Let's Encrypt staging server (for the ACME v1 protocol). This will create
+                                                                              technically correct, but untrusted certificates.
+                                                                              For Let's Encrypt, all staging endpoints can be found here: https://letsencrypt.org/docs/staging-environment/. For
+   acme_directory        Default:                                             Buypass, all endpoints can be found here: https://community.buypass.com/t/63d4ay/buypass-go-ssl-endpoints
+   string                "https://acme-staging.api.letsencrypt.org/directory" For Let's Encrypt, the production directory URL for ACME v1 is https://acme-v01.api.letsencrypt.org/directory, and the
+                                                                              production directory URL for ACME v2 is https://acme-v02.api.letsencrypt.org/directory.
+                                                                              For Buypass, the production directory URL for ACME v2 and v1 is https://api.buypass.com/acme/directory.
+                                                                              Warning: So far, the module has only been tested against Let's Encrypt (staging and production), Buypass (staging and
+                                                                              production), and Pebble testing server.
+   acme_version            Choices:                                           The ACME version of the endpoint.
+   integer                 • 1 ←                                              Must be 1 for the classic Let's Encrypt and Buypass ACME endpoints, or 2 for standardized ACME v2 endpoints.
+   added in 2.5            • 2
+   retrieve_orders         Choices:                                           Whether to retrieve the list of order URLs or order objects, if provided by the ACME server.
+   string                  • ignore ←                                         A value of ignore will not fetch the list of orders.
+   added in 2.9            • url_list                                         Currently, Let's Encrypt does not return orders, so the orders result will always be empty.
+                           • object_list
+   select_crypto_backend   Choices:                                           Determines which crypto backend to use.
+   string                  • auto ←                                           The default choice is auto, which tries to use cryptography if available, and falls back to openssl.
+   added in 2.7            • cryptography                                     If set to openssl, will try to use the openssl binary.
+                           • openssl                                          If set to cryptography, will try to use the cryptography library.
+   validate_certs          Choices:                                           Whether calls to the ACME directory will validate TLS certificates.
+   boolean                 • no                                               Warning: Should only ever be set to no for testing purposes, for example when testing against a local Pebble server.
+   added in 2.5            • yes ←
+
+NOTES                   *acme_account_info-notes*
+
+   Note
+
+     • The acme_account module allows to modify, create and delete ACME accounts.
+     • This module was called acme_account_facts before Ansible 2.8. The usage did not change.
+     • If a new enough version of the cryptography library is available (see Requirements for details), it will be used instead of the openssl binary. This can be explicitly disabled or enabled
+       with the select_crypto_backend option. Note that using the openssl binary will be slower and less secure, as private key contents always have to be stored on disk (see account_key_content).
+     • Although the defaults are chosen so that the module can be used with the Let’s Encrypt CA, the module can in principle be used with any CA providing an ACME endpoint, such as Buypass Go SSL.
+
+See Also¶
+
+   See also
+
+   acme_account – Create, modify or delete ACME accounts
+   Allows to create, modify or delete an ACME account.
+
+EXAMPLES                   *acme_account_info-examples*
+
+ - name: Check whether an account with the given account key exists
+   acme_account_info:
+     account_key_src: /etc/pki/cert/private/account.key
+     register: account_data
+ - name: Verify that account exists
+   assert:
+     that:
+       - account_data.exists
+ - name: Print account URI
+   debug: var=account_data.account_uri
+ - name: Print account contacts
+   debug: var=account_data.account.contact
+
+ - name: Check whether the account exists and is accessible with the given account key
+   acme_account_info:
+     account_key_content: "{{ acme_account_key }}"
+     account_uri: "{{ acme_account_uri }}"
+     register: account_data
+ - name: Verify that account exists
+   assert:
+     that:
+       - account_data.exists
+ - name: Print account contacts
+   debug: var=account_data.account.contact
+
+RETURN VALUES                   *acme_account_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key                             Returned                                                                         Description
+   account                      if account exists                      The account information, as retrieved from the ACME server.
+   dictionary
+     contact                                                           the challenge resource that must be created for validation
+     list / elements=string     always                                 Sample:
+                                                                       ['mailto:[email protected]', 'tel:00123456789']
+                                                                       A URL where a list of orders can be retrieved for this account.
+     orders                     always                                 Use the retrieve_orders option to query this URL and retrieve the complete list of orders.
+     string                                                            Sample:
+                                                                       https://example.ca/account/1/orders
+     public_account_key                                                the public account key as a JSON Web Key.
+     string                     always                                 Sample:
+                                                                       {"kty":"EC","crv":"P-256","x":"MKBCTNIcKUSDii11ySs3526iDZ8AiTo7Tu6KPAqv7D4","y":"4Etl6SRW2YiLUrN5vfvVHuhp7x8PxltmWWlbbM4IFyM"}
+     status                                                            the account's status
+     string                     always                                 Sample:
+                                                                       valid
+   account_uri                  always                                 ACME account URI, or None if account does not exist.
+   string
+   exists                       always                                 Whether the account exists.
+   boolean
+   orders                       if account exists, retrieve_orders is  The list of orders.
+   list                         not ignore, and server supports order  If retrieve_orders is url_list, this will be a list of URLs.
+                                listing                                If retrieve_orders is object_list, this will be a list of objects.
+     authorizations                                                    A list of URLs for authorizations for this order.
+     list / elements=string
+     certificate                when certificate was issued            The URL for retrieving the certificate.
+     string
+     error                      when an error occurred                 In case an error occurred during processing, this contains information about the error.
+     dictionary                                                        The field is structured as a problem document (RFC7807).
+     expires                                                           When the order expires.
+     string                     when server gives expiry date          Timestamp should be formatted as described in RFC3339.
+                                                                       Only required to be included in result when status is pending or valid.
+     finalize                                                          A URL used for finalizing an ACME order.
+     string
+     identifiers                                                       List of identifiers this order is for.
+     list / elements=dictionary
+               type                                                    Type of identifier. dns or ip.
+               string
+               value                                                   Name of identifier. Hostname or IP address.
+               string
+               wildcard         required to be included if the         Whether value is actually a wildcard. The wildcard prefix *. is not included in value if this is true.
+               boolean          identifier is wildcarded
+     notAfter                                                          The requested value of the notAfter field in the certificate.
+     string                     when server returns this               Date should be formatted as described in RFC3339.
+                                                                       Server is not required to return this.
+     notBefore                                                         The requested value of the notBefore field in the certificate.
+     string                     when server returns this               Date should be formatted as described in RFC3339.
+                                                                       Server is not required to return this.
+     status                                                            The order's status.
+     string
+
+STATUS                   *acme_account_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Fontein (@felixfontein)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *acme_account_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/acme_account_info_module.html

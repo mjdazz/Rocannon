@@ -1,0 +1,156 @@
+SYNOPSIS                   *acme_account*
+
+     • Allows to create, modify or delete accounts with a CA supporting the ACME protocol, such as Let’s Encrypt.
+     • This module only works with the ACME v2 protocol.
+
+REQUIREMENTS                   *acme_account-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • either openssl or cryptography >= 1.5
+
+PARAMETERS                   *acme_account-parameters*
+
+          Parameter                          Choices/Defaults                                                                         Comments
+                                                                                Content of the ACME account RSA or Elliptic Curve key.
+                                                                                Mutually exclusive with account_key_src.
+   account_key_content                                                          Required if account_key_src is not used.
+   string                                                                       Warning: the content will be written into a temporary file, which will be deleted by Ansible when the module
+   added in 2.5                                                                 completes. Since this is an important private key — it can be used to change the account key, or to revoke your
+                                                                                certificates without knowing their private keys —, this might not be acceptable.
+                                                                                In case cryptography is used, the content is not written into a temporary file. It can still happen that it is
+                                                                                written to disk by Ansible in the process of moving the module with its argument to the node where it is executed.
+                                                                                Path to a file containing the ACME account RSA or Elliptic Curve key.
+                                                                                RSA keys can be created with openssl genrsa .... Elliptic curve keys can be created with openssl ecparam -genkey ....
+   account_key_src                                                              Any other tool creating private keys in PEM format can be used as well.
+   path                                                                         Mutually exclusive with account_key_content.
+                                                                                Required if account_key_content is not used.
+                                                                                aliases: account_key
+   account_uri                                                                  If specified, assumes that the account URI is as given. If the account key does not match this account, or an account
+   string                                                                       with this URI does not exist, the module fails.
+   added in 2.7
+                                                                                The ACME directory to use. This is the entry point URL to access CA server API.
+                                                                                For safety reasons the default is set to the Let's Encrypt staging server (for the ACME v1 protocol). This will
+                                                                                create technically correct, but untrusted certificates.
+                                                                                For Let's Encrypt, all staging endpoints can be found here: https://letsencrypt.org/docs/staging-environment/. For
+   acme_directory          Default:                                             Buypass, all endpoints can be found here: https://community.buypass.com/t/63d4ay/buypass-go-ssl-endpoints
+   string                  "https://acme-staging.api.letsencrypt.org/directory" For Let's Encrypt, the production directory URL for ACME v1 is https://acme-v01.api.letsencrypt.org/directory, and
+                                                                                the production directory URL for ACME v2 is https://acme-v02.api.letsencrypt.org/directory.
+                                                                                For Buypass, the production directory URL for ACME v2 and v1 is https://api.buypass.com/acme/directory.
+                                                                                Warning: So far, the module has only been tested against Let's Encrypt (staging and production), Buypass (staging and
+                                                                                production), and Pebble testing server.
+   acme_version              Choices:                                           The ACME version of the endpoint.
+   integer                   • 1 ←                                              Must be 1 for the classic Let's Encrypt and Buypass ACME endpoints, or 2 for standardized ACME v2 endpoints.
+   added in 2.5              • 2
+   allow_creation            Choices:
+   boolean                   • no                                               Whether account creation is allowed (when state is present).
+                             • yes ←
+                                                                                A list of contact URLs.
+   contact                 Default:                                             Email addresses must be prefixed with mailto:.
+   list / elements=string  []                                                   See https://tools.ietf.org/html/rfc8555#section-7.3 for what is allowed.
+                                                                                Must be specified when state is present. Will be ignored if state is absent or changed_key.
+                                                                                Content of the ACME account RSA or Elliptic Curve key to change to.
+   new_account_key_content                                                      Same restrictions apply as to account_key_content.
+   string                                                                       Mutually exclusive with new_account_key_src.
+                                                                                Required if new_account_key_src is not used and state is changed_key.
+                                                                                Path to a file containing the ACME account RSA or Elliptic Curve key to change to.
+   new_account_key_src                                                          Same restrictions apply as to account_key_src.
+   path                                                                         Mutually exclusive with new_account_key_content.
+                                                                                Required if new_account_key_content is not used and state is changed_key.
+   select_crypto_backend     Choices:                                           Determines which crypto backend to use.
+   string                    • auto ←                                           The default choice is auto, which tries to use cryptography if available, and falls back to openssl.
+   added in 2.7              • cryptography                                     If set to openssl, will try to use the openssl binary.
+                             • openssl                                          If set to cryptography, will try to use the cryptography library.
+                             Choices:                                           The state of the account, to be identified by its account key.
+   state                     • present                                          If the state is absent, the account will either not exist or be deactivated.
+   string / required         • absent                                           If the state is changed_key, the account must exist. The account key will be changed; no other information will be
+                             • changed_key                                      touched.
+   terms_agreed              Choices:                                           Boolean indicating whether you agree to the terms of service document.
+   boolean                   • no ←                                             ACME servers can require this to be true.
+                             • yes
+   validate_certs            Choices:                                           Whether calls to the ACME directory will validate TLS certificates.
+   boolean                   • no                                               Warning: Should only ever be set to no for testing purposes, for example when testing against a local Pebble server.
+   added in 2.5              • yes ←
+
+NOTES                   *acme_account-notes*
+
+   Note
+
+     • The acme_certificate module also allows to do basic account management. When using both modules, it is recommended to disable account management for acme_certificate. For that, use the
+       modify_account option of acme_certificate.
+     • If a new enough version of the cryptography library is available (see Requirements for details), it will be used instead of the openssl binary. This can be explicitly disabled or enabled
+       with the select_crypto_backend option. Note that using the openssl binary will be slower and less secure, as private key contents always have to be stored on disk (see account_key_content).
+     • Although the defaults are chosen so that the module can be used with the Let’s Encrypt CA, the module can in principle be used with any CA providing an ACME endpoint, such as Buypass Go SSL.
+
+See Also¶
+
+   See also
+
+   Automatic Certificate Management Environment (ACME)
+   The specification of the ACME protocol (RFC 8555).
+
+   acme_account_info – Retrieves information on ACME accounts
+   Retrieves facts about an ACME account.
+
+   openssl_privatekey – Generate OpenSSL private keys
+   Can be used to create a private account key.
+
+   acme_inspect – Send direct requests to an ACME server
+   Allows to debug problems.
+
+EXAMPLES                   *acme_account-examples*
+
+ - name: Make sure account exists and has given contacts. We agree to TOS.
+   acme_account:
+     account_key_src: /etc/pki/cert/private/account.key
+     state: present
+     terms_agreed: yes
+     contact:
+     - mailto:[email protected]
+     - mailto:[email protected]
+
+ - name: Make sure account has given email address. Don't create account if it doesn't exist
+   acme_account:
+     account_key_src: /etc/pki/cert/private/account.key
+     state: present
+     allow_creation: no
+     contact:
+     - mailto:[email protected]
+
+ - name: Change account's key to the one stored in the variable new_account_key
+   acme_account:
+     account_key_src: /etc/pki/cert/private/account.key
+     new_account_key_content: '{{ new_account_key }}'
+     state: changed_key
+
+ - name: Delete account (we have to use the new key)
+   acme_account:
+     account_key_content: '{{ new_account_key }}'
+     state: absent
+
+RETURN VALUES                   *acme_account-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+   account_uri always   ACME account URI, or None if account does not exist.
+   string
+
+STATUS                   *acme_account-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Fontein (@felixfontein)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *acme_account-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/acme_account_module.html

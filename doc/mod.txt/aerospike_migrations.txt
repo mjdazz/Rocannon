@@ -1,0 +1,302 @@
+SYNOPSIS                   *aerospike_migrations*
+
+     • This can be used to check for migrations in a cluster. This makes it easy to do a rolling upgrade/update on Aerospike nodes.
+     • If waiting for migrations is not desired, simply just poll until port 3000 if available or asinfo -v status returns ok
+
+Parameters¶
+
+          Parameter                Choices/Defaults                                                                          Comments
+   connect_timeout         Default:                          How long to try to connect before giving up (milliseconds)
+   integer                 1000
+   consecutive_good_checks Default:                          How many times should the cluster report "no migrations" consecutively before returning OK back to ansible?
+   integer                 3
+   fail_on_cluster_change    Choices:
+   boolean                   • no                            Fail if the cluster key changes if something else is changing the cluster, we may want to fail
+                             • yes ←
+   host                    Default:                          Which host do we use as seed for info connection
+   string                  "localhost"
+   local_only                Choices:                        Do you wish to only check for migrations on the local node before returning, or do you want all nodes in the cluster to finish before
+   boolean / required        • no                            returning?
+                             • yes
+   migrate_rx_key          Default:                          The metric key used to determine if we have rx migrations remaining. Changeable due to backwards compatibility.
+   string                  "migrate_rx_partitions_remaining"
+   migrate_tx_key          Default:                          The metric key used to determine if we have tx migrations remaining. Changeable due to backwards compatibility.
+   string                  "migrate_tx_partitions_remaining"
+   min_cluster_size        Default:                          Check will return bad until cluster size is met or until tries is exhausted
+   integer                 1
+   port                    Default:                          Which port to connect to Aerospike on (service port)
+   integer                 3000
+   sleep_between_checks    Default:                          How long to sleep between each check (seconds).
+   integer                 60
+                                                             When all aerospike builds in the cluster are greater than version 4.3, then the cluster-stable info command will be used. Inside this
+   target_cluster_size                                       command, you can optionally specify what the target cluster size is - but it is not necessary. You can still rely on min_cluster_size if
+   integer                                                   you don't want to use this option.
+                                                             If this option is specified on a cluster that has at least 1 host <4.3 then it will be ignored until the min version reaches 4.3.
+   tries_limit             Default:                          How many times do we poll before giving up and failing?
+   integer                 300
+
+Examples¶
+
+ # check for migrations on local node
+ - name: wait for migrations on local node before proceeding
+   aerospike_migrations:
+     host: "localhost"
+     connect_timeout: 2000
+     consecutive_good_checks: 5
+     sleep_between_checks: 15
+     tries_limit: 600
+     local_only: False
+
+ # example playbook:
+ ---
+ - name: upgrade aerospike
+   hosts: all
+   become: true
+   serial: 1
+   tasks:
+     - name: Install dependencies
+       apt:
+         name:
+             - python
+             - python-pip
+             - python-setuptools
+         state: latest
+     - name: setup aerospike
+       pip:
+           name: aerospike
+ # check for migrations every (sleep_between_checks)
+ # If at least (consecutive_good_checks) checks come back OK in a row, then return OK.
+ # Will exit if any exception, which can be caused by bad nodes,
+ # nodes not returning data, or other reasons.
+ # Maximum runtime before giving up in this case will be:
+ # Tries Limit * Sleep Between Checks * delay * retries
+     - name: wait for aerospike migrations
+       aerospike_migrations:
+           local_only: True
+           sleep_between_checks: 1
+           tries_limit: 5
+           consecutive_good_checks: 3
+           fail_on_cluster_change: true
+           min_cluster_size: 3
+           target_cluster_size: 4
+       register: migrations_check
+       until: migrations_check is succeeded
+       changed_when: false
+       delay: 60
+       retries: 120
+     - name: another thing
+       shell: |
+           echo foo
+     - name: reboot
+       reboot:
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+  Authors¶
+
+     • Albert Autin (@Alb0t)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS                   *aerospike_migrations-requirements*
+
+PARAMETERS                   *aerospike_migrations-parameters*
+
+          Parameter                Choices/Defaults                                                                          Comments
+   connect_timeout         Default:                          How long to try to connect before giving up (milliseconds)
+   integer                 1000
+   consecutive_good_checks Default:                          How many times should the cluster report "no migrations" consecutively before returning OK back to ansible?
+   integer                 3
+   fail_on_cluster_change    Choices:
+   boolean                   • no                            Fail if the cluster key changes if something else is changing the cluster, we may want to fail
+                             • yes ←
+   host                    Default:                          Which host do we use as seed for info connection
+   string                  "localhost"
+   local_only                Choices:                        Do you wish to only check for migrations on the local node before returning, or do you want all nodes in the cluster to finish before
+   boolean / required        • no                            returning?
+                             • yes
+   migrate_rx_key          Default:                          The metric key used to determine if we have rx migrations remaining. Changeable due to backwards compatibility.
+   string                  "migrate_rx_partitions_remaining"
+   migrate_tx_key          Default:                          The metric key used to determine if we have tx migrations remaining. Changeable due to backwards compatibility.
+   string                  "migrate_tx_partitions_remaining"
+   min_cluster_size        Default:                          Check will return bad until cluster size is met or until tries is exhausted
+   integer                 1
+   port                    Default:                          Which port to connect to Aerospike on (service port)
+   integer                 3000
+   sleep_between_checks    Default:                          How long to sleep between each check (seconds).
+   integer                 60
+                                                             When all aerospike builds in the cluster are greater than version 4.3, then the cluster-stable info command will be used. Inside this
+   target_cluster_size                                       command, you can optionally specify what the target cluster size is - but it is not necessary. You can still rely on min_cluster_size if
+   integer                                                   you don't want to use this option.
+                                                             If this option is specified on a cluster that has at least 1 host <4.3 then it will be ignored until the min version reaches 4.3.
+   tries_limit             Default:                          How many times do we poll before giving up and failing?
+   integer                 300
+
+Examples¶
+
+ # check for migrations on local node
+ - name: wait for migrations on local node before proceeding
+   aerospike_migrations:
+     host: "localhost"
+     connect_timeout: 2000
+     consecutive_good_checks: 5
+     sleep_between_checks: 15
+     tries_limit: 600
+     local_only: False
+
+ # example playbook:
+ ---
+ - name: upgrade aerospike
+   hosts: all
+   become: true
+   serial: 1
+   tasks:
+     - name: Install dependencies
+       apt:
+         name:
+             - python
+             - python-pip
+             - python-setuptools
+         state: latest
+     - name: setup aerospike
+       pip:
+           name: aerospike
+ # check for migrations every (sleep_between_checks)
+ # If at least (consecutive_good_checks) checks come back OK in a row, then return OK.
+ # Will exit if any exception, which can be caused by bad nodes,
+ # nodes not returning data, or other reasons.
+ # Maximum runtime before giving up in this case will be:
+ # Tries Limit * Sleep Between Checks * delay * retries
+     - name: wait for aerospike migrations
+       aerospike_migrations:
+           local_only: True
+           sleep_between_checks: 1
+           tries_limit: 5
+           consecutive_good_checks: 3
+           fail_on_cluster_change: true
+           min_cluster_size: 3
+           target_cluster_size: 4
+       register: migrations_check
+       until: migrations_check is succeeded
+       changed_when: false
+       delay: 60
+       retries: 120
+     - name: another thing
+       shell: |
+           echo foo
+     - name: reboot
+       reboot:
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+  Authors¶
+
+     • Albert Autin (@Alb0t)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+NOTES                   *aerospike_migrations-notes*
+
+EXAMPLES                   *aerospike_migrations-examples*
+
+ # check for migrations on local node
+ - name: wait for migrations on local node before proceeding
+   aerospike_migrations:
+     host: "localhost"
+     connect_timeout: 2000
+     consecutive_good_checks: 5
+     sleep_between_checks: 15
+     tries_limit: 600
+     local_only: False
+
+ # example playbook:
+ ---
+ - name: upgrade aerospike
+   hosts: all
+   become: true
+   serial: 1
+   tasks:
+     - name: Install dependencies
+       apt:
+         name:
+             - python
+             - python-pip
+             - python-setuptools
+         state: latest
+     - name: setup aerospike
+       pip:
+           name: aerospike
+ # check for migrations every (sleep_between_checks)
+ # If at least (consecutive_good_checks) checks come back OK in a row, then return OK.
+ # Will exit if any exception, which can be caused by bad nodes,
+ # nodes not returning data, or other reasons.
+ # Maximum runtime before giving up in this case will be:
+ # Tries Limit * Sleep Between Checks * delay * retries
+     - name: wait for aerospike migrations
+       aerospike_migrations:
+           local_only: True
+           sleep_between_checks: 1
+           tries_limit: 5
+           consecutive_good_checks: 3
+           fail_on_cluster_change: true
+           min_cluster_size: 3
+           target_cluster_size: 4
+       register: migrations_check
+       until: migrations_check is succeeded
+       changed_when: false
+       delay: 60
+       retries: 120
+     - name: another thing
+       shell: |
+           echo foo
+     - name: reboot
+       reboot:
+
+Status¶
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+  Authors¶
+
+     • Albert Autin (@Alb0t)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+RETURN VALUES                   *aerospike_migrations-return values*
+
+STATUS                   *aerospike_migrations-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Albert Autin (@Alb0t)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aerospike_migrations-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aerospike_migrations_module.html

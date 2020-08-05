@@ -1,32 +1,238 @@
-SYNOPSIS                           *acl*
+SYNOPSIS                   *acl*
 
-New in version 1.4.
+     • Set and retrieve file ACL information.
 
-Sets and retrieves file ACL information.
+Parameters¶
 
-EXAMPLES                           *acl-examples*
->
-    # Grant user Joe read access to a file
-    - acl: name=/etc/foo.conf entity=joe etype=user permissions="r" state=present
-   
-    # Removes the acl for Joe on a specific file
-    - acl: name=/etc/foo.conf entity=joe etype=user state=absent
-   
-    # Sets default acl for joe on foo.d
-    - acl: name=/etc/foo.d entity=joe etype=user permissions=rw default=yes state=present
-   
-    # Same as previous but using entry shorthand
-    - acl: name=/etc/foo.d entry="default:user:joe:rw-" state=present
-   
-    # Obtain the acl for a specific file
-    - acl: name=/etc/foo.conf
-      register: acl_info
-   
-      Note
-   
-      The “acl” module requires that acls are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
-   
+      Parameter     Choices/Defaults                                                                             Comments
+   default            Choices:       If the target is a directory, setting this to yes will make it the default ACL for entities created inside the directory.
+   boolean            • no ←         Setting default to yes causes an error if the path is a file.
+                      • yes
+   entity                            The actual user or group that the ACL applies to when matching entity types user or group are selected.
+   -
+                                     DEPRECATED.
+                                     The ACL to set or remove.
+   entry                             This must always be quoted in the form of <etype>:<qualifier>:<perms>.
+   -                                 The qualifier may be empty for some types, but the type and perms are always required.
+                                     - can be used as placeholder when you do not care about permissions.
+                                     This is now superseded by entity, type and permissions fields.
+                      Choices:
+   etype              • group
+   -                  • mask         The entity type of the ACL to apply, see setfacl documentation for more info.
+                      • other
+                      • user
+   follow             Choices:
+   boolean            • no           Whether to follow symlinks on the path if a symlink is encountered.
+                      • yes ←
+   path                              The full path of the file or object.
+   path / required                   aliases: name
+   permissions                       The permissions to apply/remove can be any combination of r, w and x (read, write and execute respectively)
+   -
+   recalculate_mask   Choices:       Select if and when to recalculate the effective right masks of the files.
+   -                  • default ←    See setfacl documentation for more info.
+   added in 2.7       • mask         Incompatible with state=query.
+                      • no_mask
+   recursive          Choices:       Recursively sets the specified ACL.
+   boolean            • no ←         Incompatible with state=query.
+                      • yes
+                      Choices:
+   state              • absent       Define whether the ACL should be present or not.
+   -                  • present      The query state gets the current ACL without changing it, for use in register operations.
+                      • query ←
+   use_nfsv4_acls     Choices:
+   boolean            • no ←         Use NFSv4 ACLs instead of POSIX ACLs.
+                      • yes
+
+Notes¶
+
+   Note
+
+     • The acl module requires that ACLs are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
+     • As of Ansible 2.0, this module only supports Linux distributions.
+     • As of Ansible 2.3, the name option has been changed to path as default, but name still works as well.
+
+Examples¶
+
+ - name: Grant user Joe read access to a file
+   acl:
+     path: /etc/foo.conf
+     entity: joe
+     etype: user
+     permissions: r
+     state: present
+
+ - name: Removes the ACL for Joe on a specific file
+   acl:
+     path: /etc/foo.conf
+     entity: joe
+     etype: user
+     state: absent
+
+ - name: Sets default ACL for joe on /etc/foo.d/
+   acl:
+     path: /etc/foo.d/
+     entity: joe
+     etype: user
+     permissions: rw
+     default: yes
+     state: present
+
+ - name: Same as previous but using entry shorthand
+   acl:
+     path: /etc/foo.d/
+     entry: default:user:joe:rw-
+     state: present
+
+ - name: Obtain the ACL for a specific file
+   acl:
+     path: /etc/foo.conf
+   register: acl_info
+
+Return Values¶
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+   Key  Returned                                                                                     Description
+   acl           Current ACL on provided path (after changes, if any)
+   list success  Sample:
+                 ['user::rwx', 'group::rwx', 'other::rwx']
+
+Status¶
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+  Red Hat Support¶
+
+   More information about Red Hat’s support of this module is available from this Red Hat Knowledge Base article.
+
+  Authors¶
+
+     • Brian Coca (@bcoca)
+     • Jérémie Astori (@astorije)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+REQUIREMENTS                   *acl-requirements*
+
+PARAMETERS                   *acl-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   default            Choices:       If the target is a directory, setting this to yes will make it the default ACL for entities created inside the directory.
+   boolean            • no ←         Setting default to yes causes an error if the path is a file.
+                      • yes
+   entity                            The actual user or group that the ACL applies to when matching entity types user or group are selected.
+   -
+                                     DEPRECATED.
+                                     The ACL to set or remove.
+   entry                             This must always be quoted in the form of <etype>:<qualifier>:<perms>.
+   -                                 The qualifier may be empty for some types, but the type and perms are always required.
+                                     - can be used as placeholder when you do not care about permissions.
+                                     This is now superseded by entity, type and permissions fields.
+                      Choices:
+   etype              • group
+   -                  • mask         The entity type of the ACL to apply, see setfacl documentation for more info.
+                      • other
+                      • user
+   follow             Choices:
+   boolean            • no           Whether to follow symlinks on the path if a symlink is encountered.
+                      • yes ←
+   path                              The full path of the file or object.
+   path / required                   aliases: name
+   permissions                       The permissions to apply/remove can be any combination of r, w and x (read, write and execute respectively)
+   -
+   recalculate_mask   Choices:       Select if and when to recalculate the effective right masks of the files.
+   -                  • default ←    See setfacl documentation for more info.
+   added in 2.7       • mask         Incompatible with state=query.
+                      • no_mask
+   recursive          Choices:       Recursively sets the specified ACL.
+   boolean            • no ←         Incompatible with state=query.
+                      • yes
+                      Choices:
+   state              • absent       Define whether the ACL should be present or not.
+   -                  • present      The query state gets the current ACL without changing it, for use in register operations.
+                      • query ←
+   use_nfsv4_acls     Choices:
+   boolean            • no ←         Use NFSv4 ACLs instead of POSIX ACLs.
+                      • yes
+
+NOTES                   *acl-notes*
+
+   Note
+
+     • The acl module requires that ACLs are enabled on the target filesystem and that the setfacl and getfacl binaries are installed.
+     • As of Ansible 2.0, this module only supports Linux distributions.
+     • As of Ansible 2.3, the name option has been changed to path as default, but name still works as well.
+
+EXAMPLES                   *acl-examples*
+
+ - name: Grant user Joe read access to a file
+   acl:
+     path: /etc/foo.conf
+     entity: joe
+     etype: user
+     permissions: r
+     state: present
+
+ - name: Removes the ACL for Joe on a specific file
+   acl:
+     path: /etc/foo.conf
+     entity: joe
+     etype: user
+     state: absent
+
+ - name: Sets default ACL for joe on /etc/foo.d/
+   acl:
+     path: /etc/foo.d/
+     entity: joe
+     etype: user
+     permissions: rw
+     default: yes
+     state: present
+
+ - name: Same as previous but using entry shorthand
+   acl:
+     path: /etc/foo.d/
+     entry: default:user:joe:rw-
+     state: present
+
+ - name: Obtain the ACL for a specific file
+   acl:
+     path: /etc/foo.conf
+   register: acl_info
+
+RETURN VALUES                   *acl-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+   Key  Returned                                                                                     Description
+   acl           Current ACL on provided path (after changes, if any)
+   list success  Sample:
+                 ['user::rwx', 'group::rwx', 'other::rwx']
+
+STATUS                   *acl-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+  Red Hat Support¶
+
+   More information about Red Hat’s support of this module is available from this Red Hat Knowledge Base article.
+
+     • Brian Coca (@bcoca)
+     • Jérémie Astori (@astorije)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *acl-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/acl_module.html
+https://docs.ansible.com/ansible/latest/modules/acl_module.html
