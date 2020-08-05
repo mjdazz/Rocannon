@@ -44,7 +44,7 @@ vimhelp() {
     #sed -nr '/^Examples¶/,/^This is a.* Module¶/ p' $modtmp |
     #  sed -n '3,$p' |sed '$d' |
     #  sed -r 's/^/   /' >>$modtxt
-    titles=$(cat ../tmp/docker_compose.txt.tmp | grep ¶ | sed -r 's/^  //g' | sed -r 's/^          .*//' | sed -r '/^$/d' | sed 's/¶//g')
+    titles=$(cat ../tmp/$mod.txt.tmp | grep ¶ | sed -r 's/^  //g' | sed -r 's/^          .*//' | sed -r '/^$/d' | sed 's/¶//g')
     titles=("${(f)titles}")
 
     rm $modtxt
@@ -55,7 +55,7 @@ vimhelp() {
         sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
           sed -n '3,$p' |sed '$d'  >>$modtxt
       elif (($i > 1 && $i < ${#titles[@]} )); then
-        print "${titles[$i]:u}                   *$mod-${titles[$i]}*\n" >>$modtxt
+        print "${titles[$i]:u}                   *$mod-${titles[$i]:l}*\n" >>$modtxt
         sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
           sed -n '3,$p' |sed '$d'  >>$modtxt
       else
