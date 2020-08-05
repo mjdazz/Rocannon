@@ -34,16 +34,37 @@ vimhelp() {
       sleep 5
     fi
     dump $modtmphtml >|$modtmp
-    # Synopsis
-    print "SYNOPSIS                           *$mod*\n" >|$modtxt
-    sed -nr '/^Synopsis¶/,/^Options¶/ p' $modtmp |
-      sed -n '3,$p' |sed '$d' |
-      sed -r 's/^\s+//' >>$modtxt
-    # Examples
-    print "EXAMPLES                           *$mod-examples*\n>" >>$modtxt
-    sed -nr '/^Examples¶/,/^This is a.* Module¶/ p' $modtmp |
-      sed -n '3,$p' |sed '$d' |
-      sed -r 's/^/   /' >>$modtxt
+    ## Synopsis
+    #print "SYNOPSIS                           *$mod*\n" >|$modtxt
+    #sed -nr '/^Synopsis¶/,/^Options¶/ p' $modtmp |
+    #  sed -n '3,$p' |sed '$d' |
+    #  sed -r 's/^\s+//' >>$modtxt
+    ## Examples
+    #print "EXAMPLES                           *$mod-examples*\n>" >>$modtxt
+    #sed -nr '/^Examples¶/,/^This is a.* Module¶/ p' $modtmp |
+    #  sed -n '3,$p' |sed '$d' |
+    #  sed -r 's/^/   /' >>$modtxt
+    titles=$(cat ../tmp/docker_compose.txt.tmp | grep ¶ | sed -r 's/^  //g' | sed -r 's/^          .*//' | sed -r '/^$/d' | sed 's/¶//g')
+    titles=("${(f)titles}")
+
+    rm $modtxt
+    touch $modtxt
+    for ((i = 1 ; i <= ${#titles[@]} ; i++)); do
+      if (( $i == 1 )); then
+        print "${titles[$i]:u}                   *$mod*\n" >>$modtxt
+        sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
+          sed -n '3,$p' |sed '$d'  >>$modtxt
+      elif (($i > 1 && $i < ${#titles[@]} )); then
+        print "${titles[$i]:u}                   *$mod-${titles[$i]}*\n" >>$modtxt
+        sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
+          sed -n '3,$p' |sed '$d'  >>$modtxt
+      else
+        sed -nr "/^\ {0,2}${titles[$i]}/,/^\ *=*}/ p" $modtmp |
+          sed -n '3,$p' |sed '$d' >>$modtxt
+      fi
+    done
+
+
     print "MORE INFO                          *$mod-moreinfo*\n>" >>$modtxt
     print "All arguments are omni-completed, but if you really want to see the online docs:" >>$modtxt
     print $url >>$modtxt

@@ -1,0 +1,362 @@
+SYNOPSIS¶                   *docker_compose*
+
+     • Uses Docker Compose to start, shutdown and scale services.
+     • Works with compose versions 1 and 2.
+     • Configuration can be read from a docker-compose.yml or docker-compose.yaml file or inline using the definition option.
+     • See the examples for more details.
+     • Supports check mode.
+     • This module was called docker_service before Ansible 2.8. The usage did not change.
+
+   Aliases: docker_service
+
+REQUIREMENTS¶                   *docker_compose*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.20
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 1.8.0 (use docker-py for Python 2.6)
+     • PyYAML >= 3.11
+     • docker-compose >= 1.7.0
+
+PARAMETERS¶                   *docker_compose*
+
+      Parameter          Choices/Defaults                                                                             Comments
+                                                The version of the Docker API running on the Docker Host.
+   api_version     Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string          "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment variable is
+                                                not set, the default value will be used.
+                                                aliases: docker_api_version
+                                                Use with state present to always build images prior to starting the application.
+   build             Choices:                   Same as running docker-compose build with the pull option.
+   boolean           • no ←                     Images will only be rebuilt if Docker detects a change in the Dockerfile or build directory contents.
+                     • yes                      Use the nocache option to ignore the image cache when performing the build.
+                                                If an existing image is replaced, services using the image will be recreated unless recreate is never.
+                                                Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                      If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified in the
+   path                                         environment variable DOCKER_CERT_PATH will be used.
+                                                aliases: tls_ca_cert, cacert_path
+                                                Path to the client's TLS certificate file.
+   client_cert                                  If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory specified in the
+   path                                         environment variable DOCKER_CERT_PATH will be used.
+                                                aliases: tls_client_cert, cert_path
+                                                Path to the client's TLS key file.
+   client_key                                   If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory specified in the
+   path                                         environment variable DOCKER_CERT_PATH will be used.
+                                                aliases: tls_client_key, key_path
+   debug             Choices:
+   boolean           • no ←                     Debug mode
+                     • yes
+   definition                                   Compose file describing one or more services, networks and volumes.
+   dictionary                                   Mutually exclusive with project_src and files.
+   dependencies      Choices:
+   boolean           • no                       When state is present specify whether or not to include linked services.
+                     • yes ←
+                                                The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host     Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string          "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable is not
+                                                set, the default value will be used.
+                                                aliases: docker_url
+   files                                        List of Compose file names relative to project_src. Overrides docker-compose.yml or docker-compose.yaml.
+   list /                                       Files are loaded and merged in the order given.
+   elements=path
+   hostname_check    Choices:
+   boolean           • no ←                     Whether or not to check the Docker daemon's hostname against the name provided in the client certificate.
+                     • yes
+   nocache           Choices:
+   boolean           • no ←                     Use with the build option to ignore the cache during the image build process.
+                     • yes
+   project_name                                 Provide a project name. If not provided, the project name is taken from the basename of project_src.
+   string                                       Required when definition is provided.
+   project_src                                  Path to a directory containing a docker-compose.yml or docker-compose.yaml file.
+   path                                         Mutually exclusive with definition.
+                                                Required when no definition is provided.
+   pull              Choices:                   Use with state present to always pull images prior to starting the application.
+   boolean           • no ←                     Same as running docker-compose pull.
+                     • yes                      When a new image is pulled, services using the image will be recreated unless recreate is never.
+                     Choices:                   By default containers will be recreated when their configuration differs from the service definition.
+   recreate          • always                   Setting to never ignores configuration differences and leaves existing containers unchanged.
+   string            • never                    Setting to always forces recreation of all existing containers.
+                     • smart ←
+   remove_images     Choices:
+   string            • all                      Use with state absent to remove all images or only local images.
+                     • local
+   remove_orphans    Choices:
+   boolean           • no ←                     Remove containers for services not defined in the Compose file.
+                     • yes
+   remove_volumes    Choices:
+   boolean           • no ←                     Use with state absent to remove data volumes.
+                     • yes
+   restarted         Choices:                   Use with state present to restart all containers defined in the Compose file.
+   boolean           • no ←                     If services is defined, only the containers listed there will be restarted.
+                     • yes
+   scale                                        When state is present scale services. Provide a dictionary of key/value pairs where the key is the name of the service and the value is an integer
+   dictionary                                   count for the number of containers.
+   services                                     When state is present run docker-compose up resp. docker-compose stop (with stopped) resp. docker-compose restart (with restarted) on a subset of
+   list /                                       services.
+   elements=string                              If empty, which is the default, the operation will be performed on all services defined in the Compose file (or inline definition).
+   ssl_version                                  Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                       If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+   state             Choices:                   Desired state of the project.
+   string            • absent                   Specifying present is the same as running docker-compose up resp. docker-compose stop (with stopped) resp. docker-compose restart (with restarted).
+                     • present ←                Specifying absent is the same as running docker-compose down.
+   stopped           Choices:                   Use with state present to stop all containers defined in the Compose file.
+   boolean           • no ←                     If services is defined, only the containers listed there will be stopped.
+                     • yes
+   timeout         Default:                     timeout in seconds for container shutdown when attached or when containers are already running.
+   integer         10
+                     Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is set to yes
+   tls               • no ←                     as well, it will take precedence.
+   boolean           • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is not set,
+                                                the default value will be used.
+   tls_hostname    Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string          "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment variable is
+                                                not set, the default value will be used.
+                     Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs    • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment variable is
+   boolean           • yes                      not set, the default value will be used.
+                                                aliases: tls_verify
+
+NOTES¶                   *docker_compose*
+
+   Note
+
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES¶                   *docker_compose*
+
+ # Examples use the django example at https://docs.docker.com/compose/django. Follow it to create the
+ # flask directory
+
+ - name: Run using a project directory
+   hosts: localhost
+   gather_facts: no
+   tasks:
+     - name: Tear down existing services
+       docker_compose:
+         project_src: flask
+         state: absent
+
+     - name: Create and start services
+       docker_compose:
+         project_src: flask
+       register: output
+
+     - debug:
+         var: output
+
+     - name: Run `docker-compose up` again
+       docker_compose:
+         project_src: flask
+         build: no
+       register: output
+
+     - debug:
+         var: output
+
+     - assert:
+         that: "not output.changed "
+
+     - name: Stop all services
+       docker_compose:
+         project_src: flask
+         build: no
+         stopped: yes
+       register: output
+
+     - debug:
+         var: output
+
+     - assert:
+         that:
+           - "not web.flask_web_1.state.running"
+           - "not db.flask_db_1.state.running"
+
+     - name: Restart services
+       docker_compose:
+         project_src: flask
+         build: no
+         restarted: yes
+       register: output
+
+     - debug:
+         var: output
+
+     - assert:
+         that:
+           - "web.flask_web_1.state.running"
+           - "db.flask_db_1.state.running"
+
+ - name: Scale the web service to 2
+   hosts: localhost
+   gather_facts: no
+   tasks:
+     - docker_compose:
+         project_src: flask
+         scale:
+           web: 2
+       register: output
+
+     - debug:
+         var: output
+
+ - name: Run with inline v2 compose
+   hosts: localhost
+   gather_facts: no
+   tasks:
+     - docker_compose:
+         project_src: flask
+         state: absent
+
+     - docker_compose:
+         project_name: flask
+         definition:
+           version: '2'
+           services:
+             db:
+               image: postgres
+             web:
+               build: "{{ playbook_dir }}/flask"
+               command: "python manage.py runserver 0.0.0.0:8000"
+               volumes:
+                 - "{{ playbook_dir }}/flask:/code"
+               ports:
+                 - "8000:8000"
+               depends_on:
+                 - db
+       register: output
+
+     - debug:
+         var: output
+
+     - assert:
+         that:
+           - "web.flask_web_1.state.running"
+           - "db.flask_db_1.state.running"
+
+ - name: Run with inline v1 compose
+   hosts: localhost
+   gather_facts: no
+   tasks:
+     - docker_compose:
+         project_src: flask
+         state: absent
+
+     - docker_compose:
+         project_name: flask
+         definition:
+             db:
+               image: postgres
+             web:
+               build: "{{ playbook_dir }}/flask"
+               command: "python manage.py runserver 0.0.0.0:8000"
+               volumes:
+                 - "{{ playbook_dir }}/flask:/code"
+               ports:
+                 - "8000:8000"
+               links:
+                 - db
+       register: output
+
+     - debug:
+         var: output
+
+     - assert:
+         that:
+           - "web.flask_web_1.state.running"
+           - "db.flask_db_1.state.running"
+
+RETURN VALUES¶                   *docker_compose*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key            Returned                                                                           Description
+                             when in
+   actions                   check
+   complex                   mode or  Provides the actions to be taken on each service as determined by compose.
+                             debug is
+                             yes
+     service_name            always   Name of the service.
+     complex
+       action
+       list /                always   A descriptive name of the action to be performed on the service's containers.
+       elements=string
+         id                  always   the container's long ID
+         string
+         name                always   the container's name
+         string
+         short_id            always   the container's short ID
+         string
+       built_image           on image Provides image details when a new image is built for the service.
+       complex               build
+         id                  always   image hash
+         string
+         name                always   name of the image
+         string
+       pulled_image          on image Provides image details when a new image is pulled for the service.
+       complex               pull
+         id                  always   image hash
+         string
+         name                always   name of the image
+         string
+   services                           A dictionary mapping the service's name to a dictionary of containers.
+   complex                   success  Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts are also accessible directly. The service's name is the
+                                      variable with which the container dictionary can be accessed. Note that the returned facts will be removed in Ansible 2.12.
+     container_name          success  Name of the container. Format is project_service_#.
+     complex
+       cmd
+       list /                success  One or more commands to be executed in the container.
+       elements=string
+       image                 success  Name of the image from which the container was built.
+       string
+       labels                success  Meta data assigned to the container.
+       dictionary
+       networks
+       list /                success  Contains a dictionary for each network to which the container is a member.
+       elements=dictionary
+         aliases
+         list /              success  Aliases assigned to the container by the network.
+         elements=string
+         globalIPv6          success  IPv6 address assigned to the container.
+         string
+         globalIPv6PrefixLen success  IPv6 subnet length.
+         integer
+         IPAddress           success  The IP address assigned to the container.
+         string
+         IPPrefixLen         success  Number of bits used by the subnet.
+         integer
+         links
+         list /              success  List of container names to which this container is linked.
+         elements=string
+         macAddress          success  Mac Address assigned to the virtual NIC.
+         string
+       state                 success  Information regarding the current disposition of the container.
+       dictionary
+         running             success  Whether or not the container is up with a running process.
+         boolean
+         status              success  Description of the running state.
+         string
+
+STATUS¶                   *docker_compose*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+AUTHORS¶                   *docker_compose*
+
+     • Chris Houseknecht (@chouseknecht)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
