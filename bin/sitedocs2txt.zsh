@@ -5,15 +5,17 @@
 
 dump() { elinks -no-numbering -no-references -dump-width 200 -dump $1 }
 
+mkdir ../tmp/
+
 allmods=../tmp/all-modules.lst
 
-if [[ -f list_of_all_modules.html ]]; then
+if [[ -f $allmods ]]; then
   print 'Already have list of modules'
 else
   print 'Dumping list of all modules'
   # Really sill way to do this, but pretty safe to assume that nothing will
   # be outside of a10 and zypper.
-  dump http://docs.ansible.com/list_of_all_modules.html |
+  dump https://docs.ansible.com/list_of_all_modules.html |
     sed -nr '/• a10_server/,/• zypper_repository/ p' |
     sed -r 's/.*• //; s/\s.*//' >$allmods
 fi
@@ -24,7 +26,7 @@ vimhelp() {
     modtxt=../doc/mod.txt/$mod.txt
     modtmphtml=../tmp/$mod.html
     modtmp=../tmp/$mod.txt.tmp
-    url=http://docs.ansible.com/${mod}_module.html
+    url=https://docs.ansible.com/ansible/latest/modules/${mod}_module.html
     print "Dumping and creating docs for $mod"
     if [[ ! -f $modtmphtml ]]; then
       print "Downloading html (and sleeping) for $mod"
