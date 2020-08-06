@@ -1,0 +1,149 @@
+SYNOPSIS                   *bigip_profile_tcp*
+
+     • Manage TCP profiles on a BIG-IP. Many TCP profiles; each with their own adjustments to the standard tcp profile. Users of this module should be aware that many of the adjustable knobs have
+       no module default. Instead, the default is assigned by the BIG-IP system itself which, in most cases, is acceptable.
+
+PARAMETERS                   *bigip_profile_tcp-parameters*
+
+             Parameter            Choices/Defaults                                                                      Comments
+   early_retransmit                 Choices:       When yes the system uses early fast retransmits to reduce the recovery time for connections that are receive-buffer or user-data limited.
+   boolean                          • no           When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   added in 2.9                     • yes
+                                                   Specifies the length of time that a connection is idle (has no traffic) before the connection is eligible for deletion.
+   idle_timeout                                    When creating a new profile, if this parameter is not specified, the remote device will choose a default value appropriate for the profile, based
+   string                                          on its parent profile.
+                                                   When a number is specified, indicates the number of seconds that the TCP connection can remain idle before the system deletes it.
+                                                   When 0, or indefinite, specifies that the system does not delete TCP connections regardless of how long they remain idle.
+                                                   Specifies the initial congestion window size for connections to this destination. The actual window size is this value multiplied by the MSS for
+   initial_congestion_window_size                  the same connection.
+   integer                                         When set to 0 the system uses the values specified in RFC2414.
+   added in 2.9                                    The valid value range is 0 - 16 inclusive.
+                                                   When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+                                                   Specifies the initial receive window size for connections to this destination. The actual window size is this value multiplied by the MSS for the
+   initial_receive_window_size                     same connection.
+   integer                                         When set to 0 the system uses the Slow Start value.
+   added in 2.9                                    The valid value range is 0 - 16 inclusive.
+                                                   When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+                                    Choices:       When enabled the system applies Nagle's algorithm to reduce the number of short segments on the network.
+   nagle                            • auto         When auto, the use of Nagle's algorithm is decided based on network conditions.
+   string                           • enabled      Note that for interactive protocols such as Telnet, rlogin, or SSH, F5 recommends disabling this setting on high-latency networks, to improve
+   added in 2.9                     • disabled     application responsiveness.
+                                                   When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   name                                            Specifies the name of the profile.
+   string / required
+   parent                                          Specifies the profile from which this profile inherits settings.
+   string                                          When creating a new profile, if this parameter is not specified, the default is the system-supplied tcp profile.
+   partition                      Default:         Device partition to manage resources on.
+   string                         "Common"
+   provider
+   dictionary                                      A dict object containing connection details.
+   added in 2.5
+           auth_provider                           Configures the auth provider for to obtain authentication tokens from the remote device.
+           string                                  This option is really used when working with BIG-IQ devices.
+           password                                The password for the user account used to connect to the BIG-IP.
+           string / required                       You may omit this option by setting the environment variable F5_PASSWORD.
+                                                   aliases: pass, pwd
+           server                                  The BIG-IP host.
+           string / required                       You may omit this option by setting the environment variable F5_SERVER.
+           server_port            Default:         The BIG-IP server port.
+           integer                443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+           ssh_keyfile                             Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+           path                                    You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+           timeout                                 Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+           integer                                 before the operation is completed, the module will error.
+           transport                Choices:
+           string                   • cli          Configures the transport connection to use when connecting to the remote device.
+                                    • rest ←
+           user                                    The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+           string / required                       You may omit this option by setting the environment variable F5_USER.
+           validate_certs           Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+           boolean                  • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                                    • yes ←
+   proxy_options                    Choices:       When yes the system advertises an option, such as a time-stamp to the server only if it was negotiated with the client.
+   boolean                          • no           When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   added in 2.9                     • yes
+   state                            Choices:       When present, ensures that the profile exists.
+   string                           • present ←    When absent, ensures the profile is removed.
+                                    • absent
+   syn_rto_base                                    Specifies the initial RTO Retransmission TimeOut base multiplier for SYN retransmission, in milliseconds.
+   integer                                         This value is modified by the exponential backoff table to select the interval for subsequent retransmissions.
+   added in 2.9                                    The valid value range is 0 - 5000 inclusive.
+                                                   When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   time_wait_recycle                Choices:       Specifies that connections in a TIME-WAIT state are reused, if a SYN packet, indicating a request for a new connection, is received.
+   boolean                          • no           When no, connections in a TIME-WAIT state remain unused for a specified length of time.
+   added in 2.7                     • yes          When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+
+NOTES                   *bigip_profile_tcp-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_profile_tcp-examples*
+
+ - name: Create a TCP profile
+   bigip_profile_tcp:
+     name: foo
+     parent: f5-tcp-progressive
+     time_wait_recycle: no
+     idle_timeout: 300
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_profile_tcp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key               Returned                                                                        Description
+   early_retransmit                        Specifies the use of early fast retransmits.
+   boolean                        changed  Sample:
+                                           True
+   idle_timeout                            The new idle timeout of the resource.
+   integer                        changed  Sample:
+                                           100
+   initial_congestion_window_size          Specifies the initial congestion window size for connections to this destination.
+   integer                        changed  Sample:
+                                           5
+   initial_receive_window_size             Specifies the initial receive window size for connections to this destination.
+   integer                        changed  Sample:
+                                           10
+   nagle                                   Specifies the use of Nagle's algorithm.
+   string                         changed  Sample:
+                                           auto
+   parent                                  The new parent of the resource.
+   string                         changed  Sample:
+                                           f5-tcp-optimized
+   proxy_options                  changed  Specifies if that the system advertises negotiated options to the server.
+   boolean
+   syn_rto_base                            Specifies the initial Retransmission TimeOut base multiplier for SYN retransmission.
+   integer                        changed  Sample:
+                                           2000
+   time_wait_recycle                       Reuse connections in TIME-WAIT state.
+   boolean                        changed  Sample:
+                                           True
+
+STATUS                   *bigip_profile_tcp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_profile_tcp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_profile_tcp_module.html

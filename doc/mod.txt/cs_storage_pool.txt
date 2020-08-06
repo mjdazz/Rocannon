@@ -1,0 +1,197 @@
+SYNOPSIS                   *cs_storage_pool*
+
+     • Create, update, put into maintenance, disable, enable and remove storage pools.
+
+REQUIREMENTS                   *cs_storage_pool-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_storage_pool-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+                       Choices:
+   allocation_state    • enabled       Allocation state of the storage pool.
+   string              • disabled
+                       • maintenance
+                       Choices:        HTTP method used to query the API endpoint.
+   api_http_method     • get           If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string              • post          As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is get if not specified.
+   api_key                             API key of the CloudStack API.
+   string                              If not given, the CLOUDSTACK_KEY env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   api_region        Default:          Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"      If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                          Secret key of the CloudStack API.
+   string                              If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+                                       HTTP timeout in seconds.
+   api_timeout                         If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                             As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is 10 seconds if not specified.
+   api_url                             URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                              If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   capacity_bytes                      Bytes CloudStack can provision from this storage pool.
+   integer
+   capacity_iops                       Bytes CloudStack can provision from this storage pool.
+   integer
+   cluster                             Name of the cluster.
+   string
+   hypervisor                          Required when creating a zone scoped pool.
+   string                              Possible values are KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator.
+   managed             Choices:        Whether the storage pool should be managed by CloudStack.
+   boolean             • no            Only considered on creation.
+                       • yes
+   name                                Name of the storage pool.
+   string / required
+   pod                                 Name of the pod.
+   string
+   provider          Default:          Name of the storage provider e.g. SolidFire, SolidFireShared, DefaultPrimary, CloudByte.
+   string            "DefaultPrimary"
+   scope               Choices:        The scope of the storage pool.
+   string              • cluster       Defaults to cluster when cluster is provided, otherwise zone.
+                       • zone
+   state               Choices:
+   string              • present ←     State of the storage pool.
+                       • absent
+   storage_tags                        Tags associated with this storage pool.
+   list                                aliases: storage_tag
+   storage_url                         URL of the storage pool.
+   string                              Required if state=present.
+   zone                                Name of the zone in which the host should be deployed.
+   string                              If not set, default zone is used.
+
+NOTES                   *cs_storage_pool-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_storage_pool-examples*
+
+ - name: ensure a zone scoped storage_pool is present
+   cs_storage_pool:
+     zone: zone01
+     storage_url: rbd://admin:[email protected]/poolname
+     provider: DefaultPrimary
+     name: Ceph RBD
+     scope: zone
+     hypervisor: KVM
+   delegate_to: localhost
+
+ - name: ensure a cluster scoped storage_pool is disabled
+   cs_storage_pool:
+     name: Ceph RBD
+     zone: zone01
+     cluster: cluster01
+     pod: pod01
+     storage_url: rbd://admin:[email protected]/poolname
+     provider: DefaultPrimary
+     scope: cluster
+     allocation_state: disabled
+   delegate_to: localhost
+
+ - name: ensure a cluster scoped storage_pool is in maintenance
+   cs_storage_pool:
+     name: Ceph RBD
+     zone: zone01
+     cluster: cluster01
+     pod: pod01
+     storage_url: rbd://admin:[email protected]/poolname
+     provider: DefaultPrimary
+     scope: cluster
+     allocation_state: maintenance
+   delegate_to: localhost
+
+ - name: ensure a storage_pool is absent
+   cs_storage_pool:
+     name: Ceph RBD
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_storage_pool-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                 Returned                                                                             Description
+   allocation_state                             The state of the storage pool.
+   string                 success               Sample:
+                                                enabled
+   capacity_iops                                IOPS CloudStack can provision from this storage pool
+   integer                when available        Sample:
+                                                60000
+   cluster                                      The name of the cluster.
+   string                 when scope is cluster Sample:
+                                                Cluster01
+   created                                      Date of the pool was created.
+   string                 success               Sample:
+                                                2014-12-01T14:57:57+0100
+   disk_size_allocated                          The pool's currently allocated disk space.
+   integer                success               Sample:
+                                                2443517624320
+   disk_size_total                              The total size of the pool.
+   integer                success               Sample:
+                                                3915055693824
+   disk_size_used                               The pool's currently used disk size.
+   integer                success               Sample:
+                                                1040862622180
+   hypervisor                                   Hypervisor related to this storage pool.
+   string                 when available        Sample:
+                                                KVM
+   id                                           UUID of the pool.
+   string                 success               Sample:
+                                                a3fca65a-7db1-4891-b97c-48806a978a96
+   overprovision_factor                         The overprovision factor of the storage pool.
+   string                 success               Sample:
+                                                2.0
+   path                                         The storage pool path used in the storage_url.
+   string                 success               Sample:
+                                                poolname
+   pod                                          The name of the pod.
+   string                 when scope is cluster Sample:
+                                                Cluster01
+   scope                                        The scope of the storage pool.
+   string                 success               Sample:
+                                                cluster
+   state                                        The state of the storage pool as returned by the API.
+   string                 success               Sample:
+                                                Up
+   storage_capabilities                         Capabilities of the storage pool.
+   dictionary             success               Sample:
+                                                {'VOLUME_SNAPSHOT_QUIESCEVM': 'false'}
+   storage_tags                                 the tags for the storage pool.
+   list                   success               Sample:
+                                                ['perf', 'ssd']
+   suitable_for_migration success               Whether the storage pool is suitable to migrate a volume or not.
+   boolean
+   zone                                         The name of the zone.
+   string                 success               Sample:
+                                                Zone01
+
+STATUS                   *cs_storage_pool-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Netservers Ltd. (@netservers)
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_storage_pool-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_storage_pool_module.html

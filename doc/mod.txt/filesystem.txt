@@ -1,22 +1,74 @@
-SYNOPSIS                           *filesystem*
+SYNOPSIS                   *filesystem*
 
-New in version 1.2.
+     • This module creates a filesystem.
 
-This module creates file system.
+REQUIREMENTS                   *filesystem-requirements*
 
-EXAMPLES                           *filesystem-examples*
->
-    # Create a ext2 filesystem on /dev/sdb1.
-    - filesystem: fstype=ext2 dev=/dev/sdb1
-   
-    # Create a ext4 filesystem on /dev/sdb1 and check disk blocks.
-    - filesystem: fstype=ext4 dev=/dev/sdb1 opts="-cc"
-   
-      Note
-   
-      uses mkfs command
-   
+   The below requirements are needed on the host that executes this module.
+
+     • Uses tools related to the fstype (mkfs) and blkid command. When resizefs is enabled, blockdev command is required too.
+
+PARAMETERS                   *filesystem-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   dev                           Target path to device or image file.
+   - / required                  aliases: device
+   force          Choices:
+   boolean        • no ←         If yes, allows to create new filesystem on devices that already has filesystem.
+                  • yes
+                  Choices:
+                  • btrfs
+                  • ext2         Filesystem type to be created.
+                  • ext3         reiserfs support was added in 2.2.
+                  • ext4         lvm support was added in 2.5.
+   fstype         • ext4dev      since 2.5, dev can be an image file.
+   - / required   • f2fs         vfat support was added in 2.5
+                  • lvm          ocfs2 support was added in 2.6
+                  • ocfs2        f2fs support was added in 2.7
+                  • reiserfs     swap support was added in 2.8
+                  • xfs          aliases: type
+                  • vfat
+                  • swap
+   opts                          List of options to be passed to mkfs command.
+   -
+                  Choices:       If yes, if the block device and filesystem size differ, grow the filesystem into the space.
+   resizefs       • no ←         Supported for ext2, ext3, ext4, ext4dev, f2fs, lvm, xfs, vfat, swap filesystems.
+   boolean        • yes          XFS Will only grow if mounted.
+                                 vFAT will likely fail if fatresize < 1.04.
+
+NOTES                   *filesystem-notes*
+
+   Note
+
+     • Potential filesystem on dev are checked using blkid, in case blkid isn’t able to detect an existing filesystem, this filesystem is overwritten even if force is no.
+
+EXAMPLES                   *filesystem-examples*
+
+ - name: Create a ext2 filesystem on /dev/sdb1
+   filesystem:
+     fstype: ext2
+     dev: /dev/sdb1
+
+ - name: Create a ext4 filesystem on /dev/sdb1 and check disk blocks
+   filesystem:
+     fstype: ext4
+     dev: /dev/sdb1
+     opts: -cc
+
+STATUS                   *filesystem-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Alexander Bulimov (@abulimov)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *filesystem-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/filesystem_module.html
+https://docs.ansible.com/ansible/latest/modules/filesystem_module.html

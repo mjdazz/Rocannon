@@ -1,0 +1,109 @@
+SYNOPSIS                   *cli_command*
+
+     • Sends a command to a network device and returns the result read from the device.
+
+PARAMETERS                   *cli_command-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   answer                     The answer to reply with if prompt is matched. The value can be a single answer or a list of answer for multiple prompts. In case the command execution results in
+   list                       multiple prompts the sequence of the prompt and excepted answer should be in same order.
+   check_all   Choices:       By default if any one of the prompts mentioned in prompt option is matched it won't check for other prompts. This boolean flag, that when set to True will check for
+   boolean     • no ←         all the prompts mentioned in prompt option in the given order. If the option is set to True all the prompts should be received from remote host if not it will result
+               • yes          in timeout.
+   command
+   - /                        The command to send to the remote network device. The resulting output from the command is returned, unless sendonly is set.
+   required
+   newline     Choices:
+   boolean     • no           The boolean value, that when set to false will send answer to the device without a trailing newline.
+   added in    • yes ←
+   2.9
+   prompt                     A single regex pattern or a sequence of patterns to evaluate the expected prompt from command.
+   list
+   sendonly    Choices:
+   boolean     • no ←         The boolean value, that when set to true will send command to the device but not wait for a result.
+               • yes
+
+NOTES                   *cli_command-notes*
+
+   Note
+
+     • This module is supported on ansible_network_os network platforms. See the Network Platform Options for details.
+
+EXAMPLES                   *cli_command-examples*
+
+ - name: run show version on remote devices
+   cli_command:
+     command: show version
+
+ - name: run command with json formatted output
+   cli_command:
+     command: show version | json
+
+ - name: run command expecting user confirmation
+   cli_command:
+     command: commit replace
+     prompt: This commit will replace or remove the entire running configuration
+     answer: yes
+
+ - name: run command expecting user confirmation
+   cli_command:
+     command: show interface summary
+     prompt: Press any key to continue
+     answer: y
+     newline: false
+
+ - name: run config mode command and handle prompt/answer
+   cli_command:
+     command: "{{ item }}"
+     prompt:
+       - "Exit with uncommitted changes"
+     answer: 'y'
+   loop:
+     - configure
+     - set system syslog file test any any
+     - exit
+
+ - name: multiple prompt, multiple answer (mandatory check for all prompts)
+   cli_command:
+     command: "copy sftp sftp://[email protected]//user/test.img"
+     check_all: True
+     prompt:
+       - "Confirm download operation"
+       - "Password"
+       - "Do you want to change that to the standby image"
+     answer:
+       - 'y'
+       - <password>
+       - 'y'
+
+RETURN VALUES                   *cli_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key                    Returned                                                                                  Description
+   json                                              A dictionary representing a JSON-formatted response
+   dictionary when the device response is valid JSON Sample:
+                                                     { "architecture": "i386", "bootupTimestamp": 1532649700.56, "modelName": "vEOS", "version": "4.15.9M" [...] }
+   stdout                                            The response from the command
+   string     when sendonly is false                 Sample:
+                                                     Version: VyOS 1.1.7[...]
+
+STATUS                   *cli_command-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *cli_command-red hat support*
+
+     • Nathaniel Case (@Qalthos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cli_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cli_command_module.html

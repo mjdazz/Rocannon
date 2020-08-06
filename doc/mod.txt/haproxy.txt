@@ -1,47 +1,154 @@
-SYNOPSIS                           *haproxy*
+SYNOPSIS                   *haproxy*
 
-New in version 1.9.
+     • Enable, disable, drain and set weights for HAProxy backend servers using socket commands.
 
-The Enable Haproxy Backend Server, with supports get current weight for server (default) and set weight for haproxy backend server when provides. The Disable Haproxy Backend Server, with
-supports get current weight for server (default) and shutdown sessions while disabling backend host server.
+PARAMETERS                   *haproxy-parameters*
 
-EXAMPLES                           *haproxy-examples*
->
-    examples:
-   
-    # disable server in 'www' backend pool
-    - haproxy: state=disabled host={{ inventory_hostname }} backend=www
-   
-    # disable server without backend pool name (apply to all available backend pool)
-    - haproxy: state=disabled host={{ inventory_hostname }}
-   
-    # disable server, provide socket file
-    - haproxy: state=disabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock backend=www
-   
-    # disable backend server in 'www' backend pool and drop open sessions to it
-    - haproxy: state=disabled host={{ inventory_hostname }} backend=www socket=/var/run/haproxy.sock shutdown_sessions=true
-   
-    # enable server in 'www' backend pool
-    - haproxy: state=enabled host={{ inventory_hostname }} backend=www
-   
-    # enable server in 'www' backend pool with change server(s) weight
-    - haproxy: state=enabled host={{ inventory_hostname }} socket=/var/run/haproxy.sock weight=10 backend=www
-   
-    author: Ravi Bhure <[email protected]>
-   
-      Note
-   
-      enable or disable commands are restricted and can only be issued on sockets configured for level ‘admin’,
-   
-      Note
-   
-      Check - http://haproxy.1wt.eu/download/1.5/doc/configuration.txt,
-   
-      Note
-   
-      Example: ‘stats socket /var/run/haproxy.sock level admin’
-   
+       Parameter        Choices/Defaults                                                                             Comments
+   backend                                   Name of the HAProxy backend pool.
+   string                                    If this parameter is unset, it will be auto-detected.
+   drain               Choices:              Wait until the server has no active connections or until the timeout determined by wait_interval and wait_retries is reached.
+   boolean             • no                  Continue only after the status changes to 'MAINT'.
+   added in 2.4        • yes                 This overrides the shutdown_sessions option.
+   fail_on_not_found   Choices:
+   boolean             • no ←                Fail whenever trying to enable/disable a backend host that does not exist
+                       • yes
+   host                                      Name of the backend host to change.
+   string / required
+   shutdown_sessions   Choices:              When disabling a server, immediately terminate all the sessions attached to the specified server.
+   boolean             • no ←                This can be used to terminate long-running sessions after a server is put into maintenance mode. Overridden by the drain option.
+                       • yes
+   socket            Default:                Path to the HAProxy socket file.
+   path              "/var/run/haproxy.sock"
+                       Choices:              Desired state of the provided backend host.
+   state               • disabled            Note that drain state was added in version 2.4.
+   string / required   • drain               It is supported only by HAProxy version 1.5 or later,
+                       • enabled             When used on versions < 1.5, it will be ignored.
+   wait                Choices:
+   boolean             • no ←                Wait until the server reports a status of 'UP' when state=enabled, status of 'MAINT' when state=disabled or status of 'DRAIN' when state=drain
+                       • yes
+   wait_interval     Default:                Number of seconds to wait between retries.
+   integer           5
+   wait_retries      Default:                Number of times to check for status after changing the state.
+   integer           25
+   weight                                    The value passed in argument.
+   string                                    If the value ends with the `%` sign, then the new weight will be relative to the initially configured weight.
+                                             Relative weights are only permitted between 0 and 100% and absolute weights are permitted between 0 and 256.
+
+NOTES                   *haproxy-notes*
+
+   Note
+
+     • Enable, disable and drain commands are restricted and can only be issued on sockets configured for level ‘admin’. For example, you can add the line ‘stats socket /var/run/haproxy.sock level
+       admin’ to the general section of haproxy.cfg. See http://haproxy.1wt.eu/download/1.5/doc/configuration.txt.
+     • Depends on netcat (nc) being available; you need to install the appropriate package for your operating system before this module can be used.
+
+EXAMPLES                   *haproxy-examples*
+
+ - name: Disable server in 'www' backend pool
+   haproxy:
+     state: disabled
+     host: '{{ inventory_hostname }}'
+     backend: www
+
+ - name: Disable server without backend pool name (apply to all available backend pool)
+   haproxy:
+     state: disabled
+     host: '{{ inventory_hostname }}'
+
+ - name: Disable server, provide socket file
+   haproxy:
+     state: disabled
+     host: '{{ inventory_hostname }}'
+     socket: /var/run/haproxy.sock
+     backend: www
+
+ - name: Disable server, provide socket file, wait until status reports in maintenance
+   haproxy:
+     state: disabled
+     host: '{{ inventory_hostname }}'
+     socket: /var/run/haproxy.sock
+     backend: www
+     wait: yes
+
+ # Place server in drain mode, providing a socket file.  Then check the server's
+ # status every minute to see if it changes to maintenance mode, continuing if it
+ # does in an hour and failing otherwise.
+ - haproxy:
+     state: disabled
+     host: '{{ inventory_hostname }}'
+     socket: /var/run/haproxy.sock
+     backend: www
+     wait: yes
+     drain: yes
+     wait_interval: 1
+     wait_retries: 60
+
+ - name: Disable backend server in 'www' backend pool and drop open sessions to it
+   haproxy:
+     state: disabled
+     host: '{{ inventory_hostname }}'
+     backend: www
+     socket: /var/run/haproxy.sock
+     shutdown_sessions: yes
+
+ - name: Disable server without backend pool name (apply to all available backend pool) but fail when the backend host is not found
+   haproxy:
+     state: disabled
+     host: '{{ inventory_hostname }}'
+     fail_on_not_found: yes
+
+ - name: Enable server in 'www' backend pool
+   haproxy:
+     state: enabled
+     host: '{{ inventory_hostname }}'
+     backend: www
+
+ - name: Enable server in 'www' backend pool wait until healthy
+   haproxy:
+     state: enabled
+     host: '{{ inventory_hostname }}'
+     backend: www
+     wait: yes
+
+ - name: Enable server in 'www' backend pool wait until healthy. Retry 10 times with intervals of 5 seconds to retrieve the health
+   haproxy:
+     state: enabled
+     host: '{{ inventory_hostname }}'
+     backend: www
+     wait: yes
+     wait_retries: 10
+     wait_interval: 5
+
+ - name: Enable server in 'www' backend pool with change server(s) weight
+   haproxy:
+     state: enabled
+     host: '{{ inventory_hostname }}'
+     socket: /var/run/haproxy.sock
+     weight: 10
+     backend: www
+
+ - name: Set the server in 'www' backend pool to drain mode
+   haproxy:
+     state: drain
+     host: '{{ inventory_hostname }}'
+     socket: /var/run/haproxy.sock
+     backend: www
+
+STATUS                   *haproxy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ravi Bhure (@ravibhure)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *haproxy-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/haproxy_module.html
+https://docs.ansible.com/ansible/latest/modules/haproxy_module.html

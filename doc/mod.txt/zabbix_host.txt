@@ -1,0 +1,213 @@
+SYNOPSIS                   *zabbix_host*
+
+     • This module allows you to create, modify and delete Zabbix host entries and associated group and template data.
+
+REQUIREMENTS                   *zabbix_host-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • zabbix-api >= 0.5.4
+
+PARAMETERS                   *zabbix_host-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   ca_cert                              Required certificate issuer.
+   string                               Works only with >= Zabbix 3.0
+   added in 2.5                         aliases: tls_issuer
+   description
+   string                               Description of the host in Zabbix.
+   added in 2.5
+   force                 Choices:
+   boolean               • no           Overwrite the host configuration, even if already present.
+                         • yes ←
+   host_groups
+   list /                               List of host groups the host is part of.
+   elements=string
+   host_name                            Name of the host in Zabbix.
+   string / required                    host_name is the unique identifier used and cannot be updated using this module.
+   http_login_password                  Basic Auth password
+   string
+   http_login_user                      Basic Auth login
+   string / required
+   interfaces          Default:         List of interfaces to be created for the host (see example below).
+   list /              []               For more information, review host interface documentation at
+   elements=dictionary                  https://www.zabbix.com/documentation/4.0/manual/api/reference/hostinterface/object
+       bulk              Choices:       Whether to use bulk SNMP requests.
+       integer           • 0            0 (don't use bulk requests), 1 (use bulk requests)
+                         • 1 ←
+       dns             Default:         DNS name of the host interface.
+       string          ""               Required if useip=0.
+       ip              Default:         IP address used by host interface.
+       string          ""               Required if useip=1.
+       main              Choices:       Whether the interface is used as default.
+       integer           • 0 ←          If multiple interfaces with the same type are provided, only one can be default.
+                         • 1            0 (not default), 1 (default)
+                                        Port used by host interface.
+                                        If not specified, default port for each type of interface is used
+       port                             10050 if type='agent'
+       string                           161 if type='snmp'
+                                        623 if type='ipmi'
+                                        12345 if type='jmx'
+                         Choices:       Interface type to add
+                         • agent        Numerical values are also accepted for interface type
+       type              • snmp         1 = agent
+       - / required      • ipmi         2 = snmp
+                         • jmx          3 = ipmi
+                                        4 = jmx
+       useip             Choices:       Connect to host interface with IP address instead of DNS name.
+       integer           • 0 ←          0 (don't use ip), 1 (use ip)
+                         • 1
+                         Choices:
+   inventory_mode        • automatic    Configure the inventory mode.
+   string                • manual
+                         • disabled
+   inventory_zabbix                     Add Facts for a zabbix inventory (e.g. Tag) (see example below).
+   dictionary                           Please review the interface documentation for more information on the supported properties
+   added in 2.5                         https://www.zabbix.com/documentation/3.2/manual/api/reference/host/object#host_inventory
+                                        IPMI authentication algorithm.
+   ipmi_authtype                        Please review the Host object documentation for more information on the supported properties
+   integer                              https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object
+   added in 2.5                         Possible values are, 0 (none), 1 (MD2), 2 (MD5), 4 (straight), 5 (OEM), 6 (RMCP+), with -1 being the API default.
+                                        Please note that the Zabbix API will treat absent settings as default when updating any of the ipmi_-options; this means that if you attempt to set any of
+                                        the four options individually, the rest will be reset to default values.
+   ipmi_password                        IPMI password.
+   string                               also see the last note in the ipmi_authtype documentation
+   added in 2.5
+                                        IPMI privilege level.
+   ipmi_privilege                       Please review the Host object documentation for more information on the supported properties
+   integer                              https://www.zabbix.com/documentation/3.4/manual/api/reference/host/object
+   added in 2.5                         Possible values are 1 (callback), 2 (user), 3 (operator), 4 (admin), 5 (OEM), with 2 being the API default.
+                                        also see the last note in the ipmi_authtype documentation
+   ipmi_username                        IPMI username.
+   string                               also see the last note in the ipmi_authtype documentation
+   added in 2.5
+   link_templates
+   list /                               List of templates linked to the host.
+   elements=string
+   login_password                       Zabbix user password.
+   string / required
+   login_user                           Zabbix user name.
+   string / required
+   proxy                                The name of the Zabbix proxy to be used.
+   string
+   server_url                           URL of Zabbix server, with protocol (http or https). url is an alias for server_url.
+   string / required                    aliases: url
+   state                 Choices:       State of the host.
+   string                • present ←    On present, it will create if host does not exist or update the host if the associated data is different.
+                         • absent       On absent will remove a host if it exists.
+   status                Choices:
+   string                • enabled ←    Monitoring status of the host.
+                         • disabled
+   timeout             Default:         The timeout of API request (seconds).
+   integer             10
+                                        Specifies what types of connections are allowed for incoming connections.
+   tls_accept          Default:         The tls_accept parameter accepts values of 1 to 7
+   integer             1                Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
+   added in 2.5                         Values can be combined.
+                                        Works only with >= Zabbix 3.0
+   tls_connect         Default:         Specifies what encryption to use for outgoing connections.
+   integer             1                Possible values, 1 (no encryption), 2 (PSK), 4 (certificate).
+   added in 2.5                         Works only with >= Zabbix 3.0
+   tls_psk                              PSK value is a hard to guess string of hexadecimal digits.
+   string                               The preshared key, at least 32 hex digits. Required if either tls_connect or tls_accept has PSK enabled.
+   added in 2.5                         Works only with >= Zabbix 3.0
+   tls_psk_identity                     It is a unique name by which this specific PSK is referred to by Zabbix components
+   string                               Do not put sensitive information in the PSK identity string, it is transmitted over the network unencrypted.
+   added in 2.5                         Works only with >= Zabbix 3.0
+   tls_subject                          Required certificate subject.
+   string                               Works only with >= Zabbix 3.0
+   added in 2.5
+   validate_certs        Choices:
+   boolean               • no           If set to False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+   added in 2.5          • yes ←
+   visible_name                         Visible name of the host in Zabbix.
+   string
+
+NOTES                   *zabbix_host-notes*
+
+   Note
+
+     • If you use login_password=zabbix, the word “zabbix” is replaced by “""""” in all module output, because login_password uses no_log. See this FAQ for more information.
+
+EXAMPLES                   *zabbix_host-examples*
+
+ - name: Create a new host or update an existing host's info
+   local_action:
+     module: zabbix_host
+     server_url: http://monitor.example.com
+     login_user: username
+     login_password: password
+     host_name: ExampleHost
+     visible_name: ExampleName
+     description: My ExampleHost Description
+     host_groups:
+       - Example group1
+       - Example group2
+     link_templates:
+       - Example template1
+       - Example template2
+     status: enabled
+     state: present
+     inventory_mode: manual
+     inventory_zabbix:
+       tag: "{{ your_tag }}"
+       alias: "{{ your_alias }}"
+       notes: "Special Informations: {{ your_informations | default('None') }}"
+       location: "{{ your_location }}"
+       site_rack: "{{ your_site_rack }}"
+       os: "{{ your_os }}"
+       hardware: "{{ your_hardware }}"
+     ipmi_authtype: 2
+     ipmi_privilege: 4
+     ipmi_username: username
+     ipmi_password: password
+     interfaces:
+       - type: 1
+         main: 1
+         useip: 1
+         ip: 10.xx.xx.xx
+         dns: ""
+         port: 10050
+       - type: 4
+         main: 1
+         useip: 1
+         ip: 10.xx.xx.xx
+         dns: ""
+         port: 12345
+     proxy: a.zabbix.proxy
+ - name: Update an existing host's TLS settings
+   local_action:
+     module: zabbix_host
+     server_url: http://monitor.example.com
+     login_user: username
+     login_password: password
+     host_name: ExampleHost
+     visible_name: ExampleName
+     host_groups:
+       - Example group1
+     tls_psk_identity: test
+     tls_connect: 2
+     tls_psk: 123456789abcdef123456789abcdef12
+
+STATUS                   *zabbix_host-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Cove (@cove)
+     • Tony Minfei Ding (!UNKNOWN)
+     • Harrison Gu (@harrisongu)
+     • Werner Dijkerman (@dj-wasabi)
+     • Eike Frost (@eikef)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *zabbix_host-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/zabbix_host_module.html

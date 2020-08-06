@@ -1,0 +1,106 @@
+SYNOPSIS                   *win_domain*
+
+     • Ensure that the domain named by dns_domain_name exists and is reachable.
+     • If the domain is not reachable, the domain is created in a new forest on the target Windows Server 2012R2+ host.
+     • This module may require subsequent use of the win_reboot action if changes are made.
+
+PARAMETERS                   *win_domain-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   create_dns_delegation   Choices:         Whether to create a DNS delegation that references the new DNS server that you install along with the domain controller.
+   boolean                 • no             Valid for Active Directory-integrated DNS only.
+   added in 2.8            • yes            The default is computed automatically based on the environment.
+   database_path                            The path to a directory on a fixed disk of the Windows host where the domain database will be created.
+   path                                     If not set then the default path is %SYSTEMROOT%\NTDS.
+   added in 2.5
+   dns_domain_name                          The DNS name of the domain which should exist and be reachable or reside on the target Windows host.
+   string / required
+                           Choices:
+                           • Win2003
+   domain_mode             • Win2008        Specifies the domain functional level of the first domain in the creation of a new forest.
+   string                  • Win2008R2      The domain functional level cannot be lower than the forest functional level, but it can be higher.
+   added in 2.8            • Win2012        The default is automatically computed and set.
+                           • Win2012R2
+                           • WinThreshold
+   domain_netbios_name                      The NetBIOS name for the root domain in the new forest.
+   string                                   For NetBIOS names to be valid for use with this parameter they must be single label names of 15 characters or less, if not it will fail.
+   added in 2.6                             If this parameter is not set, then the default is automatically computed from the value of the domain_name parameter.
+                           Choices:
+                           • Win2003
+   forest_mode             • Win2008        Specifies the forest functional level for the new forest.
+   string                  • Win2008R2      The default forest functional level in Windows Server is typically the same as the version you are running.
+   added in 2.8            • Win2012
+                           • Win2012R2
+                           • WinThreshold
+   safe_mode_password                       Safe mode password for the domain controller.
+   string / required
+   sysvol_path                              The path to a directory on a fixed disk of the Windows host where the Sysvol file will be created.
+   path                                     If not set then the default path is %SYSTEMROOT%\SYSVOL.
+   added in 2.5
+
+SEE ALSO                   *win_domain-see also*
+
+   See also
+
+   win_domain_controller – Manage domain controller/member server state for a Windows host
+   The official documentation on the win_domain_controller module.
+
+   win_domain_computer – Manage computers in Active Directory
+   The official documentation on the win_domain_computer module.
+
+   win_domain_group – Creates, modifies or removes domain groups
+   The official documentation on the win_domain_group module.
+
+   win_domain_membership – Manage domain/workgroup membership for a Windows host
+   The official documentation on the win_domain_membership module.
+
+   win_domain_user – Manages Windows Active Directory user accounts
+   The official documentation on the win_domain_user module.
+
+EXAMPLES                   *win_domain-examples*
+
+ - name: Create new domain in a new forest on the target host
+   win_domain:
+     dns_domain_name: ansible.vagrant
+     safe_mode_password: password123!
+
+ - name: Create new Windows domain in a new forest with specific parameters
+   win_domain:
+     create_dns_delegation: no
+     database_path: C:\Windows\NTDS
+     dns_domain_name: ansible.vagrant
+     domain_mode: Win2012R2
+     domain_netbios_name: ANSIBLE
+     forest_mode: Win2012R2
+     safe_mode_password: password123!
+     sysvol_path: C:\Windows\SYSVOL
+   register: domain_install
+
+RETURN VALUES                   *win_domain-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   reboot_required          True if changes were made that require a reboot.
+   boolean         always   Sample:
+                            True
+
+STATUS                   *win_domain-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_domain-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_domain-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_domain_module.html

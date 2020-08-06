@@ -1,0 +1,157 @@
+SYNOPSIS                   *bigip_gtm_monitor_bigip*
+
+     • Manages F5 BIG-IP GTM BIG-IP monitors. This monitor is used by GTM to monitor BIG-IPs themselves.
+
+PARAMETERS                   *bigip_gtm_monitor_bigip-parameters*
+
+          Parameter          Choices/Defaults                                                                         Comments
+                                                Specifies how the system combines the module values to create the proportion (score) for the load balancing operation.
+                                                The score represents the module's estimated capacity for handing traffic.
+                                                Averaged values are appropriate for downstream Web Accelerator or Application Security Manager virtual servers.
+                                                When creating a new monitor, if this parameter is not specified, the default of none is used, meaning that the system does not use the scores in the
+                              Choices:          load balancing operation.
+                              • none            When none, specifies that the monitor ignores the nodes and pool member scores.
+   aggregate_dynamic_ratios   • average-nodes   When average-nodes, specifies that the system averages the dynamic ratios on the nodes associated with the monitor's target virtual servers and
+   string                     • sum-nodes       returns that average as the virtual servers' score.
+                              • average-members When sum-nodes, specifies that the system adds together the scores of the nodes associated with the monitor's target virtual servers and uses that
+                              • sum-members     value in the load balancing operation.
+                                                When average-members, specifies that the system averages the dynamic ratios on the pool members associated with the monitor's target virtual servers
+                                                and returns that average as the virtual servers' score.
+                                                When sum-members, specifies that the system adds together the scores of the pool members associated with the monitor's target virtual servers and
+                                                uses that value in the load balancing operation.
+                                                Specifies that the monitor allows more than one probe attempt per interval.
+   ignore_down_response       Choices:          When yes, specifies that the monitor ignores down responses for the duration of the monitor timeout. Once the monitor timeout is reached without the
+   boolean                    • no              system receiving an up response, the system marks the object down.
+                              • yes             When no, specifies that the monitor immediately marks an object down when it receives a down response.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be no.
+   interval                                     Specifies, in seconds, the frequency at which the system issues the monitor check when either the resource is down or the status of the resource is
+   integer                                      unknown.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be 30. This value must be less than the timeout value.
+   ip                                           IP address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'.
+   string
+   name                                         Monitor name.
+   string / required
+   parent                   Default:            The parent template of this monitor template. Once this value has been set, it cannot be changed. By default, this value is the bigip parent on the
+   string                   "/Common/bigip"     Common partition.
+   partition                Default:            Device partition to manage resources on.
+   string                   "Common"
+   port                                         Port address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'. Note
+   string                                       that if specifying an IP address, a value between 1 and 65535 must be specified
+   provider
+   dictionary                                   A dict object containing connection details.
+   added in 2.5
+       auth_provider                            Configures the auth provider for to obtain authentication tokens from the remote device.
+       string                                   This option is really used when working with BIG-IQ devices.
+       password                                 The password for the user account used to connect to the BIG-IP.
+       string / required                        You may omit this option by setting the environment variable F5_PASSWORD.
+                                                aliases: pass, pwd
+       server                                   The BIG-IP host.
+       string / required                        You may omit this option by setting the environment variable F5_SERVER.
+       server_port          Default:            The BIG-IP server port.
+       integer              443                 You may omit this option by setting the environment variable F5_SERVER_PORT.
+       ssh_keyfile                              Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+       path                                     You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+       timeout                                  Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+       integer                                  before the operation is completed, the module will error.
+       transport              Choices:
+       string                 • cli             Configures the transport connection to use when connecting to the remote device.
+                              • rest ←
+       user                                     The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+       string / required                        You may omit this option by setting the environment variable F5_USER.
+       validate_certs         Choices:          If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+       boolean                • no              You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                              • yes ←
+   state                      Choices:          When present, ensures that the monitor exists.
+   string                     • present ←       When absent, ensures the monitor is removed.
+                              • absent
+                                                Specifies the number of seconds the target has in which to respond to the monitor request.
+   timeout                                      If the target responds within the set time period, it is considered up.
+   integer                                      If the target does not respond within the set time period, it is considered down.
+                                                When this value is set to 0 (zero), the system uses the interval from the parent monitor.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be 90.
+
+NOTES                   *bigip_gtm_monitor_bigip-notes*
+
+   Note
+
+     • Requires BIG-IP software version >= 12
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_gtm_monitor_bigip-examples*
+
+ - name: Create BIG-IP Monitor
+   bigip_gtm_monitor_bigip:
+     state: present
+     ip: 10.10.10.10
+     name: my_monitor
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Remove BIG-IP Monitor
+   bigip_gtm_monitor_bigip:
+     state: absent
+     name: my_monitor
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Add BIG-IP monitor for all addresses, port 514
+   bigip_gtm_monitor_bigip:
+     port: 514
+     name: my_monitor
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_gtm_monitor_bigip-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key            Returned                                                                           Description
+   aggregate_dynamic_ratios          The new aggregate of to the monitor.
+   string                   changed  Sample:
+                                     sum-members
+   ignore_down_response              Whether to ignore the down response or not.
+   boolean                  changed  Sample:
+                                     True
+   interval                          The new interval in which to run the monitor check.
+   integer                  changed  Sample:
+                                     2
+   ip                                The new IP of IP/port definition.
+   string                   changed  Sample:
+                                     10.12.13.14
+   parent                            New parent template of the monitor.
+   string                   changed  Sample:
+                                     bigip
+   timeout                           The new timeout in which the remote system must respond to the monitor.
+   integer                  changed  Sample:
+                                     10
+
+STATUS                   *bigip_gtm_monitor_bigip-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_gtm_monitor_bigip-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_gtm_monitor_bigip_module.html

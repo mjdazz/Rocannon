@@ -1,0 +1,241 @@
+SYNOPSIS                   *docker_network*
+
+     • Create/remove Docker networks and connect containers to them.
+     • Performs largely the same function as the “docker network” CLI subcommand.
+
+REQUIREMENTS                   *docker_network-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 1.10.0 (use docker-py for Python 2.6)
+     • The docker server >= 1.10.0
+
+PARAMETERS                   *docker_network-parameters*
+
+        Parameter            Choices/Defaults                                                                           Comments
+                                                    The version of the Docker API running on the Docker Host.
+   api_version         Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string              "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment variable
+                                                    is not set, the default value will be used.
+                                                    aliases: docker_api_version
+   appends               Choices:                   By default the connected list is canonical, meaning containers not on the list are removed from the network.
+   boolean               • no ←                     Use appends to leave existing containers connected.
+                         • yes                      aliases: incremental
+   attachable            Choices:
+   boolean               • no                       If enabled, and the network is in the global scope, non-service containers on worker nodes will be able to connect to the network.
+   added in 2.8          • yes
+                                                    Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                          If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified in
+   path                                             the environment variable DOCKER_CERT_PATH will be used.
+                                                    aliases: tls_ca_cert, cacert_path
+                                                    Path to the client's TLS certificate file.
+   client_cert                                      If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory specified in
+   path                                             the environment variable DOCKER_CERT_PATH will be used.
+                                                    aliases: tls_client_cert, cert_path
+                                                    Path to the client's TLS key file.
+   client_key                                       If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory specified in
+   path                                             the environment variable DOCKER_CERT_PATH will be used.
+                                                    aliases: tls_client_key, key_path
+   connected                                        List of container names or container IDs to connect to a network.
+   list /                                           Please note that the module only makes sure that these containers are connected to the network, but does not care about connection options. If
+   elements=string                                  you rely on specific IP addresses etc., use the docker_container module to ensure your containers are correctly connected to this network.
+                                                    aliases: containers
+   debug                 Choices:
+   boolean               • no ←                     Debug mode
+                         • yes
+                                                    The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host         Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string              "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable is not
+                                                    set, the default value will be used.
+                                                    aliases: docker_url
+   driver              Default:                     Specify the type of network. Docker provides bridge and overlay drivers, but 3rd party drivers can also be used.
+   string              "bridge"
+   driver_options                                   Dictionary of network settings. Consult docker docs for valid options and values.
+   dictionary
+   enable_ipv6           Choices:
+   boolean               • no                       Enable IPv6 networking.
+   added in 2.8          • yes
+   force                 Choices:                   With state absent forces disconnecting all containers from the network prior to deleting the network. With state present will disconnect all
+   boolean               • no ←                     containers, delete the network and re-create the network.
+                         • yes                      This option is required if you have changed the IPAM or driver options and want an existing network to be updated to use the new options.
+   internal              Choices:
+   boolean               • no                       Restrict external access to the network.
+   added in 2.8          • yes
+   ipam_config
+   list /                                           List of IPAM config blocks. Consult Docker docs for valid options and values. Note that iprange is spelled differently here (we use the notation
+   elements=dictionary                              from the Docker SDK for Python).
+   added in 2.8
+      aux_addresses                                 Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
+      dictionary
+      gateway                                       IP gateway address.
+      string
+      iprange                                       IP address range in CIDR notation.
+      string
+      subnet                                        IP subset in CIDR notation.
+      string
+   ipam_driver                                      Specify an IPAM driver.
+   string
+   ipam_driver_options
+   dictionary                                       Dictionary of IPAM driver options.
+   added in 2.8
+   ipam_options                                     Dictionary of IPAM options.
+   dictionary                                       Deprecated in 2.8, will be removed in 2.12. Use parameter ipam_config instead. In Docker 1.10.0, IPAM options were introduced (see here). This
+                                                    module parameter addresses the IPAM config not the newly introduced IPAM options. For the IPAM options, see the ipam_driver_options parameter.
+      aux_addresses                                 Auxiliary IP addresses used by Network driver, as a mapping from hostname to IP.
+      dictionary
+      gateway                                       IP gateway address.
+      string
+      iprange                                       IP address range in CIDR notation.
+      string
+      subnet                                        IP subset in CIDR notation.
+      string
+   labels
+   dictionary                                       Dictionary of labels.
+   added in 2.8
+   name                                             Name of the network to operate on.
+   string / required                                aliases: network_name
+   scope                 Choices:
+   string                • local                    Specify the network's scope.
+   added in 2.8          • global
+                         • swarm
+   ssl_version                                      Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                           If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+                                                    absent deletes the network. If a network has connected containers, it cannot be deleted. Use the force option to disconnect all containers and
+   state                 Choices:                   delete the network.
+   string                • absent                   present creates the network, if it does not already exist with the specified parameters, and connects the list of containers provided via the
+                         • present ←                connected parameter. Containers not on the list will be disconnected. An empty list will leave no containers connected to the network. Use the
+                                                    appends option to leave existing containers connected. Use the force options to force re-creation of the network.
+   timeout             Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer             60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment variable is
+                                                    not set, the default value will be used.
+                         Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is set to
+   tls                   • no ←                     yes as well, it will take precedence.
+   boolean               • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is not
+                                                    set, the default value will be used.
+   tls_hostname        Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string              "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment
+                                                    variable is not set, the default value will be used.
+                         Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs        • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment variable
+   boolean               • yes                      is not set, the default value will be used.
+                                                    aliases: tls_verify
+
+NOTES                   *docker_network-notes*
+
+   Note
+
+     • When network options are changed, the module disconnects all containers from the network, deletes the network, and re-creates the network. It does not try to reconnect containers, except the
+       ones listed in (connected, and even for these, it does not consider specific connection options like fixed IP addresses or MAC addresses. If you need more control over how the containers are
+       connected to the network, loop the docker_container module to loop over your containers to make sure they are connected properly.
+     • The module does not support Docker Swarm, i.e. it will not try to disconnect or reconnect services. If services are connected to the network, deleting the network will fail. When network
+       options are changed, the network has to be deleted and recreated, so this will fail as well.
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_network-examples*
+
+ - name: Create a network
+   docker_network:
+     name: network_one
+
+ - name: Remove all but selected list of containers
+   docker_network:
+     name: network_one
+     connected:
+       - container_a
+       - container_b
+       - container_c
+
+ - name: Remove a single container
+   docker_network:
+     name: network_one
+     connected: "{{ fulllist|difference(['container_a']) }}"
+
+ - name: Add a container to a network, leaving existing containers connected
+   docker_network:
+     name: network_one
+     connected:
+       - container_a
+     appends: yes
+
+ - name: Create a network with driver options
+   docker_network:
+     name: network_two
+     driver_options:
+       com.docker.network.bridge.name: net2
+
+ - name: Create a network with custom IPAM config
+   docker_network:
+     name: network_three
+     ipam_config:
+       - subnet: 172.3.27.0/24
+         gateway: 172.3.27.2
+         iprange: 172.3.27.0/26
+         aux_addresses:
+           host1: 172.3.27.3
+           host2: 172.3.27.4
+
+ - name: Create a network with labels
+   docker_network:
+     name: network_four
+     labels:
+       key1: value1
+       key2: value2
+
+ - name: Create a network with IPv6 IPAM config
+   docker_network:
+     name: network_ipv6_one
+     enable_ipv6: yes
+     ipam_config:
+       - subnet: fdd1:ac8c:0557:7ce1::/64
+
+ - name: Create a network with IPv6 and custom IPv4 IPAM config
+   docker_network:
+     name: network_ipv6_two
+     enable_ipv6: yes
+     ipam_config:
+       - subnet: 172.4.27.0/24
+       - subnet: fdd1:ac8c:0557:7ce2::/64
+
+ - name: Delete a network, disconnecting all containers
+   docker_network:
+     name: network_one
+     state: absent
+     force: yes
+
+RETURN VALUES                   *docker_network-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   network             Network inspection results for the affected network.
+   dictionary success  Note that facts are part of the registered vars since Ansible 2.8. For compatibility reasons, the facts are also accessible directly as docker_network. Note that the returned
+                       fact will be removed in Ansible 2.12.
+
+STATUS                   *docker_network-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ben Keith (@keitwb)
+     • Chris Houseknecht (@chouseknecht)
+     • Dave Bendit (@DBendit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_network-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_network_module.html

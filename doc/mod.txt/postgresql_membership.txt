@@ -1,0 +1,145 @@
+SYNOPSIS                   *postgresql_membership*
+
+     • Adds or removes PostgreSQL roles from groups (other roles).
+     • Users are roles with login privilege.
+     • Groups are PostgreSQL roles usually without LOGIN privilege.
+     • Common use case:
+     • 
+         1. add a new group (groups) by postgresql_user module with role_attr_flags=NOLOGIN
+
+     • 
+         2. grant them desired privileges by postgresql_privs module
+
+     • 
+         3. add desired PostgreSQL users to the new group (groups) by this module
+
+REQUIREMENTS                   *postgresql_membership-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_membership-parameters*
+
+               Parameter             Choices/Defaults                                                                     Comments
+   ca_cert                                             Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                                              If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                                       aliases: ssl_rootcert
+   db                                                  Name of database to connect to.
+   string                                              aliases: login_db
+   fail_on_role                        Choices:
+   boolean                             • no            If yes, fail when group or target_role doesn't exist. If no, just warn and continue.
+                                       • yes ←
+   groups                                              The list of groups (roles) that need to be granted to or revoked from target_roles.
+   list / elements=string / required                   aliases: group, source_role, source_roles
+   login_host                                          Host running the database.
+   string
+   login_password                                      The password used to authenticate with.
+   string
+   login_unix_socket                                   Path to a Unix domain socket for local connections.
+   string
+   login_user                        Default:          The username used to authenticate with.
+   string                            "postgres"
+   port                              Default:          Database port to connect to.
+   integer                           5432              aliases: login_port
+   session_role                                        Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                                              Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                                       Choices:
+                                       • allow
+   ssl_mode                            • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string                              • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                                       • require       Default of prefer matches libpq default.
+                                       • verify-ca
+                                       • verify-full
+   state                               Choices:        Membership state.
+   string                              • absent        state=present implies the groupsmust be granted to target_roles.
+                                       • present ←     state=absent implies the groups must be revoked from target_roles.
+   target_roles                                        The list of target roles (groups will be granted to them).
+   list / elements=string / required                   aliases: target_role, users, user
+
+NOTES                   *postgresql_membership-notes*
+
+   Note
+
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_membership-see also*
+
+   See also
+
+   postgresql_user – Add or remove a user (role) from a PostgreSQL server instance
+   The official documentation on the postgresql_user module.
+
+   postgresql_privs – Grant or revoke privileges on PostgreSQL database objects
+   The official documentation on the postgresql_privs module.
+
+   postgresql_owner – Change an owner of PostgreSQL database object
+   The official documentation on the postgresql_owner module.
+
+   PostgreSQL role membership reference
+   Complete reference of the PostgreSQL role membership documentation.
+
+   PostgreSQL role attributes reference
+   Complete reference of the PostgreSQL role attributes documentation.
+
+EXAMPLES                   *postgresql_membership-examples*
+
+ - name: Grant role read_only to alice and bob
+   postgresql_membership:
+     group: read_only
+     target_roles:
+     - alice
+     - bob
+     state: present
+
+ # you can also use target_roles: alice,bob,etc to pass the role list
+
+ - name: Revoke role read_only and exec_func from bob. Ignore if roles don't exist
+   postgresql_membership:
+     groups:
+     - read_only
+     - exec_func
+     target_role: bob
+     fail_on_role: no
+     state: absent
+
+RETURN VALUES                   *postgresql_membership-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key         Returned                                                                                  Description
+   granted                     Dict of granted groups and roles.
+   dictionary if state=present Sample:
+                               {'ro_group': ['alice', 'bob']}
+   queries                     List of executed queries.
+   string     always           Sample:
+                               ['GRANT "user_ro" TO "alice"']
+   revoked                     Dict of revoked groups and roles.
+   dictionary if state=absent  Sample:
+                               {'ro_group': ['alice', 'bob']}
+   state                       Membership state that tried to be set.
+   string     always           Sample:
+                               present
+
+STATUS                   *postgresql_membership-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_membership-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_membership_module.html

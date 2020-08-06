@@ -1,0 +1,135 @@
+SYNOPSIS                   *vmware_vmotion*
+
+     • Using VMware vCenter, move a virtual machine using vMotion to a different host, and/or its vmdks to another datastore using storage vMotion.
+
+REQUIREMENTS                   *vmware_vmotion-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • pyVmomi
+
+PARAMETERS                   *vmware_vmotion-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   destination_datastore                  Name of the destination datastore the virtual machine's vmdk should be moved on.
+   string                                 aliases: datastore
+   added in 2.7
+   destination_host                       Name of the destination host the virtual machine should be running on.
+   string                                 Version 2.6 onwards, this parameter is not a required parameter, unlike the previous versions.
+                                          aliases: destination
+   hostname                               The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                 If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                          Environment variable support added in Ansible 2.6.
+   moid                                   Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+   string                                 This is required if vm_name or vm_uuid is not supplied.
+   added in 2.9
+                                          The password of the vSphere vCenter or ESXi server.
+   password                               If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                 Environment variable support added in Ansible 2.6.
+                                          aliases: pass, pwd
+   port                  Default:         The port number of the vSphere vCenter or ESXi server.
+   integer               443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                           Environment variable support added in Ansible 2.6.
+   proxy_host                             Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                 The format is a hostname or a IP.
+   added in 2.9                           If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                          This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                             Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   use_instance_uuid       Choices:
+   boolean                 • no ←         Whether to use the VMware instance UUID rather than the BIOS UUID.
+   added in 2.8            • yes
+                                          The username of the vSphere vCenter or ESXi server.
+   username                               If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                 Environment variable support added in Ansible 2.6.
+                                          aliases: admin, user
+                           Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs          • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                 • yes ←        Environment variable support added in Ansible 2.6.
+                                          If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+                                          Name of the VM to perform a vMotion on.
+   vm_name                                This is required parameter, if vm_uuid is not set.
+   string                                 Version 2.6 onwards, this parameter is not a required parameter, unlike the previous versions.
+                                          aliases: vm
+   vm_uuid                                UUID of the virtual machine to perform a vMotion operation on.
+   string                                 This is a required parameter, if vm_name or moid is not set.
+   added in 2.7                           aliases: uuid
+
+NOTES                   *vmware_vmotion-notes*
+
+   Note
+
+     • Tested on vSphere 6.0
+
+EXAMPLES                   *vmware_vmotion-examples*
+
+ - name: Perform vMotion of virtual machine
+   vmware_vmotion:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     validate_certs: no
+     vm_name: 'vm_name_as_per_vcenter'
+     destination_host: 'destination_host_as_per_vcenter'
+   delegate_to: localhost
+
+ - name: Perform vMotion of virtual machine
+   vmware_vmotion:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     validate_certs: no
+     moid: vm-42
+     destination_host: 'destination_host_as_per_vcenter'
+   delegate_to: localhost
+
+ - name: Perform storage vMotion of of virtual machine
+   vmware_vmotion:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     validate_certs: no
+     vm_name: 'vm_name_as_per_vcenter'
+     destination_datastore: 'destination_datastore_as_per_vcenter'
+   delegate_to: localhost
+
+ - name: Perform storage vMotion and host vMotion of virtual machine
+   vmware_vmotion:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     validate_certs: no
+     vm_name: 'vm_name_as_per_vcenter'
+     destination_host: 'destination_host_as_per_vcenter'
+     destination_datastore: 'destination_datastore_as_per_vcenter'
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_vmotion-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key           Returned                                                                                 Description
+   running_host                    List the host the virtual machine is registered to
+   string       changed or success Sample:
+                                   host1.example.com
+
+STATUS                   *vmware_vmotion-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Bede Carroll (@bedecarroll)
+     • Olivier Boukili (@oboukili)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_vmotion-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_vmotion_module.html

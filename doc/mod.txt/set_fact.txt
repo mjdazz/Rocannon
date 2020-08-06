@@ -1,27 +1,82 @@
-SYNOPSIS                           *set_fact*
+SYNOPSIS                   *set_fact*
 
-New in version 1.2.
+     • This module allows setting new variables.
+     • Variables are set on a host-by-host basis just like facts discovered by the setup module.
+     • These variables will be available to subsequent plays during an ansible-playbook run.
+     • Set cacheable to yes to save variables across executions using a fact cache. Variables created with set_fact have different precedence depending on whether they are or are not cached.
+     • Per the standard Ansible variable precedence rules, many other types of variables have a higher priority, so this value may be overridden.
+     • This module is also supported for Windows targets.
 
-This module allows setting new variables. Variables are set on a host-by-host basis just like facts discovered by the setup module. These variables will survive between plays.
+PARAMETERS                   *set_fact-parameters*
 
-EXAMPLES                           *set_fact-examples*
->
-    # Example setting host facts using key=value pairs
-    - set_fact: one_fact="something" other_fact="{{ local_var * 2 }}"
-   
-    # Example setting host facts using complex arguments
-    - set_fact:
-         one_fact: something
-         other_fact: "{{ local_var * 2 }}"
-   
-    # As of 1.8, Ansible will convert boolean strings ('true', 'false', 'yes', 'no')
-    # to proper boolean values when using the key=value syntax, however it is still
-    # recommended that booleans be set using the complex argument style:
-    - set_fact:
-        one_fact: true
-        other_fact: false
-   
+   Parameter Choices/Defaults                                                                                Comments
+   cacheable                  This boolean converts the variable into an actual 'fact' which will also be added to the fact cache, if fact caching is enabled.
+   boolean     Choices:       Normally this module creates 'host level variables' and has much higher precedence, this option changes the nature and precedence (by 7 steps) of the variable created.
+   added in    • no ←         https://docs.ansible.com/ansible/latest/user_guide/playbooks_variables.html#variable-precedence-where-should-i-put-a-variable
+   2.4         • yes          This actually creates 2 copies of the variable, a normal 'set_fact' host variable with high precedence and a lower 'ansible_fact' one that is available for persistance
+                              via the facts cache plugin. This creates a possibly confusing interaction with meta: clear_facts as it will remove the 'ansible_fact' but not the host variable.
+   key_value
+   - /                        The set_fact module takes key=value pairs as variables to set in the playbook scope. Or alternatively, accepts complex arguments using the args: statement.
+   required
+
+NOTES                   *set_fact-notes*
+
+   Note
+
+     • The var=value notation can only create strings or booleans. If you want to create lists/arrays or dictionary/hashes use var: [val1, val2].
+     • Since ‘cacheable’ is now a module param, ‘cacheable’ is no longer a valid fact name as of Ansible 2.4.
+     • This module is also supported for Windows targets.
+
+SEE ALSO                   *set_fact-see also*
+
+   See also
+
+   include_vars – Load variables from files, dynamically within a task
+   The official documentation on the include_vars module.
+
+   Variable precedence: Where should I put a variable?
+   More information related to variable precedence and which type of variable wins over others.
+
+EXAMPLES                   *set_fact-examples*
+
+ # Example setting host facts using key=value pairs, note that this always creates strings or booleans
+ - set_fact: one_fact="something" other_fact="{{ local_var }}"
+
+ # Example setting host facts using complex arguments
+ - set_fact:
+      one_fact: something
+      other_fact: "{{ local_var " 2 }}"
+      another_fact: "{{ some_registered_var.results | map(attribute='ansible_facts.some_fact') | list }}"
+
+ # Example setting facts so that they will be persisted in the fact cache
+ - set_fact:
+     one_fact: something
+     other_fact: "{{ local_var " 2 }}"
+     cacheable: yes
+
+ # As of Ansible 1.8, Ansible will convert boolean strings ('true', 'false', 'yes', 'no')
+ # to proper boolean values when using the key=value syntax, however it is still
+ # recommended that booleans be set using the complex argument style:
+ - set_fact:
+     one_fact: yes
+     other_fact: no
+
+STATUS                   *set_fact-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *set_fact-red hat support*
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *set_fact-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/set_fact_module.html
+https://docs.ansible.com/ansible/latest/modules/set_fact_module.html

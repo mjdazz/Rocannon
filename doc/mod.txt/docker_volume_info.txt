@@ -1,0 +1,121 @@
+SYNOPSIS                   *docker_volume_info*
+
+     • Performs largely the same function as the “docker volume inspect” CLI subcommand.
+
+REQUIREMENTS                   *docker_volume_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.21
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 1.8.0 (use docker-py for Python 2.6)
+
+PARAMETERS                   *docker_volume_info-parameters*
+
+     Parameter          Choices/Defaults                                                                              Comments
+                                               The version of the Docker API running on the Docker Host.
+   api_version    Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string         "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment variable is
+                                               not set, the default value will be used.
+                                               aliases: docker_api_version
+                                               Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                     If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified in the
+   path                                        environment variable DOCKER_CERT_PATH will be used.
+                                               aliases: tls_ca_cert, cacert_path
+                                               Path to the client's TLS certificate file.
+   client_cert                                 If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory specified in the
+   path                                        environment variable DOCKER_CERT_PATH will be used.
+                                               aliases: tls_client_cert, cert_path
+                                               Path to the client's TLS key file.
+   client_key                                  If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory specified in the
+   path                                        environment variable DOCKER_CERT_PATH will be used.
+                                               aliases: tls_client_key, key_path
+   debug            Choices:
+   boolean          • no ←                     Debug mode
+                    • yes
+                                               The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host    Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string         "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable is not set,
+                                               the default value will be used.
+                                               aliases: docker_url
+   name                                        Name of the volume to inspect.
+   string /                                    aliases: volume_name
+   required
+   ssl_version                                 Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                      If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+   timeout        Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer        60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment variable is not
+                                               set, the default value will be used.
+                    Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is set to yes
+   tls              • no ←                     as well, it will take precedence.
+   boolean          • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is not set,
+                                               the default value will be used.
+   tls_hostname   Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string         "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment variable is
+                                               not set, the default value will be used.
+                    Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs   • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment variable is
+   boolean          • yes                      not set, the default value will be used.
+                                               aliases: tls_verify
+
+NOTES                   *docker_volume_info-notes*
+
+   Note
+
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_volume_info-examples*
+
+ - name: Get infos on volume
+   docker_volume_info:
+     name: mydata
+   register: result
+
+ - name: Does volume exist?
+   debug:
+     msg: "The volume {{ 'exists' if result.exists else 'does not exist' }}"
+
+ - name: Print information about volume
+   debug:
+     var: result.volume
+   when: result.exists
+
+RETURN VALUES                   *docker_volume_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   exists              Returns whether the volume exists.
+   boolean    always   Sample:
+                       True
+                       Volume inspection results for the affected volume.
+   volume              Will be none if volume does not exist.
+   dictionary success  Sample:
+                       { "CreatedAt": "2018-12-09T17:43:44+01:00", "Driver": "local", "Labels": null, "Mountpoint": "/var/lib/docker/volumes/ansible-test-bd3f6172/_data", "Name":
+                       "ansible-test-bd3f6172", "Options": {}, "Scope": "local" }
+
+STATUS                   *docker_volume_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Fontein (@felixfontein)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_volume_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_volume_info_module.html

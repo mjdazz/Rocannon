@@ -1,0 +1,128 @@
+SYNOPSIS                   *netapp_e_ldap*
+
+     • Configure an E-Series system to allow authentication via an LDAP server
+
+PARAMETERS                   *netapp_e_ldap-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   api_password
+   string /                        The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   required
+   api_url
+   string /                        The url to the SANtricity Web Services Proxy or Embedded Web Services API. Example https://prod-1.wahoo.acme.com/devmgr/v2
+   required
+   api_username
+   string /                        The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   required
+   attributes     Default:         The user attributes that should be considered for the group to role mapping.
+   -              "memberOf"       Typically this is used with something like 'memberOf', and a user's access is tested against group membership or lack thereof.
+   identifier                      This is a unique identifier for the configuration (for cases where there are multiple domains configured).
+   -                               If this is not specified, but state=present, we will utilize a default value of 'default'.
+   log_path                        A local path to a file to be used for debug logging
+   -
+                                   The domain name[s] that will be utilized when authenticating to identify which domain to utilize.
+   name                            Default to use the DNS name of the server.
+   -                               The only requirement is that the name[s] be resolvable.
+                                   Example: [email protected]
+   password                        This is the password for the bind user account.
+   - / required                    aliases: bind_password
+                                   This is where you specify which groups should have access to what permissions for the storage-system.
+                                   For example, all users in group A will be assigned all 4 available roles, which will allow access to all the management functionality of the system (super-user).
+                                   Those in group B only have the storage.monitor role, which will allow only read-only access.
+                                   This is specified as a mapping of regular expressions to a list of roles. See the examples.
+   role_mappings                   The roles that will be assigned to to the group/groups matching the provided regex.
+   - / required                    storage.admin allows users full read/write access to storage objects and operations.
+                                   storage.monitor allows users read-only access to storage objects and operations.
+                                   support.admin allows users access to hardware, diagnostic information, the Major Event Log, and other critical support-related functionality, but not the storage
+                                   configuration.
+                                   security.admin allows users access to authentication/authorization configuration, as well as the audit log configuration, and certification management.
+   search_base                     The search base is used to find group memberships of the user.
+   - / required                    Example: ou=users,dc=example,dc=com
+   server                          This is the LDAP server url.
+   - / required                    The connection string should be specified as using the ldap or ldaps protocol along with the port information.
+                                   aliases: server_url
+   ssid           Default:         The ID of the array to manage. This value must be unique for each array.
+   string         1
+   state            Choices:
+   -                • present ←    Enable/disable LDAP support on the system. Disabling will clear out any existing defined domains.
+                    • absent
+   user_attribute Default:         This is the attribute we will use to match the provided username when a user attempts to authenticate.
+   -              "sAMAccountName"
+   username                        This is the user account that will be used for querying the LDAP server.
+   - / required                    Example: CN=MyBindAcct,OU=ServiceAccounts,DC=example,DC=com
+                                   aliases: bind_username
+   validate_certs   Choices:
+   boolean          • no           Should https certificates be validated?
+                    • yes ←
+
+NOTES                   *netapp_e_ldap-notes*
+
+   Note
+
+     • Check mode is supported.
+     • This module allows you to define one or more LDAP domains identified uniquely by identifier to use for authentication. Authorization is determined by role_mappings, in that different groups
+       of users may be given different (or no), access to certain aspects of the system and API.
+     • The local user accounts will still be available if the LDAP server becomes unavailable/inaccessible.
+     • Generally, you’ll need to get the details of your organization’s LDAP server before you’ll be able to configure the system for using LDAP authentication; every implementation is likely to be
+       very different.
+     • This API is currently only supported with the Embedded Web Services API v2.0 and higher, or the Web Services Proxy v3.0 and higher.
+     • The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage the storage-system, or an E-Series storage-system that supports the
+       Embedded Web Services API.
+     • Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+     • netapp_e_storage_system may be utilized for configuring the systems managed by a WSP instance.
+
+EXAMPLES                   *netapp_e_ldap-examples*
+
+ - name: Disable LDAP authentication
+   netapp_e_ldap:
+     api_url: "10.1.1.1:8443"
+     api_username: "admin"
+     api_password: "myPass"
+     ssid: "1"
+     state: absent
+
+ - name: Remove the 'default' LDAP domain configuration
+   netapp_e_ldap:
+     state: absent
+     identifier: default
+
+ - name: Define a new LDAP domain, utilizing defaults where possible
+   netapp_e_ldap:
+     state: present
+     bind_username: "CN=MyBindAccount,OU=ServiceAccounts,DC=example,DC=com"
+     bind_password: "mySecretPass"
+     server: "ldap://example.com:389"
+     search_base: 'OU=Users,DC=example,DC=com'
+     role_mappings:
+       "."dist-dev-storage."":
+         - storage.admin
+         - security.admin
+         - support.admin
+         - storage.monitor
+
+RETURN VALUES                   *netapp_e_ldap-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key    Returned                                                                                    Description
+   msg               Success message
+   string on success Sample:
+                     The ldap settings have been updated.
+
+STATUS                   *netapp_e_ldap-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Price (@lmprice)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netapp_e_ldap-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netapp_e_ldap_module.html

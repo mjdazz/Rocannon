@@ -1,0 +1,279 @@
+SYNOPSIS                   *junos_lag_interfaces*
+
+     • This module manages properties of Link Aggregation Group on Juniper JUNOS devices.
+
+REQUIREMENTS                   *junos_lag_interfaces-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.6.4)
+
+PARAMETERS                   *junos_lag_interfaces-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   config                            A list of link aggregation group configurations.
+   list
+    link_protection   Choices:       This boolean option indicates if link protection should be enabled for the LAG interface. If value is True link protection is enabled on LAG and if value is
+    boolean           • no           False link protection is disabled.
+                      • yes
+    members                          List of member interfaces of the link aggregation group. The value can be single interface or list of interfaces.
+    list
+       link_type      Choices:       The value of this options configures the member link as either primary or backup. Value primary configures primary interface for link-protection mode and backup
+       -              • primary      configures backup interface for link-protection mode.
+                      • backup
+       member                        Name of the member interface.
+       string
+    mode              Choices:       LAG mode. A value of passive will enable LACP in passive mode that is it will respond to LACP packets and active configures the link to initiate transmission of
+    -                 • active       LACP packets.
+                      • passive
+    name
+    string /                         Name of the link aggregation group (LAG).
+    required
+                      Choices:
+   state              • merged ←
+   string             • replaced     The state of the configuration after module completion
+                      • overridden
+                      • deleted
+
+NOTES                   *junos_lag_interfaces-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 18.4R1.
+     • This module works with connection netconf. See the Junos OS Platform Options.
+
+EXAMPLES                   *junos_lag_interfaces-examples*
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ #    ether-options {
+ #        802.3ad ae0;
+ #    }
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ #    ether-options {
+ #        802.3ad ae0;
+ #    }
+ # }
+ # ae0 {
+ #     description "lag interface";
+ # }
+ # ae1 {
+ #     description "lag interface 1";
+ # }
+
+ - name: "Delete LAG attributes of given interfaces (Note: This won't delete the interface itself)"
+   junos_lag_interfaces:
+     config:
+       - name: ae0
+       - name: ae1
+     state: deleted
+
+ # After state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ # }
+
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ # }
+
+ - name: Merge provided configuration with device configuration
+   junos_lag_interfaces:
+     config:
+       - name: ae0
+         members:
+           - member: ge-0/0/1
+             link_type: primary
+           - member: ge-0/0/2
+             link_type: backup
+     state: merged
+
+ # After state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ #    ether-options {
+ #        802.3ad {
+ #            ae0;
+ #            primary;
+ #        }
+ #    }
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ #    ether-options {
+ #        802.3ad {
+ #            ae0;
+ #            backup;
+ #        }
+ #    }
+ # }
+
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ #    ether-options {
+ #        802.3ad ae0;
+ #    }
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ #    ether-options {
+ #        802.3ad ae0;
+ #    }
+ # }
+ # ae0 {
+ #     description "lag interface";
+ # }
+ # ae3 {
+ #     description "lag interface 3";
+ # }
+
+ - name: Overrides all device LAG configuration with provided configuration
+   junos_lag_interfaces:
+     config:
+       - name: ae0
+         members:
+           - member: ge-0/0/2
+       - name: ae1
+         members:
+           - member: ge-0/0/1
+         mode: passive
+     state: overridden
+
+ # After state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ #    ether-options {
+ #        802.3ad ae1;
+ #    }
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ #    ether-options {
+ #        802.3ad ae0;
+ #    }
+ # }
+ # ae0 {
+ #     description "lag interface";
+ # }
+ # ae1 {
+ #    aggregated-ether-options {
+ #        lacp {
+ #            active;
+ #        }
+ #    }
+ # }
+
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ # }
+ # ge-0/0/3 {
+ #    description "Ansible configured interface 3";
+ # }
+
+ - name: Replace device LAG configuration with provided configuration
+   junos_lag_interfaces:
+     config:
+       - name: ae0
+         members:
+           - member: ge-0/0/1
+         mode: active
+     state: replaced
+
+ # After state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Ansible configured interface 1";
+ #    ether-options {
+ #        802.3ad ae0;
+ #    }
+ # }
+ # ge-0/0/2 {
+ #    description "Ansible configured interface 2";
+ # }
+ # ae0 {
+ #    aggregated-ether-options {
+ #        lacp {
+ #            active;
+ #        }
+ #    }
+ # }
+ # ge-0/0/3 {
+ #    description "Ansible configured interface 3";
+ # }
+
+RETURN VALUES                   *junos_lag_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key     Returned                                                                                    Description
+   after               The configuration as structured data after module completion.
+   list   when changed Sample:
+                       The configuration returned will always be in the same format of the parameters above.
+   before              The configuration as structured data prior to module invocation.
+   list   always       Sample:
+                       The configuration returned will always be in the same format of the parameters above.
+   xml                 The set of xml rpc payload pushed to the remote device.
+   list   always       Sample:
+                       ['xml 1', 'xml 2', 'xml 3']
+
+STATUS                   *junos_lag_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_lag_interfaces-red hat support*
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_lag_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_lag_interfaces_module.html

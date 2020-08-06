@@ -1,0 +1,121 @@
+DEPRECATED                   *vmware_host_ssl_facts*
+
+                    Removed in Ansible:
+                  version: 2.13
+        Why:      Deprecated in favour of _info module.
+    Alternative:  Use vmware_host_ssl_info instead.
+
+SYNOPSIS                   *vmware_host_ssl_facts-synopsis*
+
+     • This module can be used to gather facts of the SSL thumbprint information for a host.
+
+REQUIREMENTS                   *vmware_host_ssl_facts-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_host_ssl_facts-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   cluster_name                    Name of the cluster.
+   string                          SSL thumbprint information about all ESXi host system in the given cluster will be reported.
+                                   If esxi_hostname is not given, this parameter is required.
+   esxi_hostname                   ESXi hostname.
+   string                          SSL thumbprint information of this ESXi host system will be reported.
+                                   If cluster_name is not given, this parameter is required.
+   hostname                        The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                   Environment variable support added in Ansible 2.6.
+                                   The password of the vSphere vCenter or ESXi server.
+   password                        If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: pass, pwd
+   port           Default:         The port number of the vSphere vCenter or ESXi server.
+   integer        443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                    Environment variable support added in Ansible 2.6.
+   proxy_host                      Address of a proxy that will receive all HTTPS requests and relay them.
+   string                          The format is a hostname or a IP.
+   added in 2.9                    If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                   This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                      Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+                                   The username of the vSphere vCenter or ESXi server.
+   username                        If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: admin, user
+                    Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs   • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean          • yes ←        Environment variable support added in Ansible 2.6.
+                                   If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_host_ssl_facts-notes*
+
+   Note
+
+     • Tested on vSphere 6.5
+
+EXAMPLES                   *vmware_host_ssl_facts-examples*
+
+ - name: Gather SSL thumbprint information about all ESXi Hosts in given Cluster
+   vmware_host_ssl_facts:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     cluster_name: '{{ cluster_name }}'
+   delegate_to: localhost
+   register: all_host_ssl_facts
+
+ - name: Get SSL Thumbprint info about "{{ esxi_hostname }}"
+   vmware_host_ssl_facts:
+     hostname: "{{ vcenter_server }}"
+     username: "{{ vcenter_user }}"
+     password: "{{ vcenter_pass }}"
+     esxi_hostname: '{{ esxi_hostname }}'
+   register: ssl_facts
+ - set_fact:
+     ssl_thumbprint: "{{ ssl_facts['host_ssl_facts'][esxi_hostname]['ssl_thumbprints'][0] }}"
+ - debug:
+     msg: "{{ ssl_thumbprint }}"
+ - name: Add ESXi Host to vCenter
+   vmware_host:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter_name: '{{ datacenter_name }}'
+     cluster_name: '{{ cluster_name }}'
+     esxi_hostname: '{{ esxi_hostname }}'
+     esxi_username: '{{ esxi_username }}'
+     esxi_password: '{{ esxi_password }}'
+     esxi_ssl_thumbprint: '{{ ssl_thumbprint }}'
+     state: present
+
+RETURN VALUES                   *vmware_host_ssl_facts-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+                           dict with hostname as key and dict with SSL thumbprint related facts
+   host_ssl_facts facts    Sample:
+   dictionary              {'10.76.33.215': {'owner_tag': '', 'principal': 'vpxuser', 'ssl_thumbprints': ['E3:E8:A9:20:8D:32:AE:59:C6:8D:A5:91:B0:20:EF:00:A2:7C:27:EE',
+                           'F1:AC:DA:6E:D8:1E:37:36:4A:5C:07:E5:04:0B:87:C8:75:FB:42:01']}}
+
+STATUS                   *vmware_host_ssl_facts-status*
+
+     • This module will be removed in version 2.13. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_host_ssl_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_host_ssl_facts_module.html

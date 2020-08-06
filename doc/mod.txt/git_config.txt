@@ -1,0 +1,131 @@
+SYNOPSIS                   *git_config*
+
+     • The git_config module changes git configuration by invoking ‘git config’. This is needed if you don’t want to use template for the entire git config file (e.g. because you need to change
+       just user.email in /etc/.git/config). Solutions involving command are cumbersome or don’t work correctly in check mode.
+
+REQUIREMENTS                   *git_config-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • git
+
+PARAMETERS                   *git_config-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   list_all    Choices:
+   boolean     • no ←         List all settings (optionally limited to a given scope)
+               • yes
+   name                       The name of the setting. If no value is supplied, the value will be read from the config if it has been set.
+   -
+   repo                       Path to a git repository for reading and writing values from a specific repo.
+   -
+               Choices:
+   scope       • local        Specify which scope to read/set values from. This is required when setting config values. If this is set to local, you must also specify the repo parameter. It
+   -           • global       defaults to system only when not using list_all=yes.
+               • system
+   state       Choices:
+   -           • present ←    Indicates the setting should be set/unset. This parameter has higher precedence than value parameter: when state=absent and value is defined, value is discarded.
+   added in    • absent
+   2.8
+   value                      When specifying the name of a single setting, supply a value to set that setting to the given value.
+   -
+
+EXAMPLES                   *git_config-examples*
+
+ # Set some settings in ~/.gitconfig
+ - git_config:
+     name: alias.ci
+     scope: global
+     value: commit
+
+ - git_config:
+     name: alias.st
+     scope: global
+     value: status
+
+ # Unset some settings in ~/.gitconfig
+ - git_config:
+     name: alias.ci
+     scope: global
+     state: absent
+
+ # Or system-wide:
+ - git_config:
+     name: alias.remotev
+     scope: system
+     value: remote -v
+
+ - git_config:
+     name: core.editor
+     scope: global
+     value: vim
+
+ # scope=system is the default
+ - git_config:
+     name: alias.diffc
+     value: diff --cached
+
+ - git_config:
+     name: color.ui
+     value: auto
+
+ # Make etckeeper not complain when invoked by cron
+ - git_config:
+     name: user.email
+     repo: /etc
+     scope: local
+     value: '[email protected]{{ ansible_fqdn }}'
+
+ # Read individual values from git config
+ - git_config:
+     name: alias.ci
+     scope: global
+
+ # scope: system is also assumed when reading values, unless list_all=yes
+ - git_config:
+     name: alias.diffc
+
+ # Read all values from git config
+ - git_config:
+     list_all: yes
+     scope: global
+
+ # When list_all=yes and no scope is specified, you get configuration from all scopes
+ - git_config:
+     list_all: yes
+
+ # Specify a repository to include local settings
+ - git_config:
+     list_all: yes
+     repo: /path/to/repo.git
+
+RETURN VALUES                   *git_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   config_value           When list_all=no and value is not set, a string containing the value of the setting in name
+   string        success  Sample:
+                          vim
+   config_values          When list_all=yes, a dict containing key/value pairs of multiple configuration settings
+   dictionary    success  Sample:
+                          {'core.editor': 'vim', 'color.ui': 'auto', 'alias.diffc': 'diff --cached', 'alias.remotev': 'remote -v'}
+
+STATUS                   *git_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Matthew Gamble (@djmattyg007)
+     • Marius Gedminas (@mgedmin)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *git_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/git_config_module.html

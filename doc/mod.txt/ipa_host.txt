@@ -1,0 +1,167 @@
+SYNOPSIS                   *ipa_host*
+
+     • Add, modify and delete an IPA host using IPA API
+
+PARAMETERS                   *ipa_host-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   description                            A description of this host.
+   -
+   force                  Choices:
+   boolean                • no            Force host name even if not in DNS.
+                          • yes
+   fqdn                                   Full qualified domain name.
+   - / required                           Can not be changed as it is the unique identifier.
+                                          aliases: name
+   ip_address                             Add the host to DNS with this IP address.
+   -
+                                          IP or hostname of IPA server.
+                                          If the value is not specified in the task, the value of environment variable IPA_HOST will be used instead.
+   ipa_host             Default:          If both the environment variable IPA_HOST and the value are not specified in the task, then DNS will be used to try to discover the FreeIPA server.
+   string               "ipa.example.com" The relevant entry needed in FreeIPA is the 'ipa-ca' entry.
+                                          If neither the DNS entry, nor the environment IPA_HOST, nor the value are available in the task, then the default value will be used.
+                                          Environment variable fallback mechanism is added in Ansible 2.5.
+                                          Password of administrative user.
+                                          If the value is not specified in the task, the value of environment variable IPA_PASS will be used instead.
+   ipa_pass                               Note that if the 'urllib_gssapi' library is available, it is possible to use GSSAPI to authenticate to FreeIPA.
+   string / required                      If the environment variable KRB5CCNAME is available, the module will use this kerberos credentials cache to authenticate to the FreeIPA server.
+                                          If the environment variable KRB5_CLIENT_KTNAME is available, and KRB5CCNAME is not; the module will use this kerberos keytab to authenticate.
+                                          If GSSAPI is not available, the usage of 'ipa_pass' is required.
+                                          Environment variable fallback mechanism is added in Ansible 2.5.
+                                          Port of FreeIPA / IPA server.
+   ipa_port             Default:          If the value is not specified in the task, the value of environment variable IPA_PORT will be used instead.
+   integer              443               If both the environment variable IPA_PORT and the value are not specified in the task, then default value is set.
+                                          Environment variable fallback mechanism is added in Ansible 2.5.
+                          Choices:        Protocol used by IPA server.
+   ipa_prot               • http          If the value is not specified in the task, the value of environment variable IPA_PROT will be used instead.
+   string                 • https ←       If both the environment variable IPA_PROT and the value are not specified in the task, then default value is set.
+                                          Environment variable fallback mechanism is added in Ansible 2.5.
+   ipa_timeout                            Specifies idle timeout (in seconds) for the connection.
+   integer              Default:          For bulk operations, you may want to increase this in order to avoid timeout from IPA server.
+   added in 2.7         10                If the value is not specified in the task, the value of environment variable IPA_TIMEOUT will be used instead.
+                                          If both the environment variable IPA_TIMEOUT and the value are not specified in the task, then default value is set.
+                                          Administrative account used on IPA server.
+   ipa_user             Default:          If the value is not specified in the task, the value of environment variable IPA_USER will be used instead.
+   string               "admin"           If both the environment variable IPA_USER and the value are not specified in the task, then default value is set.
+                                          Environment variable fallback mechanism is added in Ansible 2.5.
+                                          List of Hardware MAC address(es) off this host.
+   mac_address                            If option is omitted MAC addresses will not be checked or changed.
+   -                                      If an empty list is passed all assigned MAC addresses will be removed.
+                                          MAC addresses that are already assigned but not passed will be removed.
+                                          aliases: macaddress
+   ns_hardware_platform                   Host hardware platform (e.g. "Lenovo T61")
+   -                                      aliases: nshardwareplatform
+   ns_host_location                       Host location (e.g. "Lab 2")
+   -                                      aliases: nshostlocation
+   ns_os_version                          Host operating system and version (e.g. "Fedora 9")
+   -                                      aliases: nsosversion
+   random_password        Choices:
+   boolean                • no ←          Generate a random password to be used in bulk enrollment
+   added in 2.5           • yes
+                          Choices:
+   state                  • present ←
+   -                      • absent        State to ensure
+                          • enabled
+                          • disabled
+   update_dns             Choices:        If set "True" with state as "absent", then removes DNS records of the host managed by FreeIPA DNS.
+   boolean                • no ←          This option has no effect for states other than "absent".
+   added in 2.5           • yes
+                                          List of Base-64 encoded server certificates.
+   user_certificate                       If option is omitted certificates will not be checked or changed.
+   -                                      If an empty list is passed all assigned certificates will be removed.
+                                          Certificates already assigned but not passed will be removed.
+                                          aliases: usercertificate
+   validate_certs         Choices:        This only applies if ipa_prot is https.
+   boolean                • no            If set to no, the SSL certificates will not be validated.
+                          • yes ←         This should only set to no used on personally controlled sites using self-signed certificates.
+
+EXAMPLES                   *ipa_host-examples*
+
+ # Ensure host is present
+ - ipa_host:
+     name: host01.example.com
+     description: Example host
+     ip_address: 192.168.0.123
+     ns_host_location: Lab
+     ns_os_version: CentOS 7
+     ns_hardware_platform: Lenovo T61
+     mac_address:
+     - "08:00:27:E3:B1:2D"
+     - "52:54:00:BD:97:1E"
+     state: present
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+
+ # Generate a random password for bulk enrolment
+ - ipa_host:
+     name: host01.example.com
+     description: Example host
+     ip_address: 192.168.0.123
+     state: present
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+     validate_certs: False
+     random_password: True
+
+ # Ensure host is disabled
+ - ipa_host:
+     name: host01.example.com
+     state: disabled
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+
+ # Ensure that all user certificates are removed
+ - ipa_host:
+     name: host01.example.com
+     user_certificate: []
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+
+ # Ensure host is absent
+ - ipa_host:
+     name: host01.example.com
+     state: absent
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+
+ # Ensure host and its DNS record is absent
+ - ipa_host:
+     name: host01.example.com
+     state: absent
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+     update_dns: True
+
+RETURN VALUES                   *ipa_host-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key                    Returned                                                                                   Description
+   host       always                                  Host as returned by IPA API.
+   dictionary
+   host_diff  if check mode and a difference is found List of options that differ and would be changed
+   list
+
+STATUS                   *ipa_host-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Thomas Krahn (@Nosmoht)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ipa_host-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ipa_host_module.html

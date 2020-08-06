@@ -1,0 +1,215 @@
+SYNOPSIS                   *bigip_vlan*
+
+     • Manage VLANs on a BIG-IP system
+
+PARAMETERS                   *bigip_vlan-parameters*
+
+        Parameter         Choices/Defaults                                                                            Comments
+                         Choices:
+                         • default
+                         • destination-address
+                         • source-address      Specifies how the traffic on the VLAN will be disaggregated. The value selected determines the traffic disaggregation method. You can choose to
+   cmp_hash              • dst-ip              disaggregate traffic based on source-address (the source IP address), destination-address (destination IP address), or default, which specifies that
+   string                • src-ip              the default CMP hash uses L4 ports.
+   added in 2.5          • dest                When creating a new VLAN, if this parameter is not specified, the default of default is used.
+                         • destination
+                         • source
+                         • dst
+                         • src
+   dag_round_robin       Choices:              Specifies whether some of the stateless traffic on the VLAN should be disaggregated in a round-robin order instead of using a static hash. The
+   boolean               • no                  stateless traffic includes non-IP L2 traffic, ICMP, some UDP protocols, and so on.
+   added in 2.5          • yes                 When creating a new VLAN, if this parameter is not specified, the default of (no) is used.
+   dag_tunnel            Choices:              Specifies how the disaggregator (DAG) distributes received tunnel-encapsulated packets to TMM instances. Select inner to distribute packets based on
+   string                • inner               information in inner headers. Select outer to distribute packets based on information in outer headers without inspecting inner headers.
+   added in 2.5          • outer               When creating a new VLAN, if this parameter is not specified, the default of outer is used.
+                                               This parameter is not supported on Virtual Editions of BIG-IP.
+   description                                 The description to give to the VLAN.
+   string
+   fail_safe             Choices:
+   boolean               • no                  When yes, specifies that the VLAN takes the specified fail_safe_action if the system detects a loss of traffic on this VLAN's interfaces.
+   added in 2.8          • yes
+   fail_safe_action      Choices:
+   string                • reboot              Specifies the action that the system takes when it does not detect any traffic on this VLAN, and the fail_safe_timeout has expired.
+   added in 2.8          • restart-all
+                         • failover
+   fail_safe_timeout
+   integer                                     Specifies the number of seconds that a system can run without detecting network traffic on this VLAN before it takes the fail_safe_action.
+   added in 2.8
+   interfaces                                  Interfaces that you want added to the VLAN. This can include both tagged and untagged interfaces as the tagging parameter specifies.
+   list                                        This parameter is mutually exclusive with the untagged_interfaces and tagged_interfaces parameters.
+   added in 2.8
+       interface                               The name of the interface
+       string
+       tagging           Choices:
+       string            • tagged              Whether the interface is tagged or untagged.
+                         • untagged
+   mtu                                         Specifies the maximum transmission unit (MTU) for traffic on this VLAN. When creating a new VLAN, if this parameter is not specified, the default
+   integer                                     value used will be 1500.
+   added in 2.5                                This number must be between 576 to 9198.
+   name                                        The VLAN to manage. If the special VLAN ALL is specified with the state value of absent then all VLANs will be removed.
+   string / required
+   partition           Default:
+   string              "Common"                Device partition to manage resources on.
+   added in 2.5
+   provider
+   dictionary                                  A dict object containing connection details.
+   added in 2.5
+       auth_provider                           Configures the auth provider for to obtain authentication tokens from the remote device.
+       string                                  This option is really used when working with BIG-IQ devices.
+       password                                The password for the user account used to connect to the BIG-IP.
+       string /                                You may omit this option by setting the environment variable F5_PASSWORD.
+       required                                aliases: pass, pwd
+       server                                  The BIG-IP host.
+       string /                                You may omit this option by setting the environment variable F5_SERVER.
+       required
+       server_port     Default:                The BIG-IP server port.
+       integer         443                     You may omit this option by setting the environment variable F5_SERVER_PORT.
+       ssh_keyfile                             Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+       path                                    You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+       timeout                                 Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+       integer                                 before the operation is completed, the module will error.
+       transport         Choices:
+       string            • cli                 Configures the transport connection to use when connecting to the remote device.
+                         • rest ←
+       user                                    The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+       string /                                You may omit this option by setting the environment variable F5_USER.
+       required
+       validate_certs    Choices:              If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+       boolean           • no                  You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                         • yes ←
+   sflow_poll_interval
+   integer                                     Specifies the maximum interval in seconds between two pollings.
+   added in 2.8
+   sflow_sampling_rate
+   integer                                     Specifies the ratio of packets observed to the samples generated.
+   added in 2.8
+   source_check          Choices:              When yes, specifies that the system verifies that the return route to an initial packet is the same VLAN from which the packet originated.
+   boolean               • no                  The system performs this verification only if the auto_last_hop option is no.
+   added in 2.8          • yes
+   state                 Choices:              The state of the VLAN on the system. When present, guarantees that the VLAN exists with the provided attributes. When absent, removes the VLAN from
+   string                • absent              the system.
+                         • present ←
+   tag                                         Tag number for the VLAN. The tag number can be any integer between 1 and 4094. The system automatically assigns a tag number if you do not specify a
+   integer                                     value.
+                                               Specifies a list of tagged interfaces and trunks that you want to configure for the VLAN. Use tagged interfaces or trunks when you want to assign a
+   tagged_interfaces                           single interface or trunk to multiple VLANs.
+   list                                        This parameter is mutually exclusive with the untagged_interfaces and interfaces parameters.
+                                               aliases: tagged_interface
+   untagged_interfaces                         Specifies a list of untagged interfaces and trunks that you want to configure for the VLAN.
+   list                                        This parameter is mutually exclusive with the tagged_interfaces and interfaces parameters.
+                                               aliases: untagged_interface
+
+NOTES                   *bigip_vlan-notes*
+
+   Note
+
+     • Requires BIG-IP versions >= 12.0.0
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_vlan-examples*
+
+ - name: Create VLAN
+   bigip_vlan:
+     name: net1
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set VLAN tag
+   bigip_vlan:
+     name: net1
+     tag: 2345
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Add VLAN 2345 as tagged to interface 1.1
+   bigip_vlan:
+     tagged_interface: 1.1
+     name: net1
+     tag: 2345
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Add VLAN 1234 as tagged to interfaces 1.1 and 1.2
+   bigip_vlan:
+     tagged_interfaces:
+       - 1.1
+       - 1.2
+     name: net1
+     tag: 1234
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_vlan-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+   cmp_hash                     New traffic disaggregation method.
+   string              changed  Sample:
+                                source-address
+   dag_tunnel                   The new DAG tunnel setting.
+   string              changed  Sample:
+                                outer
+   description                  The description set on the VLAN.
+   string              changed  Sample:
+                                foo VLAN
+   fail_safe           changed  The new Fail Safe setting.
+   boolean
+   fail_safe_action             The new Fail Safe Action setting.
+   string              changed  Sample:
+                                reboot
+   fail_safe_timeout            The new Fail Safe Timeout setting.
+   integer             changed  Sample:
+                                90
+   interfaces                   Interfaces that the VLAN is assigned to.
+   list                changed  Sample:
+                                ['1.1', '1.2']
+   partition                    The partition that the VLAN was created on.
+   string              changed  Sample:
+                                Common
+   sflow_poll_interval          The new sFlow Polling Interval setting.
+   integer             changed  Sample:
+                                10
+   sflow_sampling_rate          The new sFlow Sampling Rate setting.
+   integer             changed  Sample:
+                                20
+   source_check                 The new Source Check setting.
+   boolean             changed  Sample:
+                                True
+   tag                          The ID of the VLAN.
+   integer             changed  Sample:
+                                2345
+
+STATUS                   *bigip_vlan-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_vlan-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_vlan_module.html

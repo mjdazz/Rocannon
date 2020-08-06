@@ -1,0 +1,103 @@
+SYNOPSIS                   *cnos_command*
+
+     • Sends arbitrary commands to an CNOS node and returns the results read from the device. The cnos_command module includes an argument that will cause the module to wait for a specific
+       condition before returning or timing out if the condition is not met.
+
+PARAMETERS                   *cnos_command-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   commands
+   - /                        List of commands to send to the remote device. The resulting output from the command is returned. If the wait_for argument is provided, the module is not returned
+   required                   until the condition is satisfied or the number of retires is expired.
+   added in
+   2.6
+   interval
+   -         Default:         Configures the interval in seconds to wait between retries of the command. If the command does not pass the specified conditions, the interval indicates how long to
+   added in  1                wait before trying the command again.
+   2.6
+   match       Choices:
+   -           • any          The match argument is used in conjunction with the wait_for argument to specify the match policy. Valid values are all or any. If the value is set to all then all
+   added in    • all ←        conditionals in the wait_for must be satisfied. If the value is set to any then only one of the values must be satisfied.
+   2.6
+   retries
+   -         Default:         Specifies the number of retries a command should by tried before it is considered failed. The command is run on the target device every retry and evaluated against the
+   added in  10               wait_for conditions.
+   2.6
+   wait_for
+   -                          List of conditions to evaluate against the output of the command. The task will wait for each condition to be true before moving forward. If the conditional is not
+   added in                   true within the configured number of retries, the task fails. See examples.
+   2.6
+
+EXAMPLES                   *cnos_command-examples*
+
+ ---
+ - name: test contains operator
+   cnos_command:
+     commands:
+       - show version
+       - show system memory
+     wait_for:
+       - "result[0] contains 'Lenovo'"
+       - "result[1] contains 'MemFree'"
+   register: result
+
+ - assert:
+     that:
+       - "result.changed == false"
+       - "result.stdout is defined"
+
+ - name: get output for single command
+   cnos_command:
+     commands: ['show version']
+   register: result
+
+ - assert:
+     that:
+       - "result.changed == false"
+       - "result.stdout is defined"
+
+ - name: get output for multiple commands
+   cnos_command:
+     commands:
+       - show version
+       - show interface information
+   register: result
+
+ - assert:
+     that:
+       - "result.changed == false"
+       - "result.stdout is defined"
+       - "result.stdout | length == 2"
+
+RETURN VALUES                   *cnos_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   failed_conditions          the conditionals that failed
+   list              failed   Sample:
+                              ['...', '...']
+   stdout                     the set of responses from the commands
+   list              always   Sample:
+                              ['...', '...']
+   stdout_lines               The value of stdout split into a list
+   list              always   Sample:
+                              [['...', '...'], ['...'], ['...']]
+
+STATUS                   *cnos_command-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Anil Kumar Muraleedharan (@amuraleedhar)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cnos_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cnos_command_module.html

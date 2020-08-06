@@ -1,0 +1,159 @@
+SYNOPSIS                   *eos_user*
+
+     • This module provides declarative management of the local usernames configured on Arista EOS devices. It allows playbooks to manage either individual usernames or the collection of usernames
+       in the current running config. It also supports purging usernames from the configuration that are not explicitly defined.
+
+PARAMETERS                   *eos_user-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   aggregate                            The set of username objects to be configured on the remote Arista EOS device. The list entries can either be the username or a hash of username and
+   -                                    properties. This argument is mutually exclusive with the username argument.
+   added in 2.4                         aliases: users, collection
+                                        Deprecated
+                                        Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes with become_pass.
+                                        This option is only required if you are using eAPI.
+   auth_pass                            For more information please see the EOS Platform Options guide.
+   string
+                                        ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                        Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value
+                                        is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+                                        Deprecated
+                                        Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes.
+                                        This option is only required if you are using eAPI.
+   authorize             Choices:       For more information please see the EOS Platform Options guide.
+   boolean               • no ←
+                         • yes          ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                        Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+                                        commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+   configured_password                  The password to be configured on the remote Arista EOS device. The password needs to be provided in clear and it will be encrypted on the device. Please note
+   -                                    that this option is not same as provider password.
+   added in 2.4
+   name                                 The username to be configured on the remote Arista EOS device. This argument accepts a stringv value and is mutually exclusive with the aggregate argument.
+   -                                    Please note that this option is not same as provider username.
+   added in 2.4
+   nopassword            Choices:
+   boolean               • no           Defines the username without assigning a password. This will allow the user to login to the system without being authenticated by a password.
+                         • yes
+   privilege                            The privilege argument configures the privilege level of the user when logged into the system. This argument accepts integer values in the range of 1 to 15.
+   -
+                                        Deprecated
+                                        Starting with Ansible 2.5 we recommend using connection: network_cli.
+                                        This option is only required if you are using eAPI.
+   provider                             For more information please see the EOS Platform Options guide.
+   dictionary
+                                        ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                        A dict object containing connection details.
+     auth_pass                          Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value
+     string                             is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+     authorize           Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+     boolean             • no ←         commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                         • yes
+     host                               Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address
+     string / required                  for the transport.
+     password                           Specifies the password to use to authenticate the connection to the remote device. This is a common argument used for either cli or eapi transports. If the
+     string                             value is not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port              Default:         Specifies the port to use when building the connection to the remote device. This value applies to either cli or eapi.
+     integer           0                The port value will default to the appropriate transport common port if none is provided in the task (cli=22, http=80, https=443).
+     ssh_keyfile                        Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports. If the value is not
+     path                               specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     timeout                            Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                            operation is completed, the module will error.
+     transport           Choices:
+     string / required   • cli ←        Configures the transport connection to use when connecting to the remote device.
+                         • eapi
+     use_proxy           Choices:
+     boolean             • no           If no, the environment variables http_proxy and https_proxy will be ignored.
+     added in 2.5        • yes ←
+     use_ssl             Choices:
+     boolean             • no           Configures the transport to use SSL if set to yes only when the transport=eapi. If the transport argument is not eapi, this value is ignored.
+                         • yes ←
+     username                           Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate either the CLI login or the eAPI
+     string                             authentication depending on which transport is used. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will
+                                        be used instead.
+     validate_certs      Choices:       If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates. If the transport
+     boolean             • no           argument is not eapi, this value is ignored.
+                         • yes ←
+   purge                 Choices:       Instructs the module to consider the resource definition absolute. It will remove any previously configured usernames on the device with the exception of the
+   boolean               • no ←         `admin` user which cannot be deleted per EOS constraints.
+                         • yes
+   role                                 Configures the role for the username in the device running configuration. The argument accepts a string value defining the role name. This argument does not
+   -                                    check if the role has been configured on the device.
+   sshkey                               Specifies the SSH public key to configure for the given username. This argument accepts a valid SSH key value.
+   -
+   state                 Choices:       Configures the state of the username definition as it relates to the device operational configuration. When set to present, the username(s) should be
+   -                     • present ←    configured in the device active configuration and when set to absent the username(s) should not be in the device active configuration
+                         • absent
+   update_password       Choices:       Since passwords are encrypted in the device running config, this argument will instruct the module when to change the password. When set to always, the
+   -                     • on_create    password will always be updated in the device and when set to on_create the password will be updated only if the username is created.
+                         • always ←
+
+NOTES                   *eos_user-notes*
+
+   Note
+
+     • Tested against EOS 4.15
+     • For information on using CLI, eAPI and privileged mode see the EOS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Arista EOS devices see the Arista integration page.
+
+EXAMPLES                   *eos_user-examples*
+
+ - name: create a new user
+   eos_user:
+     name: ansible
+     sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+     state: present
+
+ - name: remove all users except admin
+   eos_user:
+     purge: yes
+
+ - name: set multiple users to privilege level 15
+   eos_user:
+     aggregate:
+       - name: netop
+       - name: netend
+     privilege: 15
+     state: present
+
+ - name: Change Password for User netop
+   eos_user:
+     username: netop
+     configured_password: "{{ new_password }}"
+     update_password: always
+     state: present
+
+RETURN VALUES                   *eos_user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key            Returned                                                                                 Description
+   commands                          The list of configuration mode commands to send to the device
+   list         always               Sample:
+                                     ['name ansible secret password', 'name admin secret admin']
+   session_name                      The EOS config session name used to load the configuration
+   string       when changed is True Sample:
+                                     ansible_1479315771
+
+STATUS                   *eos_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *eos_user-red hat support*
+
+     • Peter Sprygada (@privateip)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *eos_user-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/eos_user_module.html

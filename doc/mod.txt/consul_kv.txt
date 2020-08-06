@@ -1,0 +1,101 @@
+SYNOPSIS                   *consul_kv*
+
+     • Allows the retrieval, addition, modification and deletion of key/value entries in a consul cluster via the agent. The entire contents of the record, including the indices, flags and session
+       are returned as value.
+     • If the key represents a prefix then note that when a value is removed, the existing value if any is returned as part of the results.
+     • See http://www.consul.io/docs/agent/http.html#kv for more details.
+
+REQUIREMENTS                   *consul_kv-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-consul
+     • requests
+
+PARAMETERS                   *consul_kv-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   cas                             Used when acquiring a lock with a session. If the cas is 0, then Consul will only put the key if it does not already exist. If the cas value is non-zero, then the
+   string                          key is only set if the index matches the ModifyIndex of that key.
+   flags                           Opaque positive integer value that can be passed when setting a value.
+   string
+   host           Default:         Host of the consul agent.
+   string         "localhost"
+   key
+   string /                        The key at which the value should be stored.
+   required
+   port           Default:         The port on which the consul agent is running.
+   integer        8500
+   recurse          Choices:
+   boolean          • no ←         If the key represents a prefix, each entry with the prefix can be retrieved by setting this to yes.
+                    • yes
+   retrieve         Choices:
+   boolean          • no           If the state is present and value is set, perform a read after setting the value and return this value.
+                    • yes ←
+   scheme         Default:         The protocol scheme on which the consul agent is running.
+   string         "http"
+   session                         The session that should be used to acquire or release a lock associated with a key/value pair.
+   string
+                    Choices:       The action to take with the supplied key and value. If the state is 'present' and `value` is set, the key contents will be set to the value supplied and `changed`
+   state            • absent       will be set to `true` only if the value was different to the current contents. If the state is 'present' and `value` is not set, the existing value associated to
+   -                • acquire      the key will be returned. The state 'absent' will remove the key/value pair, again 'changed' will be set to true only if the key actually existed prior to the
+                    • present ←    removal. An attempt can be made to obtain or free the lock associated with a key/value pair with the states 'acquire' or 'release' respectively. a valid session
+                    • release      must be supplied to make the attempt changed will be true if the attempt is successful, false otherwise.
+   token                           The token key identifying an ACL rule set that controls access to the key value pair
+   string
+   validate_certs   Choices:
+   boolean          • no           Whether to verify the tls certificate of the consul agent.
+                    • yes ←
+   value
+   string /                        The value should be associated with the given key, required if state is present.
+   required
+
+EXAMPLES                   *consul_kv-examples*
+
+ # If the key does not exist, the value associated to the "data" property in `retrieved_key` will be `None`
+ # If the key value is empty string, `retrieved_key["data"]["Value"]` will be `None`
+ - name: retrieve a value from the key/value store
+   consul_kv:
+     key: somekey
+   register: retrieved_key
+
+ - name: Add or update the value associated with a key in the key/value store
+   consul_kv:
+     key: somekey
+     value: somevalue
+
+ - name: Remove a key from the store
+   consul_kv:
+     key: somekey
+     state: absent
+
+ - name: Add a node to an arbitrary group via consul inventory (see consul.ini)
+   consul_kv:
+     key: ansible/groups/dc1/somenode
+     value: top_secret
+
+ - name: Register a key/value pair with an associated session
+   consul_kv:
+     key: stg/node/server_birthday
+     value: 20160509
+     session: "{{ sessionid }}"
+     state: acquire
+
+STATUS                   *consul_kv-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Steve Gargan (@sgargan)
+     • Colin Nolan (@colin-nolan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *consul_kv-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/consul_kv_module.html

@@ -1,0 +1,202 @@
+DEPRECATED                   *katello*
+
+                                                      Removed in Ansible:
+                  version: 2.12
+        Why:      Replaced by re-designed individual modules living at https://github.com/theforeman/foreman-ansible-modules
+    Alternative:  https://github.com/theforeman/foreman-ansible-modules
+
+SYNOPSIS                   *katello-synopsis*
+
+     • Allows the management of Katello resources inside your Foreman server.
+
+REQUIREMENTS                   *katello-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • nailgun >= 0.28.0
+     • python >= 2.6
+     • datetime
+
+PARAMETERS                   *katello-parameters*
+
+    Parameter        Choices/Defaults                                                                               Comments
+                  Choices:                  action associated to the entity resource to set or edit in dictionary format.
+   action         • sync                    Possible Action in relation to Entitys.
+   -              • publish                 sync (available when entity=product or entity=repository)
+                  • promote                 publish (available when entity=content_view)
+                                            promote (available when entity=content_view)
+                  Choices:
+                  • repository
+                  • manifest
+   entity         • repository_set
+   - / required   • sync_plan               The Foreman resource that the action will be performed on (e.g. organization, host).
+                  • content_view
+                  • lifecycle_environment
+                  • activation_key
+                  • product
+                                            Parameters associated to the entity resource and action, to set or edit in dictionary format.
+                                            Each choice may be only available with specific entitys and actions.
+                                            Possible Choices are in the format of param_name ([entry,action,action,...],[entity,..],...).
+                                            The action "None" means no action specified.
+                                            Possible Params in relation to entity and action.
+                                            name ([product,sync,None], [repository,sync], [repository_set,None], [sync_plan,None],
+                                            [content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])
+                                            organization ([product,sync,None] ,[repository,sync,None], [repository_set,None], [sync_plan,None],
+                                            [content_view,promote,publish,None], [lifecycle_environment,None], [activation_key,None])
+   params                                   content ([manifest,None])
+   - / required                             product ([repository,sync,None], [repository_set,None], [sync_plan,None])
+                                            basearch ([repository_set,None])
+                                            releaserver ([repository_set,None])
+                                            sync_date ([sync_plan,None])
+                                            interval ([sync_plan,None])
+                                            repositories ([content_view,None])
+                                            from_environment ([content_view,promote])
+                                            to_environment([content_view,promote])
+                                            prior ([lifecycle_environment,None])
+                                            content_view ([activation_key,None])
+                                            lifecycle_environment ([activation_key,None])
+   password                                 Password for user accessing Foreman server.
+   - / required
+   server_url                               URL of Foreman server.
+   - / required
+   task_timeout Default:                    The timeout in seconds to wait for the started Foreman action to finish.
+   -            1000                        If the timeout is reached and the Foreman action did not complete, the ansible task fails. However the foreman action does not get canceled.
+   added in 2.7
+   username                                 Username on Foreman server.
+   - / required
+   verify_ssl     Choices:
+   boolean        • no ←                    verify the ssl/https connection (e.g for a valid certificate)
+                  • yes
+
+EXAMPLES                   *katello-examples*
+
+ ---
+ # Simple Example:
+
+ - name: Create Product
+   katello:
+       username: admin
+       password: admin
+       server_url: https://fakeserver.com
+       entity: product
+       params:
+         name: Centos 7
+   delegate_to: localhost
+
+ # Abstraction Example:
+ # katello.yml
+ ---
+ - name: "{{ name }}"
+   katello:
+       username: admin
+       password: admin
+       server_url: https://fakeserver.com
+       entity: "{{ entity }}"
+       params: "{{ params }}"
+   delegate_to: localhost
+
+ # tasks.yml
+ ---
+ - include: katello.yml
+   vars:
+     name: Create Dev Environment
+     entity: lifecycle_environment
+     params:
+       name: Dev
+       prior: Library
+       organization: Default Organization
+
+ - include: katello.yml
+   vars:
+     name: Create Centos Product
+     entity: product
+     params:
+       name: Centos 7
+       organization: Default Organization
+
+ - include: katello.yml
+   vars:
+     name: Create 7.2 Repository
+     entity: repository
+     params:
+       name: Centos 7.2
+       product: Centos 7
+       organization: Default Organization
+       content_type: yum
+       url: http://mirror.centos.org/centos/7/os/x86_64/
+
+ - include: katello.yml
+   vars:
+       name: Create Centos 7 View
+       entity: content_view
+       params:
+         name: Centos 7 View
+         organization: Default Organization
+         repositories:
+           - name: Centos 7.2
+             product: Centos 7
+
+ - include: katello.yml
+   vars:
+       name: Enable RHEL Product
+       entity: repository_set
+       params:
+         name: Red Hat Enterprise Linux 7 Server (RPMs)
+         product: Red Hat Enterprise Linux Server
+         organization: Default Organization
+         basearch: x86_64
+         releasever: 7
+
+ - include: katello.yml
+   vars:
+       name: Promote Contentview Environment with longer timeout
+       task_timeout: 10800
+       entity: content_view
+       action: promote
+       params:
+         name: MyContentView
+         organization: MyOrganisation
+         from_environment: Testing
+         to_environment: Production
+
+ # Best Practices
+
+ # In Foreman, things can be done in parallel.
+ # When a conflicting action is already running,
+ # the task will fail instantly instead of waiting for the already running action to complete.
+ # So you should use a "until success" loop to catch this.
+
+ - name: Promote Contentview Environment with increased Timeout
+   katello:
+   username: ansibleuser
+   password: supersecret
+   task_timeout: 10800
+   entity: content_view
+   action: promote
+   params:
+     name: MyContentView
+     organization: MyOrganisation
+     from_environment: Testing
+     to_environment: Production
+   register: task_result
+   until: task_result is success
+   retries: 9
+   delay: 120
+
+STATUS                   *katello-status*
+
+     • This module will be removed in version 2.12. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Eric D Helms (@ehelms)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *katello-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/katello_module.html

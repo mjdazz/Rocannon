@@ -1,0 +1,154 @@
+SYNOPSIS                   *mysql_info*
+
+     • Gathers information about MySQL servers.
+
+REQUIREMENTS                   *mysql_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyMySQL (Python 2.7 and Python 3.X), or
+     • MySQLdb (Python 2.x)
+
+PARAMETERS                   *mysql_info-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   ca_cert                            The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate as used by the server.
+   path                               aliases: ssl_ca
+   client_cert                        The path to a client public key certificate.
+   path                               aliases: ssl_cert
+   client_key                         The path to the client private key.
+   path                               aliases: ssl_key
+   config_file       Default:         Specify a config file from which user and password are to be read.
+   path              "~/.my.cnf"
+   connect_timeout   Default:         The connection timeout when connecting to the MySQL server.
+   integer           30
+                                      Limit the collected information by comma separated string or YAML list.
+   filter                             Allowable values are version, databases, settings, users, slave_status, slave_hosts, master_status, engines.
+   list /                             By default, collects all subsets.
+   elements=string                    You can use '!' before value (for example, !settings) to exclude it from the information.
+                                      If you pass including and excluding values to the filter, for example, filter=!settings,version, the excluding values, !settings in this case, will be ignored.
+   login_db                           Database name to connect to.
+   string                             It makes sense if login_user is allowed to connect to a specific database only.
+   login_host        Default:         Host running the database.
+   string            "localhost"
+   login_password                     The password used to authenticate with.
+   string
+   login_port        Default:         Port of the MySQL server. Requires login_host be defined as other than localhost if login_port is used.
+   integer           3306
+   login_unix_socket                  The path to a Unix domain socket for local connections.
+   string
+   login_user                         The username used to authenticate with.
+   string
+
+NOTES                   *mysql_info-notes*
+
+   Note
+
+     • Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) package on the remote host. The Python package may be installed with apt-get install python-pymysql (Ubuntu; see
+       apt) or yum install python2-PyMySQL (RHEL/CentOS/Fedora; see yum). You can also use dnf install python2-PyMySQL for newer versions of Fedora; see dnf.
+     • Both login_password and login_user are required when you are passing credentials. If none are present, the module will attempt to read the credentials from ~/.my.cnf, and finally fall back
+       to using the MySQL default login of ‘root’ with no password.
+
+EXAMPLES                   *mysql_info-examples*
+
+ # Display info from mysql-hosts group (using creds from ~/.my.cnf to connect):
+ # ansible mysql-hosts -m mysql_info
+
+ # Display only databases and users info:
+ # ansible mysql-hosts -m mysql_info -a 'filter=databases,users'
+
+ # Display only slave status:
+ # ansible standby -m mysql_info -a 'filter=slave_status'
+
+ # Display all info from databases group except settings:
+ # ansible databases -m mysql_info -a 'filter=!settings'
+
+ - name: Collect all possible information using passwordless root access
+   mysql_info:
+     login_user: root
+
+ - name: Get MySQL version with non-default credentials
+   mysql_info:
+     login_user: mysuperuser
+     login_password: mysuperpass
+     filter: version
+
+ - name: Collect all info except settings and users by root
+   mysql_info:
+     login_user: root
+     login_password: rootpass
+     filter: "!settings,!users"
+
+ - name: Collect info about databases and version using ~/.my.cnf as a credential file
+   become: yes
+   mysql_info:
+     filter:
+     - databases
+     - version
+
+ - name: Collect info about databases and version using ~alice/.my.cnf as a credential file
+   become: yes
+   mysql_info:
+     config_file: /home/alice/.my.cnf
+     filter:
+     - databases
+
+RETURN VALUES                   *mysql_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key              Returned                                                                                 Description
+   databases                               Information about databases.
+   dictionary    if not excluded by filter Sample:
+                                           [{'mysql': {'size': 656594}, 'information_schema': {'size': 73728}}]
+      size                                 Database size in bytes.
+      dictionary if not excluded by filter Sample:
+                                           {'size': 656594}
+   engines                                 Information about the server's storage engines.
+   dictionary    if not excluded by filter Sample:
+                                           [{'CSV': {'Comment': 'CSV storage engine', 'Savepoints': 'NO', 'Support': 'YES', 'Transactions': 'NO', 'XA': 'NO'}}]
+   master_status                           Master status information.
+   dictionary    if master                 Sample:
+                                           [{'Binlog_Do_DB': '', 'Binlog_Ignore_DB': 'mysql', 'File': 'mysql-bin.000001', 'Position': 769}]
+   settings                                Global settings (variables) information.
+   dictionary    if not excluded by filter Sample:
+                                           [{'innodb_open_files': 300, 'innodb_page_size"': 16384}]
+   slave_hosts                             Slave status information.
+   dictionary    if master                 Sample:
+                                           [{'2': {'Host': '', 'Master_id': 1, 'Port': 3306}}]
+   slave_status                            Slave status information.
+   dictionary    if standby                Sample:
+                                           [{'192.168.1.101': {'3306': {'replication_user': {'Connect_Retry': 60, 'Exec_Master_Log_Pos': 769, 'Last_Errno': 0}}}}]
+   users                                   Users information.
+   dictionary    if not excluded by filter Sample:
+                                           [{'localhost': {'root': {'Alter_priv': 'Y', 'Alter_routine_priv': 'Y'}}}]
+   version                                 Database server version.
+   dictionary    if not excluded by filter Sample:
+                                           {'version': {'major': 5, 'minor': 5, 'release': 60}}
+      major                                Major server version.
+      integer    if not excluded by filter Sample:
+                                           5
+      minor                                Minor server version.
+      integer    if not excluded by filter Sample:
+                                           5
+      release                              Release server version.
+      integer    if not excluded by filter Sample:
+                                           60
+
+STATUS                   *mysql_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *mysql_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/mysql_info_module.html

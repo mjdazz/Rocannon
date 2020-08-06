@@ -1,0 +1,219 @@
+SYNOPSIS                   *pamd*
+
+     • Edit PAM service’s type, control, module path and module arguments.
+     • In order for a PAM rule to be modified, the type, control and module_path must match an existing rule. See man(5) pam.d for details.
+
+PARAMETERS                   *pamd-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   backup              Choices:
+   boolean             • no ←           Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+   added in 2.6        • yes
+   control                              The control of the PAM rule being modified.
+   string / required                    This may be a complicated control with brackets. If this is the case, be sure to put "[bracketed controls]" in quotes.
+                                        The type, control and module_path all must match a rule to be modified.
+                                        When state is updated, the module_arguments will replace existing module_arguments.
+   module_arguments                     When state is args_absent args matching those listed in module_arguments will be removed.
+   list                                 When state is args_present any args listed in module_arguments are added if missing from the existing rule.
+                                        Furthermore, if the module argument takes a value denoted by =, the value will be changed to that specified in module_arguments.
+   module_path                          The module path of the PAM rule being modified.
+   string / required                    The type, control and module_path all must match a rule to be modified.
+   name                                 The name generally refers to the PAM service file to change, for example system-auth.
+   string / required
+   new_control                          The new control to assign to the new rule.
+   string
+   new_module_path                      The new module path to be assigned to the new rule.
+   string
+                       Choices:
+                       • account
+                       • -account
+   new_type            • auth
+   string              • -auth          The new type to assign to the new rule.
+                       • password
+                       • -password
+                       • session
+                       • -session
+   path              Default:           This is the path to the PAM service files.
+   path              "/etc/pam.d"
+                       Choices:         The default of updated will modify an existing rule if type, control and module_path all match an existing rule.
+                       • absent         With before, the new rule will be inserted before a rule matching type, control and module_path.
+   state               • before         Similarly, with after, the new rule will be inserted after an existing rulematching type, control and module_path.
+   string              • after          With either before or after new_type, new_control, and new_module_path must all be specified.
+                       • args_absent    If state is args_absent or args_present, new_type, new_control, and new_module_path will be ignored.
+                       • args_present   State absent will remove the rule. The 'absent' state was added in Ansible 2.4.
+                       • updated ←
+                       Choices:
+                       • account
+                       • -account
+   type                • auth           The type of the PAM rule being modified.
+   string / required   • -auth          The type, control and module_path all must match a rule to be modified.
+                       • password
+                       • -password
+                       • session
+                       • -session
+
+EXAMPLES                   *pamd-examples*
+
+ - name: Update pamd rule's control in /etc/pam.d/system-auth
+   pamd:
+     name: system-auth
+     type: auth
+     control: required
+     module_path: pam_faillock.so
+     new_control: sufficient
+
+ - name: Update pamd rule's complex control in /etc/pam.d/system-auth
+   pamd:
+     name: system-auth
+     type: session
+     control: '[success=1 default=ignore]'
+     module_path: pam_succeed_if.so
+     new_control: '[success=2 default=ignore]'
+
+ - name: Insert a new rule before an existing rule
+   pamd:
+     name: system-auth
+     type: auth
+     control: required
+     module_path: pam_faillock.so
+     new_type: auth
+     new_control: sufficient
+     new_module_path: pam_faillock.so
+     state: before
+
+ - name: Insert a new rule pam_wheel.so with argument 'use_uid' after an \
+         existing rule pam_rootok.so
+   pamd:
+     name: su
+     type: auth
+     control: sufficient
+     module_path: pam_rootok.so
+     new_type: auth
+     new_control: required
+     new_module_path: pam_wheel.so
+     module_arguments: 'use_uid'
+     state: after
+
+ - name: Remove module arguments from an existing rule
+   pamd:
+     name: system-auth
+     type: auth
+     control: required
+     module_path: pam_faillock.so
+     module_arguments: ''
+     state: updated
+
+ - name: Replace all module arguments in an existing rule
+   pamd:
+     name: system-auth
+     type: auth
+     control: required
+     module_path: pam_faillock.so
+     module_arguments: 'preauth
+         silent
+         deny=3
+         unlock_time=604800
+         fail_interval=900'
+     state: updated
+
+ - name: Remove specific arguments from a rule
+   pamd:
+     name: system-auth
+     type: session
+     control: '[success=1 default=ignore]'
+     module_path: pam_succeed_if.so
+     module_arguments: crond,quiet
+     state: args_absent
+
+ - name: Ensure specific arguments are present in a rule
+   pamd:
+     name: system-auth
+     type: session
+     control: '[success=1 default=ignore]'
+     module_path: pam_succeed_if.so
+     module_arguments: crond,quiet
+     state: args_present
+
+ - name: Ensure specific arguments are present in a rule (alternative)
+   pamd:
+     name: system-auth
+     type: session
+     control: '[success=1 default=ignore]'
+     module_path: pam_succeed_if.so
+     module_arguments:
+     - crond
+     - quiet
+     state: args_present
+
+ - name: Module arguments requiring commas must be listed as a Yaml list
+   pamd:
+     name: special-module
+     type: account
+     control: required
+     module_path: pam_access.so
+     module_arguments:
+     - listsep=,
+     state: args_present
+
+ - name: Update specific argument value in a rule
+   pamd:
+     name: system-auth
+     type: auth
+     control: required
+     module_path: pam_faillock.so
+     module_arguments: 'fail_interval=300'
+     state: args_present
+
+ - name: Add pam common-auth rule for duo
+   pamd:
+     name: common-auth
+     new_type: auth
+     new_control: '[success=1 default=ignore]'
+     new_module_path: '/lib64/security/pam_duo.so'
+     state: after
+     type: auth
+     module_path: pam_sss.so
+     control: 'requisite'
+
+RETURN VALUES                   *pamd-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   action                    That action that was taken and is one of: update_rule, insert_before_rule, insert_after_rule, args_present, args_absent, absent. This was available in Ansible 2.4 and
+   string           always   removed in Ansible 2.8
+   added in 2.4              Sample:
+                             update_rule
+   backupdest
+   string           success  The file name of the backup file, if created.
+   added in 2.6
+   change_count              How many rules were changed.
+   integer          success  Sample:
+   added in 2.4              1
+   dest                      Path to pam.d service that was changed. This is only available in Ansible 2.3 and was removed in Ansible 2.4.
+   string           success  Sample:
+                             /etc/pam.d/system-auth
+   new_rule                  The changes to the rule. This was available in Ansible 2.4 and Ansible 2.5. It was removed in Ansible 2.6.
+   string           success  Sample:
+   added in 2.4              None None None sha512 shadow try_first_pass use_authtok
+   updated_rule_(n)          The rule(s) that was/were changed. This is only available in Ansible 2.4 and was removed in Ansible 2.5.
+   string           success  Sample:
+   added in 2.4              ['password sufficient pam_unix.so sha512 shadow try_first_pass use_authtok']
+
+STATUS                   *pamd-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kenneth D. Evensen (@kevensen)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *pamd-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/pamd_module.html

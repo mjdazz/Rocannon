@@ -1,0 +1,95 @@
+SYNOPSIS                   *win_wait_for_process*
+
+     • Waiting for a process to start or stop.
+     • This is useful when Windows services behave poorly and do not enumerate external dependencies in their manifest.
+
+PARAMETERS                   *win_wait_for_process-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   owner                                 The owner of the process.
+   string                                Requires PowerShell version 4.0 or newer.
+   pid                                   The PID of the process.
+   integer
+   post_wait_delay      Default:         Seconds to wait after checking for processes.
+   integer              0
+   pre_wait_delay       Default:         Seconds to wait before checking processes.
+   integer              0
+   process_min_count    Default:         Minimum number of process matching the supplied pattern to satisfy present condition.
+   integer              1                Only applies to present.
+   process_name_exact                    The name of the process(es) for which to wait. The name of the process(es) should not include the file extension suffix.
+   list
+   process_name_pattern                  RegEx pattern matching desired process(es).
+   string
+   sleep                Default:         Number of seconds to sleep between checks.
+   integer              1                Only applies when waiting for a process to start. Waiting for a process to start does not have a native non-polling mechanism. Waiting for a stop uses
+                                         native PowerShell and does not require polling.
+                          Choices:       When checking for a running process present will block execution until the process exists, or until the timeout has been reached. absent will block
+   state                  • absent       execution until the process no longer exists, or until the timeout has been reached.
+   string                 • present ←    When waiting for present, the module will return changed only if the process was not present on the initial check but became present on subsequent checks.
+                                         If, while waiting for absent, new processes matching the supplied pattern are started, these new processes will not be included in the action.
+   timeout              Default:         The maximum number of seconds to wait for a for a process to start or stop before erroring out.
+   integer              300
+
+SEE ALSO                   *win_wait_for_process-see also*
+
+   See also
+
+   wait_for – Waits for a condition before continuing
+   The official documentation on the wait_for module.
+
+   win_wait_for – Waits for a condition before continuing
+   The official documentation on the win_wait_for module.
+
+EXAMPLES                   *win_wait_for_process-examples*
+
+ - name: Wait 300 seconds for all Oracle VirtualBox processes to stop. (VBoxHeadless, VirtualBox, VBoxSVC)
+   win_wait_for_process:
+     process_name_pattern: 'v(irtual)?box(headless|svc)?'
+     state: absent
+     timeout: 500
+
+ - name: Wait 300 seconds for 3 instances of cmd to start, waiting 5 seconds between each check
+   win_wait_for_process:
+     process_name_exact: cmd
+     state: present
+     timeout: 500
+     sleep: 5
+     process_min_count: 3
+
+RETURN VALUES                   *win_wait_for_process-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                  Returned                                                                               Description
+   elapsed                                        The elapsed seconds between the start of poll and the end of the module.
+   float             always                       Sample:
+                                                  3.14159265
+   matched_processes always                       List of matched processes (either stopped or started).
+   complex
+         name                                     The name of the matched process.
+         string      always                       Sample:
+                                                  svchost
+         owner                                    The owner of the matched process.
+         string      when supported by PowerShell Sample:
+                                                  NT AUTHORITY\SYSTEM
+         pid                                      The PID of the matched process.
+         integer     always                       Sample:
+                                                  7908
+
+STATUS                   *win_wait_for_process-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Charles Crossan (@crossan007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_wait_for_process-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_wait_for_process_module.html

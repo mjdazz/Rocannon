@@ -1,0 +1,87 @@
+SYNOPSIS                   *jenkins_script*
+
+     • The jenkins_script module takes a script plus a dict of values to use within the script and returns the result of the script being run.
+
+PARAMETERS                   *jenkins_script-parameters*
+
+     Parameter       Choices/Defaults                                                                              Comments
+   args                                   A dict of key-value pairs used in formatting the script using string.Template (see https://docs.python.org/2/library/string.html#template-strings).
+   -
+   password                               The password to connect to the jenkins server with.
+   -
+   script                                 The groovy script to be executed. This gets passed as a string Template if args is defined.
+   - / required
+   timeout        Default:
+   -              10                      The request timeout in seconds
+   added in 2.4
+   url            Default:                The jenkins server to execute the script against. The default is a local jenkins instance that is not being proxied through a webserver.
+   -              "http://localhost:8080"
+   user                                   The username to connect to the jenkins server with.
+   -
+   validate_certs   Choices:              If set to no, the SSL certificates will not be validated. This should only set to no used on personally controlled sites using self-signed certificates as
+   boolean          • no                  it avoids verifying the source site.
+                    • yes ←
+
+NOTES                   *jenkins_script-notes*
+
+   Note
+
+     • Since the script can do anything this does not report on changes. Knowing the script is being run it’s important to set changed_when for the ansible output to be clear on any alterations
+       made.
+
+EXAMPLES                   *jenkins_script-examples*
+
+ - name: Obtaining a list of plugins
+   jenkins_script:
+     script: 'println(Jenkins.instance.pluginManager.plugins)'
+     user: admin
+     password: admin
+
+ - name: Setting master using a variable to hold a more complicate script
+   set_fact:
+     setmaster_mode: |
+         import jenkins.model."
+         instance = Jenkins.getInstance()
+         instance.setMode(${jenkins_mode})
+         instance.save()
+
+ - name: use the variable as the script
+   jenkins_script:
+     script: "{{ setmaster_mode }}"
+     args:
+       jenkins_mode: Node.Mode.EXCLUSIVE
+
+ - name: interacting with an untrusted HTTPS connection
+   jenkins_script:
+     script: "println(Jenkins.instance.pluginManager.plugins)"
+     user: admin
+     password: admin
+     url: https://localhost
+     validate_certs: no
+
+RETURN VALUES                   *jenkins_script-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   output          Result of script
+   string success  Sample:
+                   Result: true
+
+STATUS                   *jenkins_script-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • James Hogarth (@hogarthj)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *jenkins_script-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/jenkins_script_module.html

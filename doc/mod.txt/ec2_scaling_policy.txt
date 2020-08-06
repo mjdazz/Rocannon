@@ -1,35 +1,91 @@
-SYNOPSIS                           *ec2_scaling_policy*
+SYNOPSIS                   *ec2_scaling_policy*
 
-New in version 1.6.
+     • Can create or delete scaling policies for autoscaling groups
+     • Referenced autoscaling groups must already exist
 
-Can create or delete scaling policies for autoscaling groups Referenced autoscaling groups must already exist
+REQUIREMENTS                   *ec2_scaling_policy-requirements*
 
-EXAMPLES                           *ec2_scaling_policy-examples*
->
-    - ec2_scaling_policy:
-        state: present
-        region: US-XXX
-        name: "scaledown-policy"
-        adjustment_type: "ChangeInCapacity"
-        asg_name: "slave-pool"
-        scaling_adjustment: -1
-        min_adjustment_step: 1
-        cooldown: 300
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *ec2_scaling_policy-parameters*
+
+            Parameter                Choices/Defaults                                                                       Comments
+                                  Choices:
+   adjustment_type                • ChangeInCapacity        The type of change in capacity of the autoscaling group
+   -                              • ExactCapacity
+                                  • PercentChangeInCapacity
+   asg_name                                                 Name of the associated autoscaling group
+   - / required
+   aws_access_key                                           AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                                   aliases: ec2_access_key, access_key
+   aws_secret_key                                           AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                                   aliases: ec2_secret_key, secret_key
+   cooldown                                                 The minimum period of time between which autoscaling actions can take place
+   -
+   debug_botocore_endpoint_logs   Choices:                  Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set
+   boolean                        • no ←                    to the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes                     ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                                  Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                                   required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable,
+                                                            if any, is used.
+   min_adjustment_step                                      Minimum amount of adjustment when policy is triggered
+   -
+   name                                                     Unique name for the scaling policy
+   - / required
+   profile                                                  Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                                   The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                                   http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                            aliases: aws_region, ec2_region
+   scaling_adjustment                                       The amount by which the autoscaling group is adjusted by the policy
+   -
+   security_token                                           AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                                   aliases: access_token
+   state                          Choices:
+   - / required                   • present                 register or deregister the policy
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no                      When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_scaling_policy-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_scaling_policy-examples*
+
+ - ec2_scaling_policy:
+     state: present
+     region: US-XXX
+     name: "scaledown-policy"
+     adjustment_type: "ChangeInCapacity"
+     asg_name: "slave-pool"
+     scaling_adjustment: -1
+     min_adjustment_step: 1
+     cooldown: 300
+
+STATUS                   *ec2_scaling_policy-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Zacharie Eakin (@Zeekin)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_scaling_policy-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_scaling_policy_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_scaling_policy_module.html

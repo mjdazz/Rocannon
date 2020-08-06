@@ -1,0 +1,117 @@
+SYNOPSIS                   *bigip_config*
+
+     • Manages a BIG-IP configuration by allowing TMSH commands that modify running configuration, or merge SCF formatted files into the running configuration. Additionally, this module is of
+       significant importance because it allows you to save your running configuration to disk. Since the F5 module only manipulate running configuration, it is important that you utilize this
+       module to save that running config.
+
+PARAMETERS                   *bigip_config-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   merge_content                    Loads the specified configuration that you want to merge into the running configuration. This is equivalent to using the tmsh command load sys config
+   string                           from-terminal merge.
+                                    If you need to read configuration from a file or template, use Ansible's file or template lookup plugins respectively.
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   reset             Choices:       Loads the default configuration on the device.
+   boolean           • no ←         If this option is specified, the default configuration will be loaded before any commands or other provided configuration is run.
+                     • yes
+                     Choices:       The save argument instructs the module to save the running-config to startup-config.
+   save              • no           This operation is performed after any changes are made to the current running config. If no changes are made, the configuration is still saved to the startup
+   boolean           • yes ←        config.
+                                    This option will always cause the module to return changed.
+   verify            Choices:       Validates the specified configuration to see whether they are valid to replace the running configuration.
+   boolean           • no ←         The running configuration will not be changed.
+                     • yes          When this parameter is set to yes, no change will be reported by the module.
+
+NOTES                   *bigip_config-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_config-examples*
+
+ - name: Save the running configuration of the BIG-IP
+   bigip_config:
+     save: yes
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+ - name: Reset the BIG-IP configuration, for example, to RMA the device
+   bigip_config:
+     reset: yes
+     save: yes
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+ - name: Load an SCF configuration
+   bigip_config:
+     merge_content: "{{ lookup('file', '/path/to/config.scf') }}"
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   stdout                The set of responses from the options
+   list         always   Sample:
+                         ['...', '...']
+   stdout_lines          The value of stdout split into a list
+   list         always   Sample:
+                         [['...', '...'], ['...'], ['...']]
+
+STATUS                   *bigip_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_config_module.html

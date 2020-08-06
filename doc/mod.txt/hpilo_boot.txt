@@ -1,0 +1,92 @@
+SYNOPSIS                   *hpilo_boot*
+
+     • This module boots a system through its HP iLO interface. The boot media can be one of: cdrom, floppy, hdd, network or usb.
+     • This module requires the hpilo python module.
+
+REQUIREMENTS                   *hpilo_boot-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-hpilo
+
+PARAMETERS                   *hpilo_boot-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   force          Choices:        Whether to force a reboot (even when the system is already booted).
+   boolean        • no ←          As a safeguard, without force, hpilo_boot will refuse to reboot a server that is already running.
+                  • yes
+   host                           The HP iLO hostname/address that is linked to the physical system.
+   - / required
+                                  The URL of a cdrom, floppy or usb boot media image. protocol://username:[email protected]:port/filename
+   image                          protocol is either 'http' or 'https'
+   -                              username:password is optional
+                                  port is optional
+   login        Default:          The login name to authenticate to the HP iLO interface.
+   -            "Administrator"
+                  Choices:
+                  • cdrom
+   media          • floppy
+   -              • hdd           The boot media to boot the system from
+                  • network
+                  • normal
+                  • usb
+   password     Default:          The password to authenticate to the HP iLO interface.
+   -            "admin"
+                  Choices:
+   ssl_version    • SSLv3
+   -              • SSLv23        Change the ssl_version used.
+   added in 2.4   • TLSv1 ←
+                  • TLSv1_1
+                  • TLSv1_2
+                  Choices:        The state of the boot media.
+                  • boot_always   no_boot: Do not boot from the device
+   state          • boot_once ←   boot_once: Boot from the device once and then notthereafter
+   -              • connect       boot_always: Boot from the device each time the server is rebooted
+                  • disconnect    connect: Connect the virtual media device and set to boot_always
+                  • no_boot       disconnect: Disconnects the virtual media device and set to no_boot
+                  • poweroff      poweroff: Power off the server
+
+NOTES                   *hpilo_boot-notes*
+
+   Note
+
+     • To use a USB key image you need to specify floppy as boot media.
+     • This module ought to be run from a system that can access the HP iLO interface directly, either by using local_action or using delegate_to.
+
+EXAMPLES                   *hpilo_boot-examples*
+
+ - name: Task to boot a system using an ISO from an HP iLO interface only if the system is an HP server
+   hpilo_boot:
+     host: YOUR_ILO_ADDRESS
+     login: YOUR_ILO_LOGIN
+     password: YOUR_ILO_PASSWORD
+     media: cdrom
+     image: http://some-web-server/iso/boot.iso
+   when: cmdb_hwmodel.startswith('HP ')
+   delegate_to: localhost
+
+ - name: Power off a server
+   hpilo_boot:
+     host: YOUR_ILO_HOST
+     login: YOUR_ILO_LOGIN
+     password: YOUR_ILO_PASSWORD
+     state: poweroff
+   delegate_to: localhost
+
+STATUS                   *hpilo_boot-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *hpilo_boot-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/hpilo_boot_module.html

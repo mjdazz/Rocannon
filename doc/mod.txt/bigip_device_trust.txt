@@ -1,0 +1,105 @@
+SYNOPSIS                   *bigip_device_trust*
+
+     • Manage the trust relationships between BIG-IPs. Devices, once peered, cannot be updated. If updating is needed, the peer must first be removed before it can be re-added to the trust.
+
+PARAMETERS                   *bigip_device_trust-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   peer_hostname                    The hostname that you want to associate with the device. This value will be used to easily distinguish this device in BIG-IP configuration.
+   string                           When trusting a new device, if this parameter is not specified, the value of peer_server will be used as a default.
+   peer_password                    The password of the API username of the remote peer device that you are trusting. If this value is not specified, then the value of password, or the environment
+   string                           variable F5_PASSWORD will be used.
+   peer_server                      The peer address to connect to and trust for synchronizing configuration. This is typically the management address of the remote device, but may also be a Self
+   string /                         IP.
+   required
+   peer_user                        The API username of the remote peer device that you are trusting. Note that the CLI user cannot be used unless it too has an API account. If this value is not
+   string                           specified, then the value of user, or the environment variable F5_USER will be used.
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:       When present, ensures the specified devices are trusted.
+   string            • absent       When absent, removes the device trusts.
+                     • present ←
+                                    Specifies whether the device you are adding is a Peer or a Subordinate. The default is peer.
+   type              Choices:       The difference between the two is a matter of mitigating risk of compromise.
+   string            • peer ←       A subordinate device cannot sign a certificate for another device.
+                     • subordinate  In the case where the security of an authority device in a trust domain is compromised, the risk of compromise is minimized for any subordinate device.
+                                    Designating devices as subordinate devices is recommended for device groups with a large number of member devices, where the risk of compromise is high.
+
+NOTES                   *bigip_device_trust-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_device_trust-examples*
+
+ - name: Add trusts for all peer devices to Active device
+   bigip_device_trust:
+     peer_server: "{{ item.ansible_host }}"
+     peer_hostname: "{{ item.inventory_hostname }}"
+     peer_user: "{{ item.bigip_username }}"
+     peer_password: "{{ item.bigip_password }}"
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   loop: hostvars
+   when: inventory_hostname in groups['master']
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_device_trust-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   peer_hostname          The remote hostname used to identify the trusted peer.
+   string        changed  Sample:
+                          test-bigip-02.localhost.localdomain
+   peer_server            The remote IP address of the trusted peer.
+   string        changed  Sample:
+                          10.0.2.15
+
+STATUS                   *bigip_device_trust-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_device_trust-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_device_trust_module.html

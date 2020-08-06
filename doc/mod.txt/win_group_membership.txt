@@ -1,0 +1,92 @@
+SYNOPSIS                   *win_group_membership*
+
+     • Allows the addition and removal of local, service and domain users, and domain groups from a local group.
+
+PARAMETERS                   *win_group_membership-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+                                      A list of members to ensure are present/absent from the group.
+   members                            Accepts local users as .\username, and SERVERNAME\username.
+   list / required                    Accepts domain users and groups as DOMAIN\username and [email protected]
+                                      Accepts service users as NT AUTHORITY\username.
+                                      Accepts all local, domain and service user types as username, favoring domain lookups when in a domain.
+   name                               Name of the local group to manage membership on.
+   string / required
+                       Choices:       Desired state of the members in the group.
+   state               • absent       pure was added in Ansible 2.8.
+   string              • present ←    When state is pure, only the members specified will exist, and all other existing members not specified are removed.
+                       • pure
+
+SEE ALSO                   *win_group_membership-see also*
+
+   See also
+
+   win_domain_group – Creates, modifies or removes domain groups
+   The official documentation on the win_domain_group module.
+
+   win_domain_membership – Manage domain/workgroup membership for a Windows host
+   The official documentation on the win_domain_membership module.
+
+   win_group – Add and remove local groups
+   The official documentation on the win_group module.
+
+EXAMPLES                   *win_group_membership-examples*
+
+ - name: Add a local and domain user to a local group
+   win_group_membership:
+     name: Remote Desktop Users
+     members:
+       - NewLocalAdmin
+       - DOMAIN\TestUser
+     state: present
+
+ - name: Remove a domain group and service user from a local group
+   win_group_membership:
+     name: Backup Operators
+     members:
+       - DOMAIN\TestGroup
+       - NT AUTHORITY\SYSTEM
+     state: absent
+
+ - name: Ensure only a domain user exists in a local group
+   win_group_membership:
+     name: Remote Desktop Users
+     members:
+       - DOMAIN\TestUser
+     state: pure
+
+RETURN VALUES                   *win_group_membership-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key             Returned                                                                                    Description
+   added                                A list of members added when state is present or pure; this is empty if no members are added.
+   list    success and state is present Sample:
+                                        ['SERVERNAME\\NewLocalAdmin', 'DOMAIN\\TestUser']
+   members                              A list of all local group members at completion; this is empty if the group contains no members.
+   list    success                      Sample:
+                                        ['DOMAIN\\TestUser', 'SERVERNAME\\NewLocalAdmin']
+   name                                 The name of the target local group.
+   string  always                       Sample:
+                                        Administrators
+   removed                              A list of members removed when state is absent or pure; this is empty if no members are removed.
+   list    success and state is absent  Sample:
+                                        ['DOMAIN\\TestGroup', 'NT AUTHORITY\\SYSTEM']
+
+STATUS                   *win_group_membership-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Saraceni (@andrewsaraceni)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_group_membership-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_group_membership_module.html

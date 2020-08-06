@@ -1,24 +1,99 @@
-SYNOPSIS                           *script*
+SYNOPSIS                   *script*
 
-The script module takes the script name followed by a list of space-delimited arguments. The local script at path will be transferred to the remote node and then executed. The given script will
-be processed through the shell environment on the remote node. This module does not require python on the remote system, much like the raw module.
+     • The script module takes the script name followed by a list of space-delimited arguments.
+     • Either a free form command or cmd parameter is required, see the examples.
+     • The local script at path will be transferred to the remote node and then executed.
+     • The given script will be processed through the shell environment on the remote node.
+     • This module does not require python on the remote system, much like the raw module.
+     • This module is also supported for Windows targets.
 
-EXAMPLES                           *script-examples*
->
-    # Example from Ansible Playbooks
-    - script: /some/local/script.sh --some-arguments 1234
-   
-    # Run a script that creates a file, but only if the file is not yet created
-    - script: /some/local/create_file.sh --some-arguments 1234 creates=/the/created/file.txt
-   
-    # Run a script that removes a file, but only if the file is not yet removed
-    - script: /some/local/remove_file.sh --some-arguments 1234 removes=/the/removed/file.txt
-   
-      Note
-   
-      It is usually preferable to write Ansible modules than pushing scripts. Convert your script to an Ansible module for bonus points!
-   
+PARAMETERS                   *script-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   chdir
+   -                             Change into this directory on the remote node before running the script.
+   added in 2.4
+   cmd                           Path to the local script to run followed by optional arguments.
+   string
+   creates                       A filename on the remote node, when it already exists, this step will not be run.
+   -
+   decrypt        Choices:
+   boolean        • no           This option controls the autodecryption of source files using vault.
+   added in 2.4   • yes ←
+   executable
+   -                             Name or path of a executable to invoke the script with.
+   added in 2.6
+   free_form                     Path to the local script file followed by optional arguments.
+   -
+   removes                       A filename on the remote node, when it does not exist, this step will not be run.
+   -
+
+NOTES                   *script-notes*
+
+   Note
+
+     • It is usually preferable to write Ansible modules rather than pushing scripts. Convert your script to an Ansible module for bonus points!
+     • The ssh connection plugin will force pseudo-tty allocation via -tt when scripts are executed. Pseudo-ttys do not have a stderr channel and all stderr is sent to stdout. If you depend on
+       separated stdout and stderr result keys, please switch to a copy+command set of tasks instead of using script.
+     • If the path to the local script contains spaces, it needs to be quoted.
+     • This module is also supported for Windows targets.
+
+SEE ALSO                   *script-see also*
+
+   See also
+
+   shell – Execute shell commands on targets
+   The official documentation on the shell module.
+
+   win_shell – Execute shell commands on target hosts
+   The official documentation on the win_shell module.
+
+EXAMPLES                   *script-examples*
+
+ - name: Run a script with arguments (free form)
+   script: /some/local/script.sh --some-argument 1234
+
+ - name: Run a script with arguments (using 'cmd' parameter)
+   script:
+     cmd: /some/local/script.sh --some-argument 1234
+
+ - name: Run a script only if file.txt does not exist on the remote node
+   script: /some/local/create_file.sh --some-argument 1234
+   args:
+     creates: /the/created/file.txt
+
+ - name: Run a script only if file.txt exists on the remote node
+   script: /some/local/remove_file.sh --some-argument 1234
+   args:
+     removes: /the/removed/file.txt
+
+ - name: Run a script using an executable in a non-system path
+   script: /some/local/script
+   args:
+     executable: /some/remote/executable
+
+ - name: Run a script using an executable in a system path
+   script: /some/local/script.py
+   args:
+     executable: python3
+
+STATUS                   *script-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *script-red hat support*
+
+     • Ansible Core Team
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *script-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/script_module.html
+https://docs.ansible.com/ansible/latest/modules/script_module.html

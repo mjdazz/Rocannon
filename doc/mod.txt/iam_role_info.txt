@@ -1,0 +1,137 @@
+SYNOPSIS                   *iam_role_info*
+
+     • Gathers information about IAM roles
+     • This module was called iam_role_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: iam_role_facts
+
+REQUIREMENTS                   *iam_role_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *iam_role_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   name                                          Name of a role to search for
+   -                                             Mutually exclusive with prefix
+                                                 aliases: role_name
+   path_prefix                                   Prefix of role path to restrict IAM role search for
+   -                                             Mutually exclusive with name
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *iam_role_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *iam_role_info-examples*
+
+ # find all existing IAM roles
+ - iam_role_info:
+   register: result
+
+ # describe a single role
+ - iam_role_info:
+     name: MyIAMRole
+
+ # describe all roles matching a path prefix
+ - iam_role_info:
+     path_prefix: /application/path
+
+RETURN VALUES                   *iam_role_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key              Returned                                                                         Description
+   iam_roles                     always   List of IAM roles
+   complex
+     arn                                  Amazon Resource Name for IAM role
+     string                      always   Sample:
+                                          arn:aws:iam::123456789012:role/AnsibleTestRole
+     assume_role_policy_document always   Policy Document describing what can assume the role
+     string
+     create_date                          Date IAM role was created
+     string                      always   Sample:
+                                          2017-10-23T00:05:08+00:00
+     inline_policies             always   List of names of inline policies
+     list
+     instance_profiles           always   List of attached instance profiles
+     complex
+         arn                              Amazon Resource Name for the instance profile
+         string                  always   Sample:
+                                          arn:aws:iam::123456789012:instance-profile/AnsibleTestEC2Policy
+         create_date                      Date instance profile was created
+         string                  always   Sample:
+                                          2017-10-23T00:05:08+00:00
+         instance_profile_id              Amazon Identifier for the instance profile
+         string                  always   Sample:
+                                          AROAII7ABCD123456EFGH
+         instance_profile_name            Name of instance profile
+         string                  always   Sample:
+                                          AnsibleTestEC2Policy
+         path                             Path of instance profile
+         string                  always   Sample:
+                                          /
+         roles                   always   List of roles associated with this instance profile
+         list
+     managed_policies            always   List of attached managed policies
+     complex
+         policy_arn                       Amazon Resource Name for the policy
+         string                  always   Sample:
+                                          arn:aws:iam::123456789012:policy/AnsibleTestEC2Policy
+         policy_name                      Name of managed policy
+         string                  always   Sample:
+                                          AnsibleTestEC2Policy
+     path                                 Path of role
+     string                      always   Sample:
+                                          /
+     role_id                              Amazon Identifier for the role
+     string                      always   Sample:
+                                          AROAII7ABCD123456EFGH
+     role_name                            Name of the role
+     string                      always   Sample:
+                                          AnsibleTestRole
+
+STATUS                   *iam_role_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iam_role_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iam_role_info_module.html

@@ -1,0 +1,127 @@
+SYNOPSIS                   *bigiq_regkey_license_assignment*
+
+     • Manages the assignment of regkey licenses on a BIG-IQ. Assignment means that the license is assigned to a BIG-IP, or, it needs to be assigned to a BIG-IP. Additionally, this module supported
+       revoking the assignments from BIG-IP devices.
+
+PARAMETERS                   *bigiq_regkey_license_assignment-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+                                    When managed is no, specifies the address, or hostname, where the BIG-IQ can reach the remote device to register.
+   device                           When managed is yes, specifies the managed device, or device UUID, that you want to register.
+   string                           If managed is yes, it is very important that you do not have more than one device with the same name. BIG-IQ internally recognizes devices by their ID, and
+                                    therefore, this module's cannot guarantee that the correct device will be registered. The device returned is the device that will be used.
+   device_password                  The password of the device_username.
+   string                           When managed is no, this parameter is required.
+   device_port     Default:         Specifies the port of the remote device to connect to.
+   integer         443              If this parameter is not specified, the default of 443 will be used.
+   device_username                  The username used to connect to the remote device.
+   string                           This username should be one that has sufficient privileges on the remote device to do licensing. Usually this is the Administrator role.
+                                    When managed is no, this parameter is required.
+   key
+   string /                         The registration key that you want to assign from the pool.
+   required
+   managed           Choices:       Whether the specified device is a managed or un-managed device.
+   boolean           • no           When state is present, this parameter is required.
+                     • yes
+   pool
+   string /                         The registration key pool to use.
+   required
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:       When present, ensures that the device is assigned the specified license.
+   string            • present ←    When absent, ensures the license is revokes from the remote device and freed on the BIG-IQ.
+                     • absent
+
+NOTES                   *bigiq_regkey_license_assignment-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigiq_regkey_license_assignment-examples*
+
+ - name: Register an unmanaged device
+   bigiq_regkey_license_assignment:
+     pool: my-regkey-pool
+     key: XXXX-XXXX-XXXX-XXXX-XXXX
+     device: 1.1.1.1
+     managed: no
+     device_username: admin
+     device_password: secret
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Register a managed device, by name
+   bigiq_regkey_license_assignment:
+     pool: my-regkey-pool
+     key: XXXX-XXXX-XXXX-XXXX-XXXX
+     device: bigi1.foo.com
+     managed: yes
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Register a managed device, by UUID
+   bigiq_regkey_license_assignment:
+     pool: my-regkey-pool
+     key: XXXX-XXXX-XXXX-XXXX-XXXX
+     device: 7141a063-7cf8-423f-9829-9d40599fa3e0
+     managed: yes
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+STATUS                   *bigiq_regkey_license_assignment-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigiq_regkey_license_assignment-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigiq_regkey_license_assignment_module.html

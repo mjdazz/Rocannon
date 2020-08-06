@@ -1,28 +1,108 @@
-SYNOPSIS                           *snmp_facts*
+SYNOPSIS                   *snmp_facts*
 
-New in version 1.9.
+     • Retrieve facts for a device using SNMP, the facts will be inserted to the ansible_facts key.
 
-Retrieve facts for a device using SNMP, the facts will be inserted to the ansible_facts key.
+REQUIREMENTS                   *snmp_facts-requirements*
 
-EXAMPLES                           *snmp_facts-examples*
->
-    # Gather facts with SNMP version 2
-    - snmp_facts: host={{ inventory_hostname }} version=2c community=public
-      connection: local
-   
-    # Gather facts using SNMP version 3
-    - snmp_facts:
-        host={{ inventory_hostname }}
-        version=v3
-        level=authPriv
-        integrity=sha
-        privacy=aes
-        username=snmp-user
-        authkey=abc12345
-        privkey=def6789
-      delegate_to: localhost
-   
+   The below requirements are needed on the host that executes this module.
+
+     • pysnmp
+
+PARAMETERS                   *snmp_facts-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   authkey                            Authentication key.
+   string                             Required if version is v3.
+   community                          The SNMP community string, required if version is v2/v2c.
+   string
+   host                               Set to target snmp server (normally {{ inventory_hostname }}).
+   string / required
+   integrity           Choices:       Hashing algorithm.
+   string              • md5          Required if version is v3.
+                       • sha
+   level               Choices:       Authentication level.
+   string              • authNoPriv   Required if version is v3.
+                       • authPriv
+   privacy             Choices:       Encryption algorithm.
+   string              • aes          Required if level is authPriv.
+                       • des
+   privkey                            Encryption key.
+   string                             Required if version is authPriv.
+   username                           Username for SNMPv3.
+   string                             Required if version is v3.
+                       Choices:
+   version             • v2           SNMP Version to use, v2/v2c or v3.
+   string / required   • v2c
+                       • v3
+
+EXAMPLES                   *snmp_facts-examples*
+
+ - name: Gather facts with SNMP version 2
+   snmp_facts:
+     host: '{{ inventory_hostname }}'
+     version: v2c
+     community: public
+   delegate_to: local
+
+ - name: Gather facts using SNMP version 3
+   snmp_facts:
+     host: '{{ inventory_hostname }}'
+     version: v3
+     level: authPriv
+     integrity: sha
+     privacy: aes
+     username: snmp-user
+     authkey: abc12345
+     privkey: def6789
+   delegate_to: localhost
+
+RETURN VALUES                   *snmp_facts-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   ansible_all_ipv4_addresses          List of all IPv4 addresses.
+   list                       success  Sample:
+                                       ['127.0.0.1', '172.17.0.1']
+                                       Dictionary of each network interface and its metadata.
+                                       Sample:
+   ansible_interfaces         success  {'1': {'adminstatus': 'up', 'description': '', 'ifindex': '1', 'ipv4': [{'address': '127.0.0.1', 'netmask': '255.0.0.0'}], 'mac': '', 'mtu': '65536', 'name':
+   dictionary                          'lo', 'operstatus': 'up', 'speed': '65536'}, '2': {'adminstatus': 'up', 'description': '', 'ifindex': '2', 'ipv4': [{'address': '192.168.213.128', 'netmask':
+                                       '255.255.255.0'}], 'mac': '000a305a52a1', 'mtu': '1500', 'name': 'Intel Corporation 82545EM Gigabit Ethernet Controller (Copper)', 'operstatus': 'up',
+                                       'speed': '1500'}}
+   ansible_syscontact                  The textual identification of the contact person for this managed node, together with information on how to contact this person.
+   string                     success  Sample:
+                                       Me <[email protected]>
+   ansible_sysdescr                    A textual description of the entity.
+   string                     success  Sample:
+                                       Linux ubuntu-user 4.4.0-93-generic
+   ansible_syslocation                 The physical location of this node (e.g., `telephone closet, 3rd floor').
+   string                     success  Sample:
+                                       Sitting on the Dock of the Bay
+   ansible_sysname                     An administratively-assigned name for this managed node.
+   string                     success  Sample:
+                                       ubuntu-user
+   ansible_sysobjectid                 The vendor's authoritative identification of the network management subsystem contained in the entity.
+   string                     success  Sample:
+                                       1.3.6.1.4.1.8072.3.2.10
+   ansible_sysuptime                   The time (in hundredths of a second) since the network management portion of the system was last re-initialized.
+   integer                    success  Sample:
+                                       42388
+
+STATUS                   *snmp_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Patrick Ogenstad (@ogenstad)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *snmp_facts-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/snmp_facts_module.html
+https://docs.ansible.com/ansible/latest/modules/snmp_facts_module.html

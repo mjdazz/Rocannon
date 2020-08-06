@@ -1,0 +1,133 @@
+SYNOPSIS                   *netapp_e_storagepool*
+
+     • Create or remove volume groups and disk pools for NetApp E-series storage arrays.
+
+PARAMETERS                   *netapp_e_storagepool-parameters*
+
+             Parameter            Choices/Defaults                                                                      Comments
+   api_password                                     The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   api_url                                          The url to the SANtricity Web Services Proxy or Embedded Web Services API. Example https://prod-1.wahoo.acme.com/devmgr/v2
+   string / required
+   api_username                                     The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   criteria_drive_count                             The number of disks to use for building the storage pool.
+   integer                                          When state=="present" then criteria_drive_count or criteria_min_usable_capacity must be specified.
+                                                    The pool will be expanded if this number exceeds the number of disks already in place (See expansion note below)
+                                   Choices:
+                                   • sas
+                                   • sas4k
+   criteria_drive_interface_type   • fibre          The interface type to use when selecting drives for the storage pool
+   -                               • fibre520b      If not provided then all interface types will be considered.
+                                   • scsi
+                                   • sata
+                                   • pata
+   criteria_drive_min_size                          The minimum individual drive size (in size_unit) to consider when choosing drives for the storage pool.
+   -
+   criteria_drive_require_da       Choices:         Ensures the storage pool will be created with only data assurance (DA) capable drives.
+   boolean                         • no ←           Only available for new storage pools; existing storage pools cannot be converted.
+   added in 2.9                    • yes
+   criteria_drive_require_fde      Choices:
+   boolean                         • no ←           Whether full disk encryption ability is required for drives to be added to the storage pool
+                                   • yes
+   criteria_drive_type             Choices:         The type of disk (hdd or ssd) to use when searching for candidates to use.
+   -                               • hdd            When not specified each drive type will be evaluated until successful drive candidates are found starting with the most prevalent drive type.
+                                   • ssd
+   criteria_min_usable_capacity                     The minimum size of the storage pool (in size_unit).
+   float                                            When state=="present" then criteria_drive_count or criteria_min_usable_capacity must be specified.
+                                                    The pool will be expanded if this value exceeds its current size. (See expansion note below)
+                                   Choices:
+                                   • bytes
+                                   • b
+                                   • kb
+   criteria_size_unit              • mb
+   -                               • gb ←           The unit used to interpret size parameters
+                                   • tb
+                                   • pb
+                                   • eb
+                                   • zb
+                                   • yb
+   erase_secured_drives            Choices:         If state=="absent" then all storage pool drives will be erase
+   boolean                         • no             If state=="present" then delete all available storage array drives that have security enabled.
+                                   • yes ←
+   name                                             The name of the storage pool to manage
+   - / required
+                                                    The RAID level of the storage pool to be created.
+                                   Choices:         Required only when state=="present".
+                                   • raidAll        When raid_level=="raidDiskPool" then criteria_drive_count >= 10 or criteria_drive_count >= 11 is required depending on the storage array
+                                   • raid0          specifications.
+   raid_level                      • raid1          When raid_level=="raid0" then 1<=criteria_drive_count is required.
+   -                               • raid3          When raid_level=="raid1" then 2<=criteria_drive_count is required.
+                                   • raid5          When raid_level=="raid3" then 3<=criteria_drive_count<=30 is required.
+                                   • raid6          When raid_level=="raid5" then 3<=criteria_drive_count<=30 is required.
+                                   • raidDiskPool ← When raid_level=="raid6" then 5<=criteria_drive_count<=30 is required.
+                                                    Note that raidAll will be treated as raidDiskPool and raid3 as raid5.
+   remove_volumes                Default:           Prior to removing a storage pool, delete all volumes in the pool.
+   -                             "yes"
+   reserve_drive_count                              Set the number of drives reserved by the storage pool for reconstruction operations.
+   -                                                Only valid on raid disk pools.
+   secure_pool                     Choices:         Enables security at rest feature on the storage pool.
+   boolean                         • no             Will only work if all drives in the pool are security capable (FDE, FIPS, or mix)
+                                   • yes            Warning, once security is enabled it is impossible to disable without erasing the drives.
+   ssid                          Default:           The ID of the array to manage. This value must be unique for each array.
+   string                        1
+   state                           Choices:         Whether the specified storage pool should exist or not.
+   - / required                    • present        Note that removing a storage pool currently requires the removal of all defined volumes first.
+                                   • absent
+   validate_certs                  Choices:
+   boolean                         • no             Should https certificates be validated?
+                                   • yes ←
+
+NOTES                   *netapp_e_storagepool-notes*
+
+   Note
+
+     • The expansion operations are non-blocking due to the time consuming nature of expanding volume groups
+     • Traditional volume groups (raid0, raid1, raid5, raid6) are performed in steps dictated by the storage array. Each required step will be attempted until the request fails which is likely
+       because of the required expansion time.
+     • raidUnsupported will be treated as raid0, raidAll as raidDiskPool and raid3 as raid5.
+     • Tray loss protection and drawer loss protection will be chosen if at all possible.
+     • The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage the storage-system, or an E-Series storage-system that supports the
+       Embedded Web Services API.
+     • Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+     • netapp_e_storage_system may be utilized for configuring the systems managed by a WSP instance.
+
+EXAMPLES                   *netapp_e_storagepool-examples*
+
+ - name: No disk groups
+   netapp_e_storagepool:
+     ssid: "{{ ssid }}"
+     name: "{{ item }}"
+     state: absent
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+     validate_certs: "{{ netapp_api_validate_certs }}"
+
+RETURN VALUES                   *netapp_e_storagepool-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   msg             Success message
+   string success  Sample:
+                   Json facts for the pool that was created.
+
+STATUS                   *netapp_e_storagepool-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Hulquest (@hulquest)
+     • Nathan Swartz (@ndswartz)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netapp_e_storagepool-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netapp_e_storagepool_module.html

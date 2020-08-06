@@ -1,0 +1,115 @@
+SYNOPSIS                   *ce_mtu*
+
+     • Manages MTU settings on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_mtu-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   interface                  Full name of interface, i.e. 40GE1/0/22.
+   -
+   jumbo_max                  Maximum frame size. The default value is 9216. The value is an integer and expressed in bytes. The value range is 1536 to 12224 for the CE12800 and 1536 to 12288 for
+   -                          ToR switches.
+   jumbo_min                  Non-jumbo frame size threshold. The default value is 1518. The value is an integer that ranges from 1518 to jumbo_max, in bytes.
+   -
+   mtu                        MTU for a specific interface. The value is an integer ranging from 46 to 9600, in bytes.
+   -
+   state       Choices:
+   -           • present ←    Specify desired state of the resource.
+               • absent
+
+NOTES                   *ce_mtu-notes*
+
+   Note
+
+     • Either sysmtu param is required or interface AND mtu params are req’d.
+     • state=absent unconfigures a given MTU if that value is currently present.
+     • Recommended connection is network_cli.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_mtu-examples*
+
+ - name: Mtu test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Config jumboframe on 40GE1/0/22"
+     ce_mtu:
+       interface: 40GE1/0/22
+       jumbo_max: 9000
+       jumbo_min: 8000
+       provider: "{{ cli }}"
+
+   - name: "Config mtu on 40GE1/0/22 (routed interface)"
+     ce_mtu:
+       interface: 40GE1/0/22
+       mtu: 1600
+       provider: "{{ cli }}"
+
+   - name: "Config mtu on 40GE1/0/23 (switched interface)"
+     ce_mtu:
+       interface: 40GE1/0/22
+       mtu: 9216
+       provider: "{{ cli }}"
+
+   - name: "Config mtu and jumboframe on 40GE1/0/22 (routed interface)"
+     ce_mtu:
+       interface: 40GE1/0/22
+       mtu: 1601
+       jumbo_max: 9001
+       jumbo_min: 8001
+       provider: "{{ cli }}"
+
+   - name: "Unconfigure mtu and jumboframe on a given interface"
+     ce_mtu:
+       state: absent
+       interface: 40GE1/0/22
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_mtu-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of mtu/sysmtu values after module execution
+   dictionary always   Sample:
+                       {'mtu': '1700', 'jumbo_max': '9000', 'jumbo_min': '8000'}
+   existing            k/v pairs of existing mtu/sysmtu on the interface/system
+   dictionary always   Sample:
+                       {'mtu': '1600', 'jumbo_max': '9216', 'jumbo_min': '1518'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'mtu': '1700', 'jumbo_max': '9000', 'jumbo_min': '8000'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['interface 40GE1/0/23', 'mtu 1700', 'jumboframe enable 9000 8000']
+
+STATUS                   *ce_mtu-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_mtu-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_mtu_module.html

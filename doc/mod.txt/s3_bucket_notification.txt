@@ -1,0 +1,123 @@
+SYNOPSIS                   *s3_bucket_notification*
+
+     • This module allows the management of AWS Lambda function bucket event mappings via the Ansible framework. Use module lambda to manage the lambda function itself, lambda_alias to manage
+       function aliases and lambda_policy to modify lambda permissions.
+
+REQUIREMENTS                   *s3_bucket_notification-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *s3_bucket_notification-parameters*
+
+            Parameter                         Choices/Defaults                                                                       Comments
+   aws_access_key                                                            AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment
+   string                                                                    variable is used.
+                                                                             aliases: ec2_access_key, access_key
+   aws_secret_key                                                            AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment
+   string                                                                    variable is used.
+                                                                             aliases: ec2_secret_key, secret_key
+   bucket_name                                                               S3 bucket name
+   string / required
+   debug_botocore_endpoint_logs   Choices:                                   Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task,
+   boolean                        • no ←                                     outputing the set to the resource_actions key in the task results. Use the aws_resource_action callback to output to
+   added in 2.8                   • yes                                      total list made during a playbook. The ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                                                   Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for
+   string                                                                    modules where region is required. Must be specified for all other modules if region is not used. If not set then the
+                                                                             value of the EC2_URL environment variable, if any, is used.
+   event_name                                                                unique name for event notification on bucket
+   string / required
+                                  Choices:
+                                  • s3:ObjectCreated:"
+                                  • s3:ObjectCreated:Put
+                                  • s3:ObjectCreated:Post
+                                  • s3:ObjectCreated:Copy                    Events that you want to be triggering notifications. You can select multiple events to send to the same destination, you
+   events                         • s3:ObjectCreated:CompleteMultipartUpload can set up different events to send to different destinations, and you can set up a prefix or suffix for an event.
+   list / required                • s3:ObjectRemoved:"                       However, for each bucket, individual events cannot have multiple configurations with overlapping prefixes or suffixes
+                                  • s3:ObjectRemoved:Delete                  that could match the same object key.
+                                  • s3:ObjectRemoved:DeleteMarkerCreated
+                                  • s3:ObjectRestore:Post
+                                  • s3:ObjectRestore:Completed
+                                  • s3:ReducedRedundancyLostObject
+   lambda_alias                                                              Name of the Lambda function alias. Mutually exclusive with lambda_version.
+   string
+   lambda_function_arn                                                       The ARN of the lambda function.
+   string                                                                    aliases: function_arn
+   lambda_version                                                            Version of the Lambda function. Mutually exclusive with lambda_alias.
+   integer
+   prefix                                                                    Optional prefix to limit the notifications to objects with keys that start with matching characters.
+   string
+   profile                                                                   Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                                                    The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is
+   string                                                                    used. See http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                                             aliases: aws_region, ec2_region
+   security_token                                                            AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable
+   string                                                                    is used.
+                                                                             aliases: access_token
+   state                          Choices:
+   string / required              • present ←                                Describes the desired state.
+                                  • absent
+   suffix                                                                    Optional suffix to limit the notifications to objects with keys that end with matching characters.
+   string
+   validate_certs                 Choices:
+   boolean                        • no                                       When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *s3_bucket_notification-notes*
+
+   Note
+
+     • This module heavily depends on lambda_policy as you need to allow lambda:InvokeFunction permission for your lambda function.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *s3_bucket_notification-examples*
+
+ ---
+ # Example that creates a lambda event notification for a bucket
+ - hosts: localhost
+   gather_facts: no
+   tasks:
+   - name: Process jpg image
+     s3_bucket_notification:
+       state: present
+       event_name: on_file_add_or_remove
+       bucket_name: test-bucket
+       function_name: arn:aws:lambda:us-east-2:526810320200:function:test-lambda
+       events: ["s3:ObjectCreated:"", "s3:ObjectRemoved:""]
+       prefix: images/
+       suffix: .jpg
+
+RETURN VALUES                   *s3_bucket_notification-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   notification_configuration success  list of currently applied notifications
+   list
+
+STATUS                   *s3_bucket_notification-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • XLAB d.o.o. (@xlab-si)
+     • Aljaz Kosir (@aljazkosir)
+     • Miha Plesko (@miha-plesko)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *s3_bucket_notification-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/s3_bucket_notification_module.html

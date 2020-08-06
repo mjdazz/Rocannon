@@ -1,0 +1,187 @@
+DEPRECATED                   *ios_interface*
+
+                                      Removed in Ansible:
+                  version: 2.13
+        Why:      Newer and updated modules released with more functionality in Ansible 2.9
+    Alternative:  ios_interfaces
+
+SYNOPSIS                   *ios_interface-synopsis*
+
+     • This module provides declarative management of Interfaces on Cisco IOS network devices.
+
+PARAMETERS                   *ios_interface-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   aggregate                     List of Interfaces definitions.
+   -
+                                 Deprecated
+                                 Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes with become_pass.
+                                 For more information please see the IOS Platform Options guide.
+   auth_pass
+   string                        ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                 Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value is not
+                                 specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+                                 Deprecated
+                                 Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes.
+                  Choices:       For more information please see the IOS Platform Options guide.
+   authorize      • no ←
+   boolean        • yes          ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                 Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all commands in
+                                 non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+   delay        Default:         Time in seconds to wait before checking for the operational state on remote device. This wait is applicable for operational state argument which are state with
+   -            10               values up/down, tx_rate and rx_rate.
+   description                   Description of Interface.
+   -
+                  Choices:
+   duplex         • full         Interface link status
+   -              • half
+                  • auto ←
+   enabled        Choices:
+   boolean        • no           Interface link status.
+                  • yes
+   mtu                           Maximum size of transmit packet.
+   -
+   name                          Name of the Interface.
+   - / required
+   neighbors                     Check the operational state of given interface name for CDP/LLDP neighbor.
+   -                             The following suboptions are available.
+    host                         CDP/LLDP neighbor host for given interface name.
+    -
+    port                         CDP/LLDP neighbor port to which given interface name is connected.
+    -
+                                 Deprecated
+                                 Starting with Ansible 2.5 we recommend using connection: network_cli.
+   provider                      For more information please see the IOS Platform Options guide.
+   dictionary
+                                 ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                 A dict object containing connection details.
+    auth_pass                    Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value is not
+    string                       specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+    authorize     Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all commands in
+    boolean       • no ←         non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                  • yes
+    host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+    string /                     the transport.
+    required
+    password                     Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not specified
+    string                       in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+    port        Default:         Specifies the port to use when building the connection to the remote device.
+    integer     22
+    ssh_keyfile                  Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+    path                         value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    timeout     Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer     10               operation is completed, the module will error.
+    username                     Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+    string                       specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   rx_rate                       Receiver rate in bits per second (bps).
+   -                             This is state check parameter only.
+                                 Supports conditionals, see Conditionals in Networking Modules
+   speed                         Interface link speed.
+   -
+                  Choices:
+   state          • present ←
+   -              • absent       State of the Interface configuration, up means present and operationally up and down means present and operationally down
+                  • up
+                  • down
+   tx_rate                       Transmit rate in bits per second (bps).
+   -                             This is state check parameter only.
+                                 Supports conditionals, see Conditionals in Networking Modules
+
+NOTES                   *ios_interface-notes*
+
+   Note
+
+     • Tested against IOS 15.6
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Cisco devices see the Cisco integration page.
+
+EXAMPLES                   *ios_interface-examples*
+
+ - name: configure interface
+   ios_interface:
+       name: GigabitEthernet0/2
+       description: test-interface
+       speed: 100
+       duplex: half
+       mtu: 512
+
+ - name: remove interface
+   ios_interface:
+     name: Loopback9
+     state: absent
+
+ - name: make interface up
+   ios_interface:
+     name: GigabitEthernet0/2
+     enabled: True
+
+ - name: make interface down
+   ios_interface:
+     name: GigabitEthernet0/2
+     enabled: False
+
+ - name: Check intent arguments
+   ios_interface:
+     name: GigabitEthernet0/2
+     state: up
+     tx_rate: ge(0)
+     rx_rate: le(0)
+
+ - name: Check neighbors intent arguments
+   ios_interface:
+     name: Gi0/0
+     neighbors:
+     - port: eth0
+       host: netdev
+
+ - name: Config + intent
+   ios_interface:
+     name: GigabitEthernet0/2
+     enabled: False
+     state: down
+
+ - name: Add interface using aggregate
+   ios_interface:
+     aggregate:
+     - { name: GigabitEthernet0/1, mtu: 256, description: test-interface-1 }
+     - { name: GigabitEthernet0/2, mtu: 516, description: test-interface-2 }
+     duplex: full
+     speed: 100
+     state: present
+
+ - name: Delete interface using aggregate
+   ios_interface:
+     aggregate:
+     - name: Loopback9
+     - name: Loopback10
+     state: absent
+
+RETURN VALUES                   *ios_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key                                        Returned                                                                                    Description
+   commands                                                                                   The list of configuration mode commands to send to the device.
+   list     always, except for the platforms that use Netconf transport to manage the device. Sample:
+                                                                                              ['interface GigabitEthernet0/2', 'description test-interface', 'duplex half', 'mtu 512']
+
+STATUS                   *ios_interface-status*
+
+     • This module will be removed in version 2.13. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_interface_module.html

@@ -1,0 +1,130 @@
+SYNOPSIS                   *ecs_service_info*
+
+     • Lists or describes services in ecs.
+     • This module was called ecs_service_facts before Ansible 2.9, returning ansible_facts. Note that the ecs_service_info module no longer returns ansible_facts!
+
+   Aliases: ecs_service_facts
+
+REQUIREMENTS                   *ecs_service_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • json
+     • python >= 2.6
+
+PARAMETERS                   *ecs_service_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   cluster                      Default:         The cluster ARNS in which to list the services.
+   -                            "default"
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   details                        Choices:
+   boolean                        • no ←         Set this to true if you want detailed information about the services.
+                                  • yes
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   events                         Choices:
+   boolean                        • no           Whether to return ECS service events. Only has an effect if details is true.
+   added in 2.6                   • yes ←
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   service                                       One or more services to get details for
+   -
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ecs_service_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ecs_service_info-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Basic listing example
+ - ecs_service_info:
+     cluster: test-cluster
+     service: console-test-service
+     details: true
+   register: output
+
+ # Basic listing example
+ - ecs_service_info:
+     cluster: test-cluster
+   register: output
+
+RETURN VALUES                   *ecs_service_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   services             success  When details is false, returns an array of service ARNs, otherwise an array of complex objects as described below.
+   complex
+     clusterArn         always   The Amazon Resource Name (ARN) of the of the cluster that hosts the service.
+     string
+     deployments        always   list of service deployments
+     list of complex
+     desiredCount       always   The desired number of instantiations of the task definition to keep running on the service.
+     integer
+     events             when
+     list of complex    events   list of service events
+                        is true
+     loadBalancers      always   A list of load balancer objects
+     complex
+       containerName    always   The name of the container to associate with the load balancer.
+       string
+       containerPort    always   The port on the container to associate with the load balancer.
+       integer
+       loadBalancerName always   the name
+       string
+     pendingCount       always   The number of tasks in the cluster that are in the PENDING state.
+     integer
+     runningCount       always   The number of tasks in the cluster that are in the RUNNING state.
+     integer
+     serviceArn         always   The Amazon Resource Name (ARN) that identifies the service. The ARN contains the arn:aws:ecs namespace, followed by the region of the service, the AWS account ID of
+     string                      the service owner, the service namespace, and then the service name. For example, arn:aws:ecs:region :012345678910 :service/my-service .
+     serviceName        always   A user-generated string used to identify the service
+     string
+     status             always   The valid values are ACTIVE, DRAINING, or INACTIVE.
+     string
+     taskDefinition     always   The ARN of a task definition to use for tasks in the service.
+     string
+
+STATUS                   *ecs_service_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mark Chance (@Java1Guy)
+     • Darek Kaczynski (@kaczynskid)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ecs_service_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ecs_service_info_module.html

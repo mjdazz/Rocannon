@@ -1,0 +1,103 @@
+SYNOPSIS                   *win_hosts*
+
+     • Manages hosts file entries on Windows.
+     • Maps IPv4 or IPv6 addresses to canonical names.
+     • Adds, removes, or sets cname records for ip and hostname pairs.
+     • Modifies %windir%\system32\drivers\etc\hosts.
+
+PARAMETERS                   *win_hosts-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+                    Choices:       Controls the behavior of aliases.
+   action           • add          Only applicable when state=present.
+   string           • remove       If add, each alias in aliases will be added to the host entry.
+                    • set ←        If set, each alias in aliases will be added to the host entry, and other aliases will be removed from the entry.
+   aliases                         A list of additional names (cname records) for the host entry.
+   list                            Only applicable when state=present.
+   canonical_name                  A canonical name for the host entry.
+   string                          required for state=present.
+   ip_address                      The ip address for the host entry.
+   string                          Can be either IPv4 (A record) or IPv6 (AAAA record).
+                                   Required for state=present.
+                    Choices:       Whether the entry should be present or absent.
+   state            • absent       If only canonical_name is provided when state=absent, then all hosts entries with the canonical name of canonical_name will be removed.
+   string           • present ←    If only ip_address is provided when state=absent, then all hosts entries with the ip address of ip_address will be removed.
+                                   If ip_address and canonical_name are both omitted when state=absent, then all hosts entries will be removed.
+
+NOTES                   *win_hosts-notes*
+
+   Note
+
+     • Each canonical name can only be mapped to one IPv4 and one IPv6 address. If canonical_name is provided with state=present and is found to be mapped to another IP address that is the same
+       type as, but unique from ip_address, then canonical_name and all aliases will be removed from the entry and added to an entry with the provided IP address.
+     • Each alias can only be mapped to one canonical name. If aliases is provided with state=present and an alias is found to be mapped to another canonical name, then the alias will be removed
+       from the entry and either added to or removed from (depending on action) an entry with the provided canonical name.
+
+SEE ALSO                   *win_hosts-see also*
+
+   See also
+
+   win_template – Template a file out to a remote server
+   The official documentation on the win_template module.
+
+   win_file – Creates, touches or removes files or directories
+   The official documentation on the win_file module.
+
+   win_copy – Copies files to remote locations on windows hosts
+   The official documentation on the win_copy module.
+
+EXAMPLES                   *win_hosts-examples*
+
+ - name: Add 127.0.0.1 as an A record for localhost
+   win_hosts:
+     state: present
+     canonical_name: localhost
+     ip_address: 127.0.0.1
+
+ - name: Add ::1 as an AAAA record for localhost
+   win_hosts:
+     state: present
+     canonical_name: localhost
+     ip_address: '::1'
+
+ - name: Remove 'bar' and 'zed' from the list of aliases for foo (192.168.1.100)
+   win_hosts:
+     state: present
+     canoncial_name: foo
+     ip_address: 192.168.1.100
+     action: remove
+     aliases:
+       - bar
+       - zed
+
+ - name: Remove hosts entries with canonical name 'bar'
+   win_hosts:
+     state: absent
+     canonical_name: bar
+
+ - name: Remove 10.2.0.1 from the list of hosts
+   win_hosts:
+     state: absent
+     ip_address: 10.2.0.1
+
+ - name: Ensure all name resolution is handled by DNS
+   win_hosts:
+     state: absent
+
+STATUS                   *win_hosts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Micah Hunsberger (@mhunsber)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_hosts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_hosts_module.html

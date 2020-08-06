@@ -1,0 +1,203 @@
+SYNOPSIS                   *bigip_policy_rule*
+
+     • This module will manage LTM policy rules on a BIG-IP.
+
+REQUIREMENTS                   *bigip_policy_rule-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • BIG-IP >= v12.1.0
+
+PARAMETERS                   *bigip_policy_rule-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   actions                                The actions that you want the policy rule to perform.
+   list                                   The available attributes vary by the action, however, each action requires that a type be specified.
+                                          These conditions can be specified in any order. Despite them being a list, the BIG-IP does not treat their order as anything special.
+    asm_policy                            ASM policy to enable.
+    string                                This parameter is only valid with the enable type.
+    location                              The new URL for which a redirect response will be sent.
+    string                                A Tcl command substitution can be used for this field.
+    pool                                  Pool that you want to forward traffic to.
+    string                                This parameter is only valid with the forward type.
+                           Choices:       The action type. This value controls what below options are required.
+    type                   • forward      When type is forward, will associate a given pool, or virtual with this rule.
+    string / required      • enable       When type is enable, will associate a given asm_policy with this rule.
+                           • ignore       When type is ignore, will remove all existing actions from this rule.
+                           • redirect     When type is redirect, will redirect an HTTP request to a different URL.
+    virtual                               Virtual Server that you want to forward traffic to.
+    string                                This parameter is only valid with the forward type.
+                                          A list of attributes that describe the condition.
+   conditions                             See suboptions for details on how to construct each list entry.
+   list                                   The ordering of this list is important, the module will ensure the order is kept when modifying the task.
+                                          The suboption options listed below are not required for all condition types, read the description for more details.
+                                          These conditions can be specified in any order. Despite them being a list, the BIG-IP does not treat their order as anything special.
+    host_begins_with_any                  A list of strings of characters that the HTTP Host should start with.
+    string                                This parameter is only valid with the http_host type.
+    host_is_any                           A list of strings of characters that the HTTP Host should match.
+    string                                This parameter is only valid with the http_host type.
+    path_begins_with_any                  A list of strings of characters that the HTTP URI should start with.
+    string                                This parameter is only valid with the http_uri type.
+                           Choices:       The condition type. This value controls what below options are required.
+    type                   • http_uri     When type is http_uri, will associate a given path_begins_with_any list of strings with which the HTTP URI should begin with. Any item in the list will
+    string / required      • all_traffic  provide a match.
+                           • http_host    When type is all_traffic, will remove all existing conditions from this rule.
+   description                            Description of the policy rule.
+   string
+   name                                   The name of the rule.
+   string / required
+   partition             Default:         Device partition to manage resources on.
+   string                "Common"
+   policy                                 The name of the policy that you want to associate this rule with.
+   string / required
+   provider
+   dictionary                             A dict object containing connection details.
+   added in 2.5
+    auth_provider                         Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                                This option is really used when working with BIG-IQ devices.
+    password                              The password for the user account used to connect to the BIG-IP.
+    string / required                     You may omit this option by setting the environment variable F5_PASSWORD.
+                                          aliases: pass, pwd
+    server                                The BIG-IP host.
+    string / required                     You may omit this option by setting the environment variable F5_SERVER.
+    server_port          Default:         The BIG-IP server port.
+    integer              443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                           Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                                  You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                               Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                               operation is completed, the module will error.
+    transport              Choices:
+    string                 • cli          Configures the transport connection to use when connecting to the remote device.
+                           • rest ←
+    user                                  The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string / required                     You may omit this option by setting the environment variable F5_USER.
+    validate_certs         Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean                • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                           • yes ←
+   state                   Choices:       When present, ensures that the key is uploaded to the device. When absent, ensures that the key is removed from the device. If the key is currently in use,
+   string                  • present ←    the module will not be able to remove the key.
+                           • absent
+
+NOTES                   *bigip_policy_rule-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_policy_rule-examples*
+
+ - name: Create policies
+   bigip_policy:
+     name: Policy-Foo
+     state: present
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Add a rule to the new policy
+   bigip_policy_rule:
+     policy: Policy-Foo
+     name: rule3
+     conditions:
+       - type: http_uri
+         path_begins_with_any: /ABC
+     actions:
+       - type: forward
+         pool: pool-svrs
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Add multiple rules to the new policy
+   bigip_policy_rule:
+     policy: Policy-Foo
+     name: "{{ item.name }}"
+     conditions: "{{ item.conditions }}"
+     actions: "{{ item.actions }}"
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+   loop:
+     - name: rule1
+       actions:
+         - type: forward
+           pool: pool-svrs
+       conditions:
+         - type: http_uri
+           path_starts_with: /euro
+     - name: rule2
+       actions:
+         - type: forward
+           pool: pool-svrs
+       conditions:
+         - type: http_uri
+           path_starts_with: /HomePage/
+
+ - name: Remove all rules and conditions from the rule
+   bigip_policy_rule:
+     policy: Policy-Foo
+     name: rule1
+     conditions:
+       - type: all_traffic
+     actions:
+       - type: ignore
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_policy_rule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   actions                         The new list of actions applied to the rule
+   complex                changed  Sample:
+                                   hash/dictionary of values
+     pool                          Pool for forward to
+     string               changed  Sample:
+                                   foo-pool
+     type                          The action type
+     string               changed  Sample:
+                                   forward
+   conditions                      The new list of conditions applied to the rule.
+   complex                changed  Sample:
+                                   hash/dictionary of values
+     path_begins_with_any          List of strings that the URI begins with.
+     list                 changed  Sample:
+                                   ['foo', 'bar']
+     type                          The condition type.
+     string               changed  Sample:
+                                   http_uri
+   description                     The new description of the rule.
+   string                 changed  Sample:
+                                   My rule
+
+STATUS                   *bigip_policy_rule-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_policy_rule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_policy_rule_module.html

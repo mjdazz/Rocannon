@@ -1,0 +1,147 @@
+SYNOPSIS                   *bigiq_application_fastl4_udp*
+
+     • Manages BIG-IQ applications used for load balancing a UDP-based application with a FastL4 profile.
+
+PARAMETERS                   *bigiq_application_fastl4_udp-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   add_analytics         Choices:       Collects statistics of the BIG-IP that the application is deployed to.
+   boolean               • no ←         This parameter is only relevant when specifying a service_environment which is a BIG-IP; not an SSG.
+                         • yes
+   description                          Description of the application.
+   string
+   inbound_virtual                      Settings to configure the virtual which will receive the inbound connection.
+   dictionary
+     address                            Specifies destination IP address information to which the virtual server sends traffic.
+     string / required                  This parameter is required when creating a new application.
+     netmask                            Specifies the netmask to associate with the given destination.
+     string / required                  This parameter is required when creating a new application.
+     port              Default:         The port that the virtual listens for connections on.
+     string            53               When creating a new application, if this parameter is not specified, the default value of 53 will be used.
+   name                                 Name of the new application.
+   string / required
+   provider
+   dictionary                           A dict object containing connection details.
+   added in 2.5
+     auth_provider                      Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                             This option is really used when working with BIG-IQ devices.
+     password                           The password for the user account used to connect to the BIG-IP.
+     string / required                  You may omit this option by setting the environment variable F5_PASSWORD.
+                                        aliases: pass, pwd
+     server                             The BIG-IP host.
+     string / required                  You may omit this option by setting the environment variable F5_SERVER.
+     server_port       Default:         The BIG-IP server port.
+     integer           443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                        Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                               You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                            Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                            operation is completed, the module will error.
+     transport           Choices:
+     string              • cli          Configures the transport connection to use when connecting to the remote device.
+                         • rest ←
+     user                               The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string / required                  You may omit this option by setting the environment variable F5_USER.
+     validate_certs      Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean             • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                         • yes ←
+   servers                              A list of servers that the application is hosted on.
+   list                                 If you are familiar with other BIG-IP setting, you might also refer to this list as the list of pool members.
+                                        When creating a new application, at least one server is required.
+     address                            The IP address of the server.
+     string / required
+     port              Default:         The port of the server.
+     string            8000             When creating a new application and specifying a server, if this parameter is not provided, the default of 8000 will be used.
+                                        Specifies the name of service environment that the application will be deployed to.
+   service_environment                  When creating a new application, this parameter is required.
+   string                               The service environment type will be discovered by this module automatically. Therefore, it is crucial that you maintain unique names for items in the
+                                        different service environment types.
+                                        SSGs are not supported for this type of application.
+   state                 Choices:       The state of the resource on the system.
+   string                • absent       When present, guarantees that the resource exists with the provided attributes.
+                         • present ←    When absent, removes the resource from the system.
+   wait                  Choices:
+   boolean               • no           If the module should wait for the application to be created, deleted or updated.
+                         • yes ←
+
+NOTES                   *bigiq_application_fastl4_udp-notes*
+
+   Note
+
+     • This module does not support updating of your application (whether deployed or not). If you need to update the application, the recommended practice is to remove and re-create.
+     • This module will not work on BIGIQ version 6.1.x or greater.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigiq_application_fastl4_udp-examples*
+
+ - name: Load balance a UDP-based application with a FastL4 profile
+   bigiq_application_fastl4_udp:
+     name: my-app
+     description: My description
+     service_environment: my-bigip-device
+     servers:
+       - address: 1.2.3.4
+         port: 8080
+       - address: 5.6.7.8
+         port: 8080
+     inbound_virtual:
+       name: foo
+       address: 2.2.2.2
+       netmask: 255.255.255.255
+       port: 53
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+     state: present
+   delegate_to: localhost
+
+RETURN VALUES                   *bigiq_application_fastl4_udp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key             Returned                                                                          Description
+   description                          The new description of the application of the resource.
+   string                      changed  Sample:
+                                        My application
+   inbound_virtual_destination          The destination of the virtual that was created.
+   string                      changed  Sample:
+                                        6.7.8.9
+   inbound_virtual_netmask              The network mask of the provided inbound destination.
+   string                      changed  Sample:
+                                        255.255.255.0
+   inbound_virtual_port                 The port the inbound virtual address listens on.
+   integer                     changed  Sample:
+                                        80
+   servers                              List of servers, and their ports, that make up the application.
+   complex                     changed  Sample:
+                                        hash/dictionary of values
+              address                   The IP address of the server.
+              string           changed  Sample:
+                                        2.3.4.5
+              port                      The port that the server listens on.
+              integer          changed  Sample:
+                                        8080
+   service_environment                  The environment which the service was deployed to.
+   string                      changed  Sample:
+                                        my-ssg1
+
+STATUS                   *bigiq_application_fastl4_udp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigiq_application_fastl4_udp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigiq_application_fastl4_udp_module.html

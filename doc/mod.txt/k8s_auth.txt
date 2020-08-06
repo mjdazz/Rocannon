@@ -1,0 +1,106 @@
+SYNOPSIS                   *k8s_auth*
+
+     • This module handles authenticating to Kubernetes clusters requiring explicit authentication procedures, meaning ones where a client logs in (obtains an authentication token), performs API
+       operations using said token and then logs out (revokes the token). An example of a Kubernetes distribution requiring this module is OpenShift.
+     • On the other hand a popular configuration for username+password authentication is one utilizing HTTP Basic Auth, which does not involve any additional login/logout steps (instead login
+       credentials can be attached to each and every API call performed) and as such is handled directly by the k8s module (and other resource–specific modules) by utilizing the host, username and
+       password parameters. Please consult your preferred module’s documentation for more details.
+
+REQUIREMENTS                   *k8s_auth-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • urllib3
+     • requests
+     • requests-oauthlib
+
+PARAMETERS                   *k8s_auth-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   api_key                         When state is set to absent, this specifies the token to revoke.
+   -
+   ca_cert                         Path to a CA certificate file used to verify connection to the API server. The full certificate chain must be provided to avoid certificate validation errors.
+   -                               aliases: ssl_ca_cert
+   host                            Provide a URL for accessing the API server.
+   - / required
+   password                        Provide a password for authenticating with the API server.
+   -
+   state            Choices:       If set to present connect to the API server using the URL specified in host and attempt to log in.
+   -                • present ←    If set to absent attempt to log out by revoking the authentication token specified in api_key.
+                    • absent
+   username                        Provide a username for authenticating with the API server.
+   -
+   validate_certs   Choices:       Whether or not to verify the API server's SSL certificates.
+   boolean          • no           aliases: verify_ssl
+                    • yes ←
+
+EXAMPLES                   *k8s_auth-examples*
+
+ - hosts: localhost
+   module_defaults:
+     group/k8s:
+       host: https://k8s.example.com/
+       ca_cert: ca.pem
+   tasks:
+   - block:
+     # It's good practice to store login credentials in a secure vault and not
+     # directly in playbooks.
+     - include_vars: k8s_passwords.yml
+
+     - name: Log in (obtain access token)
+       k8s_auth:
+         username: admin
+         password: "{{ k8s_admin_password }}"
+       register: k8s_auth_results
+
+     # Previous task provides the token/api_key, while all other parameters
+     # are taken from module_defaults
+     - name: Get a list of all pods from any namespace
+       k8s_info:
+         api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+         kind: Pod
+       register: pod_list
+
+     always:
+     - name: If login succeeded, try to log out (revoke access token)
+       when: k8s_auth_results.k8s_auth.api_key is defined
+       k8s_auth:
+         state: absent
+         api_key: "{{ k8s_auth_results.k8s_auth.api_key }}"
+
+RETURN VALUES                   *k8s_auth-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   k8s_auth         success  Kubernetes authentication facts.
+   complex
+     api_key        success  Authentication token.
+     string
+     ca_cert        success  Path to a CA certificate file used to verify connection to the API server.
+     string
+     host           success  URL for accessing the API server.
+     string
+     username       success  Username for authenticating with the API server.
+     string
+     validate_certs success  Whether or not to verify the API server's SSL certificates.
+     boolean
+
+STATUS                   *k8s_auth-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • KubeVirt Team (@kubevirt)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *k8s_auth-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/k8s_auth_module.html

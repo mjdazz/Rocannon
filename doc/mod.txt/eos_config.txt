@@ -1,0 +1,226 @@
+SYNOPSIS                   *eos_config*
+
+     • Arista EOS configurations use a simple block indent file syntax for segmenting configuration into sections. This module provides an implementation for working with EOS configuration sections
+       in a deterministic way. This module works with either CLI or eAPI transports.
+
+PARAMETERS                   *eos_config-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   after                              The ordered set of commands to append to the end of the command stack if a change needs to be made. Just like with before this allows the playbook designer to
+   -                                  append a set of commands to be executed after the command set.
+                                      Deprecated
+                                      Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes with become_pass.
+                                      This option is only required if you are using eAPI.
+   auth_pass                          For more information please see the EOS Platform Options guide.
+   string
+                                      ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                      Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value
+                                      is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+                                      Deprecated
+                                      Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes.
+                                      This option is only required if you are using eAPI.
+   authorize           Choices:       For more information please see the EOS Platform Options guide.
+   boolean             • no ←
+                       • yes          ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                      Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+                                      commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+   backup              Choices:       This argument will cause the module to create a full backup of the current running-config from the remote device before any changes are made. If the
+   boolean             • no ←         backup_options value is not given, the backup file is written to the backup folder in the playbook root directory or role root directory, if playbook is part
+                       • yes          of an ansible role. If the directory does not exist, it is created.
+   backup_options                     This is a dict object containing configurable options related to backup file path. The value of this option is read only when backup is set to yes, if backup
+   dictionary                         is set to no this option will be silently ignored.
+   added in 2.8
+     dir_path                         This option provides the path ending with directory name in which the backup configuration file will be stored. If the directory does not exist it will be
+     path                             first created and the filename is either the value of filename or default filename as described in filename options description. If the path value is not given
+                                      in that case a backup directory will be created in the current working directory and backup configuration will be copied in filename within backup directory.
+     filename                         The filename to be used to store the backup configuration. If the the filename is not given it will be generated based on the hostname, current time and date
+     -                                in format defined by <hostname>_config.<current-date>@<current-time>
+   before                             The ordered set of commands to push on to the command stack if a change needs to be made. This allows the playbook designer the opportunity to perform
+   -                                  configuration commands prior to pushing any changes without affecting how the set of commands are matched against the system.
+   defaults            Choices:       The defaults argument will influence how the running-config is collected from the device. When the value is set to true, the command used to collect the
+   boolean             • no ←         running-config is append with the all keyword. When the value is set to false, the command is issued without the all keyword
+                       • yes
+                                      When using the ansible-playbook --diff command line argument the module can generate diffs against different sources.
+                       Choices:       When this option is configure as startup, the module will return the diff of the running-config against the startup-config.
+   diff_against        • startup      When this option is configured as intended, the module will return the diff of the running-config against the configuration provided in the intended_config
+   -                   • running      argument.
+   added in 2.4        • intended     When this option is configured as running, the module will return the before and after diff of the running-config with respect to any changes made to the
+                       • session ←    device configuration.
+                                      When this option is configured as session, the diff returned will be based on the configuration session.
+   diff_ignore_lines                  Use this argument to specify one or more lines that should be ignored during the diff. This is used for lines in the configuration that are automatically
+   -                                  updated by the system. This argument takes a list of regular expressions or exact line matches.
+   added in 2.4
+   intended_config                    The intended_config provides the master configuration that the node should conform to and is used to check the final running-config against. This argument will
+   string                             not modify any settings on the remote device and is strictly used to check the compliance of the current device's configuration against. When specifying this
+   added in 2.4                       argument, the task should also modify the diff_against value and set it to intended.
+   lines                              The ordered set of commands that should be configured in the section. The commands must be the exact same commands as found in the device running-config. Be
+   -                                  sure to note the configuration command syntax as some commands are automatically modified by the device config parser.
+                                      aliases: commands
+                       Choices:
+   match               • line ←       Instructs the module on the way to perform the matching of the set of commands against the current device config. If match is set to line, commands are matched
+   -                   • strict       line by line. If match is set to strict, command lines are matched with respect to position. If match is set to exact, command lines must be an equal match.
+                       • exact        Finally, if match is set to none, the module will not attempt to compare the source configuration with the running configuration on the remote device.
+                       • none
+   parents                            The ordered set of parents that uniquely identify the section or hierarchy the commands should be checked against. If the parents argument is omitted, the
+   -                                  commands are checked against the set of top level or global commands.
+                                      Deprecated
+                                      Starting with Ansible 2.5 we recommend using connection: network_cli.
+                                      This option is only required if you are using eAPI.
+   provider                           For more information please see the EOS Platform Options guide.
+   dictionary
+                                      ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                      A dict object containing connection details.
+     auth_pass                        Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value
+     string                           is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+     authorize         Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+     boolean           • no ←         commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                       • yes
+     host                             Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address
+     string /                         for the transport.
+     required
+     password                         Specifies the password to use to authenticate the connection to the remote device. This is a common argument used for either cli or eapi transports. If the
+     string                           value is not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port            Default:         Specifies the port to use when building the connection to the remote device. This value applies to either cli or eapi.
+     integer         0                The port value will default to the appropriate transport common port if none is provided in the task (cli=22, http=80, https=443).
+     ssh_keyfile                      Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports. If the value is not
+     path                             specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     timeout                          Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                          operation is completed, the module will error.
+     transport         Choices:
+     string /          • cli ←        Configures the transport connection to use when connecting to the remote device.
+     required          • eapi
+     use_proxy         Choices:
+     boolean           • no           If no, the environment variables http_proxy and https_proxy will be ignored.
+     added in 2.5      • yes ←
+     use_ssl           Choices:
+     boolean           • no           Configures the transport to use SSL if set to yes only when the transport=eapi. If the transport argument is not eapi, this value is ignored.
+                       • yes ←
+     username                         Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate either the CLI login or the eAPI
+     string                           authentication depending on which transport is used. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be
+                                      used instead.
+     validate_certs    Choices:       If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates. If the transport
+     boolean           • no           argument is not eapi, this value is ignored.
+                       • yes ←
+                       Choices:       Instructs the module on the way to perform the configuration on the device. If the replace argument is set to line then the modified lines are pushed to the
+   replace             • line ←       device in configuration mode. If the replace argument is set to block then the entire command block is pushed to the device in configuration mode if any line
+   -                   • block        is not correct.
+                       • config
+   running_config                     The module, by default, will connect to the remote device and retrieve the current running-config to use as a base for comparing against the contents of
+   string                             source. There are times when it is not desirable to have the task get the current running-config for every task in a playbook. The running_config argument
+   added in 2.4                       allows the implementer to pass in the configuration to use as the base config for this module.
+                                      aliases: config
+                       Choices:       When changes are made to the device running-configuration, the changes are not copied to non-volatile storage by default. Using this argument will change that
+   save_when           • always       before. If the argument is set to always, then the running-config will always be copied to the startup-config and the modified flag will always be set to True.
+   -                   • never ←      If the argument is set to modified, then the running-config will only be copied to the startup-config if it has changed since the last save to startup-config.
+   added in 2.4        • modified     If the argument is set to never, the running-config will never be copied to the startup-config. If the argument is set to changed, then the running-config will
+                       • changed      only be copied to the startup-config if the task has made a change. changed was added in Ansible 2.5.
+   src                                The src argument provides a path to the configuration file to load into the remote system. The path can either be a full system path to the configuration file
+   -                                  if the value starts with / or relative to the root of the implemented role or playbook. This argument is mutually exclusive with the lines and parents
+                                      arguments. It can be a Jinja2 template as well. src file must have same indentation as a live switch config. Arista EOS device config has 3 spaces indentation.
+
+NOTES                   *eos_config-notes*
+
+   Note
+
+     • Tested against EOS 4.15
+     • Abbreviated commands are NOT idempotent, see Network FAQ.
+     • For information on using CLI, eAPI and privileged mode see the EOS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Arista EOS devices see the Arista integration page.
+
+EXAMPLES                   *eos_config-examples*
+
+ - name: configure top level settings
+   eos_config:
+     lines: hostname {{ inventory_hostname }}
+
+ - name: load an acl into the device
+   eos_config:
+     lines:
+       - 10 permit ip host 192.0.2.1 any log
+       - 20 permit ip host 192.0.2.2 any log
+       - 30 permit ip host 192.0.2.3 any log
+       - 40 permit ip host 192.0.2.4 any log
+     parents: ip access-list test
+     before: no ip access-list test
+     replace: block
+
+ - name: load configuration from file
+   eos_config:
+     src: eos.cfg
+
+ - name: render a Jinja2 template onto an Arista switch
+   eos_config:
+     backup: yes
+     src: eos_template.j2
+
+ - name: diff the running config against a master config
+   eos_config:
+     diff_against: intended
+     intended_config: "{{ lookup('file', 'master.cfg') }}"
+
+ - name: for idempotency, use full-form commands
+   eos_config:
+     lines:
+       # - shut
+       - shutdown
+     # parents: int eth1
+     parents: interface Ethernet1
+
+ - name: configurable backup path
+   eos_config:
+     src: eos_template.j2
+     backup: yes
+     backup_options:
+       filename: backup.cfg
+       dir_path: /home/user
+
+RETURN VALUES                   *eos_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key                                  Returned                                                                                  Description
+   backup_path                                                                    The full path to the backup file
+   string      when backup is yes                                                 Sample:
+                                                                                  /playbooks/ansible/backup/[email protected]:28:34
+   commands                                                                       The set of commands that will be pushed to the remote device
+   list        always                                                             Sample:
+                                                                                  ['hostname switch01', 'interface Ethernet1', 'no shutdown']
+   date                                                                           The date extracted from the backup file name
+   string      when backup is yes                                                 Sample:
+                                                                                  2016-07-16
+   filename                                                                       The name of the backup file
+   string      when backup is yes and filename is not specified in backup options Sample:
+                                                                                  [email protected]:28:34
+   shortname                                                                      The full path to the backup file excluding the timestamp
+   string      when backup is yes and filename is not specified in backup options Sample:
+                                                                                  /playbooks/ansible/backup/eos_config
+   time                                                                           The time extracted from the backup file name
+   string      when backup is yes                                                 Sample:
+                                                                                  22:28:34
+   updates                                                                        The set of commands that will be pushed to the remote device
+   list        always                                                             Sample:
+                                                                                  ['hostname switch01', 'interface Ethernet1', 'no shutdown']
+
+STATUS                   *eos_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *eos_config-red hat support*
+
+     • Peter Sprygada (@privateip)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *eos_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/eos_config_module.html

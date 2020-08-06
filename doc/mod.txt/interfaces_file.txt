@@ -1,0 +1,133 @@
+SYNOPSIS                   *interfaces_file*
+
+     • Manage (add, remove, change) individual interface options in an interfaces-style file without having to manage the file as a whole with, say, template or assemble. Interface has to be
+       presented in a file.
+     • Read information about interfaces from interfaces-styled files
+
+PARAMETERS                   *interfaces_file-parameters*
+
+     Parameter        Choices/Defaults                                                                              Comments
+   address_family
+   -                                        Address family of the interface, useful if same interface name is used for both inet and inet6
+   added in 2.8
+                                            The attributes the resulting file or directory should have.
+   attributes                               To get supported flags look at the man page for chattr on the target system.
+   string                                   This string should contain the attributes in the same order as the one displayed by lsattr.
+                                            The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                            aliases: attr
+   backup           Choices:
+   boolean          • no ←                  Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                    • yes
+   dest           Default:                  Path to the interfaces file
+   -              "/etc/network/interfaces"
+   group                                    Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   iface                                    Name of the interface, required for value changes or option remove
+   -
+                                            The permissions the resulting file or directory should have.
+                                            For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows
+                                            it is an octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into
+   mode                                     number.
+   string                                   Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                            As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                            As of Ansible 2.6, the mode may also be the special string preserve.
+                                            When set to preserve the file will be given the same permissions as the source file.
+   option                                   Name of the option, required for value changes or option remove
+   -
+   owner                                    Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   selevel        Default:                  The level part of the SELinux file context.
+   string         "s0"                      This is the MLS/MCS attribute, sometimes known as the range.
+                                            When set to _default, it will use the level portion of the policy if available.
+   serole                                   The role part of the SELinux file context.
+   string                                   When set to _default, it will use the role portion of the policy if available.
+   setype                                   The type part of the SELinux file context.
+   string                                   When set to _default, it will use the type portion of the policy if available.
+   seuser                                   The user part of the SELinux file context.
+   string                                   By default it uses the system policy, where applicable.
+                                            When set to _default, it will use the user portion of the policy if available.
+   state            Choices:
+   -                • present ←             If set to absent the option or section will be removed if present instead of created.
+                    • absent
+                                            Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                            By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are
+   unsafe_writes    Choices:                configured or just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container
+   boolean          • no ←                  and can only be written in an unsafe manner.
+                    • yes                   This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform
+                                            unsafe writes).
+                                            IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   value                                    If option is not presented for the interface and state is present option will be added. If option already exists and is not pre-up, up, post-up or down,
+   -                                        it's value will be updated. pre-up, up, post-up and down options can't be updated, only adding new options, removing existing ones or cleaning the whole
+                                            option set are supported
+
+NOTES                   *interfaces_file-notes*
+
+   Note
+
+     • If option is defined multiple times last one will be updated but all will be deleted in case of an absent state
+
+EXAMPLES                   *interfaces_file-examples*
+
+ # Set eth1 mtu configuration value to 8000
+ - interfaces_file:
+     dest: /etc/network/interfaces.d/eth1.cfg
+     iface: eth1
+     option: mtu
+     value: 8000
+     backup: yes
+     state: present
+   register: eth1_cfg
+
+RETURN VALUES                   *interfaces_file-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   dest                          destination file/path
+   string               success  Sample:
+                                 /etc/network/interfaces
+   ifaces               success  interfaces dictionary
+   complex
+     ifaces             success  interface dictionary
+     dictionary
+       eth0             success  Name of the interface
+       dictionary
+         address_family          interface address family
+         string         success  Sample:
+                                 inet
+         down                    list of down scripts
+         list           success  Sample:
+                                 ['route del -net 10.10.10.0/24 gw 10.10.10.1 dev eth1', 'route del -net 10.10.11.0/24 gw 10.10.11.1 dev eth2']
+         method                  interface method
+         string         success  Sample:
+                                 manual
+         mtu                     other options, all values returned as strings
+         string         success  Sample:
+                                 1500
+         post-up                 list of post-up scripts
+         list           success  Sample:
+                                 ['route add -net 10.10.10.0/24 gw 10.10.10.1 dev eth1', 'route add -net 10.10.11.0/24 gw 10.10.11.1 dev eth2']
+         pre-up                  list of pre-up scripts
+         list           success  Sample:
+                                 ['route add -net 10.10.10.0/24 gw 10.10.10.1 dev eth1', 'route add -net 10.10.11.0/24 gw 10.10.11.1 dev eth2']
+         up                      list of up scripts
+         list           success  Sample:
+                                 ['route add -net 10.10.10.0/24 gw 10.10.10.1 dev eth1', 'route add -net 10.10.11.0/24 gw 10.10.11.1 dev eth2']
+
+STATUS                   *interfaces_file-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Roman Belyakovsky (@hryamzik)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *interfaces_file-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/interfaces_file_module.html

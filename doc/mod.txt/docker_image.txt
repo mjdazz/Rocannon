@@ -1,45 +1,308 @@
-SYNOPSIS                           *docker_image*
+SYNOPSIS                   *docker_image*
 
-New in version 1.5.
+     • Build, load or pull an image, making the image available for creating containers. Also supports tagging an image into a repository and archiving an image to a .tar file.
+     • Since Ansible 2.8, it is recommended to explicitly specify the image’s source (source can be build, load, pull or local). This will be required from Ansible 2.12 on.
 
-Create, check and remove docker images
+REQUIREMENTS                   *docker_image-requirements*
 
-EXAMPLES                           *docker_image-examples*
->
-    Build docker image if required. Path should contains Dockerfile to build image:
-   
-    - hosts: web
-      sudo: yes
-      tasks:
-      - name: check or build image
-        docker_image: path="/path/to/build/dir" name="my/app" state=present
-   
-    Build new version of image:
-   
-    - hosts: web
-      sudo: yes
-      tasks:
-      - name: check or build image
-        docker_image: path="/path/to/build/dir" name="my/app" state=build
-   
-    Remove image from local docker storage:
-   
-    - hosts: web
-      sudo: yes
-      tasks:
-      - name: remove image
-        docker_image: name="my/app" state=absent
-   
-      For help in developing on modules, should you be so inclined, please read Community Information & Contributing, Helping Testing PRs and Developing Modules.
-   
-      Next Previous
-   
-      ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-   
-      © Copyright 2014 Ansible, Inc.. Last updated on Jan 07, 2015.
-   
-      Ansible docs are generated from GitHub sources using Sphinx using a theme provided by Read the Docs. . Module documentation is not edited directly, but is generated from the source code for the
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.20
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 1.8.0 (use docker-py for Python 2.6)
+
+PARAMETERS                   *docker_image-parameters*
+
+       Parameter           Choices/Defaults                                                                            Comments
+                                                  The version of the Docker API running on the Docker Host.
+   api_version       Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string            "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment variable
+                                                  is not set, the default value will be used.
+                                                  aliases: docker_api_version
+   archive_path                                   Use with state present to archive an image to a .tar file.
+   path
+   build
+   dictionary                                     Specifies options used for building images.
+   added in 2.8
+    args                                          Provide a dictionary of key:value build arguments that map to Dockerfile ARG directive.
+    dictionary                                    Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
+                                                  Requires Docker API >= 1.21.
+    cache_from
+    list /                                        List of image names to consider as cache source.
+    elements=string
+    container_limits                              A dictionary of limits applied to each container created by the build process.
+    dictionary
+        cpusetcpus                                CPUs in which to allow execution, e.g., "0-3", "0,1".
+        string
+        cpushares                                 CPU shares (relative weight).
+        integer
+        memory                                    Set memory limit for build.
+        integer
+        memswap                                   Total memory (memory + swap), -1 to disable swap.
+        integer
+    dockerfile                                    Use with state present and source build to provide an alternate name for the Dockerfile to use when building an image.
+    string                                        This can also include a relative path (relative to path).
+    etc_hosts
+    dictionary                                    Extra hosts to add to /etc/hosts in building containers, as a mapping of hostname to IP address.
+    added in 2.9
+    http_timeout                                  Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of seconds.
+    integer
+    network                                       The network to use for RUN build instructions.
+    string
+    nocache            Choices:
+    boolean            • no ←                     Do not use cache when building an image.
+                       • yes
+    path                                          Use with state 'present' to build an image. Will be the path to a directory containing the context and Dockerfile for building an image.
+    path / required
+    pull               Choices:                   When building an image downloads any updates to the FROM image in Dockerfile.
+    boolean            • no                       The default is currently yes. This will change to no in Ansible 2.12.
+                       • yes
+    rm                 Choices:
+    boolean            • no                       Remove intermediate containers after build.
+                       • yes ←
+    target
+    string                                        When building an image specifies an intermediate build stage by name as a final stage for the resulting image.
+    added in 2.9
+    use_config_proxy   Choices:                   If set to yes and a proxy configuration is specified in the docker client configuration (by default $HOME/.docker/config.json), the corresponding
+    boolean            • no                       environment variables will be set in the container being built.
+                       • yes                      Needs Docker SDK for Python >= 3.7.0.
+                                                  Provide a dictionary of key:value build arguments that map to Dockerfile ARG directive.
+   buildargs                                      Docker expects the value to be a string. For convenience any non-string values will be converted to strings.
+   dictionary                                     Requires Docker API >= 1.21.
+                                                  Please use build.args instead. This option will be removed in Ansible 2.12.
+                                                  Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                        If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified in the
+   path                                           environment variable DOCKER_CERT_PATH will be used.
+                                                  aliases: tls_ca_cert, cacert_path
+                                                  Path to the client's TLS certificate file.
+   client_cert                                    If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory specified in
+   path                                           the environment variable DOCKER_CERT_PATH will be used.
+                                                  aliases: tls_client_cert, cert_path
+                                                  Path to the client's TLS key file.
+   client_key                                     If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory specified in
+   path                                           the environment variable DOCKER_CERT_PATH will be used.
+                                                  aliases: tls_client_key, key_path
+   container_limits                               A dictionary of limits applied to each container created by the build process.
+   dictionary                                     Please use build.container_limits instead. This option will be removed in Ansible 2.12.
+    cpusetcpus                                    CPUs in which to allow execution, e.g., "0-3", "0,1".
+    string
+    cpushares                                     CPU shares (relative weight).
+    integer
+    memory                                        Set memory limit for build.
+    integer
+    memswap                                       Total memory (memory + swap), -1 to disable swap.
+    integer
+   debug               Choices:
+   boolean             • no ←                     Debug mode
+                       • yes
+                                                  The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host       Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string            "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable is not
+                                                  set, the default value will be used.
+                                                  aliases: docker_url
+   dockerfile                                     Use with state present and source build to provide an alternate name for the Dockerfile to use when building an image.
+   string                                         This can also include a relative path (relative to path).
+                                                  Please use build.dockerfile instead. This option will be removed in Ansible 2.12.
+                       Choices:                   Use with state absent to un-tag and remove all images matching the specified name. Use with state present to build, load or pull an image when the
+   force               • no                       image already exists. Also use with state present to force tagging an image.
+   boolean             • yes                      Please stop using this option, and use the more specialized force options force_source, force_absent and force_tag instead.
+                                                  This option will be removed in Ansible 2.12.
+   force_absent        Choices:
+   boolean             • no ←                     Use with state absent to un-tag and remove all images matching the specified name.
+   added in 2.8        • yes
+   force_source        Choices:
+   boolean             • no ←                     Use with state present to build, load or pull an image (depending on the value of the source option) when the image already exists.
+   added in 2.8        • yes
+   force_tag           Choices:
+   boolean             • no ←                     Use with state present to force tagging an image.
+   added in 2.8        • yes
+   http_timeout                                   Timeout for HTTP requests during the image build operation. Provide a positive integer value for the number of seconds.
+   integer                                        Please use build.http_timeout instead. This option will be removed in Ansible 2.12.
+   load_path                                      Use with state present to load an image from a .tar file.
+   path                                           Set source to load if you want to load the image. The option will be set automatically before Ansible 2.12 if this option is used (except if path
+                                                  is specified as well, in which case building will take precedence). From Ansible 2.12 on, you have to set source to load.
+   name                                           Image name. Name format will be one of: name, repository/name, registry_server:port/name. When pushing or pulling an image the name can optionally
+   string / required                              include the tag by appending ':tag_name'.
+                                                  Note that image IDs (hashes) are not supported.
+   nocache             Choices:                   Do not use cache when building an image.
+   boolean             • no ←                     Please use build.nocache instead. This option will be removed in Ansible 2.12.
+                       • yes
+                                                  Use with state 'present' to build an image. Will be the path to a directory containing the context and Dockerfile for building an image.
+   path                                           Set source to build if you want to build the image. The option will be set automatically before Ansible 2.12 if this option is used. From Ansible
+   path                                           2.12 on, you have to set source to build.
+                                                  Please use build.path instead. This option will be removed in Ansible 2.12.
+                                                  aliases: build_path
+   pull                Choices:                   When building an image downloads any updates to the FROM image in Dockerfile.
+   boolean             • no                       Please use build.pull instead. This option will be removed in Ansible 2.12.
+                       • yes                      The default is currently yes. This will change to no in Ansible 2.12.
+   push                Choices:
+   boolean             • no ←                     Push the image to the registry. Specify the registry as part of the name or repository parameter.
+                       • yes
+   repository                                     Full path to a repository. Use with state present to tag the image into the repository. Expects format repository:tag. If no tag is provided, will
+   string                                         use the value of the tag parameter or latest.
+   rm                  Choices:                   Remove intermediate containers after build.
+   boolean             • no                       Please use build.rm instead. This option will be removed in Ansible 2.12.
+                       • yes ←
+                                                  Determines where the module will try to retrieve the image from.
+                       Choices:                   Use build to build the image from a Dockerfile. build.path must be specified when this value is used.
+   source              • build                    Use load to load the image from a .tar file. load_path must be specified when this value is used.
+   string              • load                     Use pull to pull the image from a registry.
+   added in 2.8        • pull                     Use local to make sure that the image is already available on the local docker daemon, i.e. do not try to build, pull or load the image.
+                       • local                    Before Ansible 2.12, the value of this option will be auto-detected to be backwards compatible, but a warning will be issued if it is not
+                                                  explicitly specified. From Ansible 2.12 on, auto-detection will be disabled and this option will be made mandatory.
+   ssl_version                                    Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                         If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+                                                  Make assertions about the state of an image.
+                                                  When absent an image will be removed. Use the force option to un-tag and remove all images matching the provided name.
+                       Choices:                   When present check if an image exists using the provided name and tag. If the image is not found or the force option is used, the image will either
+   state               • absent                   be pulled, built or loaded, depending on the source option.
+   string              • present ←                By default the image will be pulled from Docker Hub, or the registry specified in the image's name. Note that this will change in Ansible 2.12, so
+                       • build                    to make sure that you are pulling, set source to pull. To build the image, provide a path value set to a directory containing a context and
+                                                  Dockerfile, and set source to build. To load an image, specify load_path to provide a path to an archive file. To tag an image to a repository,
+                                                  provide a repository path. If the name contains a repository path, it will be pushed.
+                                                  "Note:" state=build is DEPRECATED and will be removed in Ansible 2.11. Specifying build will behave the same as present.
+   tag               Default:                     Used to select an image when pulling. Will be added to the image when pushing, tagging or building. Defaults to latest.
+   string            "latest"                     If name parameter format is name:tag, then tag value from name will take precedence.
+   timeout           Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer           60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment variable is
+                                                  not set, the default value will be used.
+                       Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is set to
+   tls                 • no ←                     yes as well, it will take precedence.
+   boolean             • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is not
+                                                  set, the default value will be used.
+   tls_hostname      Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string            "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment variable
+                                                  is not set, the default value will be used.
+                       Choices:                   DEPRECATED. Whether to use tls to connect to the docker daemon. Set to encrypt to use TLS. And set to verify to use TLS and verify that the
+   use_tls             • no                       server's certificate is valid for the server.
+   string              • encrypt                  "Note:" If you specify this option, it will set the value of the tls or validate_certs parameters if not set to no.
+                       • verify                   Will be removed in Ansible 2.11.
+                       Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs      • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment variable is
+   boolean             • yes                      not set, the default value will be used.
+                                                  aliases: tls_verify
+
+NOTES                   *docker_image-notes*
+
+   Note
+
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_image-examples*
+
+ - name: pull an image
+   docker_image:
+     name: pacur/centos-7
+     source: pull
+
+ - name: Tag and push to docker hub
+   docker_image:
+     name: pacur/centos-7:56
+     repository: dcoppenhagan/myimage:7.56
+     push: yes
+     source: local
+
+ - name: Tag and push to local registry
+   docker_image:
+     # Image will be centos:7
+     name: centos
+     # Will be pushed to localhost:5000/centos:7
+     repository: localhost:5000/centos
+     tag: 7
+     push: yes
+     source: local
+
+ - name: Add tag latest to image
+   docker_image:
+     name: myimage:7.1.2
+     repository: myimage:latest
+     # As 'latest' usually already is present, we need to enable overwriting of existing tags:
+     force_tag: yes
+     source: local
+
+ - name: Remove image
+   docker_image:
+     state: absent
+     name: registry.ansible.com/chouseknecht/sinatra
+     tag: v1
+
+ - name: Build an image and push it to a private repo
+   docker_image:
+     build:
+       path: ./sinatra
+     name: registry.ansible.com/chouseknecht/sinatra
+     tag: v1
+     push: yes
+     source: build
+
+ - name: Archive image
+   docker_image:
+     name: registry.ansible.com/chouseknecht/sinatra
+     tag: v1
+     archive_path: my_sinatra.tar
+     source: local
+
+ - name: Load image from archive and push to a private registry
+   docker_image:
+     name: localhost:5000/myimages/sinatra
+     tag: v1
+     push: yes
+     load_path: my_sinatra.tar
+     source: load
+
+ - name: Build image and with build args
+   docker_image:
+     name: myimage
+     build:
+       path: /path/to/build/dir
+       args:
+         log_volume: /var/log/myapp
+         listen_port: 8080
+     source: build
+
+ - name: Build image using cache source
+   docker_image:
+     name: myimage:latest
+     build:
+       path: /path/to/build/dir
+       # Use as cache source for building myimage
+       cache_from:
+         - nginx:latest
+         - alpine:3.8
+     source: build
+
+RETURN VALUES                   *docker_image-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   image      success  Image inspection results for the affected image.
+   dictionary
+
+STATUS                   *docker_image-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pavel Antonov (@softzilla)
+     • Chris Houseknecht (@chouseknecht)
+     • Sorin Sbarnea (@ssbarnea)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *docker_image-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/docker_image_module.html
+https://docs.ansible.com/ansible/latest/modules/docker_image_module.html

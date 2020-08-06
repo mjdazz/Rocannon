@@ -1,0 +1,126 @@
+SYNOPSIS                   *netapp_e_host*
+
+     • Create, update, remove hosts on NetApp E-series storage arrays
+
+PARAMETERS                   *netapp_e_host-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_password                       The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   api_url                            The url to the SANtricity Web Services Proxy or Embedded Web Services API. Example https://prod-1.wahoo.acme.com/devmgr/v2
+   string / required
+   api_username                       The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   force_port          Choices:
+   boolean             • no           Allow ports that are already assigned to be re-assigned to your current host
+   added in 2.7        • yes
+   group                              The unique identifier of the host-group you want the host to be a member of; this is used for clustering.
+   -                                  aliases: cluster
+                                      This is the type of host to be mapped
+   host_type                          Required when state=present
+   string                             Either one of the following names can be specified, Linux DM-MP, VMWare, Windows, Windows Clustered, or a host type index which can be found in netapp_e_facts
+                                      aliases: host_type_index
+   log_path
+   -                                  A local path to a file to be used for debug logging
+   added in 2.7
+   name                               If the host doesn't yet exist, the label/name to assign at creation time.
+   - / required                       If the hosts already exists, this will be used to uniquely identify the host to make any required changes
+                                      aliases: label
+   ports                              A list of host ports you wish to associate with the host.
+   -                                  Host ports are uniquely identified by their WWN or IQN. Their assignments to a particular host are uniquely identified by a label and these must be unique.
+      label                           A unique label to assign to this port assignment.
+      - / required
+      port                            The WWN or IQN of the hostPort to assign to this port definition.
+      - / required
+                       Choices:
+                       • iscsi
+      type             • sas          The interface type of the port to define.
+      - / required     • fc           Acceptable choices depend on the capabilities of the target hardware/software platform.
+                       • ib
+                       • nvmeof
+                       • ethernet
+   ssid              Default:         The ID of the array to manage. This value must be unique for each array.
+   string            1
+   state               Choices:       Set to absent to remove an existing host
+   -                   • absent       Set to present to modify or create a new host definition
+   added in 2.7        • present ←
+   validate_certs      Choices:
+   boolean             • no           Should https certificates be validated?
+                       • yes ←
+
+NOTES                   *netapp_e_host-notes*
+
+   Note
+
+     • The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage the storage-system, or an E-Series storage-system that supports the
+       Embedded Web Services API.
+     • Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+     • netapp_e_storage_system may be utilized for configuring the systems managed by a WSP instance.
+
+EXAMPLES                   *netapp_e_host-examples*
+
+ - name: Define or update an existing host named 'Host1'
+   netapp_e_host:
+     ssid: "1"
+     api_url: "10.113.1.101:8443"
+     api_username: admin
+     api_password: myPassword
+     name: "Host1"
+     state: present
+     host_type_index: Linux DM-MP
+     ports:
+       - type: 'iscsi'
+         label: 'PORT_1'
+         port: 'iqn.1996-04.de.suse:01:56f86f9bd1fe'
+       - type: 'fc'
+         label: 'FC_1'
+         port: '10:00:FF:7C:FF:FF:FF:01'
+       - type: 'fc'
+         label: 'FC_2'
+         port: '10:00:FF:7C:FF:FF:FF:00'
+
+ - name: Ensure a host named 'Host2' doesn't exist
+   netapp_e_host:
+     ssid: "1"
+     api_url: "10.113.1.101:8443"
+     api_username: admin
+     api_password: myPassword
+     name: "Host2"
+     state: absent
+
+RETURN VALUES                   *netapp_e_host-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key                Returned                                                                                  Description
+   api_url                                    the url of the API that this request was processed by
+   string       on success                    Sample:
+   added in 2.6                               https://webservices.example.com:8443
+   id                                         the unique identifier of the host on the E-Series storage-system
+   string       on success when state=present Sample:
+   added in 2.6                               00000000600A098000AAC0C3003004700AD86A52
+   msg                                        A user-readable description of the actions performed.
+   string       on success                    Sample:
+                                              The host has been created.
+   ssid                                       the unique identifier of the E-Series storage-system with the current api
+   string       on success                    Sample:
+   added in 2.6                               1
+
+STATUS                   *netapp_e_host-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Hulquest (@hulquest)
+     • Nathan Swartz (@ndswartz)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netapp_e_host-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netapp_e_host_module.html

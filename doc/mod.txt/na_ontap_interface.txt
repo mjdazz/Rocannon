@@ -1,0 +1,147 @@
+SYNOPSIS                   *na_ontap_interface*
+
+     • Creating / deleting and modifying the LIF.
+
+REQUIREMENTS                   *na_ontap_interface-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_interface-parameters*
+
+          Parameter             Choices/Defaults                                                                         Comments
+   address                                            Specifies the LIF's IP address.
+   -                                                  Required when state=present
+   admin_status               Choices:
+   -                          • up                    Specifies the administrative status of the LIF.
+                              • down
+   dns_domain_name
+   string                                             Specifies the unique, fully qualified domain name of the DNS zone of this LIF.
+   added in 2.9
+                              Choices:
+                              • disabled
+   failover_policy            • system-defined        Specifies the failover policy for the LIF.
+   -                          • local-only
+                              • sfo-partner-only
+                              • broadcast-domain-wide
+   firewall_policy                                    Specifies the firewall policy for the LIF.
+   -
+   force_subnet_association   Choices:
+   boolean                    • no                    Set this to true to acquire the address from the named subnet and assign the subnet to the LIF.
+   added in 2.9               • yes
+   home_node                                          Specifies the LIF's home node.
+   -                                                  By default, the first node from the cluster is considered as home node
+   home_port                                          Specifies the LIF's home port.
+   -                                                  Required when state=present
+   hostname                                           The hostname or IP address of the ONTAP instance.
+   string / required
+   http_port                                          Override the default port (80 or 443) with this port
+   integer
+   https                      Choices:
+   boolean                    • no ←                  Enable and disable https
+                              • yes
+   interface_name                                     Specifies the logical interface (LIF) name.
+   - / required
+   is_auto_revert             Choices:                If true, data LIF will revert to its home node under certain circumstances such as startup, and load balancing migration capability is disabled
+   boolean                    • no                    automatically
+                              • yes
+   is_dns_update_enabled      Choices:
+   boolean                    • no                    Specifies if DNS update is enabled for this LIF. Dynamic updates will be sent for this LIF if updates are enabled at Vserver level.
+   added in 2.9               • yes
+   listen_for_dns_query       Choices:
+   boolean                    • no                    If True, this IP address will listen for DNS queries for the dnszone specified.
+   added in 2.9               • yes
+   netmask                                            Specifies the LIF's netmask.
+   -                                                  Required when state=present.
+   ontapi                                             The ontap api version to use
+   integer
+   password                                           Password for the specified user.
+   string / required                                  aliases: pass
+                                                      Specifies the list of data protocols configured on the LIF. By default, the values in this element are nfs, cifs and fcache.
+   protocols                                          Other supported protocols are iscsi and fcp. A LIF can be configured to not support any data protocols by specifying 'none'.
+   -                                                  Protocol values of none, iscsi, fc-nvme or fcp can't be combined with any other data protocol(s).
+                                                      address, netmask and firewall_policy parameters are not supported for 'fc-nvme' option.
+   role                                               Specifies the role of the LIF.
+   -                                                  When setting role as "intercluster", setting protocol is not supported.
+                                                      Required when state=present.
+   state                      Choices:
+   -                          • present ←             Whether the specified interface should exist or not.
+                              • absent
+   subnet_name                                        Subnet where the interface address is allocated from. If the option is not used, the IP address will need to be provided by the administrator
+   -                                                  during configuration.
+   added in 2.8
+                              Choices:                REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest                   • Never                 Always -- will always use the REST API
+   string                     • Always                Never -- will always use the ZAPI
+                              • Auto ←                Auto -- will try to use the REST Api
+   username                                           This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information,
+   string / required                                  please read the documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+                                                      aliases: user
+   validate_certs             Choices:                If set to no, the SSL certificates will not be validated.
+   boolean                    • no                    This should only set to False used on personally controlled sites using self-signed certificates.
+                              • yes ←
+   vserver                                            The name of the vserver to use.
+   - / required
+
+NOTES                   *na_ontap_interface-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_interface-examples*
+
+ - name: Create interface
+   na_ontap_interface:
+     state: present
+     interface_name: data2
+     home_port: e0d
+     home_node: laurentn-vsim1
+     role: data
+     protocols: nfs
+     admin_status: up
+     failover_policy: local-only
+     firewall_policy: mgmt
+     is_auto_revert: true
+     address: 10.10.10.10
+     netmask: 255.255.255.0
+     force_subnet_association: false
+     dns_domain_name: test.com
+     listen_for_dns_query: true
+     is_dns_update_enabled: true
+     vserver: svm1
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Delete interface
+   na_ontap_interface:
+     state: absent
+     interface_name: data2
+     vserver: svm1
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+STATUS                   *na_ontap_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_interface_module.html

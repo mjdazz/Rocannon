@@ -1,0 +1,85 @@
+SYNOPSIS                   *ovh_ip_failover*
+
+     • Manage OVH (French European hosting provider) IP Failover Address. For now, this module can only be used to move an ip failover (or failover block) between services
+
+REQUIREMENTS                   *ovh_ip_failover-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ovh >= 0.4.8
+
+PARAMETERS                   *ovh_ip_failover-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   application_key                       The applicationKey to use
+   - / required
+   application_secret                    The application secret to use
+   - / required
+   consumer_key                          The consumer key to use
+   - / required
+   endpoint                              The endpoint to use ( for instance ovh-eu)
+   - / required
+   name                                  The IP address to manage (can be a single IP like 1.1.1.1 or a block like 1.1.1.1/28 )
+   - / required
+   service                               The name of the OVH service this IP address should be routed
+   - / required
+   timeout              Default:         The timeout in seconds used to wait for a task to be completed. Default is 120 seconds.
+   -                    120
+   wait_completion        Choices:
+   boolean                • no           If true, the module will wait for the IP address to be moved. If false, exit without waiting. The taskId will be returned in module output
+                          • yes ←
+   wait_task_completion Default:         If not 0, the module will wait for this task id to be completed. Use wait_task_completion if you want to wait for completion of a previously executed task
+   -                    0                with wait_completion=false. You can execute this module repeatedly on a list of failover IPs using wait_completion=false (see examples)
+
+NOTES                   *ovh_ip_failover-notes*
+
+   Note
+
+     • Uses the python OVH Api https://github.com/ovh/python-ovh. You have to create an application (a key and secret) with a consummer key as described into
+       https://eu.api.ovh.com/g934.first_step_with_api
+
+EXAMPLES                   *ovh_ip_failover-examples*
+
+ # Route an IP address 1.1.1.1 to the service ns666.ovh.net
+ - ovh_ip_failover:
+     name: 1.1.1.1
+     service: ns666.ovh.net
+     endpoint: ovh-eu
+     application_key: yourkey
+     application_secret: yoursecret
+     consumer_key: yourconsumerkey
+ - ovh_ip_failover:
+     name: 1.1.1.1
+     service: ns666.ovh.net
+     endpoint: ovh-eu
+     wait_completion: false
+     application_key: yourkey
+     application_secret: yoursecret
+     consumer_key: yourconsumerkey
+   register: moved
+ - ovh_ip_failover:
+     name: 1.1.1.1
+     service: ns666.ovh.net
+     endpoint: ovh-eu
+     wait_task_completion: "{{moved.taskId}}"
+     application_key: yourkey
+     application_secret: yoursecret
+     consumer_key: yourconsumerkey
+
+STATUS                   *ovh_ip_failover-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pascal HERAUD (@pascalheraud)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovh_ip_failover-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovh_ip_failover_module.html

@@ -1,0 +1,99 @@
+SYNOPSIS                   *postgresql_ping*
+
+     • Simple module to check remote PostgreSQL server availability.
+
+REQUIREMENTS                   *postgresql_ping-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_ping-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+   ca_cert                             Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                              If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                       aliases: ssl_rootcert
+   db                                  Name of a database to connect to.
+   string                              aliases: login_db
+   login_host                          Host running the database.
+   string
+   login_password                      The password used to authenticate with.
+   string
+   login_unix_socket                   Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:          The username used to authenticate with.
+   string            "postgres"
+   port              Default:          Database port to connect to.
+   integer           5432              aliases: login_port
+                       Choices:
+                       • allow
+   ssl_mode            • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                       • require       Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+
+NOTES                   *postgresql_ping-notes*
+
+   Note
+
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_ping-see also*
+
+   See also
+
+   postgresql_info – Gather information about PostgreSQL servers
+   The official documentation on the postgresql_info module.
+
+EXAMPLES                   *postgresql_ping-examples*
+
+ # PostgreSQL ping dbsrv server from the shell:
+ # ansible dbsrv -m postgresql_ping
+
+ # In the example below you need to generate certificates previously.
+ # See https://www.postgresql.org/docs/current/libpq-ssl.html for more information.
+ - name: PostgreSQL ping dbsrv server using not default credentials and ssl
+   postgresql_ping:
+     db: protected_db
+     login_host: dbsrv
+     login_user: secret
+     login_password: secret_pass
+     ca_cert: /root/root.crt
+     ssl_mode: verify-full
+
+RETURN VALUES                   *postgresql_ping-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   is_available            PostgreSQL server availability.
+   boolean        always   Sample:
+                           True
+   server_version          PostgreSQL server version.
+   dictionary     always   Sample:
+                           {'major': 10, 'minor': 1}
+
+STATUS                   *postgresql_ping-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_ping-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_ping_module.html

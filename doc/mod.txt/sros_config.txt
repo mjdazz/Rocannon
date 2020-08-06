@@ -1,0 +1,167 @@
+SYNOPSIS                   *sros_config*
+
+     • Nokia SR OS configurations use a simple block indent file syntax for segmenting configuration into sections. This module provides an implementation for working with SR OS configuration
+       sections in a deterministic way.
+
+PARAMETERS                   *sros_config-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   after                           The ordered set of commands to append to the end of the command stack if a change needs to be made. Just like with before this allows the playbook designer to
+   -                               append a set of commands to be executed after the command set.
+   backup           Choices:       This argument will cause the module to create a full backup of the current running-config from the remote device before any changes are made. If the
+   boolean          • no ←         backup_options value is not given, the backup file is written to the backup folder in the playbook root directory. If the directory does not exist, it is created.
+                    • yes
+   backup_options                  This is a dict object containing configurable options related to backup file path. The value of this option is read only when backup is set to yes, if backup is
+   dictionary                      set to no this option will be silently ignored.
+   added in 2.8
+     dir_path                      This option provides the path ending with directory name in which the backup configuration file will be stored. If the directory does not exist it will be first
+     path                          created and the filename is either the value of filename or default filename as described in filename options description. If the path value is not given in that
+                                   case a backup directory will be created in the current working directory and backup configuration will be copied in filename within backup directory.
+     filename                      The filename to be used to store the backup configuration. If the the filename is not given it will be generated based on the hostname, current time and date in
+     -                             format defined by <hostname>_config.<current-date>@<current-time>
+   before                          The ordered set of commands to push on to the command stack if a change needs to be made. This allows the playbook designer the opportunity to perform
+   -                               configuration commands prior to pushing any changes without affecting how the set of commands are matched against the system.
+   config                          The config argument allows the playbook designer to supply the base configuration to be used to validate configuration changes necessary. If this argument is
+   -                               provided, the module will not download the running-config from the remote node.
+   defaults         Choices:       This argument specifies whether or not to collect all defaults when getting the remote device running config. When enabled, the module will get the current config
+   boolean          • no ←         by issuing the command admin display-config detail.
+                    • yes          aliases: detail
+                    Choices:       The force argument instructs the module to not consider the current devices running-config. When set to true, this will cause the module to push the contents of
+   force            • no           src into the device without first checking if already configured.
+   boolean          • yes          Note this argument should be considered deprecated. To achieve the equivalent, set the match=none which is idempotent. This argument will be removed in a future
+                                   release.
+                                   The ordered set of commands that should be configured in the section. The commands must be the exact same commands as found in the device running-config. Be sure
+   lines                           to note the configuration command syntax as some commands are automatically modified by the device config parser. The lines argument only supports current context
+   -                               lines. See EXAMPLES
+                                   aliases: commands
+   match            Choices:       Instructs the module on the way to perform the matching of the set of commands against the current device config. If match is set to line, commands are matched
+   -                • line ←       line by line. If match is set to none, the module will not attempt to compare the source configuration with the running configuration on the remote device.
+                    • none
+   parents                         The ordered set of parents that uniquely identify the section or hierarchy the commands should be checked against. If the parents argument is omitted, the
+   -                               commands are checked against the set of top level or global commands.
+   provider                        A dict object containing connection details.
+   dictionary
+     host                          Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+     string /                      the transport.
+     required
+     password                      Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                        specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port         Default:         Specifies the port to use when building the connection to the remote device.
+     integer      22
+     ssh_keyfile                   Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+     path                          value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     timeout      Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer      10               operation is completed, the module will error.
+     username                      Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                        specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   replace          Choices:       Instructs the module on the way to perform the configuration on the device. If the replace argument is set to line then the modified lines are pushed to the
+   -                • line ←       device in configuration mode. If the replace argument is set to block then the entire command block is pushed to the device in configuration mode if any line is
+                    • block        not correct.
+   save             Choices:       The save argument instructs the module to save the running- config to the startup-config at the conclusion of the module running. If check mode is specified, this
+   boolean          • no ←         argument is ignored.
+                    • yes
+   src                             Specifies the source path to the file that contains the configuration or configuration template to load. The path to the source file can either be the full path
+   -                               on the Ansible control host or a relative path from the playbook or role root directory. This argument is mutually exclusive with lines, parents.
+
+NOTES                   *sros_config-notes*
+
+   Note
+
+     • For more information on using Ansible to manage Nokia SR OS Network devices see https://www.ansible.com/ansible-nokia.
+
+EXAMPLES                   *sros_config-examples*
+
+ # Note: examples below use the following provider dict to handle
+ #       transport and authentication to the node.
+ ---
+ vars:
+   cli:
+     host: "{{ inventory_hostname }}"
+     username: admin
+     password: admin
+     transport: cli
+
+ ---
+ - name: enable rollback location
+   sros_config:
+     lines: configure system rollback rollback-location "cf3:/ansible"
+     provider: "{{ cli }}"
+
+ - name: set system name to {{ inventory_hostname }} using one line
+   sros_config:
+     lines:
+         - configure system name "{{ inventory_hostname }}"
+     provider: "{{ cli }}"
+
+ - name: set system name to {{ inventory_hostname }} using parents
+   sros_config:
+     lines:
+         - 'name "{{ inventory_hostname }}"'
+     parents:
+         - configure
+         - system
+     provider: "{{ cli }}"
+     backup: yes
+
+ - name: load config from file
+   sros_config:
+       src: "{{ inventory_hostname }}.cfg"
+       provider: "{{ cli }}"
+       save: yes
+
+ - name: invalid use of lines
+   sros_config:
+     lines:
+       - service
+       -     vpls 1000 customer foo 1 create
+       -         description "invalid lines example"
+     provider: "{{ cli }}"
+
+ - name: valid use of lines
+   sros_config:
+     lines:
+       - description "invalid lines example"
+     parents:
+       - service
+       - vpls 1000 customer foo 1 create
+     provider: "{{ cli }}"
+
+ - name: configurable backup path
+   sros_config:
+     backup: yes
+     backup_options:
+       filename: backup.cfg
+       dir_path: /home/user
+
+RETURN VALUES                   *sros_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key          Returned                                                                                  Description
+   backup_path                    The full path to the backup file
+   string      when backup is yes Sample:
+                                  /playbooks/ansible/backup/[email protected]:28:34
+   commands                       The set of commands that will be pushed to the remote device
+   list        always             Sample:
+                                  ['config system name "sros01"']
+   updates                        The set of commands that will be pushed to the remote device
+   list        always             Sample:
+                                  ['config system name "sros01"']
+
+STATUS                   *sros_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Peter Sprygada (@privateip)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sros_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sros_config_module.html

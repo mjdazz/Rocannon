@@ -1,0 +1,136 @@
+SYNOPSIS                   *lxd_profile*
+
+     • Management of LXD profiles
+
+PARAMETERS                   *lxd_profile-parameters*
+
+     Parameter                 Choices/Defaults                                                                              Comments
+   client_cert    Default:                                    The client certificate file path.
+   -              "\"{}/.config/lxc/client.crt\"              aliases: cert_file
+                  .format(os.environ[\"HOME\"])"
+   client_key     Default:                                    The client certificate key file path.
+   -              "\"{}/.config/lxc/client.key\"              aliases: key_file
+                  .format(os.environ[\"HOME\"])"
+                                                              The config for the container (e.g. {"limits.memory": "4GB"}). See https://github.com/lxc/lxd/blob/master/doc/rest-api.md#patch-3
+   config                                                     If the profile already exists and its "config" value in metadata obtained from GET /1.0/profiles/<name>
+   -                                                          https://github.com/lxc/lxd/blob/master/doc/rest-api.md#get-19 are different, they this module tries to apply the configurations.
+                                                              Not all config values are supported to apply the existing profile. Maybe you need to delete and recreate a profile.
+   description
+   -                                                          Description of the profile.
+   added in 2.5
+   devices                                                    The devices for the profile (e.g. {"rootfs": {"path": "/dev/kvm", "type": "unix-char"}). See
+   -                                                          https://github.com/lxc/lxd/blob/master/doc/rest-api.md#patch-3
+   name                                                       Name of a profile.
+   - / required
+   new_name                                                   A new name of a profile.
+   -                                                          If this parameter is specified a profile will be renamed to this name. See
+                                                              https://github.com/lxc/lxd/blob/master/doc/rest-api.md#post-11
+   snap_url       Default:
+   -              "unix:/var/snap/lxd/common/lxd/unix.socket" The unix domain socket path when LXD is installed by snap package manager.
+   added in 2.8
+   state            Choices:
+   -                • present ←                               Define the state of a profile.
+                    • absent
+                                                              The client trusted password.
+   trust_password                                             You need to set this password on the LXD server before running this module using the following command. lxc config set
+   -                                                          core.trust_password <some random password> See https://www.stgraber.org/2016/04/18/lxd-api-direct-interaction/
+                                                              If trust_password is set, this module send a request for authentication before sending any requests.
+   url            Default:                                    The unix domain socket path or the https URL for the LXD server.
+   -              "unix:/var/lib/lxd/unix.socket"
+
+NOTES                   *lxd_profile-notes*
+
+   Note
+
+     • Profiles must have a unique name. If you attempt to create a profile with a name that already existed in the users namespace the module will simply return as “unchanged”.
+
+EXAMPLES                   *lxd_profile-examples*
+
+ # An example for creating a profile
+ - hosts: localhost
+   connection: local
+   tasks:
+     - name: Create a profile
+       lxd_profile:
+         name: macvlan
+         state: present
+         config: {}
+         description: my macvlan profile
+         devices:
+           eth0:
+             nictype: macvlan
+             parent: br0
+             type: nic
+
+ # An example for creating a profile via http connection
+ - hosts: localhost
+   connection: local
+   tasks:
+   - name: create macvlan profile
+     lxd_profile:
+       url: https://127.0.0.1:8443
+       # These client_cert and client_key values are equal to the default values.
+       #client_cert: "{{ lookup('env', 'HOME') }}/.config/lxc/client.crt"
+       #client_key: "{{ lookup('env', 'HOME') }}/.config/lxc/client.key"
+       trust_password: mypassword
+       name: macvlan
+       state: present
+       config: {}
+       description: my macvlan profile
+       devices:
+         eth0:
+           nictype: macvlan
+           parent: br0
+           type: nic
+
+ # An example for deleting a profile
+ - hosts: localhost
+   connection: local
+   tasks:
+     - name: Delete a profile
+       lxd_profile:
+         name: macvlan
+         state: absent
+
+ # An example for renaming a profile
+ - hosts: localhost
+   connection: local
+   tasks:
+     - name: Rename a profile
+       lxd_profile:
+         name: macvlan
+         new_name: macvlan2
+         state: present
+
+RETURN VALUES                   *lxd_profile-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key                      Returned                                                                                   Description
+   actions                                                List of actions performed for the profile.
+   list      success                                      Sample:
+                                                          ["create"]
+   logs                                                   The logs of requests and responses.
+   list      when ansible-playbook is invoked with -vvvv. Sample:
+                                                          (too long to be placed here)
+   old_state                                              The old state of the profile
+   string    success                                      Sample:
+                                                          absent
+
+STATUS                   *lxd_profile-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Hiroaki Nakamura (@hnakamur)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *lxd_profile-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/lxd_profile_module.html

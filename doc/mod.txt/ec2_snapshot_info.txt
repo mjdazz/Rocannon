@@ -1,0 +1,158 @@
+SYNOPSIS                   *ec2_snapshot_info*
+
+     • Gather information about ec2 volume snapshots in AWS
+     • This module was called ec2_snapshot_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: ec2_snapshot_facts
+
+REQUIREMENTS                   *ec2_snapshot_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ec2_snapshot_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   filters                      Default:         A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+   -                            {}               https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSnapshots.html for possible filters. Filter names and values are case sensitive.
+   owner_ids                    Default:         If you specify one or more snapshot owners, only snapshots from the specified owners and for which you have access are returned.
+   -                            []
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   restorable_by_user_ids       Default:         If you specify a list of restorable users, only snapshots with create snapshot permissions for those users are returned.
+   -                            []
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   snapshot_ids                 Default:         If you specify one or more snapshot IDs, only snapshots that have the specified IDs are returned.
+   -                            []
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_snapshot_info-notes*
+
+   Note
+
+     • By default, the module will return all snapshots, including public ones. To limit results to snapshots owned by the account use the filter ‘owner-id’.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_snapshot_info-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Gather information about all snapshots, including public ones
+ - ec2_snapshot_info:
+
+ # Gather information about all snapshots owned by the account 0123456789
+ - ec2_snapshot_info:
+     filters:
+       owner-id: 0123456789
+
+ # Or alternatively...
+ - ec2_snapshot_info:
+     owner_ids:
+       - 0123456789
+
+ # Gather information about a particular snapshot using ID
+ - ec2_snapshot_info:
+     filters:
+       snapshot-id: snap-00112233
+
+ # Or alternatively...
+ - ec2_snapshot_info:
+     snapshot_ids:
+       - snap-00112233
+
+ # Gather information about any snapshot with a tag key Name and value Example
+ - ec2_snapshot_info:
+     filters:
+       "tag:Name": Example
+
+ # Gather information about any snapshot with an error status
+ - ec2_snapshot_info:
+     filters:
+       status: error
+
+RETURN VALUES                   *ec2_snapshot_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+                                   The data encryption key identifier for the snapshot. This value is a unique identifier that corresponds to the data encryption key that was used to encrypt the
+   data_encryption_key_id always   original volume or snapshot copy.
+   string                          Sample:
+                                   arn:aws:kms:ap-southeast-2:012345678900:key/74c9742a-a1b2-45cb-b3fe-abcdef123456
+   description                     The description for the snapshot.
+   string                 always   Sample:
+                                   My important backup
+   encrypted                       Indicates whether the snapshot is encrypted.
+   boolean                always   Sample:
+                                   True
+   kms_key_id                      The full ARN of the AWS Key Management Service (AWS KMS) customer master key (CMK) that was used to protect the volume encryption key for the parent volume.
+   string                 always   Sample:
+                                   74c9742a-a1b2-45cb-b3fe-abcdef123456
+   owner_alias                     The AWS account alias (for example, amazon, self) or AWS account ID that owns the snapshot.
+   string                 always   Sample:
+                                   033440102211
+   owner_id                        The AWS account ID of the EBS snapshot owner.
+   string                 always   Sample:
+                                   099720109477
+   progress                        The progress of the snapshot, as a percentage.
+   string                 always   Sample:
+                                   100%
+   snapshot_id                     The ID of the snapshot. Each snapshot receives a unique identifier when it is created.
+   string                 always   Sample:
+                                   snap-01234567
+   start_time                      The time stamp when the snapshot was initiated.
+   string                 always   Sample:
+                                   2015-02-12T02:14:02+00:00
+   state                           The snapshot state (completed, pending or error).
+   string                 always   Sample:
+                                   completed
+   state_message          always   Encrypted Amazon EBS snapshots are copied asynchronously. If a snapshot copy operation fails (for example, if the proper AWS Key Management Service (AWS KMS)
+   string                          permissions are not obtained) this field displays error state details to help you diagnose why the error occurred.
+   tags                            Any tags assigned to the snapshot.
+   dictionary             always   Sample:
+                                   { 'my_tag_key': 'my_tag_value' }
+   volume_id                       The ID of the volume that was used to create the snapshot.
+   string                 always   Sample:
+                                   vol-01234567
+   volume_size                     The size of the volume, in GiB.
+   integer                always   Sample:
+                                   8
+
+STATUS                   *ec2_snapshot_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_snapshot_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_snapshot_info_module.html

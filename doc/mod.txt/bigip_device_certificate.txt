@@ -1,0 +1,215 @@
+SYNOPSIS                   *bigip_device_certificate*
+
+     • Module used to create and/or renew self-signed device certificates for BIG-IP.
+
+PARAMETERS                   *bigip_device_certificate-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   add_to_trusted    Choices:
+   boolean           • no ←         Specified if the certificate should be added to the trusted client and server certificate files.
+                     • yes
+   cert_name       Default:         Specifies the full name of the certificate file.
+   string          "server.crt"     If the name is not default server.crt, the module will configure httpd to use them prior to restarting the httpd daemon.
+   days_valid                       Specifies the interval for which the self-signed certificate is valid.
+   integer /                        The maximum value is 25 years: 9125 days
+   required
+                     Choices:       When yes, will update or overwrite the existing certificate when it is not expired device.
+   force             • no ←         When no, the certificate will only be updated/overwritten if expired.
+   boolean           • yes          Generally should be yes only in cases where you need to update certificate that is about to expire.
+                                    This option is also needed when generating new certificate to replace non expired one.
+   issuer                           Certificate properties, required when generating new certificates.
+   dictionary
+    common_name                     Specifies Common Name attribute for the certificate.
+    string
+    country                         Specifies the Country name attribute for the certificate.
+    string
+    division                        Specifies the department name attribute for the certificate.
+    string
+    email                           Specifies the domain administrator's email address.
+    string
+    locality                        Specifies the city or town name for the certificate.
+    string
+    organization                    Specifies the Organization attribute for the certificate.
+    string
+    state                           Specifies the State or Province attribute for the certificate.
+    string
+   key_name        Default:         Specifies the full name of the key file.
+   string          "server.key"     If the name is not default server.key, the module will configure httpd to use them prior to restarting the httpd daemon.
+                     Choices:
+   key_size          • 512          Specifies the desired key size in bits.
+   integer           • 1024         Mandatory option when generating a new certificate.
+                     • 2048 ←
+                     • 4096
+   new_cert          Choices:       Specified if the module should generate new certificate.
+   boolean           • no ←         When yes the device certificate and key will be replaced
+                     • yes
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   transport         Choices:       Configures the transport connection to use when connecting to the remote device.
+   - / required      • cli ←        This module currently supports only connectivity to the device over cli (ssh).
+
+NOTES                   *bigip_device_certificate-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_device_certificate-examples*
+
+ - name: Update expired certificate
+   bigip_device_certificate:
+     days_valid: 365
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+       transport: cli
+       server_port: 22
+   delegate_to: localhost
+
+ - name: Update expired certificate non-default names
+   bigip_device_certificate:
+     days_valid: 60
+     cert_name: custom.crt
+     key_name: custom.key
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+       transport: cli
+       server_port: 22
+   delegate_to: localhost
+
+ - name: Force update not expired certificate
+   bigip_device_certificate:
+     days_valid: 365
+     force: yes
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+       transport: cli
+       server_port: 22
+   delegate_to: localhost
+
+ - name: Create a new certificate to replace expired certificate
+   bigip_device_certificate:
+     days_valid: 365
+     new_cert: yes
+     issuer:
+       country: US
+       state: WA
+       common_name: foobar.foo.local
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+       transport: cli
+       server_port: 22
+   delegate_to: localhost
+
+ - name: Force create a new custom named certificate to replace not expired certificate
+   bigip_device_certificate:
+     days_valid: 365
+     cert_name: custom.crt
+     key_name: custom.key
+     new_cert: yes
+     force: yes
+     issuer:
+       country: US
+       state: WA
+       common_name: foobar.foo.local
+     key_size: 2048
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+       transport: cli
+       server_port: 22
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_device_certificate-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   cert_name               The full name of the certificate file.
+   string         changed  Sample:
+                           common.crt
+   days_valid              The interval for which the self-signed certificate is valid.
+   integer        changed  Sample:
+                           365
+   issuer         changed  Specifies certificate properties.
+   complex
+     common_name           The Common Name attribute of the certificate.
+     string       changed  Sample:
+                           foo.bar.local
+     country               The Country name attribute of the certificate.
+     string       changed  Sample:
+                           US
+     division              The department name attribute of the certificate.
+     string       changed  Sample:
+                           IT
+     email                 The domain administrator's email address.
+     string       changed  Sample:
+                           [email protected]
+     locality              The city or town name attribute of the certificate.
+     string       changed  Sample:
+                           Seattle
+     organization          The Organization attribute of the certificate.
+     string       changed  Sample:
+                           F5
+     state                 The State or Province attribute of the certificate.
+     string       changed  Sample:
+                           WA
+   key_name                The full name of the key file.
+   string         changed  Sample:
+                           common.key
+   key_size                The desired key size in bits.
+   integer        changed  Sample:
+                           2048
+
+STATUS                   *bigip_device_certificate-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_device_certificate-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_device_certificate_module.html

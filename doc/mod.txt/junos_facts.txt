@@ -1,0 +1,97 @@
+SYNOPSIS                   *junos_facts*
+
+     • Collects fact information from a remote device running the Junos operating system. By default, the module will collect basic fact information from the device to be included with the
+       hostvars. Additional fact information can be collected based on the configured set of arguments.
+
+REQUIREMENTS                   *junos_facts-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.5.2)
+
+PARAMETERS                   *junos_facts-parameters*
+
+          Parameter         Choices/Defaults                                                                         Comments
+                              Choices:
+   config_format              • xml          The config_format argument specifies the format of the configuration when serializing output from the device. This argument is applicable only when
+   -                          • text ←       config value is present in gather_subset. The config_format should be supported by the junos version running on device. This value is not applicable
+                              • set          while fetching old style facts that is when ofacts value is present in value if gather_subset value. This option is valid only for gather_subset values.
+                              • json
+   gather_network_resources                  When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include all and the resources like
+   -                                         interfaces, vlans etc. Can specify a list of values to include a larger subset. Values can also be used with an initial ! to specify that a specific
+   added in 2.9                              subset should not be collected. Valid subsets are 'all', 'interfaces', 'lacp', 'lacp_interfaces', 'lag_interfaces', 'l2_interfaces', 'l3_interfaces',
+                                             'lldp_global', 'lldp_interfaces', 'vlans'.
+                                             When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include all, hardware, config, and
+                                             interfaces. Can specify a list of values to include a larger subset. Values can also be used with an initial ! to specify that a specific subset should
+   gather_subset            Default:         not be collected. To maintain backward compatibility old style facts can be retrieved by explicitly adding ofacts to value, this requires junos-eznc to
+   -                        ["!config"]      be installed as a prerequisite. Valid value of gather_subset are default, hardware, config, interfaces, ofacts. If ofacts is present in the list it
+                                             fetches the old style facts (fact keys without 'ansible_' prefix) and it requires junos-eznc library to be installed on control node and the device
+                                             login credentials must be given in provider option.
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli or connection: netconf.
+   provider                                  For more information please see the Junos OS Platform Options guide.
+   dictionary
+                                             ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                             A dict object containing connection details.
+        host                                 Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination
+        string / required                    address for the transport.
+        password                             Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is
+        string                               not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+        port                Default:         Specifies the port to use when building the connection to the remote device. The port value will default to the well known SSH port of 22 (for
+        integer             22               transport=cli) or port 830 (for transport=netconf) device.
+        ssh_keyfile                          Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH
+        path                                 session. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+        timeout             Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+        integer             10               the operation is completed, the module will error.
+        username                             Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is
+        string                               not specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+
+NOTES                   *junos_facts-notes*
+
+   Note
+
+     • Ensure config_format used to retrieve configuration from device is supported by junos version running on device.
+     • With config_format = json, configuration in the results will be a dictionary(and not a JSON string)
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+     • Recommended connection is netconf. See the Junos OS Platform Options.
+     • This module also works with local connections for legacy playbooks.
+     • Fetching old style facts requires junos-eznc library to be installed on control node and the device login credentials must be given in provider option.
+     • For information on using CLI and netconf see the Junos OS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Juniper network devices see https://www.ansible.com/ansible-juniper.
+
+EXAMPLES                   *junos_facts-examples*
+
+ - name: collect default set of facts
+   junos_facts:
+
+ - name: collect default set of facts and configuration
+   junos_facts:
+     gather_subset: config
+
+ - name: Gather legacy and resource facts
+   junos_facts:
+     gather_subset: all
+     gather_network_resources: all
+
+STATUS                   *junos_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_facts-red hat support*
+
+     • Nathaniel Case (@Qalthos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_facts_module.html

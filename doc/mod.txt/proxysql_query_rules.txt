@@ -1,0 +1,158 @@
+SYNOPSIS                   *proxysql_query_rules*
+
+     • The proxysql_query_rules module modifies query rules using the proxysql admin interface.
+
+REQUIREMENTS                   *proxysql_query_rules-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyMySQL (Python 2.7 and Python 3.X), or
+     • MySQLdb (Python 2.x)
+
+PARAMETERS                   *proxysql_query_rules-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   active                  Choices:
+   boolean                 • no           A rule with active set to False will be tracked in the database, but will be never loaded in the in-memory data structures.
+                           • yes
+   apply                   Choices:
+   boolean                 • no           Used in combination with flagIN and flagOUT to create chains of rules. Setting apply to True signifies the last rule to be applied.
+                           • yes
+   cache_ttl                              The number of milliseconds for which to cache the result of the query. Note in ProxySQL 1.1 cache_ttl was in seconds.
+   -
+   client_addr                            Match traffic from a specific source.
+   -
+   comment                                Free form text field, usable for a descriptive comment of the query rule.
+   -
+   config_file           Default:         Specify a config file from which login_user and login_password are to be read.
+   path                  ""
+   delay                                  Number of milliseconds to delay the execution of the query. This is essentially a throttling mechanism and QoS, and allows a way to give priority to
+   -                                      queries over others. This value is added to the mysql-default_query_delay global variable that applies to all queries.
+   destination_hostgroup                  Route matched queries to this hostgroup. This happens unless there is a started transaction and the logged in user has transaction_persistent set to True
+   -                                      (see proxysql_mysql_users).
+   digest                                 Match queries with a specific digest, as returned by stats_mysql_query_digest.digest.
+   -
+   error_msg                              Query will be blocked, and the specified error_msg will be returned to the client.
+   -
+   flagIN                                 Used in combination with flagOUT and apply to create chains of rules.
+   -
+   flagOUT                                Used in combination with flagIN and apply to create chains of rules. When set, flagOUT signifies the flagIN to be used in the next chain of rules.
+   -
+   force_delete            Choices:       By default we avoid deleting more than one schedule in a single batch, however if you need this behaviour and you're not concerned about the schedules
+   boolean                 • no ←         deleted, you can set force_delete to True.
+                           • yes
+   load_to_runtime         Choices:
+   boolean                 • no           Dynamically load config to runtime memory.
+                           • yes ←
+   log                     Choices:
+   boolean                 • no           Query will be logged.
+                           • yes
+   login_host            Default:         The host used to connect to ProxySQL admin interface.
+   string                "127.0.0.1"
+   login_password                         The password used to authenticate to ProxySQL admin interface.
+   string
+   login_port            Default:         The port used to connect to ProxySQL admin interface.
+   integer               6032
+   login_user                             The username used to authenticate to ProxySQL admin interface.
+   string
+   match_digest                           Regular expression that matches the query digest. The dialect of regular expressions used is that of re2 - https://github.com/google/re2
+   -
+   match_pattern                          Regular expression that matches the query text. The dialect of regular expressions used is that of re2 - https://github.com/google/re2
+   -
+   mirror_flagOUT                         Enables query mirroring. If set mirror_flagOUT can be used to evaluates the mirrored query against the specified chain of rules.
+   -
+   mirror_hostgroup                       Enables query mirroring. If set mirror_hostgroup can be used to mirror queries to the same or different hostgroup.
+   -
+   negate_match_pattern    Choices:       If negate_match_pattern is set to True, only queries not matching the query text will be considered as a match. This acts as a NOT operator in front of the
+   boolean                 • no           regular expression matching against match_pattern.
+                           • yes
+   proxy_addr                             Match incoming traffic on a specific local IP.
+   -
+   proxy_port                             Match incoming traffic on a specific local port.
+   -
+   replace_pattern                        This is the pattern with which to replace the matched pattern. Note that this is optional, and when omitted, the query processor will only cache, route, or
+   -                                      set other parameters without rewriting.
+   retries                                The maximum number of times a query needs to be re-executed in case of detected failure during the execution of the query. If retries is not specified, the
+   -                                      global variable mysql-query_retries_on_failure applies.
+   rule_id                                The unique id of the rule. Rules are processed in rule_id order.
+   -
+   save_to_disk            Choices:
+   boolean                 • no           Save config to sqlite db on disk to persist the configuration.
+                           • yes ←
+   schemaname                             Filtering criteria matching schemaname. If schemaname is non-NULL, a query will match only if the connection uses schemaname as its default schema.
+   -
+   state                   Choices:
+   -                       • present ←    When present - adds the rule, when absent - removes the rule.
+                           • absent
+   timeout                                The maximum timeout in milliseconds with which the matched or rewritten query should be executed. If a query run for longer than the specific threshold,
+   -                                      the query is automatically killed. If timeout is not specified, the global variable mysql-default_query_timeout applies.
+   username                               Filtering criteria matching username. If username is non-NULL, a query will match only if the connection is made with the correct username.
+   -
+
+EXAMPLES                   *proxysql_query_rules-examples*
+
+ ---
+ # This example adds a rule to redirect queries from a specific user to another
+ # hostgroup, it saves the mysql query rule config to disk, but avoids loading
+ # the mysql query config config to runtime (this might be because several
+ # rules are being added and the user wants to push the config to runtime in a
+ # single batch using the M(proxysql_manage_config) module). It uses supplied
+ # credentials to connect to the proxysql admin interface.
+
+ - proxysql_query_rules:
+     login_user: admin
+     login_password: admin
+     username: 'guest_ro'
+     match_pattern: "^SELECT.""
+     destination_hostgroup: 1
+     active: 1
+     retries: 3
+     state: present
+     load_to_runtime: False
+
+ # This example removes all rules that use the username 'guest_ro', saves the
+ # mysql query rule config to disk, and dynamically loads the mysql query rule
+ # config to runtime.  It uses credentials in a supplied config file to connect
+ # to the proxysql admin interface.
+
+ - proxysql_query_rules:
+     config_file: '~/proxysql.cnf'
+     username: 'guest_ro'
+     state: absent
+     force_delete: true
+
+RETURN VALUES                   *proxysql_query_rules-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                   Description
+              On
+              create/update
+              will return
+              the newly     The mysql user modified or removed from proxysql
+              modified      Sample:
+   stdout     rule, in all  {'changed': True, 'msg': 'Added rule to mysql_query_rules', 'rules': [{'active': '0', 'apply': '0', 'cache_ttl': None, 'client_addr': None, 'comment': None, 'delay':
+   dictionary other cases   None, 'destination_hostgroup': 1, 'digest': None, 'error_msg': None, 'flagIN': '0', 'flagOUT': None, 'log': None, 'match_digest': None, 'match_pattern': None,
+              will return a 'mirror_flagOUT': None, 'mirror_hostgroup': None, 'negate_match_pattern': '0', 'proxy_addr': None, 'proxy_port': None, 'reconnect': None, 'replace_pattern': None,
+              list of rules 'retries': None, 'rule_id': '1', 'schemaname': None, 'timeout': None, 'username': 'guest_ro'}], 'state': 'present'}
+              that match
+              the supplied
+              criteria.
+
+STATUS                   *proxysql_query_rules-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ben Mildren (@bmildren)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *proxysql_query_rules-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/proxysql_query_rules_module.html

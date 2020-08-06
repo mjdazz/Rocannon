@@ -1,46 +1,294 @@
-SYNOPSIS                           *uri*
+SYNOPSIS                   *uri*
 
-New in version 1.1.
+     • Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE HTTP authentication mechanisms.
+     • For Windows targets, use the win_uri module instead.
 
-Interacts with HTTP and HTTPS web services and supports Digest, Basic and WSSE HTTP authentication mechanisms.
+PARAMETERS                   *uri-parameters*
 
-EXAMPLES                           *uri-examples*
->
-    # Check that you can connect (GET) to a page and it returns a status 200
-    - uri: url=http://www.example.com
-   
-    # Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents.
-    - action: uri url=http://www.example.com return_content=yes
-      register: webpage
-   
-    - action: fail
-      when: 'AWESOME' not in "{{ webpage.content }}"
-   
-   
-    # Create a JIRA issue
-   
-    - uri: url=https://your.jira.example.com/rest/api/2/issue/
-           method=POST user=your_username password=your_pass
-           body="{{ lookup('file','issue.json') }}" force_basic_auth=yes
-           status_code=201 HEADER_Content-Type="application/json"
-   
-    # Login to a form based webpage, then use the returned cookie to
-    # access the app in later tasks
-   
-    - uri: url=https://your.form.based.auth.examle.com/index.php
-           method=POST body="name=your_username&password=your_password&enter=Sign%20in"
-           status_code=302 HEADER_Content-Type="application/x-www-form-urlencoded"
-      register: login
-   
-    - uri: url=https://your.form.based.auth.example.com/dashboard.php
-           method=GET return_content=yes HEADER_Cookie="{{login.set_cookie}}"
-   
-    # Queue build of a project in Jenkins:
-   
-    - uri: url=http://{{jenkins.host}}/job/{{jenkins.job}}/build?token={{jenkins.token}}
-           method=GET user={{jenkins.user}} password={{jenkins.password}} force_basic_auth=yes status_code=201
-   
+      Parameter      Choices/Defaults                                                                             Comments
+                                        The attributes the resulting file or directory should have.
+   attributes                           To get supported flags look at the man page for chattr on the target system.
+   string                               This string should contain the attributes in the same order as the one displayed by lsattr.
+                                        The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                        aliases: attr
+   body                                 The body of the http request/response to the web service. If body_format is set to 'json' it will take an already formatted JSON string or convert a data
+   raw                                  structure into JSON. If body_format is set to 'form-urlencoded' it will convert a dictionary or list of tuples into an 'application/x-www-form-urlencoded'
+                                        string. (Added in v2.7)
+                      Choices:
+   body_format        • form-urlencoded The serialization format of the body. When set to json or form-urlencoded, encodes the body argument, if needed, and automatically sets the Content-Type
+   string             • json            header accordingly. As of 2.3 it is possible to override the `Content-Type` header, when set to json or form-urlencoded via the headers option.
+                      • raw ←
+   client_cert                          PEM formatted certificate chain file to be used for SSL client authentication.
+   path                                 This file can also include the key as well, and if the key is included, client_key is not required
+   added in 2.4
+   client_key                           PEM formatted file that contains your private key to be used for SSL client authentication.
+   path                                 If client_cert contains both the certificate and key, this option is not required.
+   added in 2.4
+   creates                              A filename, when it already exists, this step will not be run.
+   path
+   dest                                 A path of where to download the file to (if desired). If dest is a directory, the basename of the file on the remote server will be used.
+   path
+                      Choices:
+                      • all             Whether or not the URI module should follow redirects. all will follow all redirects. safe will follow only "safe" redirects, where "safe" means that the
+   follow_redirects   • no              client is only doing a GET or HEAD on the URI to which it is being redirected. none will not follow any redirects. Note that yes and no choices are accepted
+   string             • none            for backwards compatibility, where yes is the equivalent of all and no is the equivalent of safe. yes and no are deprecated and will be removed in some
+                      • safe ←          future version of Ansible.
+                      • urllib2
+                      • yes
+   force              Choices:          If yes do not get a cached copy.
+   boolean            • no ←            Alias thirsty has been deprecated and will be removed in 2.13.
+                      • yes             aliases: thirsty
+   force_basic_auth   Choices:          Force the sending of the Basic authentication header upon initial request.
+   boolean            • no ←            The library used by the uri module only sends authentication information when a webservice responds to an initial request with a 401 status. Since some basic
+                      • yes             auth services do not properly send a 401, logins will fail.
+   group                                Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   headers                              Add custom HTTP headers to a request in the format of a YAML hash. As of 2.3 supplying Content-Type here will override the header generated by supplying json
+   dictionary                           or form-urlencoded for body_format.
+   http_agent       Default:            Header to identify as, generally appears in web server logs.
+   string           "ansible-httpget"
+   method           Default:            The HTTP method of the request or response.
+   string           "GET"               In more recent versions we do not restrict the method at the module level anymore but it still must be a valid method accepted by the service handling the
+                                        request.
+                                        The permissions the resulting file or directory should have.
+                                        For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is
+   mode                                 an octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                               Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                        As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                        As of Ansible 2.6, the mode may also be the special string preserve.
+                                        When set to preserve the file will be given the same permissions as the source file.
+   owner                                Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   remote_src         Choices:          If no, the module will search for src on originating/master machine.
+   boolean            • no ←            If yes the module will use the src path on the remote/target machine.
+   added in 2.7       • yes
+   removes                              A filename, when it does not exist, this step will not be run.
+   path
+   return_content     Choices:          Whether or not to return the body of the response as a "content" key in the dictionary result.
+   boolean            • no ←            Independently of this option, if the reported Content-type is "application/json", then the JSON is always loaded into a key called json in the dictionary
+                      • yes             results.
+   selevel          Default:            The level part of the SELinux file context.
+   string           "s0"                This is the MLS/MCS attribute, sometimes known as the range.
+                                        When set to _default, it will use the level portion of the policy if available.
+   serole                               The role part of the SELinux file context.
+   string                               When set to _default, it will use the role portion of the policy if available.
+   setype                               The type part of the SELinux file context.
+   string                               When set to _default, it will use the type portion of the policy if available.
+   seuser                               The user part of the SELinux file context.
+   string                               By default it uses the system policy, where applicable.
+                                        When set to _default, it will use the user portion of the policy if available.
+   src                                  Path to file to be submitted to the remote server.
+   path                                 Cannot be used with body.
+   added in 2.7
+   status_code      Default:            A list of valid, numeric, HTTP status codes that signifies success of the request.
+   list             [200]
+   timeout          Default:            The socket level timeout in seconds
+   integer          30
+   unix_socket
+   -                                    Path to Unix domain socket to use for connection
+   added in 2.8
+                                        Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                        By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or
+   unsafe_writes      Choices:          just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be
+   boolean            • no ←            written in an unsafe manner.
+                      • yes             This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                        writes).
+                                        IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   url
+   string /                             HTTP or HTTPS URL in the form (http|https)://host.domain[:port]/path
+   required
+   url_password                         A password for the module to use for Digest, Basic or WSSE authentication.
+   string                               aliases: password
+   url_username                         A username for the module to use for Digest, Basic or WSSE authentication.
+   string                               aliases: user
+   use_proxy          Choices:
+   boolean            • no              If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                      • yes ←
+   validate_certs     Choices:          If no, SSL certificates will not be validated.
+   boolean            • no              This should only set to no used on personally controlled sites using self-signed certificates.
+                      • yes ←           Prior to 1.9.2 the code defaulted to no.
+
+NOTES                   *uri-notes*
+
+   Note
+
+     • The dependency on httplib2 was removed in Ansible 2.1.
+     • The module returns all the HTTP headers in lower-case.
+     • For Windows targets, use the win_uri module instead.
+
+SEE ALSO                   *uri-see also*
+
+   See also
+
+   get_url – Downloads files from HTTP, HTTPS, or FTP to node
+   The official documentation on the get_url module.
+
+   win_uri – Interacts with webservices
+   The official documentation on the win_uri module.
+
+EXAMPLES                   *uri-examples*
+
+ - name: Check that you can connect (GET) to a page and it returns a status 200
+   uri:
+     url: http://www.example.com
+
+ - name: Check that a page returns a status 200 and fail if the word AWESOME is not in the page contents
+   uri:
+     url: http://www.example.com
+     return_content: yes
+   register: this
+   failed_when: "'AWESOME' not in this.content"
+
+ - name: Create a JIRA issue
+   uri:
+     url: https://your.jira.example.com/rest/api/2/issue/
+     user: your_username
+     password: your_pass
+     method: POST
+     body: "{{ lookup('file','issue.json') }}"
+     force_basic_auth: yes
+     status_code: 201
+     body_format: json
+
+ - name: Login to a form based webpage, then use the returned cookie to access the app in later tasks
+   uri:
+     url: https://your.form.based.auth.example.com/index.php
+     method: POST
+     body_format: form-urlencoded
+     body:
+       name: your_username
+       password: your_password
+       enter: Sign in
+     status_code: 302
+   register: login
+
+ - name: Login to a form based webpage using a list of tuples
+   uri:
+     url: https://your.form.based.auth.example.com/index.php
+     method: POST
+     body_format: form-urlencoded
+     body:
+     - [ name, your_username ]
+     - [ password, your_password ]
+     - [ enter, Sign in ]
+     status_code: 302
+   register: login
+
+ - name: Connect to website using a previously stored cookie
+   uri:
+     url: https://your.form.based.auth.example.com/dashboard.php
+     method: GET
+     return_content: yes
+     headers:
+       Cookie: "{{ login.set_cookie }}"
+
+ - name: Queue build of a project in Jenkins
+   uri:
+     url: http://{{ jenkins.host }}/job/{{ jenkins.job }}/build?token={{ jenkins.token }}
+     user: "{{ jenkins.user }}"
+     password: "{{ jenkins.password }}"
+     method: GET
+     force_basic_auth: yes
+     status_code: 201
+
+ - name: POST from contents of local file
+   uri:
+     url: https://httpbin.org/post
+     method: POST
+     src: file.json
+
+ - name: POST from contents of remote file
+   uri:
+     url: https://httpbin.org/post
+     method: POST
+     src: /path/to/my/file.json
+     remote_src: yes
+
+ - name: Pause play until a URL is reachable from this host
+   uri:
+     url: "http://192.0.2.1/some/test"
+     follow_redirects: none
+     method: GET
+   register: _result
+   until: _result.status == 200
+   retries: 720 # 720 " 5 seconds = 1hour (60"60/5)
+   delay: 5 # Every 5 seconds
+
+ # There are issues in a supporting Python library that is discussed in
+ # https://github.com/ansible/ansible/issues/52705 where a proxy is defined
+ # but you want to bypass proxy use on CIDR masks by using no_proxy
+ - name: Work around a python issue that doesn't support no_proxy envvar
+   uri:
+     follow_redirects: none
+     validate_certs: false
+     timeout: 5
+     url: "http://{{ ip_address }}:{{ port | default(80) }}"
+   register: uri_data
+   failed_when: false
+   changed_when: false
+   vars:
+     ip_address: 192.0.2.1
+   environment: |
+       {
+         {% for no_proxy in (lookup('env', 'no_proxy') | regex_replace('\s",\s"', ' ') ).split() %}
+           {% if no_proxy | regex_search('\/') and
+                 no_proxy | ipaddr('net') != '' and
+                 no_proxy | ipaddr('net') != false and
+                 ip_address | ipaddr(no_proxy) is not none and
+                 ip_address | ipaddr(no_proxy) != false %}
+             'no_proxy': '{{ ip_address }}'
+           {% elif no_proxy | regex_search(':') != '' and
+                   no_proxy | regex_search(':') != false and
+                   no_proxy == ip_address + ':' + (port | default(80)) %}
+             'no_proxy': '{{ ip_address }}:{{ port | default(80) }}'
+           {% elif no_proxy | ipaddr('host') != '' and
+                   no_proxy | ipaddr('host') != false and
+                   no_proxy == ip_address %}
+             'no_proxy': '{{ ip_address }}'
+           {% elif no_proxy | regex_search('^(\"|)\.') != '' and
+                   no_proxy | regex_search('^(\"|)\.') != false and
+                   no_proxy | regex_replace('\"', '') in ip_address %}
+             'no_proxy': '{{ ip_address }}'
+           {% endif %}
+         {% endfor %}
+       }
+
+RETURN VALUES                   *uri-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key      Returned                                                                                  Description
+   elapsed               The number of seconds that elapsed while performing the download
+   integer    on success Sample:
+                         23
+   msg                   The HTTP message from the request
+   string     always     Sample:
+                         OK (unknown bytes)
+   redirected on success Whether the request was redirected
+   boolean
+   status                The HTTP status code from the request
+   integer    always     Sample:
+                         200
+   url                   The actual URL used for the request
+   string     always     Sample:
+                         https://www.ansible.com/
+
+STATUS                   *uri-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *uri-red hat support*
+
+     • Romeo Theriault (@romeotheriault)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *uri-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/uri_module.html
+https://docs.ansible.com/ansible/latest/modules/uri_module.html

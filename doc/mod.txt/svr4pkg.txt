@@ -1,26 +1,78 @@
-SYNOPSIS                           *svr4pkg*
+SYNOPSIS                   *svr4pkg*
 
-Manages SVR4 packages on Solaris 10 and 11. These were the native packages on Solaris <= 10 and are available as a legacy feature in Solaris 11. Note that this is a very basic packaging system.
-It will not enforce dependencies on install or remove.
+     • Manages SVR4 packages on Solaris 10 and 11.
+     • These were the native packages on Solaris <= 10 and are available as a legacy feature in Solaris 11.
+     • Note that this is a very basic packaging system. It will not enforce dependencies on install or remove.
 
-EXAMPLES                           *svr4pkg-examples*
->
-    # Install a package from an already copied file
-    - svr4pkg: name=CSWcommon src=/tmp/cswpkgs.pkg state=present
-   
-    # Install a package directly from an http site
-    - svr4pkg: name=CSWpkgutil src=http://get.opencsw.org/now state=present zone=current
-   
-    # Install a package with a response file
-    - svr4pkg: name=CSWggrep src=/tmp/third-party.pkg response_file=/tmp/ggrep.response state=present
-   
-    # Ensure that a package is not installed.
-    - svr4pkg: name=SUNWgnome-sound-recorder state=absent
-   
-    # Ensure that a category is not installed.
-    - svr4pkg: name=FIREFOX state=absent category=true
-   
+PARAMETERS                   *svr4pkg-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   category        Choices:
+   boolean         • no           Install/Remove category instead of a single package.
+                   • yes
+   name                           Package name, e.g. SUNWcsr
+   - / required
+   proxy                          HTTP[s] proxy to be used if src is a URL.
+   -
+   response_file                  Specifies the location of a response file to be used if package expects input on install. (added in Ansible 1.4)
+   -
+   src                            Specifies the location to install the package from. Required when state=present.
+   -                              Can be any path acceptable to the pkgadd command's -d option. e.g.: somefile.pkg, /dir/with/pkgs, http:/server/mypkgs.pkg.
+                                  If using a file or directory, they must already be accessible by the host. See the copy module for a way to get them there.
+   state           Choices:       Whether to install (present), or remove (absent) a package.
+   - / required    • present      If the package is to be installed, then src is required.
+                   • absent       The SVR4 package system doesn't provide an upgrade operation. You need to uninstall the old, then install the new package.
+   zone            Choices:       Whether to install the package only in the current zone, or install it into all zones.
+   -               • current      The installation into all zones works only if you are working with the global zone.
+                   • all ←
+
+EXAMPLES                   *svr4pkg-examples*
+
+ # Install a package from an already copied file
+ - svr4pkg:
+     name: CSWcommon
+     src: /tmp/cswpkgs.pkg
+     state: present
+
+ # Install a package directly from an http site
+ - svr4pkg:
+     name: CSWpkgutil
+     src: 'http://get.opencsw.org/now'
+     state: present
+     zone: current
+
+ # Install a package with a response file
+ - svr4pkg:
+     name: CSWggrep
+     src: /tmp/third-party.pkg
+     response_file: /tmp/ggrep.response
+     state: present
+
+ # Ensure that a package is not installed.
+ - svr4pkg:
+     name: SUNWgnome-sound-recorder
+     state: absent
+
+ # Ensure that a category is not installed.
+ - svr4pkg:
+     name: FIREFOX
+     state: absent
+     category: true
+
+STATUS                   *svr4pkg-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Boyd Adamson (@brontitall)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *svr4pkg-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/svr4pkg_module.html
+https://docs.ansible.com/ansible/latest/modules/svr4pkg_module.html

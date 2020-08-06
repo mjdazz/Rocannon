@@ -1,0 +1,146 @@
+SYNOPSIS                   *aws_direct_connect_connection*
+
+     • Create, update, or delete a Direct Connect connection between a network and a specific AWS Direct Connect location. Upon creation the connection may be added to a link aggregation group or
+       established as a standalone connection. The connection may later be associated or disassociated with a link aggregation group.
+
+REQUIREMENTS                   *aws_direct_connect_connection-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *aws_direct_connect_connection-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   bandwidth                      Choices:
+   -                              • 1Gbps        The bandwidth of the Direct Connect connection. Required when state=present.
+                                  • 10Gbps
+   connection_id                                 The ID of the Direct Connect connection. name or connection_id is required to recreate or delete a connection. Modifying attributes of a connection
+   -                                             with forced_update will result in a new Direct Connect connection ID.
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   forced_update                  Choices:       To modify bandwidth or location the connection will need to be deleted and recreated. By default this will not happen - this option must be set to
+   boolean                        • no           True.
+                                  • yes
+   link_aggregation_group                        The ID of the link aggregation group you want to associate with the connection. This is optional in case a stand-alone connection is desired.
+   -
+   location                                      Where the Direct Connect connection is located. Required when state=present.
+   -
+   name                                          The name of the Direct Connect connection. This is required to create a new connection. To recreate or delete a connection name or connection_id is
+   -                                             required.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present      The state of the Direct Connect connection.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *aws_direct_connect_connection-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_direct_connect_connection-examples*
+
+ # create a Direct Connect connection
+ - aws_direct_connect_connection:
+     name: ansible-test-connection
+     state: present
+     location: EqDC2
+     link_aggregation_group: dxlag-xxxxxxxx
+     bandwidth: 1Gbps
+   register: dc
+
+ # disassociate the LAG from the connection
+ - aws_direct_connect_connection:
+     state: present
+     connection_id: dc.connection.connection_id
+     location: EqDC2
+     bandwidth: 1Gbps
+
+ # replace the connection with one with more bandwidth
+ - aws_direct_connect_connection:
+     state: present
+     name: ansible-test-connection
+     location: EqDC2
+     bandwidth: 10Gbps
+     forced_update: True
+
+ # delete the connection
+ - aws_direct_connect_connection:
+     state: absent
+     name: ansible-test-connection
+
+RETURN VALUES                   *aws_direct_connect_connection-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                                              Returned                                                                              Description
+   connection         state=present                                                                      The attributes of the direct connect connection.
+   complex
+     aws_device                                                                                          The endpoint which the physical connection terminates on.
+     string           when the requested state is no longer 'requested'                                  Sample:
+                                                                                                         EqDC2-12pmo7hemtz1z
+     bandwidth                                                                                           The bandwidth of the connection.
+     string           always                                                                             Sample:
+                                                                                                         1Gbps
+     connection_id                                                                                       The ID of the connection.
+     string           always                                                                             Sample:
+                                                                                                         dxcon-ffy9ywed
+     connection_name                                                                                     The name of the connection.
+     string           always                                                                             Sample:
+                                                                                                         ansible-test-connection
+     connection_state                                                                                    The state of the connection.
+     string           always                                                                             Sample:
+                                                                                                         pending
+     loa_issue_time   when the LOA-CFA has been issued (the connection state will no longer be           The issue time of the connection's Letter of Authorization - Connecting Facility Assignment.
+     string           'requested')                                                                       Sample:
+                                                                                                         2018-03-20T17:36:26-04:00
+     location                                                                                            The location of the connection.
+     string           always                                                                             Sample:
+                                                                                                         EqDC2
+     owner_account                                                                                       The account that owns the direct connect connection.
+     string           always                                                                             Sample:
+                                                                                                         123456789012
+     region                                                                                              The region in which the connection exists.
+     string           always                                                                             Sample:
+                                                                                                         us-east-1
+
+STATUS                   *aws_direct_connect_connection-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Sloane Hertel (@s-hertel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_direct_connect_connection-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_direct_connect_connection_module.html

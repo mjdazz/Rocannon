@@ -1,33 +1,269 @@
-SYNOPSIS                           *win_chocolatey*
+SYNOPSIS                   *win_chocolatey*
 
-New in version 1.9.
+     • Manage packages using Chocolatey.
+     • If Chocolatey is missing from the system, the module will install it.
 
-Installs packages using Chocolatey (http://chocolatey.org/). If Chocolatey is missing from the system, the module will install it. List of packages can be found at http://chocolatey.org/packages
+REQUIREMENTS                   *win_chocolatey-requirements*
 
-EXAMPLES                           *win_chocolatey-examples*
->
-    # Install git
-    win_chocolatey:
-      name: git
-   
-    # Install notepadplusplus version 6.6
-    win_chocolatey:
-      name: notepadplusplus.install
-      version: 6.6
-   
-    # Uninstall git
-    win_chocolatey:
-      name: git
-      state: absent
-   
-    # Install Application Request Routing v3 from webpi
-    # Logically, this requires that you install IIS first (see win_feature)
-    # To find a list of packages available via webpi source, `choco list -source webpi`
-    win_chocolatey:
-      name: ARRv3
-      source: webpi
-   
+   The below requirements are needed on the host that executes this module.
+
+     • chocolatey >= 0.10.5 (will be upgraded if older)
+
+PARAMETERS                   *win_chocolatey-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   allow_empty_checksums   Choices:       Allow empty checksums to be used for downloaded resource from non-secure locations.
+   boolean                 • no ←         Use win_chocolatey_feature with the name allowEmptyChecksums to control this option globally.
+                           • yes
+   allow_multiple          Choices:       Allow the installation of multiple packages when version is specified.
+   boolean                 • no ←         Having multiple packages at different versions can cause issues if the package doesn't support this. Use at your own risk.
+   added in 2.8            • yes
+   allow_prerelease        Choices:       Allow the installation of pre-release packages.
+   boolean                 • no ←         If state is latest, the latest pre-release package will be installed.
+   added in 2.6            • yes
+   architecture            Choices:       Force Chocolatey to install the package of a specific process architecture.
+   string                  • default ←    When setting x86, will ensure Chocolatey installs the x86 package even when on an x64 bit OS.
+   added in 2.7            • x86
+   force                   Choices:       Forces the install of a package, even if it already is installed.
+   boolean                 • no ←         Using force will cause Ansible to always report that a change was made.
+                           • yes
+   ignore_checksums        Choices:       Ignore the checksums provided by the package.
+   boolean                 • no ←         Use win_chocolatey_feature with the name checksumFiles to control this option globally.
+                           • yes
+   ignore_dependencies     Choices:
+   boolean                 • no ←         Ignore dependencies, only install/upgrade the package itself.
+                           • yes
+   install_args                           Arguments to pass to the native installer.
+   string                                 These are arguments that are passed directly to the installer the Chocolatey package runs, this is generally an advanced option.
+   name                                   Name of the package(s) to be installed.
+   list / required                        Set to all to run the action on all the installed packages.
+                                          Parameters to pass to the package.
+   package_params                         These are parameters specific to the Chocolatey package and are generally documented by the package itself.
+   string                                 Before Ansible 2.7, this option was just params.
+                                          aliases: params
+                                          Whether to pin the Chocolatey package or not.
+   pinned                  Choices:       If omitted then no checks on package pins are done.
+   boolean                 • no           Will pin/unpin the specific version if version is set.
+   added in 2.8            • yes          Will pin the latest version of a package if yes, version is not set and and no pin already exists.
+                                          Will unpin all versions of a package if no and version is not set.
+                                          This is ignored when state=absent.
+   proxy_password                         Proxy password used to install Chocolatey and the package.
+   string                                 This value is exposed as a command argument and any privileged account can see this value when the module is running Chocolatey, define the password on the
+   added in 2.4                           global config level with win_chocolatey_config with name proxyPassword to avoid this.
+   proxy_url                              Proxy URL used to install chocolatey and the package.
+   string                                 Use win_chocolatey_config with the name proxy to control this option globally.
+   added in 2.4
+   proxy_username                         Proxy username used to install Chocolatey and the package.
+   string                                 Before Ansible 2.7, users with double quote characters " would need to be escaped with \ beforehand. This is no longer necessary.
+   added in 2.4                           Use win_chocolatey_config with the name proxyUser to control this option globally.
+   skip_scripts            Choices:
+   boolean                 • no ←         Do not run chocolateyInstall.ps1 or chocolateyUninstall.ps1 scripts when installing a package.
+   added in 2.4            • yes
+                                          Specify the source to retrieve the package from.
+   source                                 Use win_chocolatey_source to manage global sources.
+   string                                 This value can either be the URL to a Chocolatey feed, a path to a folder containing .nupkg packages or the name of a source defined by
+                                          win_chocolatey_source.
+                                          This value is also used when Chocolatey is not installed as the location of the install.ps1 script and only supports URLs for this case.
+   source_password                        The password for source_username.
+   string                                 This value is exposed as a command argument and any privileged account can see this value when the module is running Chocolatey, define the credentials
+   added in 2.7                           with a source with win_chocolatey_source to avoid this.
+   source_username                        A username to use with source when accessing a feed that requires authentication.
+   string                                 It is recommended you define the credentials on a source with win_chocolatey_source instead of passing it per task.
+   added in 2.7
+                           Choices:       State of the package on the system.
+                           • absent       When absent, will ensure the package is not installed.
+   state                   • downgrade    When present, will ensure the package is installed.
+   string                  • latest       When downgrade, will allow Chocolatey to downgrade a package if version is older than the installed version.
+                           • present ←    When latest, will ensure the package is installed to the latest available version.
+                           • reinstalled  When reinstalled, will uninstall and reinstall the package.
+   timeout               Default:         The time to allow chocolatey to finish before timing out.
+   integer               2700             aliases: execution_timeout
+   validate_certs          Choices:       Used when downloading the Chocolatey install script if Chocolatey is not already installed, this does not affect the Chocolatey package install process.
+   boolean                 • no           When no, no SSL certificates will be validated.
+   added in 2.7            • yes ←        This should only be used on personally controlled sites using self-signed certificate.
+                                          Specific version of the package to be installed.
+                                          When state is set to absent, will uninstall the specific version otherwise all versions of that package will be removed.
+   version                                If a different version of package is installed, state must be latest or force set to yes to install the desired version.
+   string                                 Provide as a string (e.g. '6.1'), otherwise it is considered to be a floating-point number and depending on the locale could become 6,1, which will cause a
+                                          failure.
+                                          If name is set to chocolatey and Chocolatey is not installed on the host, this will be the version of Chocolatey that is installed. You can also set the
+                                          chocolateyVersion environment var.
+
+NOTES                   *win_chocolatey-notes*
+
+   Note
+
+     • This module will install or upgrade Chocolatey when needed.
+     • When using verbosity 2 or less (-vv) the stdout output will be restricted. When using verbosity 4 (-vvvv) the stdout output will be more verbose. When using verbosity 5 (-vvvvv) the stdout
+       output will include debug output.
+     • Some packages, like hotfixes or updates need an interactive user logon in order to install. You can use become to achieve this, see Become and Windows. Even if you are connecting as local
+       Administrator, using become to become Administrator will give you an interactive user logon, see examples below.
+     • If become is unavailable, use win_hotfix to install hotfixes instead of win_chocolatey as win_hotfix avoids using wusa.exe which cannot be run without become.
+
+SEE ALSO                   *win_chocolatey-see also*
+
+   See also
+
+   win_chocolatey_config – Manages Chocolatey config settings
+   The official documentation on the win_chocolatey_config module.
+
+   win_chocolatey_facts – Create a facts collection for Chocolatey
+   The official documentation on the win_chocolatey_facts module.
+
+   win_chocolatey_feature – Manages Chocolatey features
+   The official documentation on the win_chocolatey_feature module.
+
+   win_chocolatey_source – Manages Chocolatey sources
+   The official documentation on the win_chocolatey_source module.
+
+   win_feature – Installs and uninstalls Windows Features on Windows Server
+   The official documentation on the win_feature module.
+
+   win_hotfix – Install and uninstalls Windows hotfixes
+   Use when become is unavailable, to avoid using wusa.exe.
+
+   win_package – Installs/uninstalls an installable package
+   The official documentation on the win_package module.
+
+   win_updates – Download and install Windows updates
+   The official documentation on the win_updates module.
+
+   Chocolatey website
+   More information about the Chocolatey tool.
+
+   Chocolatey packages
+   An overview of the available Chocolatey packages.
+
+   Become and Windows
+   Some packages, like hotfixes or updates need an interactive user logon in order to install. You can use become to achieve this.
+
+EXAMPLES                   *win_chocolatey-examples*
+
+ - name: Install git
+   win_chocolatey:
+     name: git
+     state: present
+
+ - name: Upgrade installed packages
+   win_chocolatey:
+     name: all
+     state: latest
+
+ - name: Install notepadplusplus version 6.6
+   win_chocolatey:
+     name: notepadplusplus
+     version: '6.6'
+
+ - name: Install notepadplusplus 32 bit version
+   win_chocolatey:
+     name: notepadplusplus
+     architecture: x86
+
+ - name: Install git from specified repository
+   win_chocolatey:
+     name: git
+     source: https://someserver/api/v2/
+
+ - name: Install git from a pre configured source (win_chocolatey_source)
+   win_chocolatey:
+     name: git
+     source: internal_repo
+
+ - name: Ensure Chocolatey itself is installed and use internal repo as source
+   win_chocolatey:
+     name: chocolatey
+     source: http://someserver/chocolatey
+
+ - name: Uninstall git
+   win_chocolatey:
+     name: git
+     state: absent
+
+ - name: Install multiple packages
+   win_chocolatey:
+     name:
+     - procexp
+     - putty
+     - windirstat
+     state: present
+
+ - name: Install multiple packages sequentially
+   win_chocolatey:
+     name: '{{ item }}'
+     state: present
+   loop:
+   - procexp
+   - putty
+   - windirstat
+
+ - name: Uninstall multiple packages
+   win_chocolatey:
+     name:
+     - procexp
+     - putty
+     - windirstat
+     state: absent
+
+ - name: Install curl using proxy
+   win_chocolatey:
+     name: curl
+     proxy_url: http://proxy-server:8080/
+     proxy_username: joe
+     proxy_password: [email protected]
+
+ - name: Install a package that requires 'become'
+   win_chocolatey:
+     name: officepro2013
+   become: yes
+   become_user: Administrator
+   become_method: runas
+
+ - name: install and pin Notepad++ at 7.6.3
+   win_chocolatey:
+     name: notepadplusplus
+     version: 7.6.3
+     pinned: yes
+     state: present
+
+ - name: remove all pins for Notepad++ on all versions
+   win_chocolatey:
+     name: notepadplusplus
+     pinned: no
+     state: present
+
+RETURN VALUES                   *win_chocolatey-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   command          The full command used in the chocolatey task.
+   string  changed  Sample:
+                    choco.exe install -r --no-progress -y sysinternals --timeout 2700 --failonunfound
+   rc      always   The return code from the chocolatey task.
+   integer
+   stdout           The stdout from the chocolatey task. The verbosity level of the messages are affected by Ansible verbosity setting, see notes for more details.
+   string  changed  Sample:
+                    Chocolatey upgraded 1/1 packages.
+
+STATUS                   *win_chocolatey-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Trond Hindenes (@trondhindenes)
+     • Peter Mounce (@petemounce)
+     • Pepe Barbe (@elventear)
+     • Adam Keech (@smadam813)
+     • Pierre Templier (@ptemplier)
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *win_chocolatey-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/win_chocolatey_module.html
+https://docs.ansible.com/ansible/latest/modules/win_chocolatey_module.html

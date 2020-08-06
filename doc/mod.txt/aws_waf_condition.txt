@@ -1,0 +1,281 @@
+SYNOPSIS                   *aws_waf_condition*
+
+     • Read the AWS documentation for WAF https://aws.amazon.com/documentation/waf/
+
+REQUIREMENTS                   *aws_waf_condition-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *aws_waf_condition-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+                                                 A list of the filters against which to match.
+                                                 For type=byte, valid keys are field_to_match, position, header, transformation.
+                                                 For type=geo, the only valid key is country.
+                                                 For type=ip, the only valid key is ip_address.
+                                                 For type=regex, valid keys are field_to_match, transformation and regex_pattern.
+                                                 For type=size, valid keys are field_to_match, transformation, comparison and size.
+   filters                                       For type=sql, valid keys are field_to_match and transformation.
+   -                                             For type=xss, valid keys are field_to_match and transformation.
+                                                 field_to_match can be one of uri, query_string, header method and body.
+                                                 If field_to_match is header, then header must also be specified.
+                                                 transformation can be one of none, compress_white_space, html_entity_decode, lowercase, cmd_line, url_decode.
+                                                 position, can be one of exactly, starts_with, ends_with, contains, contains_word.
+                                                 comparison can be one of EQ, NE, LE, LT, GE, GT.
+                                                 target_string is a maximum of 50 bytes.
+                                                 regex_pattern is a dict with a name key and regex_strings list of strings to match.
+   name                                          Name of the Web Application Firewall condition to manage.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_filters                  Choices:
+   boolean                        • no ←         Whether to remove existing filters from a condition if not passed in filters.
+                                  • yes
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Whether the condition should be present or absent.
+                                  • absent
+                                  Choices:
+                                  • byte
+                                  • geo
+   type                           • ip           the type of matching to perform.
+   -                              • regex
+                                  • size
+                                  • sql
+                                  • xss
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   waf_regional                   Choices:
+   boolean                        • no ←         Whether to use waf_regional module. Defaults to false.
+   added in 2.9                   • yes
+
+NOTES                   *aws_waf_condition-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_waf_condition-examples*
+
+ - name: create WAF byte condition
+   aws_waf_condition:
+     name: my_byte_condition
+     filters:
+     - field_to_match: header
+       position: STARTS_WITH
+       target_string: Hello
+       header: Content-type
+     type: byte
+
+ - name: create WAF geo condition
+   aws_waf_condition:
+     name: my_geo_condition
+     filters:
+       - country: US
+       - country: AU
+       - country: AT
+     type: geo
+
+ - name: create IP address condition
+   aws_waf_condition:
+     name: "{{ resource_prefix }}_ip_condition"
+     filters:
+       - ip_address: "10.0.0.0/8"
+       - ip_address: "192.168.0.0/24"
+     type: ip
+
+ - name: create WAF regex condition
+   aws_waf_condition:
+     name: my_regex_condition
+     filters:
+       - field_to_match: query_string
+         regex_pattern:
+           name: greetings
+           regex_strings:
+             - '[hH]ello'
+             - '^Hi there'
+             - '."Good Day to You'
+     type: regex
+
+ - name: create WAF size condition
+   aws_waf_condition:
+     name: my_size_condition
+     filters:
+       - field_to_match: query_string
+         size: 300
+         comparison: GT
+     type: size
+
+ - name: create WAF sql injection condition
+   aws_waf_condition:
+     name: my_sql_condition
+     filters:
+       - field_to_match: query_string
+         transformation: url_decode
+     type: sql
+
+ - name: create WAF xss condition
+   aws_waf_condition:
+     name: my_xss_condition
+     filters:
+       - field_to_match: query_string
+         transformation: url_decode
+     type: xss
+
+RETURN VALUES                   *aws_waf_condition-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key                             Returned                                                                          Description
+   condition                    always                                  condition returned by operation
+   complex
+     byte_match_set_id                                                  ID for byte match set
+     string                     always                                  Sample:
+                                                                        c4882c96-837b-44a2-a762-4ea87dbf812b
+     byte_match_tuples          always                                  list of byte match tuples
+     complex
+        field_to_match          always                                  Field to match
+        complex
+                  data                                                  Which specific header (if type is header)
+                  string                                                Sample:
+                                                                        content-type
+                  type                                                  Type of field
+                  string                                                Sample:
+                                                                        HEADER
+        positional_constraint                                           Position in the field to match
+        string                                                          Sample:
+                                                                        STARTS_WITH
+        target_string                                                   String to look for
+        string                                                          Sample:
+                                                                        Hello
+        text_transformation                                             Transformation to apply to the field before matching
+        string                                                          Sample:
+                                                                        NONE
+     condition_id                                                       type-agnostic ID for the condition
+     string                     when state is present                   Sample:
+                                                                        dd74b1ff-8c06-4a4f-897a-6b23605de413
+     geo_match_constraints      when type is geo and state is present   List of geographical constraints
+     complex
+        type                                                            Type of geo constraint
+        string                                                          Sample:
+                                                                        Country
+        value                                                           Value of geo constraint (typically a country code)
+        string                                                          Sample:
+                                                                        AT
+     geo_match_set_id                                                   ID of the geo match set
+     string                     when type is geo and state is present   Sample:
+                                                                        dd74b1ff-8c06-4a4f-897a-6b23605de413
+     ip_set_descriptors         when type is ip and state is present    list of IP address filters
+     complex
+        type                                                            Type of IP address (IPV4 or IPV6)
+        string                  always                                  Sample:
+                                                                        IPV4
+        value                                                           IP address
+        string                  always                                  Sample:
+                                                                        10.0.0.0/8
+     ip_set_id                                                          ID of condition
+     string                     when type is ip and state is present    Sample:
+                                                                        78ad334a-3535-4036-85e6-8e11e745217b
+     name                                                               Name of condition
+     string                     when state is present                   Sample:
+                                                                        my_waf_condition
+     regex_match_set_id                                                 ID of the regex match set
+     string                     when type is regex and state is present Sample:
+                                                                        5ea3f6a8-3cd3-488b-b637-17b79ce7089c
+     regex_match_tuples         when type is regex and state is present List of regex matches
+     complex
+        field_to_match                                                  Field on which the regex match is applied
+        complex
+                  type                                                  The field name
+                  string        when type is regex and state is present Sample:
+                                                                        QUERY_STRING
+        regex_pattern_set_id                                            ID of the regex pattern
+        string                                                          Sample:
+                                                                        6fdf7f2d-9091-445c-aef2-98f3c051ac9e
+        text_transformation                                             transformation applied to the text before matching
+        string                                                          Sample:
+                                                                        NONE
+     size_constraint_set_id                                             ID of the size constraint set
+     string                     when type is size and state is present  Sample:
+                                                                        de84b4b3-578b-447e-a9a0-0db35c995656
+     size_constraints           when type is size and state is present  List of size constraints to apply
+     complex
+        comparison_operator                                             Comparison operator to apply
+        string                                                          Sample:
+                                                                        GT
+        field_to_match                                                  Field on which the size constraint is applied
+        complex
+                  type                                                  Field name
+                  string                                                Sample:
+                                                                        QUERY_STRING
+        size                                                            size to compare against the field
+        integer                                                         Sample:
+                                                                        300
+        text_transformation                                             transformation applied to the text before matching
+        string                                                          Sample:
+                                                                        NONE
+     sql_injection_match_set_id                                         ID of the SQL injection match set
+     string                     when type is sql and state is present   Sample:
+                                                                        de84b4b3-578b-447e-a9a0-0db35c995656
+     sql_injection_match_tuples when type is sql and state is present   List of SQL injection match sets
+     complex
+        field_to_match                                                  Field on which the SQL injection match is applied
+        complex
+                  type                                                  Field name
+                  string                                                Sample:
+                                                                        QUERY_STRING
+        text_transformation                                             transformation applied to the text before matching
+        string                                                          Sample:
+                                                                        URL_DECODE
+     xss_match_set_id                                                   ID of the XSS match set
+     string                     when type is xss and state is present   Sample:
+                                                                        de84b4b3-578b-447e-a9a0-0db35c995656
+     xss_match_tuples           when type is xss and state is present   List of XSS match sets
+     complex
+        field_to_match                                                  Field on which the XSS match is applied
+        complex
+                  type                                                  Field name
+                  string                                                Sample:
+                                                                        QUERY_STRING
+        text_transformation                                             transformation applied to the text before matching
+        string                                                          Sample:
+                                                                        URL_DECODE
+
+STATUS                   *aws_waf_condition-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Will Thames (@willthames)
+     • Mike Mochan (@mmochan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_waf_condition-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_waf_condition_module.html

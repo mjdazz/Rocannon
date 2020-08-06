@@ -1,0 +1,141 @@
+SYNOPSIS                   *win_nssm*
+
+     • Install a Windows service using the NSSM wrapper.
+     • NSSM is a service helper which doesn’t suck. See https://nssm.cc/ for more information.
+
+REQUIREMENTS                   *win_nssm-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • nssm >= 2.24.0 # (install via win_chocolatey) win_chocolatey: name=nssm
+
+PARAMETERS                   *win_nssm-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   app_parameters                     A string representing a dictionary of parameters to be passed to the application when it starts.
+   string                             DEPRECATED since v2.8, please use arguments instead.
+                                      This is mutually exclusive with arguments.
+   application                        The application binary to run as a service
+   path                               Required when state is present, started, stopped, or restarted.
+                                      Parameters to be passed to the application when it starts.
+   arguments                          This can be either a simple string or a list.
+   string                             This parameter was renamed from app_parameters_free_form in 2.8.
+                                      This is mutually exclusive with app_parameters.
+                                      aliases: app_parameters_free_form
+   dependencies                       Service dependencies that has to be started to trigger startup, separated by comma.
+   list                               DEPRECATED since v2.8, please use the win_service module instead.
+   description
+   string                             The description to set for the service.
+   added in 2.8.0
+   display_name
+   string                             The display name to set for the service.
+   added in 2.8.0
+   executable        Default:
+   path              "nssm.exe"       The location of the NSSM utility (in case it is not located in your PATH).
+   added in 2.8.0
+   name                               Name of the service to operate on.
+   string / required
+   password                           Password to be used for service startup.
+   string                             DEPRECATED since v2.8, please use the win_service module instead.
+                       Choices:       If auto is selected, the service will start at bootup.
+   start_mode          • auto ←       delayed causes a delayed but automatic start after boot (added in version 2.5).
+   string              • delayed      manual means that the service will start only when another service needs it.
+                       • disabled     disabled means that the service will stay off, regardless if it is needed or not.
+                       • manual       DEPRECATED since v2.8, please use the win_service module instead.
+                       Choices:
+                       • absent
+   state               • present ←    State of the service on the system.
+   string              • started      Values started, stopped, and restarted are deprecated since v2.8, please use the win_service module instead to start, stop or restart the service.
+                       • stopped
+                       • restarted
+   stderr_file                        Path to receive error output.
+   path
+   stdout_file                        Path to receive output.
+   path
+   user                               User to be used for service startup.
+   string                             DEPRECATED since v2.8, please use the win_service module instead.
+   working_directory                  The working directory to run the service executable from (defaults to the directory containing the application binary)
+   path                               aliases: app_directory, chdir
+   added in 2.8.0
+
+NOTES                   *win_nssm-notes*
+
+   Note
+
+     • The service will NOT be started after its creation when state=present.
+     • Once the service is created, you can use the win_service module to start it or configure some additionals properties, such as its startup type, dependencies, service account, and so on.
+
+SEE ALSO                   *win_nssm-see also*
+
+   See also
+
+   win_service – Manage and query Windows services
+   The official documentation on the win_service module.
+
+EXAMPLES                   *win_nssm-examples*
+
+ - name: Install the foo service
+   win_nssm:
+     name: foo
+     application: C:\windows\foo.exe
+
+ # This will yield the following command: C:\windows\foo.exe bar "true"
+ - name: Install the Consul service with a list of parameters
+   win_nssm:
+     name: Consul
+     application: C:\consul\consul.exe
+     arguments:
+       - agent
+       - -config-dir=C:\consul\config
+
+ # This is strictly equivalent to the previous example
+ - name: Install the Consul service with an arbitrary string of parameters
+   win_nssm:
+     name: Consul
+     application: C:\consul\consul.exe
+     arguments: agent -config-dir=C:\consul\config
+
+
+ # Install the foo service, and then configure and start it with win_service
+ - name: Install the foo service, redirecting stdout and stderr to the same file
+   win_nssm:
+     name: foo
+     application: C:\windows\foo.exe
+     stdout_file: C:\windows\foo.log
+     stderr_file: C:\windows\foo.log
+
+ - name: Configure and start the foo service using win_service
+   win_service:
+     name: foo
+     dependencies: [ adf, tcpip ]
+     user: foouser
+     password: secret
+     start_mode: manual
+     state: started
+
+ - name: Remove the foo service
+   win_nssm:
+     name: foo
+     state: absent
+
+STATUS                   *win_nssm-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Adam Keech (@smadam813)
+     • George Frank (@georgefrank)
+     • Hans-Joachim Kliemeck (@h0nIg)
+     • Michael Wild (@themiwi)
+     • Kevin Subileau (@ksubileau)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_nssm-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_nssm_module.html

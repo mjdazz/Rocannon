@@ -1,0 +1,107 @@
+SYNOPSIS                   *netapp_e_amg*
+
+     • Allows for the creation, removal and updating of Asynchronous Mirror Groups for NetApp E-series storage arrays
+
+PARAMETERS                   *netapp_e_amg-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   api_password                                  The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   api_url                                       The url to the SANtricity Web Services Proxy or Embedded Web Services API. Example https://prod-1.wahoo.acme.com/devmgr/v2
+   string / required
+   api_username                                  The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   interfaceType                  Choices:
+   -                              • iscsi        The intended protocol to use if both Fibre and iSCSI are available.
+                                  • fibre
+   manualSync                     Choices:
+   boolean                        • no ←         Setting this to true will cause other synchronization values to be ignored
+                                  • yes
+   name                                          The name of the async array you wish to target, or create.
+   - / required                                  If state is present and the name isn't found, it will attempt to create.
+   recoveryWarnThresholdMinutes Default:         Recovery point warning threshold (minutes). The user will be warned when the age of the last good failures point exceeds this value
+   -                            20
+   repoUtilizationWarnThreshold Default:         Recovery point warning threshold
+   -                            80
+   secondaryArrayId                              The ID of the secondary array to be used in mirroring process
+   - / required
+   ssid                         Default:         The ID of the array to manage. This value must be unique for each array.
+   string                       1
+   state                          Choices:       A state of present will either create or update the async mirror group.
+   - / required                   • absent       A state of absent will remove the async mirror group.
+                                  • present
+   syncIntervalMinutes          Default:         The synchronization interval in minutes
+   -                            10
+   syncWarnThresholdMinutes     Default:         The threshold (in minutes) for notifying the user that periodic synchronization has taken too long to complete.
+   -                            10
+   validate_certs                 Choices:
+   boolean                        • no           Should https certificates be validated?
+                                  • yes ←
+
+NOTES                   *netapp_e_amg-notes*
+
+   Note
+
+     • The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage the storage-system, or an E-Series storage-system that supports the
+       Embedded Web Services API.
+     • Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+     • netapp_e_storage_system may be utilized for configuring the systems managed by a WSP instance.
+
+EXAMPLES                   *netapp_e_amg-examples*
+
+ - name: AMG removal
+   na_eseries_amg:
+     state: absent
+     ssid: "{{ ssid }}"
+     secondaryArrayId: "{{amg_secondaryArrayId}}"
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+     new_name: "{{amg_array_name}}"
+     name: "{{amg_name}}"
+   when: amg_create
+
+ - name: AMG create
+   netapp_e_amg:
+     state: present
+     ssid: "{{ ssid }}"
+     secondaryArrayId: "{{amg_secondaryArrayId}}"
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+     new_name: "{{amg_array_name}}"
+     name: "{{amg_name}}"
+   when: amg_create
+
+RETURN VALUES                   *netapp_e_amg-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+                   Successful creation
+                   Sample:
+                   {"changed": true, "connectionType": "fc", "groupRef": "3700000060080E5000299C24000006E857AC7EEC", "groupState": "optimal", "id": "3700000060080E5000299C24000006E857AC7EEC",
+   msg             "label": "amg_made_by_ansible", "localRole": "primary", "mirrorChannelRemoteTarget": "9000000060080E5000299C24005B06E557AC7EEC", "orphanGroup": false,
+   string success  "recoveryPointAgeAlertThresholdMinutes": 20, "remoteRole": "secondary", "remoteTarget": {"nodeName": {"ioInterfaceType": "fc", "iscsiNodeName": null, "remoteNodeWWN":
+                   "20040080E5299F1C"}, "remoteRef": "9000000060080E5000299C24005B06E557AC7EEC", "scsiinitiatorTargetBaseProperties": {"ioInterfaceType": "fc", "iscsiinitiatorTargetBaseParameters":
+                   null}}, "remoteTargetId": "ansible2", "remoteTargetName": "Ansible2", "remoteTargetWwn": "60080E5000299F880000000056A25D56", "repositoryUtilizationWarnThreshold": 80,
+                   "roleChangeProgress": "none", "syncActivity": "idle", "syncCompletionTimeAlertThresholdMinutes": 10, "syncIntervalMinutes": 10, "worldWideName":
+                   "60080E5000299C24000006E857AC7EEC"}
+
+STATUS                   *netapp_e_amg-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Hulquest (@hulquest)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netapp_e_amg-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netapp_e_amg_module.html

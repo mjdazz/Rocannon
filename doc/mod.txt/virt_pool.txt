@@ -1,0 +1,145 @@
+SYNOPSIS                   *virt_pool*
+
+     • Manage libvirt storage pools.
+
+REQUIREMENTS                   *virt_pool-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • python-libvirt
+     • python-lxml
+
+PARAMETERS                   *virt_pool-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   autostart   Choices:
+   boolean     • no           Specify if a given storage pool should be started automatically on system boot.
+               • yes
+               Choices:
+               • define
+               • build
+               • create
+               • start
+               • stop
+   command     • destroy      in addition to state management, various non-idempotent commands are available. See examples.
+   -           • delete
+               • undefine
+               • get_xml
+               • list_pools
+               • facts
+               • info
+               • status
+               Choices:
+               • new
+               • repair
+   mode        • resize       Pass additional parameters to 'build' or 'delete' commands.
+   -           • no_overwrite
+               • overwrite
+               • normal
+               • zeroed
+   name                       name of the storage pool being managed. Note that pool must be previously defined with xml.
+   -                          aliases: pool
+               Choices:
+               • active
+   state       • inactive     specify which state you want a storage pool to be in. If 'active', pool will be started. If 'present', ensure that pool is present but do not change its state; if it's
+   -           • present      missing, you need to specify xml argument. If 'inactive', pool will be stopped. If 'undefined' or 'absent', pool will be removed from libvirt configuration. If
+               • absent       'deleted', pool contents will be deleted and then pool undefined.
+               • undefined
+               • deleted
+   uri       Default:         libvirt connection uri.
+   -         "qemu:///system"
+   xml                        XML document used with the define command.
+   -
+
+EXAMPLES                   *virt_pool-examples*
+
+ # Define a new storage pool
+ - virt_pool:
+     command: define
+     name: vms
+     xml: '{{ lookup("template", "pool/dir.xml.j2") }}'
+
+ # Build a storage pool if it does not exist
+ - virt_pool:
+     command: build
+     name: vms
+
+ # Start a storage pool
+ - virt_pool:
+     command: create
+     name: vms
+
+ # List available pools
+ - virt_pool:
+     command: list_pools
+
+ # Get XML data of a specified pool
+ - virt_pool:
+     command: get_xml
+     name: vms
+
+ # Stop a storage pool
+ - virt_pool:
+     command: destroy
+     name: vms
+
+ # Delete a storage pool (destroys contents)
+ - virt_pool:
+     command: delete
+     name: vms
+
+ # Undefine a storage pool
+ - virt_pool:
+     command: undefine
+     name: vms
+
+ # Gather facts about storage pools
+ # Facts will be available as 'ansible_libvirt_pools'
+ - virt_pool:
+     command: facts
+
+ # Gather information about pools managed by 'libvirt' remotely using uri
+ - virt_pool:
+     command: info
+     uri: '{{ item }}'
+   with_items: '{{ libvirt_uris }}'
+   register: storage_pools
+
+ # Ensure that a pool is active (needs to be defined and built first)
+ - virt_pool:
+     state: active
+     name: vms
+
+ # Ensure that a pool is inactive
+ - virt_pool:
+     state: inactive
+     name: vms
+
+ # Ensure that a given pool will be started at boot
+ - virt_pool:
+     autostart: yes
+     name: vms
+
+ # Disable autostart for a given pool
+ - virt_pool:
+     autostart: no
+     name: vms
+
+STATUS                   *virt_pool-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Maciej Delmanowski (@drybjed)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *virt_pool-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/virt_pool_module.html

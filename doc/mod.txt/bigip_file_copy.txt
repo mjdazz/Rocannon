@@ -1,0 +1,122 @@
+SYNOPSIS                   *bigip_file_copy*
+
+     • Manages files on a variety of datastores on a BIG-IP.
+
+PARAMETERS                   *bigip_file_copy-parameters*
+
+      Parameter      Choices/Defaults                                                                             Comments
+                                        Specifies the datastore to put the file in.
+                     Choices:           There are several different datastores and each of them allows files to be exposed in different ways.
+   datastore         • external-monitor When external-monitor, the specified file will be stored as an external monitor file and be available for use in external monitors
+   string            • ifile ←          When ifile, the specified file will be stored as an iFile.
+                     • lw4o6-table      When lw4o6-table, the specified file will be store as an Lightweight 4 over 6 (lw4o6) tunnel binding table, which include an IPv6 address for the lwB4,
+                                        public IPv4 address, and restricted port set.
+                     Choices:           Force overwrite a file.
+   force             • no               By default, files will only be overwritten if the SHA of the file is different for the given filename. This parameter can be used to force overwrite the file
+   boolean           • yes              even if it already exists and its SHA matches.
+                                        The lw4o6-table datastore does not keep checksums of its file. Therefore, you would need to provide this argument to update any of these files.
+   name                                 The name of the file as it should reside on the BIG-IP.
+   string                               If this is not specified, then the filename provided in the source parameter is used instead.
+   partition       Default:             Device partition to manage resources on.
+   string          "Common"
+   provider
+   dictionary                           A dict object containing connection details.
+   added in 2.5
+    auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                              This option is really used when working with BIG-IQ devices.
+    password                            The password for the user account used to connect to the BIG-IP.
+    string /                            You may omit this option by setting the environment variable F5_PASSWORD.
+    required                            aliases: pass, pwd
+    server                              The BIG-IP host.
+    string /                            You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:             The BIG-IP server port.
+    integer        443                  You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                             operation is completed, the module will error.
+    transport        Choices:
+    string           • cli              Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                            You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:           If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no               You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   source                               Specifies the path of the file to upload.
+   path                                 This parameter is required if state is present.
+                                        aliases: src
+   state             Choices:           When present, ensures that the resource exists.
+   string            • present ←        When absent, ensures the resource is removed.
+                     • absent
+
+NOTES                   *bigip_file_copy-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_file_copy-examples*
+
+ - name: Upload a file as an iFile
+   bigip_file_copy:
+     name: foo
+     source: /path/to/file.txt
+     datastore: ifile
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ # Upload a directory of files
+ - name: Recursively upload web related files in /var/tmp/project
+   find:
+     paths: /var/tmp/project
+     patterns: "^."?\\.(?:html|?:css|?:js)$"
+   register: f
+
+ - name: Upload a directory of files as a set of iFiles
+   bigip_file_copy:
+     source: "{{ f.path }}"
+     datastore: ifile
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+     loop: f
+   delegate_to: localhost
+ # End upload a directory of files
+
+ - name: Upload a file to use in an external monitor
+   bigip_file_copy:
+     source: /path/to/files/external.sh
+     datastore: external-monitor
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+STATUS                   *bigip_file_copy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_file_copy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_file_copy_module.html

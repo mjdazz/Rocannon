@@ -1,0 +1,211 @@
+SYNOPSIS                   *os_router*
+
+     • Create or Delete routers from OpenStack. Although Neutron allows routers to share the same name, this module enforces name uniqueness to be more user friendly.
+
+REQUIREMENTS                   *os_router-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_router-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   admin_state_up       Choices:
+   boolean              • no           Desired admin state of the created or existing router.
+                        • yes ←
+   api_timeout                         How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                       Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url, username,
+   auth                                password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports them. For other
+   dictionary                          plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud is provided or OpenStack
+                                       OS_" environment variables are present.
+   auth_type                           Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and the
+   string                              contents of the auth parameter should be updated accordingly.
+   availability_zone                   Ignored. Present for backwards compatibility
+   -
+   ca_cert                             A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                              aliases: cacert
+   client_cert                         A path to a client certificate to use as part of the SSL transaction.
+   string                              aliases: cert
+   client_key                          A path to a client key to use as part of the SSL transaction.
+   string                              aliases: key
+   cloud                               Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file. Provides
+   raw                                 default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are present. If cloud is a
+                                       dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   enable_snat          Choices:
+   boolean              • no           Enable Source NAT (SNAT) attribute.
+                        • yes
+   external_fixed_ips                  The IP address parameters for the external gateway network. Each is a dictionary with the subnet name or ID (subnet) and the IP address to assign on the
+   -                                   subnet (ip). If no IP is specified, one is automatically assigned from that subnet.
+                        Choices:
+   interface            • admin        Endpoint URL type to fetch from the service catalog.
+   string               • internal     aliases: endpoint_type
+                        • public ←
+                                       List of subnets to attach to the router internal interface. Default gateway associated with the subnet will be automatically attached with the router's
+   interfaces                          internal interface. In order to provide an ip address different from the default gateway,parameters are passed as dictionary with keys as network name or
+   -                                   ID(net), subnet name or ID (subnet) and the IP of port (portip) from the network. User defined portip is often required when a multiple router need to be
+                                       connected to a single subnet for which the default gateway has been already used.
+   name                                Name to be give to the router
+   - / required
+   network                             Unique name or ID of the external gateway network.
+   -                                   required interfaces or enable_snat are provided.
+   project                             Unique name or ID of the project.
+   -
+   region_name                         Name of the region.
+   string
+   state                Choices:
+   -                    • present ←    Indicate desired state of the resource
+                        • absent
+   timeout            Default:         How long should ansible wait for the requested resource.
+   integer            180
+   validate_certs       Choices:       Whether or not SSL API requests should be verified.
+   boolean              • no ←         Before Ansible 2.3 this defaulted to yes.
+                        • yes          aliases: verify
+   wait                 Choices:
+   boolean              • no           Should ansible wait until the requested resource is complete.
+                        • yes ←
+
+NOTES                   *os_router-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_router-examples*
+
+ # Create a simple router, not attached to a gateway or subnets.
+ - os_router:
+     cloud: mycloud
+     state: present
+     name: simple_router
+
+ # Create a simple router, not attached to a gateway or subnets for a given project.
+ - os_router:
+     cloud: mycloud
+     state: present
+     name: simple_router
+     project: myproj
+
+ # Creates a router attached to ext_network1 on an IPv4 subnet and one
+ # internal subnet interface.
+ - os_router:
+     cloud: mycloud
+     state: present
+     name: router1
+     network: ext_network1
+     external_fixed_ips:
+       - subnet: public-subnet
+         ip: 172.24.4.2
+     interfaces:
+       - private-subnet
+
+ # Create another router with two internal subnet interfaces.One with user defined port
+ # ip and another with default gateway.
+ - os_router:
+     cloud: mycloud
+     state: present
+     name: router2
+     network: ext_network1
+     interfaces:
+       - net: private-net
+         subnet: private-subnet
+         portip: 10.1.1.10
+       - project-subnet
+
+ # Create another router with two internal subnet interface.One with user defined port
+ # ip and and another with default gateway.
+ - os_router:
+     cloud: mycloud
+     state: present
+     name: router2
+     network: ext_network1
+     interfaces:
+       - net: private-net
+         subnet: private-subnet
+         portip: 10.1.1.10
+       - project-subnet
+
+ # Create another router with two internal subnet interface. one with  user defined port
+ # ip and and another  with default gateway.
+ - os_router:
+     cloud: mycloud
+     state: present
+     name: router2
+     network: ext_network1
+     interfaces:
+       - net: private-net
+         subnet: private-subnet
+         portip: 10.1.1.10
+       - project-subnet
+
+ # Update existing router1 external gateway to include the IPv6 subnet.
+ # Note that since 'interfaces' is not provided, any existing internal
+ # interfaces on an existing router will be left intact.
+ - os_router:
+     cloud: mycloud
+     state: present
+     name: router1
+     network: ext_network1
+     external_fixed_ips:
+       - subnet: public-subnet
+         ip: 172.24.4.2
+       - subnet: ipv6-public-subnet
+         ip: 2001:db8::3
+
+ # Delete router1
+ - os_router:
+     cloud: mycloud
+     state: absent
+     name: router1
+
+RETURN VALUES                   *os_router-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key                        Returned                                                                            Description
+   router                  On success when state is 'present' Dictionary describing the router.
+   complex
+     admin_state_up                                           Administrative state of the router.
+     boolean                                                  Sample:
+                                                              True
+     external_gateway_info                                    The external gateway parameters.
+     dictionary                                               Sample:
+                                                              {'enable_snat': True, 'external_fixed_ips': [{'ip_address': '10.6.6.99', 'subnet_id': '4272cb52-a456-4c20-8f3c-c26024ecfa81'}]}
+     id                                                       Router ID.
+     string                                                   Sample:
+                                                              474acfe5-be34-494c-b339-50f06aa143e4
+     name                                                     Router name.
+     string                                                   Sample:
+                                                              router1
+     routes                                                   The extra routes configuration for L3 router.
+     list
+     status                                                   The router status.
+     string                                                   Sample:
+                                                              ACTIVE
+     tenant_id                                                The tenant ID.
+     string                                                   Sample:
+                                                              861174b82b43463c9edc5202aadc60ef
+
+STATUS                   *os_router-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Shrewsbury (@Shrews)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_router-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_router_module.html

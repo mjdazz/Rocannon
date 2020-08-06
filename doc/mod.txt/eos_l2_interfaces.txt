@@ -1,0 +1,239 @@
+SYNOPSIS                   *eos_l2_interfaces*
+
+     • This module provides declarative management of Layer-2 interface on Arista EOS devices.
+
+PARAMETERS                   *eos_l2_interfaces-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   config                                      A dictionary of Layer-2 interface options
+   list / elements=dictionary
+      access                                   Switchport mode access command to configure the interface as a layer 2 access.
+      dictionary
+         vlan                                  Configure given VLAN in access port. It's used as the access VLAN ID.
+         integer
+      name                                     Full name of interface, e.g. Ethernet1.
+      string / required
+      trunk                                    Switchport mode trunk command to configure the interface as a Layer 2 trunk.
+      dictionary
+         native_vlan                           Native VLAN to be configured in trunk port. It is used as the trunk native VLAN ID.
+         integer
+         trunk_allowed_vlans                   List of allowed VLANs in a given trunk port. These are the only VLANs that will be configured on the trunk.
+         list
+                                Choices:
+   state                        • merged ←
+   string                       • replaced     The state of the configuration after module completion
+                                • overridden
+                                • deleted
+
+NOTES                   *eos_l2_interfaces-notes*
+
+   Note
+
+     • Tested against Arista EOS 4.20.10M
+     • This module works with connection network_cli. See the EOS Platform Options.
+
+EXAMPLES                   *eos_l2_interfaces-examples*
+
+ ---
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    switchport access vlan 20
+ # !
+ # interface Ethernet2
+ #    switchport trunk native vlan 20
+ #    switchport mode trunk
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+ # !
+
+ - name: Merge provided configuration with device configuration.
+   eos_l2_interfaces:
+     config:
+       - name: Ethernet1
+         trunk:
+           native_vlan: 10
+       - name: Ethernet2
+         access:
+           vlan: 30
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    switchport trunk native vlan 10
+ #    switchport mode trunk
+ # !
+ # interface Ethernet2
+ #    switchport access vlan 30
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+ # !
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # veos2#show running-config | s int
+ # interface Ethernet1
+ #    switchport access vlan 20
+ # !
+ # interface Ethernet2
+ #    switchport trunk native vlan 20
+ #    switchport mode trunk
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+ # !
+
+ - name: Replace device configuration of specified L2 interfaces with provided configuration.
+   eos_l2_interfaces:
+     config:
+       - name: Ethernet1
+         trunk:
+           native_vlan: 20
+           trunk_vlans: 5-10, 15
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    switchport trunk native vlan 20
+ #    switchport trunk allowed vlan 5-10,15
+ #    switchport mode trunk
+ # !
+ # interface Ethernet2
+ #    switchport trunk native vlan 20
+ #    switchport mode trunk
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+ # !
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    switchport access vlan 20
+ # !
+ # interface Ethernet2
+ #    switchport trunk native vlan 20
+ #    switchport mode trunk
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+ # !
+
+ - name: Override device configuration of all L2 interfaces on device with provided configuration.
+   eos_l2_interfaces:
+     config:
+       - name: Ethernet2
+         access:
+           vlan: 30
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ # !
+ # interface Ethernet2
+ #    switchport access vlan 30
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+ # !
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    switchport access vlan 20
+ # !
+ # interface Ethernet2
+ #    switchport trunk native vlan 20
+ #    switchport mode trunk
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+ # !
+
+ - name: Delete EOS L2 interfaces as in given arguments.
+   eos_l2_interfaces:
+     config:
+       - name: Ethernet1
+       - name: Ethernet2
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ # !
+ # interface Ethernet2
+ # !
+ # interface Management1
+ #    ip address dhcp
+ #    ipv6 address auto-config
+
+RETURN VALUES                   *eos_l2_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['interface Ethernet2', 'switchport access vlan 20']
+
+STATUS                   *eos_l2_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *eos_l2_interfaces-red hat support*
+
+     • Nathaniel Case (@qalthos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *eos_l2_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/eos_l2_interfaces_module.html

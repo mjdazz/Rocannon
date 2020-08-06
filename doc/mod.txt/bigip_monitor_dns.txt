@@ -1,0 +1,222 @@
+SYNOPSIS                   *bigip_monitor_dns*
+
+     • Manages DNS monitors on a BIG-IP.
+
+PARAMETERS                   *bigip_monitor_dns-parameters*
+
+          Parameter         Choices/Defaults                                                                         Comments
+                                             Specifies the RCODE required in the response for an up status.
+   accept_rcode               Choices:       When creating a new monitor, if this parameter is not specified, the default value is no-error.
+   string                     • no-error     When no-error, specifies that the status of the node will be marked up if the received DNS message has no error.
+                              • anything     When anything, specifies that the status of the node will be marked up irrespective of the RCODE in the DNS message received.
+                                             If this parameter is set to anything, it will disregard the receive string, and nullify it if the monitor is being updated.
+                              Choices:       Specifies whether adaptive response time monitoring is enabled for this monitor.
+   adaptive                   • no           When yes, the monitor determines the state of a service based on how divergent from the mean latency a monitor probe for that service is allowed to be.
+   boolean                    • yes          Also, values for the allowed_divergence, adaptive_limit, and and sampling_timespan will be enforced.
+                                             When disabled, the monitor determines the state of a service based on the interval, up_interval, time_until_up, and timeout monitor settings.
+                                             Specifies the absolute number of milliseconds that may not be exceeded by a monitor probe, regardless of allowed_divergence setting, for a probe to be
+   adaptive_limit                            considered successful.
+   integer                                   This value applies regardless of the value of the allowed_divergence setting.
+                                             While this value can be configured when adaptive is no, it will not take effect on the system until adaptive is yes.
+                              Choices:       When specifying a new monitor, if adaptive is yes, the default is relative
+   allowed_divergence_type    • relative     When absolute, the number of milliseconds the latency of a monitor probe can exceed the mean latency of a monitor probe for the service being probed. In
+   string                     • absolute     typical cases, if the monitor detects three probes in a row that miss the latency value you set, the pool member or node is marked down.
+                                             When relative, the percentage of deviation the latency of a monitor probe can exceed the mean latency of a monitor probe for the service being probed.
+   allowed_divergence_value                  When specifying a new monitor, if adaptive is yes, and type is relative, the default is 25 percent.
+   integer
+                              Choices:       Specifies the type of DNS query that the monitor sends.
+   answer_section_contains    • any-type     When creating a new monitor, if this value is not specified, the default value is query-type.
+   string                     • anything     When query-type, specifies that the response should contain at least one answer of which the resource record type matches the query type.
+                              • query-type   When any-type, specifies that the DNS message should contain at least one answer.
+                                             When anything, specifies that an empty answer is enough to mark the status of the node up.
+   description                               The description of the monitor.
+   string
+   interval                                  The interval specifying how frequently the monitor instance of this template will run.
+   integer                                   This value must be less than the timeout value.
+                                             When creating a new monitor, if this parameter is not provided, the default 5 will be used.
+   ip                                        IP address part of the IP/port definition.
+   string                                    If this parameter is not provided when creating a new monitor, then the default value will be ".
+                                             Specifies whether the system automatically changes the status of a resource to enabled at the next successful monitor check.
+   manual_resume              Choices:       If you set this option to yes, you must manually re-enable the resource before the system can use it for load balancing connections.
+   boolean                    • no           When creating a new monitor, if this parameter is not specified, the default value is no.
+                              • yes          When yes, specifies that you must manually re-enable the resource after an unsuccessful monitor check.
+                                             When no, specifies that the system automatically changes the status of a resource to enabled at the next successful monitor check.
+   name                                      Specifies the name of the monitor.
+   string / required
+   parent                   Default:         The parent template of this monitor template. Once this value has been set, it cannot be changed. By default, this value is the dns parent on the Common
+   string                   "/Common/dns"    partition.
+   partition                Default:         Device partition to manage resources on.
+   string                   "Common"
+   port                                      Port address part of the IP/port definition.
+   string                                    If this parameter is not provided when creating a new monitor, then the default value will be ".
+                                             Note that if specifying an IP address, a value between 1 and 65535 must be specified.
+   provider
+   dictionary                                A dict object containing connection details.
+   added in 2.5
+        auth_provider                        Configures the auth provider for to obtain authentication tokens from the remote device.
+        string                               This option is really used when working with BIG-IQ devices.
+        password                             The password for the user account used to connect to the BIG-IP.
+        string / required                    You may omit this option by setting the environment variable F5_PASSWORD.
+                                             aliases: pass, pwd
+        server                               The BIG-IP host.
+        string / required                    You may omit this option by setting the environment variable F5_SERVER.
+        server_port         Default:         The BIG-IP server port.
+        integer             443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+        ssh_keyfile                          Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+        path                                 You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+        timeout                              Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+        integer                              the operation is completed, the module will error.
+        transport             Choices:
+        string                • cli          Configures the transport connection to use when connecting to the remote device.
+                              • rest ←
+        user                                 The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+        string / required                    You may omit this option by setting the environment variable F5_USER.
+        validate_certs        Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+        boolean               • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                              • yes ←
+   query_name                                Specifies a query name for the monitor to use in a DNS query.
+   string
+                              Choices:       Specifies the type of DNS query that the monitor sends.
+   query_type                 • a            When creating a new monitor, if this parameter is not specified, the default value is a.
+   string                     • aaaa         When a, specifies that the monitor will send a DNS query of type A.
+                                             When aaaa, specifies that the monitor will send a DNS query of type AAAA.
+   receive                                   Specifies the IP address that the monitor uses from the resource record sections of the DNS response.
+   string                                    The IP address should be specified in the dotted-decimal notation or IPv6 notation.
+                              Choices:       Specifies whether the monitor operates in reverse mode.
+   reverse                    • no           When the monitor is in reverse mode, a successful receive string match marks the monitored object down instead of up. You can use the this mode only if
+   boolean                    • yes          you configure the receive option.
+                                             This parameter is not compatible with the time_until_up parameter. If time_until_up is specified, it must be 0. Or, if it already exists, it must be 0.
+   sampling_timespan                         Specifies the length, in seconds, of the probe history window that the system uses to calculate the mean latency and standard deviation of a monitor
+   integer                                   probe.
+                                             While this value can be configured when adaptive is no, it will not take effect on the system until adaptive is yes.
+   state                      Choices:       When present, ensures that the monitor exists.
+   string                     • present ←    When absent, ensures the monitor is removed.
+                              • absent
+   time_until_up                             Specifies the amount of time in seconds after the first successful response before a node will be marked up.
+   integer                                   A value of 0 will cause a node to be marked up immediately after a valid response is received from the node.
+                                             If this parameter is not provided when creating a new monitor, then the default value will be 0.
+                                             The number of seconds in which the node or service must respond to the monitor request.
+   timeout                                   If the target responds within the set time period, it is considered up.
+   integer                                   If the target does not respond within the set time period, it is considered down.
+                                             You can change this number to any number you want, however, it should be 3 times the interval number of seconds plus 1 second.
+                                             If this parameter is not provided when creating a new monitor, then the default value will be 16.
+   transparent                Choices:       Specifies whether the monitor operates in transparent mode.
+   boolean                    • no           Monitors in transparent mode can monitor pool members through firewalls.
+                              • yes          When creating a new monitor, if this parameter is not provided, then the default value will be no.
+                                             Specifies the interval for the system to use to perform the health check when a resource is up.
+   up_interval                               When 0, specifies that the system uses the interval specified in interval to check the health of the resource.
+   integer                                   When any other number, enables specification of a different interval to use when checking the health of a resource that is up.
+                                             When creating a new monitor, if this parameter is not provided, the default 0 will be used.
+
+NOTES                   *bigip_monitor_dns-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_monitor_dns-examples*
+
+ - name: Create a DNS monitor
+   bigip_monitor_dns:
+     name: DNS-UDP-V6
+     interval: 2
+     query_name: localhost
+     query_type: aaaa
+     up_interval: 5
+     adaptive: no
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_monitor_dns-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key            Returned                                                                           Description
+   accept_rcode                      RCODE required in the response for an up status.
+   string                   changed  Sample:
+                                     no-error
+   adaptive                          Whether adaptive is enabled or not.
+   boolean                  changed  Sample:
+                                     True
+   adaptive_limit                    Absolute number of milliseconds that may not be exceeded by a monitor probe.
+   integer                  changed  Sample:
+                                     200
+   allowed_divergence_type           Type of divergence used for adaptive response time monitoring.
+   string                   changed  Sample:
+                                     absolute
+                                     Value of the type of divergence used for adaptive response time monitoring.
+   allowed_divergence_value changed  May be percent or ms depending on whether relative or absolute.
+   integer                           Sample:
+                                     25
+   answer_section_contains           Type of DNS query that the monitor sends.
+   string                   changed  Sample:
+                                     query-type
+   description                       The description of the monitor.
+   string                   changed  Sample:
+                                     Important Monitor
+   interval                          The new interval in which to run the monitor check.
+   integer                  changed  Sample:
+                                     2
+   ip                                The new IP of IP/port definition.
+   string                   changed  Sample:
+                                     10.12.13.14
+   manual_resume                     Whether the system automatically changes the status of a resource to enabled at the next successful monitor check.
+   string                   changed  Sample:
+                                     query-type
+   parent                            New parent template of the monitor.
+   string                   changed  Sample:
+                                     http
+   port                              Alias port or service for the monitor to check, on behalf of the pools or pool members with which the monitor is associated.
+   string                   changed  Sample:
+                                     80
+   query_name                        Query name for the monitor to use in a DNS query.
+   string                   changed  Sample:
+                                     foo
+   query_type                        Type of DNS query that the monitor sends. Either a or aaaa.
+   string                   changed  Sample:
+                                     aaaa
+   receive                           IP address that the monitor uses from the resource record sections of the DNS response.
+   string                   changed  Sample:
+                                     2.3.2.4
+   reverse                           Whether the monitor operates in reverse mode.
+   boolean                  changed  Sample:
+                                     True
+   sampling_timespan                 Absolute number of milliseconds that may not be exceeded by a monitor probe.
+   integer                  changed  Sample:
+                                     200
+   time_until_up                     The new time in which to mark a system as up after first successful response.
+   integer                  changed  Sample:
+                                     2
+   timeout                           The new timeout in which the remote system must respond to the monitor.
+   integer                  changed  Sample:
+                                     10
+   transparent              changed  Whether the monitor operates in transparent mode.
+   boolean
+   up_interval              changed  Interval for the system to use to perform the health check when a resource is up.
+   integer
+
+STATUS                   *bigip_monitor_dns-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_monitor_dns-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_monitor_dns_module.html

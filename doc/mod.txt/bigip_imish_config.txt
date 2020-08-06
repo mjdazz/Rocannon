@@ -1,0 +1,211 @@
+SYNOPSIS                   *bigip_imish_config*
+
+     • This module provides an implementation for working with advanced routing configuration sections in a deterministic way.
+
+PARAMETERS                   *bigip_imish_config-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   after                              The ordered set of commands to append to the end of the command stack if a change needs to be made.
+   list                               Just like with before this allows the playbook designer to append a set of commands to be executed after the command set.
+   backup              Choices:       This argument will cause the module to create a full backup of the current running-config from the remote device before any changes are made.
+   boolean             • no ←         The backup file is written to the backup folder in the playbook root directory or role root directory, if playbook is part of an ansible role. If the directory
+                       • yes          does not exist, it is created.
+   backup_options                     This is a dict object containing configurable options related to backup file path. The value of this option is read only when backup is set to yes, if backup
+   dictionary                         is set to no this option will be silently ignored.
+   added in 2.8
+     dir_path                         This option provides the path ending with directory name in which the backup configuration file will be stored. If the directory does not exist it will be
+     path                             first created and the filename is either the value of filename or default filename as described in filename options description. If the path value is not given
+                                      in that case a backup directory will be created in the current working directory and backup configuration will be copied in filename within backup directory.
+     filename                         The filename to be used to store the backup configuration. If the the filename is not given it will be generated based on the hostname, current time and date
+     string                           in format defined by <hostname>_config.<current-date>@<current-time>
+   before                             The ordered set of commands to push on to the command stack if a change needs to be made.
+   list                               This allows the playbook designer the opportunity to perform configuration commands prior to pushing any changes without affecting how the set of commands are
+                                      matched against the system.
+                                      When using the ansible-playbook --diff command line argument the module can generate diffs against different sources.
+                       Choices:       When this option is configure as startup, the module will return the diff of the running-config against the startup-config.
+   diff_against        • startup ←    When this option is configured as intended, the module will return the diff of the running-config against the configuration provided in the intended_config
+   string              • intended     argument.
+                       • running      When this option is configured as running, the module will return the before and after diff of the running-config with respect to any changes made to the
+                                      device configuration.
+   diff_ignore_lines                  Use this argument to specify one or more lines that should be ignored during the diff.
+   list                               This is used for lines in the configuration that are automatically updated by the system.
+                                      This argument takes a list of regular expressions or exact line matches.
+   intended_config                    The intended_config provides the master configuration that the node should conform to and is used to check the final running-config against.
+   string                             This argument will not modify any settings on the remote device and is strictly used to check the compliance of the current device's configuration against.
+                                      When specifying this argument, the task should also modify the diff_against value and set it to intended.
+                                      The ordered set of commands that should be configured in the section.
+   lines                              The commands must be the exact same commands as found in the device running-config.
+   list                               Be sure to note the configuration command syntax as some commands are automatically modified by the device config parser.
+                                      aliases: commands
+                       Choices:       Instructs the module on the way to perform the matching of the set of commands against the current device config.
+   match               • line ←       If match is set to line, commands are matched line by line.
+   string              • strict       If match is set to strict, command lines are matched with respect to position.
+                       • exact        If match is set to exact, command lines must be an equal match.
+                       • none         Finally, if match is set to none, the module will not attempt to compare the source configuration with the running configuration on the remote device.
+   parents                            The ordered set of parents that uniquely identify the section or hierarchy the commands should be checked against.
+   list                               If the parents argument is omitted, the commands are checked against the set of top level or global commands.
+   provider
+   dictionary                         A dict object containing connection details.
+   added in 2.5
+     auth_provider                    Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                           This option is really used when working with BIG-IQ devices.
+     password                         The password for the user account used to connect to the BIG-IP.
+     string /                         You may omit this option by setting the environment variable F5_PASSWORD.
+     required                         aliases: pass, pwd
+     server                           The BIG-IP host.
+     string /                         You may omit this option by setting the environment variable F5_SERVER.
+     required
+     server_port     Default:         The BIG-IP server port.
+     integer         443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                      Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                             You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                          Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                          operation is completed, the module will error.
+     transport         Choices:
+     string            • cli          Configures the transport connection to use when connecting to the remote device.
+                       • rest ←
+     user                             The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string /                         You may omit this option by setting the environment variable F5_USER.
+     required
+     validate_certs    Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean           • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                       • yes ←
+   replace             Choices:       Instructs the module on the way to perform the configuration on the device.
+   string              • line ←       If the replace argument is set to line then the modified lines are pushed to the device in configuration mode.
+                       • block        If the replace argument is set to block then the entire command block is pushed to the device in configuration mode if any line is not correct.
+   route_domain      Default:         Route domain to manage BGP configuration on.
+   string            0
+                                      The module, by default, will connect to the remote device and retrieve the current running-config to use as a base for comparing against the contents of
+   running_config                     source.
+   string                             There are times when it is not desirable to have the task get the current running-config for every task in a playbook.
+                                      The running_config argument allows the implementer to pass in the configuration to use as the base config for comparison.
+                                      aliases: config
+                       Choices:       When changes are made to the device running-configuration, the changes are not copied to non-volatile storage by default.
+   save_when           • always       If the argument is set to always, then the running-config will always be copied to the startup-config and the modified flag will always be set to True.
+   string              • never ←      If the argument is set to modified, then the running-config will only be copied to the startup-config if it has changed since the last save to startup-config.
+                       • modified     If the argument is set to never, the running-config will never be copied to the startup-config.
+                       • changed      If the argument is set to changed, then the running-config will only be copied to the startup-config if the task has made a change.
+   src                                The src argument provides a path to the configuration file to load into the remote system.
+   path                               The path can either be a full system path to the configuration file if the value starts with / or relative to the root of the implemented role or playbook.
+                                      This argument is mutually exclusive with the lines and parents arguments.
+
+NOTES                   *bigip_imish_config-notes*
+
+   Note
+
+     • Abbreviated commands are NOT idempotent, see Network FAQ.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_imish_config-examples*
+
+ - name: configure top level configuration and save it
+   bigip_imish_config:
+     lines: bfd slow-timer 2000
+     save_when: modified
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: diff the running-config against a provided config
+   bigip_imish_config:
+     diff_against: intended
+     intended_config: "{{ lookup('file', 'master.cfg') }}"
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Add config to a parent block
+   bigip_imish_config:
+     lines:
+       - bgp graceful-restart restart-time 120
+       - redistribute kernel route-map rhi
+       - neighbor 10.10.10.11 remote-as 65000
+       - neighbor 10.10.10.11 fall-over bfd
+       - neighbor 10.10.10.11 remote-as 65000
+       - neighbor 10.10.10.11 fall-over bfd
+     parents: router bgp 64664
+     match: exact
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Remove an existing acl before writing it
+   bigip_imish_config:
+     lines:
+       - access-list 10 permit 20.20.20.20
+       - access-list 10 permit 20.20.20.21
+       - access-list 10 deny any
+     before: no access-list 10
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: for idempotency, use full-form commands
+   bigip_imish_config:
+     lines:
+       # - desc My interface
+       - description My Interface
+     # parents: int ANYCAST-P2P-2
+     parents: interface ANYCAST-P2P-2
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: configurable backup path
+   bigip_imish_config:
+     lines: bfd slow-timer 2000
+     backup: yes
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+     backup_options:
+       filename: backup.cfg
+       dir_path: /home/user
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_imish_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key          Returned                                                                                  Description
+   backup_path                    The full path to the backup file
+   string      when backup is yes Sample:
+                                  /playbooks/ansible/backup/[email protected]:28:34
+   commands                       The set of commands that will be pushed to the remote device
+   list        always             Sample:
+                                  ['interface ANYCAST-P2P-2', 'neighbor 20.20.20.21 remote-as 65000', 'neighbor 20.20.20.21 fall-over bfd']
+   updates                        The set of commands that will be pushed to the remote device
+   list        always             Sample:
+                                  ['interface ANYCAST-P2P-2', 'neighbor 20.20.20.21 remote-as 65000', 'neighbor 20.20.20.21 fall-over bfd']
+
+STATUS                   *bigip_imish_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_imish_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_imish_config_module.html

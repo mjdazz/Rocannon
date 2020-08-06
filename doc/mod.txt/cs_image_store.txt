@@ -1,0 +1,130 @@
+SYNOPSIS                   *cs_image_store*
+
+     • Deploy, remove, recreate CloudStack Image Stores.
+
+REQUIREMENTS                   *cs_image_store-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_image_store-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+                       Choices:       HTTP method used to query the API endpoint.
+   api_http_method     • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string              • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is get if not specified.
+   api_key                            API key of the CloudStack API.
+   string                             If not given, the CLOUDSTACK_KEY env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   api_region        Default:         Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                         Secret key of the CloudStack API.
+   string                             If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+                                      HTTP timeout in seconds.
+   api_timeout                        If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                            As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is 10 seconds if not specified.
+   api_url                            URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                             If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   force_recreate      Choices:       Set to yes if you're changing an existing Image Store.
+   boolean             • no ←         This will force the recreation of the Image Store.
+                       • yes          Recreation might fail if there are snapshots present on the Image Store. Delete them before running the recreation.
+   name                               The ID of the Image Store. Required when deleting a Image Store.
+   string / required
+   provider                           The image store provider name. Required when creating a new Image Store
+   string
+   state               Choices:
+   string              • present ←    Stage of the Image Store
+                       • absent
+   url                                The URL for the Image Store.
+   string                             Required when state=present.
+   zone                               The Zone name for the Image Store.
+   string / required
+
+NOTES                   *cs_image_store-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_image_store-examples*
+
+ - name: Add a Image Store (NFS)
+   cs_image_store:
+     zone: zone-01
+     name: nfs-01
+     provider: NFS
+     url: nfs://192.168.21.16/exports/secondary
+   delegate_to: localhost
+
+ # Change the NFS share URL and force a Image Store recreation
+ - name: Change the NFS url
+   cs_image_store:
+     zone: zone-01
+     name: nfs-01
+     provider: NFS
+     force_recreate: yes
+     url: nfs://192.168.21.10/shares/secondary
+   delegate_to: localhost
+
+ - name: delete the image store
+   cs_image_store:
+     name: nfs-01
+     zone: zone-01
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_image_store-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   id                     the ID of the image store
+   string        success  Sample:
+                          feb11a84-a093-45eb-b84d-7f680313c40b
+   name                   the name of the image store
+   string        success  Sample:
+                          nfs-01
+   protocol               the protocol of the image store
+   string        success  Sample:
+                          nfs
+   provider_name          the provider name of the image store
+   string        success  Sample:
+                          NFS
+   scope                  the scope of the image store
+   string        success  Sample:
+                          ZONE
+   url                    the url of the image store
+   string        success  Sample:
+                          nfs://192.168.21.16/exports/secondary
+   zone                   the Zone name of the image store
+   string        success  Sample:
+                          zone-01
+
+STATUS                   *cs_image_store-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Patryk Cichy (@PatTheSilent)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_image_store-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_image_store_module.html

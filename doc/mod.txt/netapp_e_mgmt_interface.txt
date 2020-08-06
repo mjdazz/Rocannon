@@ -1,0 +1,175 @@
+SYNOPSIS                   *netapp_e_mgmt_interface*
+
+     • Configure the E-Series management interfaces
+
+PARAMETERS                   *netapp_e_mgmt_interface-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   address                             The IPv4 address to assign to the interface.
+   -                                   Should be specified in xx.xx.xx.xx form.
+                                       Mutually exclusive with config_method=dhcp
+   api_password                        The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   api_url                             The url to the SANtricity Web Services Proxy or Embedded Web Services API. Example https://prod-1.wahoo.acme.com/devmgr/v2
+   string / required
+   api_username                        The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   channel                             The port to modify the configuration for.
+   -                                   The channel represents the port number (typically from left to right on the controller), beginning with a value of 1.
+                                       Mutually exclusive with name.
+   config_method        Choices:       The configuration method type to use for network interface ports.
+   -                    • dhcp         dhcp is mutually exclusive with address, subnet_mask, and gateway.
+                        • static
+   controller           Choices:       The controller that owns the port you want to configure.
+   - / required         • A            Controller names are represented alphabetically, with the first controller as A, the second as B, and so on.
+                        • B            Current hardware models have either 1 or 2 available controllers, but that is not a guaranteed hard limitation and could change in the future.
+   dns_address                         Primary IPv4 DNS server address
+   -
+   dns_address_backup                  Backup IPv4 DNS server address
+   -                                   Queried when primary DNS server fails
+   dns_config_method    Choices:       The configuration method type to use for DNS services.
+   -                    • dhcp         dhcp is mutually exclusive with dns_address, and dns_address_backup.
+                        • static
+   gateway                             The IPv4 gateway address to utilize for the interface.
+   -                                   Should be specified in xx.xx.xx.xx form.
+                                       Mutually exclusive with config_method=dhcp
+   log_path                            A local path to a file to be used for debug logging
+   -
+                                       The port to modify the configuration for.
+   name                                The list of choices is not necessarily comprehensive. It depends on the number of ports that are present in the system.
+   -                                   The name represents the port number (typically from left to right on the controller), beginning with a value of 1.
+                                       Mutually exclusive with channel.
+                                       aliases: port, iface
+   ntp_address                         Primary IPv4 NTP server address
+   -
+   ntp_address_backup                  Backup IPv4 NTP server address
+   -                                   Queried when primary NTP server fails
+                        Choices:       The configuration method type to use for NTP services.
+   ntp_config_method    • disable      disable is mutually exclusive with ntp_address and ntp_address_backup.
+   -                    • dhcp         dhcp is mutually exclusive with ntp_address and ntp_address_backup.
+                        • static
+   ssh                  Choices:       Enable ssh access to the controller for debug purposes.
+   boolean              • no           This is a controller-level setting.
+                        • yes          rlogin/telnet will be enabled for ancient equipment where ssh is not available.
+   ssid               Default:         The ID of the array to manage. This value must be unique for each array.
+   string             1
+                        Choices:       Enable or disable IPv4 network interface configuration.
+   state                • enable       Either IPv4 or IPv6 must be enabled otherwise error will occur.
+   -                    • disable      Only required when enabling or disabling IPv4 network interface
+                                       aliases: enable_interface
+   subnet_mask                         The subnet mask to utilize for the interface.
+   -                                   Should be specified in xx.xx.xx.xx form.
+                                       Mutually exclusive with config_method=dhcp
+   validate_certs       Choices:
+   boolean              • no           Should https certificates be validated?
+                        • yes ←
+
+NOTES                   *netapp_e_mgmt_interface-notes*
+
+   Note
+
+     • Check mode is supported.
+     • The interface settings are applied synchronously, but changes to the interface itself (receiving a new IP address via dhcp, etc), can take seconds or minutes longer to take effect.
+     • Known issue: Changes specifically to down ports will result in a failure. However, this may not be the case in up coming NetApp E-Series firmware releases (released after firmware version
+       11.40.2).
+     • The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage the storage-system, or an E-Series storage-system that supports the
+       Embedded Web Services API.
+     • Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+     • netapp_e_storage_system may be utilized for configuring the systems managed by a WSP instance.
+
+EXAMPLES                   *netapp_e_mgmt_interface-examples*
+
+ - name: Configure the first port on the A controller with a static IPv4 address
+   netapp_e_mgmt_interface:
+     name: "1"
+     controller: "A"
+     config_method: static
+     address: "192.168.1.100"
+     subnet_mask: "255.255.255.0"
+     gateway: "192.168.1.1"
+     ssid: "1"
+     api_url: "10.1.1.1:8443"
+     api_username: "admin"
+     api_password: "myPass"
+
+ - name: Disable ipv4 connectivity for the second port on the B controller
+   netapp_e_mgmt_interface:
+     name: "2"
+     controller: "B"
+     enable_interface: no
+     ssid: "{{ ssid }}"
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+
+ - name: Enable ssh access for ports one and two on controller A
+   netapp_e_mgmt_interface:
+     name: "{{ item }}"
+     controller: "A"
+     ssh: yes
+     ssid: "{{ ssid }}"
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+   loop:
+     - 1
+     - 2
+
+ - name: Configure static DNS settings for the first port on controller A
+   netapp_e_mgmt_interface:
+     name: "1"
+     controller: "A"
+     dns_config_method: static
+     dns_address: "192.168.1.100"
+     dns_address_backup: "192.168.1.1"
+     ssid: "{{ ssid }}"
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+
+ - name: Configure static NTP settings for ports one and two on controller B
+   netapp_e_mgmt_interface:
+     name: "{{ item }}"
+     controller: "B"
+     ntp_config_method: static
+     ntp_address: "129.100.1.100"
+     ntp_address_backup: "127.100.1.1"
+     ssid: "{{ ssid }}"
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+   loop:
+     - 1
+     - 2
+
+RETURN VALUES                   *netapp_e_mgmt_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                    Description
+                      Indicates whether IPv4 connectivity has been enabled or disabled.
+   enabled on success This does not necessarily indicate connectivity. If dhcp was enabled absent a dhcp server, for instance, it is unlikely that the configuration will actually be valid.
+   boolean            Sample:
+                      True
+   msg                Success message
+   string  on success Sample:
+                      The interface settings have been updated.
+
+STATUS                   *netapp_e_mgmt_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Price (@lmprice)
+     • Nathan Swartz (@ndswartz)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netapp_e_mgmt_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netapp_e_mgmt_interface_module.html

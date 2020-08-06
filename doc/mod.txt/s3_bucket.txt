@@ -1,0 +1,136 @@
+SYNOPSIS                   *s3_bucket*
+
+     • Manage S3 buckets in AWS, DigitalOcean, Ceph, Walrus and FakeS3
+
+REQUIREMENTS                   *s3_bucket-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *s3_bucket-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   ceph                           Choices:       Enable API compatibility with Ceph. It takes into account the S3 API subset working with Ceph in order to provide the same module behaviour where
+   boolean                        • no           possible.
+                                  • yes
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   encryption                     Choices:
+   -                              • none         Describes the default server-side encryption to apply to new objects in the bucket. In order to remove the server-side encryption, the encryption
+   added in 2.9                   • AES256       needs to be set to 'none' explicitly.
+                                  • aws:kms
+   encryption_key_id                             KMS master key ID to use for the default encryption. This parameter is allowed if encryption is aws:kms. If not specified then it will default to
+   -                                             the AWS provided KMS key.
+   added in 2.9
+   force                          Choices:       When trying to delete a bucket, delete all keys (including versions and delete markers) in the bucket first (an s3 bucket must be empty for a
+   boolean                        • no ←         successful deletion)
+                                  • yes
+   name                                          Name of the s3 bucket
+   - / required
+   policy                                        The JSON policy as a string.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_tags                     Choices:
+   boolean                        • no           whether to remove tags that aren't present in the tags parameter
+   added in 2.9                   • yes ←
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   requester_pays                 Choices:
+   boolean                        • no ←         With Requester Pays buckets, the requester instead of the bucket owner pays the cost of the request and the data download from the bucket.
+                                  • yes
+                                                 S3 URL endpoint for usage with DigitalOcean, Ceph, Eucalyptus and fakes3 etc.
+   s3_url                                        Assumes AWS if not specified.
+   -                                             For Walrus, use FQDN of the endpoint without scheme nor path.
+                                                 aliases: S3_URL
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Create or remove the s3 bucket
+                                  • absent
+   tags                                          tags dict to apply to bucket
+   -
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   versioning                     Choices:
+   boolean                        • no           Whether versioning is enabled or disabled (note that once versioning is enabled, it can only be suspended)
+                                  • yes
+
+NOTES                   *s3_bucket-notes*
+
+   Note
+
+     • If requestPayment, policy, tagging or versioning operations/API aren’t implemented by the endpoint, module doesn’t fail if related parameters requester_pays, policy, tags or versioning are
+       None.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *s3_bucket-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Create a simple s3 bucket
+ - s3_bucket:
+     name: mys3bucket
+     state: present
+
+ # Create a simple s3 bucket on Ceph Rados Gateway
+ - s3_bucket:
+     name: mys3bucket
+     s3_url: http://your-ceph-rados-gateway-server.xxx
+     ceph: true
+
+ # Remove an s3 bucket and any keys it contains
+ - s3_bucket:
+     name: mys3bucket
+     state: absent
+     force: yes
+
+ # Create a bucket, add a policy from a file, enable requester pays, enable versioning and tag
+ - s3_bucket:
+     name: mys3bucket
+     policy: "{{ lookup('file','policy.json') }}"
+     requester_pays: yes
+     versioning: yes
+     tags:
+       example: tag1
+       another: tag2
+
+ # Create a simple DigitalOcean Spaces bucket using their provided regional endpoint
+ - s3_bucket:
+     name: mydobucket
+     s3_url: 'https://nyc3.digitaloceanspaces.com'
+
+STATUS                   *s3_bucket-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *s3_bucket-red hat support*
+
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *s3_bucket-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/s3_bucket_module.html

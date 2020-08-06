@@ -1,0 +1,174 @@
+SYNOPSIS                   *postgresql_query*
+
+     • Runs arbitrary PostgreSQL queries.
+     • Can run queries from SQL script files.
+     • Does not run against backup files. Use postgresql_db with state=restore to run queries on files made by pg_dump/pg_dumpall utilities.
+
+REQUIREMENTS                   *postgresql_query-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_query-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+   autocommit          Choices:        Execute in autocommit mode when the query can't be run inside a transaction block (e.g., VACUUM).
+   boolean             • no ←          Mutually exclusive with check_mode.
+   added in 2.9        • yes
+   ca_cert                             Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                              If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                       aliases: ssl_rootcert
+   db                                  Name of database to connect to and run queries against.
+   string                              aliases: login_db
+   login_host                          Host running the database.
+   string
+   login_password                      The password used to authenticate with.
+   string
+   login_unix_socket                   Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:          The username used to authenticate with.
+   string            "postgres"
+   named_args                          Dictionary of key-value arguments to pass to the query. When the value is a list, it will be converted to PostgreSQL array.
+   dictionary                          Mutually exclusive with positional_args.
+   path_to_script                      Path to SQL script on the remote host.
+   path                                Returns result of the last query in the script.
+                                       Mutually exclusive with query.
+   port              Default:          Database port to connect to.
+   integer           5432              aliases: login_port
+   positional_args                     List of values to be passed as positional arguments to the query. When the value is a list, it will be converted to PostgreSQL array.
+   list                                Mutually exclusive with named_args.
+   query                               SQL query to run. Variables can be escaped with psycopg2 syntax http://initd.org/psycopg/docs/usage.html.
+   string
+   session_role                        Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                              Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                       Choices:
+                       • allow
+   ssl_mode            • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                       • require       Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+
+NOTES                   *postgresql_query-notes*
+
+   Note
+
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_query-see also*
+
+   See also
+
+   postgresql_db – Add or remove PostgreSQL databases from a remote host
+   The official documentation on the postgresql_db module.
+
+EXAMPLES                   *postgresql_query-examples*
+
+ - name: Simple select query to acme db
+   postgresql_query:
+     db: acme
+     query: SELECT version()
+
+ - name: Select query to db acme with positional arguments and non-default credentials
+   postgresql_query:
+     db: acme
+     login_user: django
+     login_password: mysecretpass
+     query: SELECT " FROM acme WHERE id = %s AND story = %s
+     positional_args:
+     - 1
+     - test
+
+ - name: Select query to test_db with named_args
+   postgresql_query:
+     db: test_db
+     query: SELECT " FROM test WHERE id = %(id_val)s AND story = %(story_val)s
+     named_args:
+       id_val: 1
+       story_val: test
+
+ - name: Insert query to test_table in db test_db
+   postgresql_query:
+     db: test_db
+     query: INSERT INTO test_table (id, story) VALUES (2, 'my_long_story')
+
+ - name: Run queries from SQL script
+   postgresql_query:
+     db: test_db
+     path_to_script: /var/lib/pgsql/test.sql
+     positional_args:
+     - 1
+
+ - name: Example of using autocommit parameter
+   postgresql_query:
+     db: test_db
+     query: VACUUM
+     autocommit: yes
+
+ - name: >
+     Insert data to the column of array type using positional_args.
+     Note that we use quotes here, the same as for passing JSON, etc.
+   postgresql_query:
+     query: INSERT INTO test_table (array_column) VALUES (%s)
+     positional_args:
+     - '{1,2,3}'
+
+ # Pass list and string vars as positional_args
+ - name: Set vars
+   set_fact:
+     my_list:
+     - 1
+     - 2
+     - 3
+     my_arr: '{1, 2, 3}'
+
+ - name: Select from test table by passing positional_args as arrays
+   postgresql_query:
+     query: SELECT " FROM test_array_table WHERE arr_col1 = %s AND arr_col2 = %s
+     positional_args:
+     - '{{ my_list }}'
+     - '{{ my_arr|string }}'
+
+RETURN VALUES                   *postgresql_query-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   query                  Query that was tried to be executed.
+   string        always   Sample:
+                          SELECT " FROM bar
+   query_result           List of dictionaries in column:value form representing returned rows.
+   list          changed  Sample:
+                          [{'Column': 'Value1'}, {'Column': 'Value2'}]
+   rowcount               Number of affected rows.
+   integer       changed  Sample:
+                          5
+   statusmessage          Attribute containing the message returned by the command.
+   string        always   Sample:
+                          INSERT 0 1
+
+STATUS                   *postgresql_query-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Archambault (@archf)
+     • Andrew Klychkov (@Andersson007)
+     • Will Rouesnel (@wrouesnel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_query-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_query_module.html

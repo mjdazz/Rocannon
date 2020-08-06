@@ -1,0 +1,221 @@
+SYNOPSIS                   *azure_rm_aks*
+
+     • Create, update and delete a managed Azure Container Service (AKS) instance.
+
+REQUIREMENTS                   *azure_rm_aks-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_aks-parameters*
+
+                 Parameter                Choices/Defaults                                                                   Comments
+   aad_profile
+   -                                                         Profile of Azure Active Directory configuration.
+   added in 2.8
+    client_app_id                                            The client AAD application ID.
+    -
+    server_app_id                                            The server AAD application ID.
+    -
+    server_app_secret                                        The server AAD application secret.
+    -
+    tenant_id                                                The AAD tenant ID to use for authentication.
+    -                                                        If not specified, will use the tenant of the deployment subscription.
+   ad_user                                                   Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   addon                                                     Profile of managed cluster add-on.
+   dictionary                                                Key can be http_application_routing, monitoring, virtual_node.
+   added in 2.8                                              Value must be a dict contains a bool variable enabled.
+    http_application_routing                                 The HTTP application routing solution makes it easy to access applications that are deployed to your cluster.
+    dictionary
+     enabled                               Choices:
+     boolean                               • no              Whether the solution enabled.
+                                           • yes
+    monitoring                                               It gives you performance visibility by collecting memory and processor metrics from controllers, nodes, and containers that are
+    dictionary                                               available in Kubernetes through the Metrics API.
+     enabled                               Choices:
+     boolean                               • no              Whether the solution enabled.
+                                           • yes
+     log_analytics_workspace_resource_id                     Where to store the container metrics.
+     -
+    virtual_node                                             With virtual nodes, you have quick provisioning of pods, and only pay per second for their execution time.
+    dictionary                                               You don't need to wait for Kubernetes cluster autoscaler to deploy VM compute nodes to run the additional pods.
+     enabled                               Choices:
+     boolean                               • no              Whether the solution enabled.
+                                           • yes
+     subnet_resource_id                                      Subnet associated to the cluster.
+     -
+   adfs_authority_url
+   string                                                    Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   agent_pool_profiles                                       The agent pool profile suboptions.
+   -
+    count                                                    Number of agents (VMs) to host docker containers.
+    - / required                                             Allowed values must be in the range of 1 to 100 (inclusive).
+    name                                                     Unique name of the agent pool profile in the context of the subscription and resource group.
+    - / required
+    os_disk_size_gb                                          Size of the OS disk.
+    -
+    vm_size                                                  The VM Size of each of the Agent Pool VM's (e.g. Standard_F1 / Standard_D2v2).
+    - / required
+   api_profile                           Default:            Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds; future
+   string                                "latest"            values will allow use with Azure Stack.
+   added in 2.5
+   append_tags                             Choices:          Use to control if tags field is canonical or just appends to existing tags.
+   boolean                                 • no              When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
+                                           • yes ←
+                                                             Controls the source of the credentials to use for authentication.
+                                                             If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                                           Choices:          auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file
+   auth_source                             • auto            ~/.azure/credentials.
+   string                                  • cli             When set to cli, the credentials will be sources from the default Azure CLI profile.
+   added in 2.5                            • credential_file Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+                                           • env             When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment variable
+                                           • msi             AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one subscription,
+                                                             otherwise the first subscription is chosen.
+                                                             The msi was added in Ansible 2.6.
+   cert_validation_mode                    Choices:          Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when
+   string                                  • ignore          an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can also be set via
+   added in 2.5                            • validate        credential file profile or the AZURE_CERT_VALIDATION environment variable.
+   client_id                                                 Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment                     Default:            For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud,
+   string                                "AzureCloud"        AzureUSGovernment), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or the
+   added in 2.4                                              AZURE_CLOUD_ENVIRONMENT environment variable.
+   dns_prefix                                                DNS prefix specified when creating the managed cluster.
+   -
+   enable_rbac                             Choices:          Enable RBAC.
+   boolean                                 • no ←            Existing non-RBAC enabled AKS clusters cannot currently be updated for RBAC use.
+   added in 2.8                            • yes
+   kubernetes_version                                        Version of Kubernetes specified when creating the managed cluster.
+   -
+   linux_profile                                             The Linux profile suboptions.
+   -
+    admin_username                                           The Admin Username for the cluster.
+    - / required
+    ssh_key                                                  The Public SSH Key used to access the cluster.
+    - / required
+   location                                                  Valid azure location. Defaults to location of the resource group.
+   -
+   name                                                      Name of the managed Azure Container Services (AKS) instance.
+   - / required
+   network_profile
+   -                                                         Profile of network configuration.
+   added in 2.8
+    dns_service_ip                       Default:            An IP address assigned to the Kubernetes DNS service.
+    -                                    "10.0.0.10"         It must be within the Kubernetes service address range specified in serviceCidr.
+    docker_bridge_cidr                   Default:            A CIDR notation IP range assigned to the Docker bridge network.
+    -                                    "172.17.0.1/16"     It must not overlap with any Subnet IP ranges or the Kubernetes service address range.
+                                                             Network plugin used for building Kubernetes network.
+    network_plugin                         Choices:          This property cannot been changed.
+    -                                      • azure           With kubenet, nodes get an IP address from the Azure virtual network subnet.
+                                           • kubenet ←       AKS features such as Virtual Nodes or network policies aren't supported with kubenet.
+                                                             azure enables Azure Container Networking Interface(CNI), every pod gets an IP address from the subnet and can be accessed directly.
+    network_policy                         Choices:
+    -                                      • azure           Network policy used for building Kubernetes network.
+                                           • calico
+    pod_cidr                             Default:            A CIDR notation IP range from which to assign pod IPs when network_plugin=kubenet is used.
+    -                                    "10.244.0.0/16"     It should be a large address space that isn't in use elsewhere in your network environment.
+                                                             This address range must be large enough to accommodate the number of nodes that you expect to scale up to.
+    service_cidr                         Default:            A CIDR notation IP range from which to assign service cluster IPs.
+    -                                    "10.0.0.0/16"       It must not overlap with any Subnet IP ranges.
+                                                             It should be the ".10 address of your service IP address range.
+   password                                                  Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   profile                                                   Security profile found in ~/.azure/credentials file.
+   string
+   resource_group                                            Name of a resource group where the managed Azure Container Services (AKS) exists or will be created.
+   - / required
+   secret                                                    Azure client secret. Use when authenticating with a Service Principal.
+   string
+   service_principal                                         The service principal suboptions.
+   -
+    client_id                                                The ID for the Service Principal.
+    - / required
+    client_secret                                            The secret password associated with the service principal.
+    - / required
+   state                                   Choices:
+   -                                       • absent          Assert the state of the AKS. Use present to create or update an AKS and absent to delete it.
+                                           • present ←
+   subscription_id                                           Your Azure subscription Id.
+   string
+   tags                                                      Dictionary of string:string pairs to assign as metadata to the object.
+   dictionary                                                Metadata tags on the object will be updated with any provided values.
+                                                             To remove tags set append_tags option to false.
+   tenant                                                    Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+
+NOTES                   *azure_rm_aks-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_aks-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_aks-examples*
+
+ - name: Create a managed Azure Container Services (AKS) instance
+   azure_rm_aks:
+     name: myAKS
+     location: eastus
+     resource_group: myResourceGroup
+     dns_prefix: akstest
+     kubernetes_version: 1.14.6
+     linux_profile:
+       admin_username: azureuser
+       ssh_key: ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAA...
+     service_principal:
+       client_id: "cf72ca99-f6b9-4004-b0e0-bee10c521948"
+       client_secret: "[email protected]!"
+     agent_pool_profiles:
+       - name: default
+         count: 5
+         vm_size: Standard_D2_v2
+     tags:
+       Environment: Production
+
+ - name: Remove a managed Azure Container Services (AKS) instance
+   azure_rm_aks:
+     name: myAKS
+     resource_group: myResourceGroup
+     state: absent
+
+RETURN VALUES                   *azure_rm_aks-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   state      always   Current state of the Azure Container Service (AKS).
+   dictionary
+
+STATUS                   *azure_rm_aks-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Sertac Ozercan (@sozercan)
+     • Yuwei Zhou (@yuwzho)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_aks-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_aks_module.html

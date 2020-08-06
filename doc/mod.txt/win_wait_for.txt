@@ -1,0 +1,120 @@
+SYNOPSIS                   *win_wait_for*
+
+     • You can wait for a set amount of time timeout, this is the default if nothing is specified.
+     • Waiting for a port to become available is useful for when services are not immediately available after their init scripts return which is true of certain Java application servers.
+     • You can wait for a file to exist or not exist on the filesystem.
+     • This module can also be used to wait for a regex match string to be present in a file.
+     • You can wait for active connections to be closed before continuing on a local port.
+
+PARAMETERS                   *win_wait_for-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   connect_timeout Default:         The maximum number of seconds to wait for a connection to happen before closing and retrying.
+   integer         5
+   delay                            The number of seconds to wait before starting to poll.
+   integer
+   exclude_hosts                    The list of hosts or IPs to ignore when looking for active TCP connections when state=drained.
+   list
+   host            Default:         A resolvable hostname or IP address to wait for.
+   string          "127.0.0.1"      If state=drained then it will only check for connections on the IP specified, you can use '0.0.0.0' to use all host IPs.
+   path                             The path to a file on the filesystem to check.
+   path                             If state is present or started then it will wait until the file exists.
+                                    If state is absent then it will wait until the file does not exist.
+   port                             The port number to poll on host.
+   integer
+                                    Can be used to match a string in a file.
+   regex                            If state is present or started then it will wait until the regex matches.
+   string                           If state is absent then it will wait until the regex does not match.
+                                    Defaults to a multiline regex.
+                                    aliases: search_regex, regexp
+   sleep           Default:         Number of seconds to sleep between checks.
+   integer         1
+                     Choices:
+                     • absent       When checking a port, started will ensure the port is open, stopped will check that is it closed and drained will check for active connections.
+   state             • drained      When checking for a file or a search string present or started will ensure that the file or string is present, absent will check that the file or search string
+   string            • present      is absent or removed.
+                     • started ←
+                     • stopped
+   timeout         Default:         The maximum number of seconds to wait for.
+   integer         300
+
+SEE ALSO                   *win_wait_for-see also*
+
+   See also
+
+   wait_for – Waits for a condition before continuing
+   The official documentation on the wait_for module.
+
+   win_wait_for_process – Waits for a process to exist or not exist before continuing
+   The official documentation on the win_wait_for_process module.
+
+EXAMPLES                   *win_wait_for-examples*
+
+ - name: Wait 300 seconds for port 8000 to become open on the host, don't start checking for 10 seconds
+   win_wait_for:
+     port: 8000
+     delay: 10
+
+ - name: Wait 150 seconds for port 8000 of any IP to close active connections
+   win_wait_for:
+     host: 0.0.0.0
+     port: 8000
+     state: drained
+     timeout: 150
+
+ - name: Wait for port 8000 of any IP to close active connection, ignoring certain hosts
+   win_wait_for:
+     host: 0.0.0.0
+     port: 8000
+     state: drained
+     exclude_hosts: ['10.2.1.2', '10.2.1.3']
+
+ - name: Wait for file C:\temp\log.txt to exist before continuing
+   win_wait_for:
+     path: C:\temp\log.txt
+
+ - name: Wait until process complete is in the file before continuing
+   win_wait_for:
+     path: C:\temp\log.txt
+     regex: process complete
+
+ - name: Wait until file is removed
+   win_wait_for:
+     path: C:\temp\log.txt
+     state: absent
+
+ - name: Wait until port 1234 is offline but try every 10 seconds
+   win_wait_for:
+     port: 1234
+     state: absent
+     sleep: 10
+
+RETURN VALUES                   *win_wait_for-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   elapsed                The elapsed seconds between the start of poll and the end of the module. This includes the delay if the option is set.
+   float         always   Sample:
+                          2.1406487
+   wait_attempts          The number of attempts to poll the file or port before module finishes.
+   integer       always   Sample:
+                          1
+
+STATUS                   *win_wait_for-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_wait_for-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_wait_for_module.html

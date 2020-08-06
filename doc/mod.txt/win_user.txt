@@ -1,28 +1,136 @@
-SYNOPSIS                           *win_user*
+SYNOPSIS                   *win_user*
 
-New in version 1.7.
+     • Manages local Windows user accounts.
+     • For non-Windows targets, use the user module instead.
 
-Manages local Windows user accounts
+PARAMETERS                   *win_user-parameters*
 
-EXAMPLES                           *win_user-examples*
->
-    # Ad-hoc example
-    $ ansible -i hosts -m win_user -a "name=bob password=Password12345 groups=Users" all
-    $ ansible -i hosts -m win_user -a "name=bob state=absent" all
-   
-    # Playbook example
-    ---
-    - name: Add a user
-      hosts: all
-      gather_facts: false
-      tasks:
-        - name: Add User
-          win_user:
-            name: ansible
-            password: "@ns1bl3"
-            groups: ["Users"]
-   
+            Parameter          Choices/Defaults                                                                       Comments
+   account_disabled              Choices:       yes will disable the user account.
+   boolean                       • no           no will clear the disabled flag.
+                                 • yes
+   account_locked                Choices:       no will unlock the user account if locked.
+   -                             • no
+   description                                  Description of the user.
+   string
+   fullname                                     Full name of the user.
+   string
+   groups                                       Adds or removes the user from this comma-separated list of groups, depending on the value of groups_action.
+   -                                            When groups_action is replace and groups is set to the empty string ('groups='), the user is removed from all groups.
+                                 Choices:       If add, the user is added to each group in groups where not already a member.
+   groups_action                 • add          If replace, the user is added as a member of each group in groups and removed from any other groups.
+   string                        • replace ←    If remove, the user is removed from each group in groups.
+                                 • remove
+   name                                         Name of the user to create, remove or modify.
+   string / required
+   password                                     Optionally set the user's password to this (plain text) value.
+   string
+   password_expired              Choices:       yes will require the user to change their password at next login.
+   boolean                       • no           no will clear the expired password flag.
+                                 • yes
+   password_never_expires        Choices:       yes will set the password to never expire.
+   boolean                       • no           no will allow the password to expire.
+                                 • yes
+                                 Choices:       When absent, removes the user account if it exists.
+   state                         • absent       When present, creates or updates the user account.
+   string                        • present ←    When query (new in 1.9), retrieves the user account details without making any changes.
+                                 • query
+   update_password               Choices:
+   string                        • always ←     always will update passwords if they differ. on_create will only set the password for newly created users.
+                                 • on_create
+   user_cannot_change_password   Choices:       yes will prevent the user from changing their password.
+   boolean                       • no           no will allow the user to change their password.
+                                 • yes
+
+SEE ALSO                   *win_user-see also*
+
+   See also
+
+   user – Manage user accounts
+   The official documentation on the user module.
+
+   win_domain_membership – Manage domain/workgroup membership for a Windows host
+   The official documentation on the win_domain_membership module.
+
+   win_domain_user – Manages Windows Active Directory user accounts
+   The official documentation on the win_domain_user module.
+
+   win_group – Add and remove local groups
+   The official documentation on the win_group module.
+
+   win_group_membership – Manage Windows local group membership
+   The official documentation on the win_group_membership module.
+
+   win_user_profile – Manages the Windows user profiles
+   The official documentation on the win_user_profile module.
+
+EXAMPLES                   *win_user-examples*
+
+ - name: Ensure user bob is present
+   win_user:
+     name: bob
+     password: B0bP4ssw0rd
+     state: present
+     groups:
+       - Users
+
+ - name: Ensure user bob is absent
+   win_user:
+     name: bob
+     state: absent
+
+RETURN VALUES                   *win_user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key              Returned                                                                          Description
+   account_disabled            user exists Whether the user is disabled.
+   boolean
+   account_locked              user exists Whether the user is locked.
+   boolean
+   description                             The description set for the user.
+   string                      user exists Sample:
+                                           Username for test
+   fullname                                The full name set for the user.
+   string                      user exists Sample:
+                                           Test Username
+   groups                                  A list of groups and their ADSI path the user is a member of.
+   list                        user exists Sample:
+                                           [{'name': 'Administrators', 'path': 'WinNT://WORKGROUP/USER-PC/Administrators'}]
+   name                                    The name of the user
+   string                      always      Sample:
+                                           username
+   password_expired            user exists Whether the password is expired.
+   boolean
+   password_never_expires                  Whether the password is set to never expire.
+   boolean                     user exists Sample:
+                                           True
+   path                                    The ADSI path for the user.
+   string                      user exists Sample:
+                                           WinNT://WORKGROUP/USER-PC/username
+   sid                                     The SID for the user.
+   string                      user exists Sample:
+                                           S-1-5-21-3322259488-2828151810-3939402796-1001
+   user_cannot_change_password user exists Whether the user can change their own password.
+   boolean
+
+STATUS                   *win_user-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_user-red hat support*
+
+     • Paul Durivage (@angstwad)
+     • Chris Church (@cchurch)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *win_user-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/win_user_module.html
+https://docs.ansible.com/ansible/latest/modules/win_user_module.html

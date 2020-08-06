@@ -1,0 +1,141 @@
+SYNOPSIS                   *memset_zone_record*
+
+     • Manage DNS records in a Memset account.
+
+PARAMETERS                   *memset_zone_record-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   address                    The address for this record (can be IP or text string depending on record type).
+   - /                        aliases: ip, data
+   required
+   api_key
+   - /                        The API key obtained from the Memset control panel.
+   required
+   priority                   SRV and TXT record priority, in the range 0 > 999 (inclusive).
+   -
+   record                     The subdomain to create.
+   -
+   relative    Choices:
+   boolean     • no           If set then the current domain is added onto the address field for CNAME, MX, NS and SRVrecord types.
+               • yes
+   state       Choices:
+   -           • absent       Indicates desired state of resource.
+               • present ←
+               Choices:
+               • 0
+               • 300
+               • 600
+               • 900
+   ttl         • 1800         The record's TTL in seconds (will inherit zone's TTL if not explicitly set). This must be a valid int from
+   -           • 3600         https://www.memset.com/apidocs/methods_dns.html#dns.zone_record_create.
+               • 7200
+               • 10800
+               • 21600
+               • 43200
+               • 86400
+               Choices:
+               • A
+   type        • AAAA
+   - /         • CNAME        The type of DNS record to create.
+   required    • MX
+               • NS
+               • SRV
+               • TXT
+   zone
+   - /                        The name of the zone to which to add the record to.
+   required
+
+NOTES                   *memset_zone_record-notes*
+
+   Note
+
+     • Zones can be thought of as a logical group of domains, all of which share the same DNS records (i.e. they point to the same IP). An API key generated via the Memset customer control panel is
+       needed with the following minimum scope - dns.zone_create, dns.zone_delete, dns.zone_list.
+     • Currently this module can only create one DNS record at a time. Multiple records should be created using with_items.
+
+EXAMPLES                   *memset_zone_record-examples*
+
+ # Create DNS record for www.domain.com
+ - name: create DNS record
+   memset_zone_record:
+     api_key: dcf089a2896940da9ffefb307ef49ccd
+     state: present
+     zone: domain.com
+     type: A
+     record: www
+     address: 1.2.3.4
+     ttl: 300
+     relative: false
+   delegate_to: localhost
+
+ # create an SPF record for domain.com
+ - name: create SPF record for domain.com
+   memset_zone_record:
+     api_key: dcf089a2896940da9ffefb307ef49ccd
+     state: present
+     zone: domain.com
+     type: TXT
+     address: "v=spf1 +a +mx +ip4:a1.2.3.4 ?all"
+   delegate_to: localhost
+
+ # create multiple DNS records
+ - name: create multiple DNS records
+   memset_zone_record:
+     api_key: dcf089a2896940da9ffefb307ef49ccd
+     zone: "{{ item.zone }}"
+     type: "{{ item.type }}"
+     record: "{{ item.record }}"
+     address: "{{ item.address }}"
+   delegate_to: localhost
+   with_items:
+     - { 'zone': 'domain1.com', 'type': 'A', 'record': 'www', 'address': '1.2.3.4' }
+     - { 'zone': 'domain2.com', 'type': 'A', 'record': 'mail', 'address': '4.3.2.1' }
+
+RETURN VALUES                   *memset_zone_record-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key           Returned                                                                                   Description
+   memset_api when state == present Record info from the Memset API.
+   complex
+     address                        Record content (may be an IP, string or blank depending on record type).
+     string   always                Sample:
+                                    1.1.1.1
+     id                             Record ID.
+     string   always                Sample:
+                                    b0bb1ce851aeea6feeb2dc32fe83bf9c
+     priority                       Priority for MX and SRV records.
+     integer  always                Sample:
+                                    10
+     record                         Name of record.
+     string   always                Sample:
+                                    www
+     relative always                Adds the current domain onto the address field for CNAME, MX, NS and SRV types.
+     boolean
+     ttl                            Record TTL.
+     integer  always                Sample:
+                                    10
+     type                           Record type.
+     string   always                Sample:
+                                    AAAA
+     zone_id                        Zone ID.
+     string   always                Sample:
+                                    b0bb1ce851aeea6feeb2dc32fe83bf9c
+
+STATUS                   *memset_zone_record-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Simon Weald (@glitchcrab)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *memset_zone_record-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/memset_zone_record_module.html

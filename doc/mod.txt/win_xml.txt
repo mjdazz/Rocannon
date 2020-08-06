@@ -1,0 +1,125 @@
+SYNOPSIS                   *win_xml*
+
+     • Manages XML nodes, attributes and text, using xpath to select which xml nodes need to be managed.
+     • XML fragments, formatted as strings, are used to specify the desired state of a part or parts of XML files on remote Windows servers.
+     • For non-Windows targets, use the xml module instead.
+
+PARAMETERS                   *win_xml-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   attribute                          The attribute name if the type is 'attribute'.
+   string                             Required if type=attribute.
+   backup              Choices:       Determine whether a backup should be created.
+   boolean             • no ←         When set to yes, create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                       • yes
+   count               Choices:
+   boolean             • no ←         When set to yes, return the number of nodes matched by xpath.
+   added in 2.9        • yes
+   fragment                           The string representation of the XML fragment expected at xpath. Since ansible 2.9 not required when state=absent, or when count=yes.
+   string                             aliases: xmlstring
+   path                               Path to the file to operate on.
+   path / required                    aliases: dest, file
+   state               Choices:
+   string              • present ←    Set or remove the nodes (or attributes) matched by xpath.
+   added in 2.9        • absent
+                       Choices:
+   type                • attribute    The type of XML node you are working with.
+   string / required   • element ←
+                       • text
+   xpath                              Xpath to select the node or nodes to operate on.
+   string / required
+
+NOTES                   *win_xml-notes*
+
+   Note
+
+     • Only supports operating on xml elements, attributes and text.
+     • Namespace, processing-instruction, command and document node types cannot be modified with this module.
+
+SEE ALSO                   *win_xml-see also*
+
+   See also
+
+   xml – Manage bits and pieces of XML files or strings
+   XML manipulation for Posix hosts.
+
+   w3shools XPath tutorial
+   A useful tutorial on XPath
+
+EXAMPLES                   *win_xml-examples*
+
+ - name: Apply our filter to Tomcat web.xml
+   win_xml:
+    path: C:\apache-tomcat\webapps\myapp\WEB-INF\web.xml
+    fragment: '<filter><filter-name>MyFilter</filter-name><filter-class>com.example.MyFilter</filter-class></filter>'
+    xpath: '/"'
+
+ - name: Apply sslEnabledProtocols to Tomcat's server.xml
+   win_xml:
+    path: C:\Tomcat\conf\server.xml
+    xpath: '//Server/Service[@name="Catalina"]/Connector[@port="9443"]'
+    attribute: 'sslEnabledProtocols'
+    fragment: 'TLSv1,TLSv1.1,TLSv1.2'
+    type: attribute
+
+ - name: remove debug configuration nodes from nlog.conf
+   win_xml:
+    path: C:\IISApplication\nlog.conf
+    xpath: /nlog/rules/logger[@name="debug"]/descendant::"
+    state: absent
+
+ - name: count configured connectors in Tomcat's server.xml
+   win_xml:
+    path: C:\Tomcat\conf\server.xml
+    xpath: //Server/Service/Connector
+    count: yes
+   register: connector_count
+
+ - name: show connector count
+   debug:
+     msg="Connector count is {{connector_count.count}}"
+
+ - name: ensure all lang=en attributes to lang=nl
+   win_xml:
+    path: C:\Data\Books.xml
+    xpath: //@[lang="en"]
+    attribute: lang
+    fragment: nl
+    type: attribute
+
+RETURN VALUES                   *win_xml-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key                     Returned                                                                                  Description
+   backup_file                                           Name of the backup file that was created.
+   string      if backup=yes                             Sample:
+                                                         C:\Path\To\File.txt.11540.20150212-220915.bak
+   count                                                 Number of nodes matched by xpath.
+   integer     if count=yes                              Sample:
+                                                         33
+   err                                                   XML comparison exceptions.
+   list        always, for type element and -vvv or more Sample:
+                                                         attribute mismatch for actual=string
+   msg                                                   What was done.
+   string      always                                    Sample:
+                                                         xml added
+
+STATUS                   *win_xml-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Richard Levenberg (@richardcs)
+     • Jon Hawkesworth (@jhawkesworth)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_xml-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_xml_module.html

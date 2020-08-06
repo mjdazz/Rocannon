@@ -1,0 +1,91 @@
+SYNOPSIS                   *ce_file_copy*
+
+     • Copy a file to a remote cloudengine device over SCP on HUAWEI CloudEngine switches.
+
+REQUIREMENTS                   *ce_file_copy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • paramiko
+
+PARAMETERS                   *ce_file_copy-parameters*
+
+    Parameter  Choices/Defaults                                                                               Comments
+                                The remote file system of the device. If omitted, devices that support a file_system parameter will use their default values. File system indicates the storage
+   file_system Default:         medium and can be set to as follows, 1) flash is root directory of the flash memory on the master MPU. 2) slave#flash is root directory of the flash memory on the
+   -           "flash:"         slave MPU. If no slave MPU exists, this drive is unavailable. 3) chassis ID/slot number#flash is root directory of the flash memory on a device in a stack. For
+                                example, 1/5#flash indicates the flash memory whose chassis ID is 1 and slot number is 5.
+   local_file
+   - /                          Path to local file. Local directory must exist. The maximum length of local_file is 4096.
+   required
+   remote_file                  Remote file path of the copy. Remote directories must exist. If omitted, the name of the local file will be used. The maximum length of remote_file is 4096.
+   -
+
+NOTES                   *ce_file_copy-notes*
+
+   Note
+
+     • The feature must be enabled with feature scp-server.
+     • If the file is already present, no transfer will take place.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_file_copy-examples*
+
+ - name: File copy test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Copy a local file to remote device"
+     ce_file_copy:
+       local_file: /usr/vrpcfg.cfg
+       remote_file: /vrpcfg.cfg
+       file_system: 'flash:'
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_file_copy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   changed                  check to see if a change was made on the device
+   boolean         always   Sample:
+                            True
+   local_file               The path of the local file.
+   string          always   Sample:
+                            /usr/work/vrpcfg.zip
+   remote_file              The path of the remote file.
+   string          always   Sample:
+                            /vrpcfg.zip
+   transfer_result          information about transfer result.
+   string          always   Sample:
+                            The local file has been successfully transferred to the device.
+
+STATUS                   *ce_file_copy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Zhou Zhijin (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_file_copy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_file_copy_module.html

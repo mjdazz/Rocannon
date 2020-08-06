@@ -1,0 +1,322 @@
+SYNOPSIS                   *ios_lag_interfaces*
+
+     • This module manages properties of Link Aggregation Group on Cisco IOS devices.
+
+PARAMETERS                   *ios_lag_interfaces-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   config                                      A list of link aggregation group configurations.
+   list / elements=dictionary
+       members                                 Interface options for the link aggregation group.
+       list
+                link                           Assign a link identifier used for load-balancing.
+                integer                        Refer to vendor documentation for valid values.
+                                               NOTE, parameter only supported on Cisco IOS XE platform.
+                member                         Interface member of the link aggregation group.
+                string
+                                Choices:
+                                • auto
+                mode            • on           Etherchannel Mode of the interface for link aggregation.
+                string          • desirable
+                                • active
+                                • passive
+       name                                    ID of Ethernet Channel of interfaces.
+       string / required                       Refer to vendor documentation for valid port values.
+                                Choices:
+   state                        • merged ←
+   string                       • replaced     The state of the configuration after module completion
+                                • overridden
+                                • deleted
+
+NOTES                   *ios_lag_interfaces-notes*
+
+   Note
+
+     • Tested against Cisco IOSv Version 15.2 on VIRL
+     • This module works with connection network_cli. See IOS Platform Options.
+
+EXAMPLES                   *ios_lag_interfaces-examples*
+
+ ---
+ # Using merged
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface GigabitEthernet0/1
+ #  shutdown
+ # interface GigabitEthernet0/2
+ #  shutdown
+ # interface GigabitEthernet0/3
+ #  shutdown
+ # interface GigabitEthernet0/4
+ #  shutdown
+
+ - name: Merge provided configuration with device configuration
+   ios_lag_interfaces:
+     config:
+       - name: 10
+         members:
+         - member: GigabitEthernet0/1
+           mode: auto
+         - member: GigabitEthernet0/2
+           mode: auto
+       - name: 20
+         members:
+         - member: GigabitEthernet0/3
+           mode: on
+       - name: 30
+         members:
+         - member: GigabitEthernet0/4
+           mode: active
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/2
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/3
+ #  shutdown
+ #  channel-group 20 mode on
+ # interface GigabitEthernet0/4
+ #  shutdown
+ #  channel-group 30 mode active
+
+ # Using overridden
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/2
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/3
+ #  shutdown
+ #  channel-group 20 mode on
+ # interface GigabitEthernet0/4
+ #  shutdown
+ #  channel-group 30 mode active
+
+ - name: Override device configuration of all interfaces with provided configuration
+   ios_lag_interfaces:
+     config:
+       - name: 20
+         members:
+         - member: GigabitEthernet0/2
+           mode: auto
+         - member: GigabitEthernet0/3
+           mode: auto
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ # interface GigabitEthernet0/2
+ #  shutdown
+ #  channel-group 20 mode auto
+ # interface GigabitEthernet0/3
+ #  shutdown
+ #  channel-group 20 mode auto
+ # interface GigabitEthernet0/4
+ #  shutdown
+
+ # Using replaced
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/2
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/3
+ #  shutdown
+ #  channel-group 20 mode on
+ # interface GigabitEthernet0/4
+ #  shutdown
+ #  channel-group 30 mode active
+
+ - name: Replaces device configuration of listed interfaces with provided configuration
+   ios_lag_interfaces:
+     config:
+       - name: 40
+         members:
+         - member: GigabitEthernet0/3
+           mode: auto
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface Port-channel40
+ # interface GigabitEthernet0/1
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/2
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/3
+ #  shutdown
+ #  channel-group 40 mode on
+ # interface GigabitEthernet0/4
+ #  shutdown
+ #  channel-group 30 mode active
+
+ # Using Deleted
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/2
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/3
+ #  shutdown
+ #  channel-group 20 mode on
+ # interface GigabitEthernet0/4
+ #  shutdown
+ #  channel-group 30 mode active
+
+ - name: "Delete LAG attributes of given interfaces (Note: This won't delete the interface itself)"
+   ios_lag_interfaces:
+     config:
+       - name: 10
+       - name: 20
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ # interface GigabitEthernet0/2
+ #  shutdown
+ # interface GigabitEthernet0/3
+ #  shutdown
+ # interface GigabitEthernet0/4
+ #  shutdown
+ #  channel-group 30 mode active
+
+ # Using Deleted without any config passed
+ #"(NOTE: This will delete all of configured LLDP module attributes)"
+
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/2
+ #  shutdown
+ #  channel-group 10 mode auto
+ # interface GigabitEthernet0/3
+ #  shutdown
+ #  channel-group 20 mode on
+ # interface GigabitEthernet0/4
+ #  shutdown
+ #  channel-group 30 mode active
+
+ - name: "Delete all configured LAG attributes for interfaces (Note: This won't delete the interface itself)"
+   ios_lag_interfaces:
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface Port-channel10
+ # interface Port-channel20
+ # interface Port-channel30
+ # interface GigabitEthernet0/1
+ #  shutdown
+ # interface GigabitEthernet0/2
+ #  shutdown
+ # interface GigabitEthernet0/3
+ #  shutdown
+ # interface GigabitEthernet0/4
+ #  shutdown
+
+RETURN VALUES                   *ios_lag_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device
+   list     always       Sample:
+                         ['interface GigabitEthernet0/1', 'channel-group 1 mode active']
+
+STATUS                   *ios_lag_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *ios_lag_interfaces-red hat support*
+
+     • Sumit Jaiswal (@justjais)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_lag_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_lag_interfaces_module.html

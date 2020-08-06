@@ -1,0 +1,103 @@
+SYNOPSIS                   *gce_snapshot*
+
+     • Manages snapshots for GCE instances. This module manages snapshots for the storage volumes of a GCE compute instance. If there are multiple volumes, each snapshot will be prepended with the
+       disk name
+
+REQUIREMENTS                   *gce_snapshot-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • apache-libcloud >= 0.19.0
+
+PARAMETERS                   *gce_snapshot-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   credentials_file                       The path to the credentials file associated with the service account
+   - / required
+   disks                 Default:         A list of disks to create snapshots for. If none is provided, all of the volumes will be snapshotted
+   -                     "all"
+   instance_name                          The GCE instance to snapshot
+   - / required
+   project_id                             The GCP project ID to use
+   - / required
+   service_account_email                  GCP service account email for the project where the instance resides
+   - / required
+   snapshot_name                          The name of the snapshot to manage
+   -
+   state                   Choices:
+   -                       • present ←    Whether a snapshot should be present or absent
+                           • absent
+
+EXAMPLES                   *gce_snapshot-examples*
+
+ - name: Create gce snapshot
+   gce_snapshot:
+     instance_name: example-instance
+     snapshot_name: example-snapshot
+     state: present
+     service_account_email: [email protected]
+     credentials_file: /path/to/credentials
+     project_id: project_name
+   delegate_to: localhost
+
+ - name: Delete gce snapshot
+   gce_snapshot:
+     instance_name: example-instance
+     snapshot_name: example-snapshot
+     state: absent
+     service_account_email: [email protected]
+     credentials_file: /path/to/credentials
+     project_id: project_name
+   delegate_to: localhost
+
+ # This example creates snapshots for only two of the available disks as
+ # disk0-example-snapshot and disk1-example-snapshot
+ - name: Create snapshots of specific disks
+   gce_snapshot:
+     instance_name: example-instance
+     snapshot_name: example-snapshot
+     state: present
+     disks:
+       - disk0
+       - disk1
+     service_account_email: [email protected]
+     credentials_file: /path/to/credentials
+     project_id: project_name
+   delegate_to: localhost
+
+RETURN VALUES                   *gce_snapshot-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                      Returned                                                                               Description
+   snapshots_absent                                       List of snapshots that were already absent (no-op)
+   list               When snapshots were already absent  Sample:
+                                                          [disk0-example-snapshot, disk1-example-snapshot]
+   snapshots_created                                      List of newly created snapshots
+   list               When snapshots are created          Sample:
+                                                          [disk0-example-snapshot, disk1-example-snapshot]
+   snapshots_deleted                                      List of destroyed snapshots
+   list               When snapshots are deleted          Sample:
+                                                          [disk0-example-snapshot, disk1-example-snapshot]
+   snapshots_existing                                     List of snapshots that already existed (no-op)
+   list               When snapshots were already present Sample:
+                                                          [disk0-example-snapshot, disk1-example-snapshot]
+
+STATUS                   *gce_snapshot-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Rob Wagner (@robwagner33)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gce_snapshot-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gce_snapshot_module.html

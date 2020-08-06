@@ -1,0 +1,125 @@
+SYNOPSIS                   *ce_bfd_session*
+
+     • Manages BFD session configuration, creates a BFD session or deletes a specified BFD session on HUAWEI CloudEngine devices.
+
+PARAMETERS                   *ce_bfd_session-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   addr_type        Choices:       Specifies the peer IP address type.
+   -                • ipv4
+   create_type      Choices:
+   -                • static ←     BFD session creation mode, the currently created BFD session only supports static or static auto-negotiation mode.
+                    • auto
+   dest_addr                       Specifies the peer IP address bound to the BFD session.
+   -
+   local_discr
+   -                               The BFD session local identifier does not need to be configured when the mode is auto.
+   added in 2.9
+   out_if_name                     Specifies the type and number of the interface bound to the BFD session.
+   -
+   remote_discr
+   -                               The BFD session remote identifier does not need to be configured when the mode is auto.
+   added in 2.9
+   session_name                    Specifies the name of a BFD session. The value is a string of 1 to 15 case-sensitive characters without spaces.
+   - / required
+   src_addr                        Indicates the source IP address carried in BFD packets.
+   -
+   state            Choices:
+   -                • present ←    Determines whether the config should be present or not on the device.
+                    • absent
+   use_default_ip   Choices:       Indicates the default multicast IP address that is bound to a BFD session. By default, BFD uses the multicast IP address 224.0.0.184. You can set the multicast IP
+   boolean          • no ←         address by running the default-ip-address command. The value is a bool type.
+                    • yes
+   vrf_name                        Specifies the name of a Virtual Private Network (VPN) instance that is bound to a BFD session. The value is a string of 1 to 31 case-sensitive characters, spaces
+   -                               not supported. When double quotation marks are used around the string, spaces are allowed in the string. The value _public_ is reserved and cannot be used as the
+                                   VPN instance name.
+
+NOTES                   *ce_bfd_session-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_bfd_session-examples*
+
+ - name: bfd session module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+   - name: Configuring Single-hop BFD for Detecting Faults on a Layer 2 Link
+     ce_bfd_session:
+       session_name: bfd_l2link
+       use_default_ip: true
+       out_if_name: 10GE1/0/1
+       local_discr: 163
+       remote_discr: 163
+       provider: '{{ cli }}'
+
+   - name: Configuring Single-Hop BFD on a VLANIF Interface
+     ce_bfd_session:
+       session_name: bfd_vlanif
+       dest_addr: 10.1.1.6
+       out_if_name: Vlanif100
+       local_discr: 163
+       remote_discr: 163
+       provider: '{{ cli }}'
+
+   - name: Configuring Multi-Hop BFD
+     ce_bfd_session:
+       session_name: bfd_multi_hop
+       dest_addr: 10.1.1.1
+       local_discr: 163
+       remote_discr: 163
+       provider: '{{ cli }}'
+
+RETURN VALUES                   *ce_bfd_session-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+                       k/v pairs of configuration after module execution
+   end_state  always   Sample:
+   dictionary          {'session': {'addrType': 'IPV4', 'createType': 'SESS_STATIC', 'destAddr': None, 'outIfName': '10GE1/0/1', 'sessName': 'bfd_l2link', 'srcAddr': None, 'useDefaultIp': 'true',
+                       'vrfName': None}}
+   existing            k/v pairs of existing configuration
+   dictionary always   Sample:
+                       {'session': {}}
+                       k/v pairs of parameters passed into module
+   proposed   always   Sample:
+   dictionary          {'addr_type': None, 'create_type': None, 'dest_addr': None, 'out_if_name': '10GE1/0/1', 'session_name': 'bfd_l2link', 'src_addr': None, 'state': 'present', 'use_default_ip':
+                       True, 'vrf_name': None}
+   updates             commands sent to the device
+   list       always   Sample:
+                       ['bfd bfd_l2link bind peer-ip default-ip interface 10ge1/0/1']
+
+STATUS                   *ce_bfd_session-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_bfd_session-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_bfd_session_module.html

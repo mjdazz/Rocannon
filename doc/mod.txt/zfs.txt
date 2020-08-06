@@ -1,24 +1,74 @@
-SYNOPSIS                           *zfs*
+SYNOPSIS                   *zfs*
 
-New in version 1.1.
+     • Manages ZFS file systems, volumes, clones and snapshots
 
-Manages ZFS file systems on Solaris and FreeBSD. Can manage file systems, volumes and snapshots. See zfs(1M) for more information about the properties.
+PARAMETERS                   *zfs-parameters*
 
-EXAMPLES                           *zfs-examples*
->
-    # Create a new file system called myfs in pool rpool
-    - zfs: name=rpool/myfs state=present
-   
-    # Create a new volume called myvol in pool rpool.
-    - zfs: name=rpool/myvol state=present volsize=10M
-   
-    # Create a snapshot of rpool/myfs file system.
-    - zfs: name=rpool/myfs@mysnapshot state=present
-   
-    # Create a new file system called myfs2 with snapdir enabled
-    - zfs: name=rpool/myfs2 state=present snapdir=enabled
-   
+        Parameter       Choices/Defaults                                                                           Comments
+   extra_zfs_properties                  A dictionary of zfs properties to be set.
+   -                                     See the zfs(8) man page for more information.
+   added in 2.5
+   name                                  File system, snapshot or volume name e.g. rpool/myfs.
+   - / required
+   origin                                Snapshot from which to create a clone.
+   -
+   state                  Choices:       Whether to create (present), or remove (absent) a file system, snapshot or volume. All parents/children will be created/destroyed as needed to reach the
+   - / required           • absent       desired state.
+                          • present
+
+EXAMPLES                   *zfs-examples*
+
+ - name: Create a new file system called myfs in pool rpool with the setuid property turned off
+   zfs:
+     name: rpool/myfs
+     state: present
+     extra_zfs_properties:
+       setuid: off
+
+ - name: Create a new volume called myvol in pool rpool.
+   zfs:
+     name: rpool/myvol
+     state: present
+     extra_zfs_properties:
+       volsize: 10M
+
+ - name: Create a snapshot of rpool/myfs file system.
+   zfs:
+     name: rpool/[email protected]
+     state: present
+
+ - name: Create a new file system called myfs2 with snapdir enabled
+   zfs:
+     name: rpool/myfs2
+     state: present
+     extra_zfs_properties:
+       snapdir: enabled
+
+ - name: Create a new file system by cloning a snapshot
+   zfs:
+     name: rpool/cloned_fs
+     state: present
+     origin: rpool/[email protected]
+
+ - name: Destroy a filesystem
+   zfs:
+     name: rpool/myfs
+     state: absent
+
+STATUS                   *zfs-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Johan Wiren (@johanwiren)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *zfs-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/zfs_module.html
+https://docs.ansible.com/ansible/latest/modules/zfs_module.html

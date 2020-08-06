@@ -1,0 +1,263 @@
+SYNOPSIS                   *xml*
+
+     • A CRUD-like interface to managing bits of XML files.
+
+REQUIREMENTS                   *xml-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • lxml >= 2.3.0
+
+PARAMETERS                   *xml-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+                                     Add additional child-element(s) to a selected element for a given xpath.
+   add_children                      Child elements must be given in a list and each item may be either a string (eg. children=ansible to add an empty <ansible/> child element), or a hash where the
+   list                              key is an element name and the value is the element value.
+                                     This parameter requires xpath to be set.
+   attribute                         The attribute to select when using parameter value.
+   raw                               This is a string, not prepended with @.
+   backup             Choices:
+   boolean            • no ←         Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                      • yes
+   content            Choices:       Search for a given xpath and get content.
+   string             • attribute    This parameter requires xpath to be set.
+                      • text
+   count              Choices:       Search for a given xpath and provide the count of any matches.
+   boolean            • no ←         This parameter requires xpath to be set.
+                      • yes
+   input_type         Choices:
+   string             • xml          Type of input for add_children and set_children.
+                      • yaml ←
+   insertafter        Choices:       Add additional child-element(s) after the last selected element for a given xpath.
+   boolean            • no ←         Child elements must be given in a list and each item may be either a string (eg. children=ansible to add an empty <ansible/> child element), or a hash where the
+   added in 2.8       • yes          key is an element name and the value is the element value.
+                                     This parameter requires xpath to be set.
+   insertbefore       Choices:       Add additional child-element(s) before the first selected element for a given xpath.
+   boolean            • no ←         Child elements must be given in a list and each item may be either a string (eg. children=ansible to add an empty <ansible/> child element), or a hash where the
+   added in 2.8       • yes          key is an element name and the value is the element value.
+                                     This parameter requires xpath to be set.
+   namespaces                        The namespace prefix:uri mapping for the XPath expression.
+   dictionary                        Needs to be a dict, not a list of items.
+                                     Path to the file to operate on.
+   path                              This file must exist ahead of time.
+   path / required                   This parameter is required, unless xmlstring is given.
+                                     aliases: dest, file
+   pretty_print       Choices:
+   boolean            • no ←         Pretty print XML output.
+                      • yes
+   print_match        Choices:       Search for a given xpath and print out any matches.
+   boolean            • no ←         This parameter requires xpath to be set.
+                      • yes
+                                     Set the child-element(s) of a selected element for a given xpath.
+   set_children                      Removes any existing children.
+   list                              Child elements must be specified as in add_children.
+                                     This parameter requires xpath to be set.
+   state              Choices:       Set or remove an xpath selection (node(s), attribute(s)).
+   string             • absent       aliases: ensure
+                      • present ←
+   strip_cdata_tags   Choices:       Remove CDATA tags surrounding text values.
+   boolean            • no ←         Note that this might break your XML file if text values contain characters that could be interpreted as XML.
+   added in 2.7       • yes
+                                     Desired state of the selected attribute.
+   value                             Either a string, or to unset a value, the Python None keyword (YAML Equivalent, null).
+   raw                               Elements default to no value (but present).
+                                     Attributes default to an empty string.
+   xmlstring                         A string containing XML on which to operate.
+   string /                          This parameter is required, unless path is given.
+   required
+   xpath                             A valid XPath expression describing the item(s) you want to manipulate.
+   string                            Operates on the document root, /, by default.
+
+NOTES                   *xml-notes*
+
+   Note
+
+     • Use the --check and --diff options when testing your expressions.
+     • The diff output is automatically pretty-printed, so may not reflect the actual file content, only the file structure.
+     • This module does not handle complicated xpath expressions, so limit xpath selectors to simple expressions.
+     • Beware that in case your XML elements are namespaced, you need to use the namespaces parameter, see the examples.
+     • Namespaces prefix should be used for all children of an element where namespace is defined, unless another namespace is defined for them.
+
+SEE ALSO                   *xml-see also*
+
+   See also
+
+   Xml module development community wiki
+   More information related to the development of this xml module.
+
+   Introduction to XPath
+   A brief tutorial on XPath (w3schools.com).
+
+   XPath Reference document
+   The reference documentation on XSLT/XPath (developer.mozilla.org).
+
+EXAMPLES                   *xml-examples*
+
+ # Consider the following XML file:
+ #
+ # <business type="bar">
+ #   <name>Tasty Beverage Co.</name>
+ #     <beers>
+ #       <beer>Rochefort 10</beer>
+ #       <beer>St. Bernardus Abbot 12</beer>
+ #       <beer>Schlitz</beer>
+ #    </beers>
+ #   <rating subjective="true">10</rating>
+ #   <website>
+ #     <mobilefriendly/>
+ #     <address>http://tastybeverageco.com</address>
+ #   </website>
+ # </business>
+
+ - name: Remove the 'subjective' attribute of the 'rating' element
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/rating/@subjective
+     state: absent
+
+ - name: Set the rating to '11'
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/rating
+     value: 11
+
+ # Retrieve and display the number of nodes
+ - name: Get count of 'beers' nodes
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/beers/beer
+     count: yes
+   register: hits
+
+ - debug:
+     var: hits.count
+
+ # Example where parent XML nodes are created automatically
+ - name: Add a 'phonenumber' element to the 'business' element
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/phonenumber
+     value: 555-555-1234
+
+ - name: Add several more beers to the 'beers' element
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/beers
+     add_children:
+     - beer: Old Rasputin
+     - beer: Old Motor Oil
+     - beer: Old Curmudgeon
+
+ - name: Add several more beers to the 'beers' element and add them before the 'Rochefort 10' element
+   xml:
+     path: /foo/bar.xml
+     xpath: '/business/beers/beer[text()="Rochefort 10"]'
+     insertbefore: yes
+     add_children:
+     - beer: Old Rasputin
+     - beer: Old Motor Oil
+     - beer: Old Curmudgeon
+
+ # NOTE: The 'state' defaults to 'present' and 'value' defaults to 'null' for elements
+ - name: Add a 'validxhtml' element to the 'website' element
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/website/validxhtml
+
+ - name: Add an empty 'validatedon' attribute to the 'validxhtml' element
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/website/validxhtml/@validatedon
+
+ - name: Add or modify an attribute, add element if needed
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/website/validxhtml
+     attribute: validatedon
+     value: 1976-08-05
+
+ # How to read an attribute value and access it in Ansible
+ - name: Read an element's attribute values
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/website/validxhtml
+     content: attribute
+   register: xmlresp
+
+ - name: Show an attribute value
+   debug:
+     var: xmlresp.matches[0].validxhtml.validatedon
+
+ - name: Remove all children from the 'website' element (option 1)
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/website/"
+     state: absent
+
+ - name: Remove all children from the 'website' element (option 2)
+   xml:
+     path: /foo/bar.xml
+     xpath: /business/website
+     children: []
+
+ # In case of namespaces, like in below XML, they have to be explicitly stated.
+ #
+ # <foo xmlns="http://x.test" xmlns:attr="http://z.test">
+ #   <bar>
+ #     <baz xmlns="http://y.test" attr:my_namespaced_attribute="true" />
+ #   </bar>
+ # </foo>
+
+ # NOTE: There is the prefix 'x' in front of the 'bar' element, too.
+ - name: Set namespaced '/x:foo/x:bar/y:baz/@z:my_namespaced_attribute' to 'false'
+   xml:
+     path: foo.xml
+     xpath: /x:foo/x:bar/y:baz
+     namespaces:
+       x: http://x.test
+       y: http://y.test
+       z: http://z.test
+     attribute: z:my_namespaced_attribute
+     value: 'false'
+
+RETURN VALUES                   *xml-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key                  Returned                                                                                  Description
+   actions                                         A dictionary with the original xpath, namespaces and state.
+   dictionary  success                             Sample:
+                                                   {'xpath': 'xpath', 'namespaces': ['namespace1', 'namespace2'], 'state=present': None}
+   backup_file                                     The name of the backup file that was created
+   string      when backup=yes                     Sample:
+                                                   /path/to/[email protected]:16:01~
+   count                                           The count of xpath matches.
+   integer     when parameter 'count' is set       Sample:
+                                                   2
+   matches     when parameter 'print_match' is set The xpath matches found.
+   list
+   msg         always                              A message related to the performed action(s).
+   string
+   xmlstring   when parameter 'xmlstring' is set   An XML string of the resulting output.
+   string
+
+STATUS                   *xml-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Tim Bielawa (@tbielawa)
+     • Magnus Hedemark (@magnus919)
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *xml-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/xml_module.html

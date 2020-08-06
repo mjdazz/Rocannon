@@ -1,0 +1,310 @@
+SYNOPSIS                   *ovirt_disk*
+
+     • Module to manage Virtual Machine and floating disks in oVirt/RHV.
+
+REQUIREMENTS                   *ovirt_disk-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • ovirt-engine-sdk-python >= 4.3.0
+
+PARAMETERS                   *ovirt_disk-parameters*
+
+         Parameter              Choices/Defaults                                                                           Comments
+   activate                Choices:                      True if the disk should be activated.
+   boolean                 • no                          When creating disk of virtual machine it is set to True.
+   added in 2.8            • yes
+   auth                                                  Dictionary with values needed to create HTTP/HTTPS connection to oVirt:
+   dictionary / required
+                                                         A PEM file containing the trusted CA certificates.
+        ca_file                                          The certificate presented by the server will be verified using these CA certificates.
+        string                                           If ca_file parameter is not set, system wide CA certificate store is used.
+                                                         Default value is set by OVIRT_CAFILE environment variable.
+        headers                                          Dictionary of HTTP headers to be added to each API call.
+        dictionary
+        hostname                                         A string containing the hostname of the server, usually something like `server.example.com`.
+        string                                           Default value is set by OVIRT_HOSTNAME environment variable.
+                                                         Either url or hostname is required.
+        insecure           Choices:
+        boolean            • no                          A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                           • yes
+        kerberos           Choices:
+        boolean            • no                          A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                           • yes
+        password                                         The password of the user.
+        string /                                         Default value is set by OVIRT_PASSWORD environment variable.
+        required
+        token                                            Token to be used instead of login with username/password.
+        string                                           Default value is set by OVIRT_TOKEN environment variable.
+        url                                              A string containing the API URL of the server, usually something like `https://server.example.com/ovirt-engine/api`.
+        string                                           Default value is set by OVIRT_URL environment variable.
+                                                         Either url or hostname is required.
+        username                                         The name of the user, something like [email protected].
+        string /                                         Default value is set by OVIRT_USERNAME environment variable.
+        required
+   bootable                Choices:
+   boolean                 • no ←                        True if the disk should be bootable. By default when disk is created it isn't bootable.
+                           • yes
+                           Choices:
+                           • data ←
+   content_type            • iso                         Specify if the disk is a data disk or ISO image or a one of a the Hosted Engine disk types
+   -                       • hosted_engine               The Hosted Engine disk content types are available with Engine 4.3+ and Ansible 2.8
+   added in 2.8            • hosted_engine_sanlock
+                           • hosted_engine_metadata
+                           • hosted_engine_configuration
+   description
+   -                                                     Description of the disk image to manage.
+   added in 2.5
+   download_image_path                                   Path on a file system where disk should be downloaded.
+   -                                                     Note that you must have an valid oVirt/RHV engine CA in your system trust store or you must provide it in ca_file parameter.
+                                                         Note that the disk is not downloaded when the file already exists, but you can forcibly download the disk when using force I (true).
+   fetch_nested            Choices:                      If True the module will fetch additional data from the API.
+   boolean                 • no                          It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other attributes of the nested entities by specifying
+                           • yes                         nested_attributes.
+   force                   Choices:
+   boolean                 • no                          Please take a look at image_path documentation to see the correct usage of this parameter.
+                           • yes
+   format                  Choices:                      Specify format of the disk.
+   -                       • raw                         Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
+                           • cow ←
+   host                                                  When the hypervisor name is specified the newly created disk or an existing disk will refresh its information about the underlying storage(
+   -                                                     Disk size, Serial, Product ID, Vendor ID ...) The specified host will be used for gathering the storage related information. This option is
+   added in 2.8                                          only valid for passthrough disks. This option requires at least the logical_unit.id to be specified
+   id                                                    ID of the disk to manage. Either id or name is required.
+   -
+   image_provider                                        When state is exported disk is exported to given Glance image provider.
+   -                                                     ""IMPORTANT""
+   added in 2.4                                          There is no reliable way to achieve idempotency, so every time you specify this parameter the disk is exported, so please handle your
+                                                         playbook accordingly to not export the disk all the time. This option is valid only for template disks.
+                           Choices:
+   interface               • virtio                      Driver of the storage interface.
+   -                       • ide                         It's required parameter when creating the new disk.
+                           • virtio_scsi
+   logical_unit                                          Dictionary which describes LUN to be directly attached to VM:
+   -
+        address                                          Address of the storage server. Used by iSCSI.
+        -
+        lun_id                                           LUN id.
+        -
+        password                                         CHAP Password of the user to be used to access storage server. Used by iSCSI.
+        -
+        port                                             Port of the storage server. Used by iSCSI.
+        -
+        storage_type                                     Storage type either fcp or iscsi.
+        -
+        target                                           iSCSI target.
+        -
+        username                                         CHAP Username to be used to access storage server. Used by iSCSI.
+        -
+   name                                                  Name of the disk to manage. Either id or name/alias is required.
+   -                                                     aliases: alias
+   nested_attributes                                     Specifies list of the attributes which should be fetched from the API.
+   list                                                  This parameter apply only when fetch_nested is true.
+   openstack_volume_type
+   -                                                     Name of the openstack volume type. This is valid when working with cinder.
+   added in 2.4
+   poll_interval         Default:                        Number of the seconds the module waits until another poll request on entity status is sent.
+   integer               3
+   profile                                               Disk profile name to be attached to disk. By default profile is chosen by oVirt/RHV engine.
+   -
+   quota_id
+   -                                                     Disk quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine.
+   added in 2.5
+   shareable               Choices:
+   boolean                 • no                          True if the disk should be shareable. By default when disk is created it isn't shareable.
+                           • yes
+   size                                                  Size of the disk. Size should be specified using IEC standard units. For example 10GiB, 1024MiB, etc.
+   -                                                     Size can be only increased, not decreased.
+   sparse                  Choices:                      True if the disk should be sparse (also known as thin provision). If the parameter is omitted, cow disks will be created as sparse and raw
+   boolean                 • no                          disks as preallocated
+   added in 2.5            • yes                         Note that this option isn't idempotent as it's not currently possible to change sparseness of the disk via API.
+   sparsify                Choices:                      True if the disk should be sparsified.
+   boolean                 • no                          Sparsification frees space in the disk image that is not used by its filesystem. As a result, the image will occupy less space on the
+   added in 2.4            • yes                         storage.
+                                                         Note that this parameter isn't idempotent, as it's not possible to check if the disk should be or should not be sparsified.
+                           Choices:
+                           • present ←
+   state                   • absent                      Should the Virtual Machine disk be present/absent/attached/detached/exported.
+   -                       • attached
+                           • detached
+                           • exported
+   storage_domain                                        Storage domain name where disk should be created.
+   -
+                                                         Storage domain names where disk should be copied.
+   storage_domains                                       ""IMPORTANT""
+   -                                                     There is no reliable way to achieve idempotency, so every time you specify this parameter the disks are copied, so please handle your
+                                                         playbook accordingly to not copy the disks all the time. This is valid only for VM and floating disks, template disks works as expected.
+   timeout               Default:                        The amount of time in seconds the module should wait for the instance to get into desired state.
+   integer               180
+                                                         Path to disk image, which should be uploaded.
+                                                         Note if size is not specified the size of the disk will be determined by the size of the specified image.
+   upload_image_path                                     Note that currently we support only compatibility version 0.10 of the qcow disk.
+   -                                                     Note that you must have an valid oVirt/RHV engine CA in your system trust store or you must provide it in ca_file parameter.
+                                                         Note that there is no reliable way to achieve idempotency, so if you want to upload the disk even if the disk with id or name exists, then
+                                                         please use force true. If you will use force false, which is default, then the disk image won't be uploaded.
+                                                         Note that to upload iso the format should be 'raw'
+   vm_id                                                 ID of the Virtual Machine to manage. Either vm_id or vm_name is required if state is attached or detached.
+   -
+   vm_name                                               Name of the Virtual Machine to manage. Either vm_id or vm_name is required if state is attached or detached.
+   -
+   wait                    Choices:
+   boolean                 • no                          yes if the module should wait for the entity to get into desired state.
+                           • yes ←
+   wipe_after_delete       Choices:
+   boolean                 • no                          If the disk's Wipe After Delete is enabled, then the disk is first wiped.
+                           • yes
+
+NOTES                   *ovirt_disk-notes*
+
+   Note
+
+     • In order to use this module you have to install oVirt Python SDK. To ensure it’s installed with correct version you can create the following task: pip: name=ovirt-engine-sdk-python
+       version=4.3.0
+
+EXAMPLES                   *ovirt_disk-examples*
+
+ # Examples don't contain auth parameter for simplicity,
+ # look at ovirt_auth module to see how to reuse authentication:
+
+ # Create and attach new disk to VM
+ - ovirt_disk:
+     name: myvm_disk
+     vm_name: rhel7
+     size: 10GiB
+     format: cow
+     interface: virtio
+     storage_domain: data
+
+ # Attach logical unit to VM rhel7
+ - ovirt_disk:
+     vm_name: rhel7
+     logical_unit:
+       target: iqn.2016-08-09.brq.str-01:omachace
+       id: 1IET_000d0001
+       address: 10.34.63.204
+     interface: virtio
+
+ # Detach disk from VM
+ - ovirt_disk:
+     state: detached
+     name: myvm_disk
+     vm_name: rhel7
+     size: 10GiB
+     format: cow
+     interface: virtio
+
+ # Change Disk Name
+ - ovirt_disk:
+     id: 00000000-0000-0000-0000-000000000000
+     storage_domain: data
+     name: "new_disk_name"
+     vm_name: rhel7
+
+ # Upload local image to disk and attach it to vm:
+ # Since Ansible 2.3
+ - ovirt_disk:
+     name: mydisk
+     vm_name: myvm
+     interface: virtio
+     size: 10GiB
+     format: cow
+     image_path: /path/to/mydisk.qcow2
+     storage_domain: data
+
+ # Download disk to local file system:
+ # Since Ansible 2.3
+ - ovirt_disk:
+     id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+     download_image_path: /home/user/mydisk.qcow2
+
+ # Export disk as image to Glance domain
+ # Since Ansible 2.4
+ - ovirt_disk:
+     id: 7de90f31-222c-436c-a1ca-7e655bd5b60c
+     image_provider: myglance
+     state: exported
+
+ # Defining a specific quota while creating a disk image:
+ # Since Ansible 2.5
+ - ovirt_quotas_info:
+     data_center: Default
+     name: myquota
+   register: quota
+ - ovirt_disk:
+     name: mydisk
+     size: 10GiB
+     storage_domain: data
+     description: somedescriptionhere
+     quota_id: "{{ quota.ovirt_quotas[0]['id'] }}"
+
+ # Upload an ISO image
+ # Since Ansible 2.8
+ -  ovirt_disk:
+      name: myiso
+      upload_image_path: /path/to/iso/image
+      storage_domain: data
+      size: 4 GiB
+      wait: true
+      bootable: true
+      format: raw
+      content_type: iso
+
+ # Add fiber chanel disk
+ - name: Create disk
+   ovirt_disk:
+     name: fcp_disk
+     host: my_host
+     logical_unit:
+         id: 3600a09803830447a4f244c4657597777
+         storage_type: fcp
+
+RETURN VALUES                   *ovirt_disk-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+                   On
+                   success
+                   if disk
+   disk            is found Dictionary of all the disk attributes. Disk attributes can be found on your oVirt/RHV instance at following url:
+   dictionary      and      http://ovirt.github.io/ovirt-engine-api-model/master/#types/disk.
+                   vm_id or
+                   vm_name
+                   wasn't
+                   passed.
+                   On
+                   success
+                   if disk
+                   is found
+                   and
+   disk_attachment vm_id or Dictionary of all the disk attachment attributes. Disk attachment attributes can be found on your oVirt/RHV instance at following url:
+   dictionary      vm_name  http://ovirt.github.io/ovirt-engine-api-model/master/#types/disk_attachment.
+                   was
+                   passed
+                   and VM
+                   was
+                   found.
+                   On
+   id              success  ID of the managed disk
+   string          if disk  Sample:
+                   is       7de90f31-222c-436c-a1ca-7e655bd5b60c
+                   found.
+
+STATUS                   *ovirt_disk-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ondra Machacek (@machacekondra)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovirt_disk-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovirt_disk_module.html

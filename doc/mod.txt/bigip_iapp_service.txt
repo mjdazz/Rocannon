@@ -1,0 +1,235 @@
+SYNOPSIS                   *bigip_iapp_service*
+
+     • Manages TCL iApp services on a BIG-IP.
+     • If you are looking for the API that is communicated with on the BIG-IP, the one the is used is /mgmt/tm/sys/application/service/.
+
+PARAMETERS                   *bigip_iapp_service-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   description                      Description of the iApp service.
+   string                           If this option is specified in the Ansible task, it will take precedence over any similar setting in the iApp Service payload that you provide in the parameters
+   added in 2.7                     field.
+   device_group                     The device group for the iApp service.
+   string                           If this option is specified in the Ansible task, it will take precedence over any similar setting in the iApp Service payload that you provide in the parameters
+   added in 2.7                     field.
+   force             Choices:       Forces the updating of an iApp service even if the parameters to the service have not changed. This option is of particular importance if the iApp template that
+   boolean           • no ←         underlies the service has been updated in-place. This option is equivalent to re-configuring the iApp if that template has changed.
+                     • yes
+   metadata                         Metadata associated with the iApp service.
+   list                             If this option is specified in the Ansible task, it will take precedence over any similar setting in the iApp Service payload that you provide in the parameters
+   added in 2.7                     field.
+   name
+   string /                         The name of the iApp service that you want to deploy.
+   required
+   parameters                       A hash of all the required template variables for the iApp template. If your parameters are stored in a file (the more common scenario) it is recommended you use
+   dictionary                       either the file or template lookups to supply the expected parameters.
+                                    These parameters typically consist of the lists, tables, and variables fields.
+   partition       Default:
+   string          "Common"         Device partition to manage resources on.
+   added in 2.5
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:
+   string            • present ←    When present, ensures that the iApp service is created and running. When absent, ensures that the iApp service has been removed.
+                     • absent
+                                    Indicates whether the application service is tied to the template, so when the template is updated, the application service changes to reflect the updates.
+   strict_updates    Choices:       When yes, disallows any updates to the resources that the iApp service has created, if they are not updated directly through the iApp.
+   boolean           • no           When no, allows updates outside of the iApp.
+   added in 2.5      • yes ←        If this option is specified in the Ansible task, it will take precedence over any similar setting in the iApp Service payload that you provide in the parameters
+                                    field.
+   template                         The iApp template from which to instantiate a new service. This template must exist on your BIG-IP before you can successfully create a service.
+   string                           When creating a new service, this parameter is required.
+   traffic_group                    The traffic group for the iApp service. When creating a new service, if this value is not specified, the default of /Common/traffic-group-1 will be used.
+   string                           If this option is specified in the Ansible task, it will take precedence over any similar setting in the iApp Service payload that you provide in the parameters
+   added in 2.5                     field.
+
+NOTES                   *bigip_iapp_service-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_iapp_service-examples*
+
+ - name: Create HTTP iApp service from iApp template
+   bigip_iapp_service:
+     name: foo-service
+     template: f5.http
+     parameters: "{{ lookup('file', 'f5.http.parameters.json') }}"
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Upgrade foo-service to v1.2.0rc4 of the f5.http template
+   bigip_iapp_service:
+     name: foo-service
+     template: f5.http.v1.2.0rc4
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Configure a service using parameters in YAML
+   bigip_iapp_service:
+     name: tests
+     template: web_frontends
+     state: present
+     parameters:
+       variables:
+         - name: var__vs_address
+           value: 1.1.1.1
+         - name: pm__apache_servers_for_http
+           value: 2.2.2.1:80
+         - name: pm__apache_servers_for_https
+           value: 2.2.2.2:80
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Re-configure a service whose underlying iApp was updated in place
+   bigip_iapp_service:
+     name: tests
+     template: web_frontends
+     force: yes
+     state: present
+     parameters:
+       variables:
+         - name: var__vs_address
+           value: 1.1.1.1
+         - name: pm__apache_servers_for_http
+           value: 2.2.2.1:80
+         - name: pm__apache_servers_for_https
+           value: 2.2.2.2:80
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Try to remove the iApp template before the associated Service is removed
+   bigip_iapp_template:
+     name: web_frontends
+     state: absent
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   register: result
+   failed_when:
+     - result is not success
+     - "'referenced by one or more applications' not in result.msg"
+
+ - name: Configure a service using more complicated parameters
+   bigip_iapp_service:
+     name: tests
+     template: web_frontends
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+     parameters:
+       variables:
+         - name: var__vs_address
+           value: 1.1.1.1
+         - name: pm__apache_servers_for_http
+           value: 2.2.2.1:80
+         - name: pm__apache_servers_for_https
+           value: 2.2.2.2:80
+       lists:
+         - name: irules__irules
+           value:
+             - foo
+             - bar
+       tables:
+         - name: basic__snatpool_members
+         - name: net__snatpool_members
+         - name: optimizations__hosts
+         - name: pool__hosts
+           columnNames:
+             - name
+           rows:
+             - row:
+                 - internal.company.bar
+         - name: pool__members
+           columnNames:
+             - addr
+             - port
+             - connection_limit
+           rows:
+             - row:
+                 - "none"
+                 - 80
+                 - 0
+         - name: server_pools__servers
+   delegate_to: localhost
+
+ - name: Override metadata that may or may not exist in parameters
+   bigip_iapp_service:
+     name: foo-service
+     template: f5.http
+     parameters: "{{ lookup('file', 'f5.http.parameters.json') }}"
+     metadata:
+       - persist: yes
+         name: data 1
+       - persist: yes
+         name: data 2
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+STATUS                   *bigip_iapp_service-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_iapp_service-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_iapp_service_module.html

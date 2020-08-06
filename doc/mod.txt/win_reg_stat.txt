@@ -1,0 +1,102 @@
+SYNOPSIS                   *win_reg_stat*
+
+     • Like win_file, win_reg_stat will return whether the key/property exists.
+     • It also returns the sub keys and properties of the key specified.
+     • If specifying a property name through property, it will return the information specific for that property.
+
+PARAMETERS                   *win_reg_stat-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   name                               The registry property name to get information for, the return json will not include the sub_keys and properties entries for the key specified.
+   string                             Set to an empty string to target the registry key's (Default) property value.
+                                      aliases: entry, value, property
+   path                               The full registry key path including the hive to search for.
+   string / required                  aliases: key
+
+NOTES                   *win_reg_stat-notes*
+
+   Note
+
+     • The properties return value will contain an empty string key "" that refers to the key’s Default value. If the value has not been set then this key is not returned.
+
+SEE ALSO                   *win_reg_stat-see also*
+
+   See also
+
+   win_regedit – Add, change, or remove registry keys and values
+   The official documentation on the win_regedit module.
+
+   win_regmerge – Merges the contents of a registry file into the Windows registry
+   The official documentation on the win_regmerge module.
+
+EXAMPLES                   *win_reg_stat-examples*
+
+ - name: Obtain information about a registry key using short form
+   win_reg_stat:
+     path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion
+   register: current_version
+
+ - name: Obtain information about a registry key property
+   win_reg_stat:
+     path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion
+     name: CommonFilesDir
+   register: common_files_dir
+
+ - name: Obtain the registry key's (Default) property
+   win_reg_stat:
+     path: HKLM:\SOFTWARE\Microsoft\Windows\CurrentVersion
+     name: ''
+   register: current_version_default
+
+RETURN VALUES                   *win_reg_stat-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                   Description
+   changed                  Whether anything was changed.
+   boolean    always        Sample:
+                            True
+   exists     success and   States whether the registry key/property exists.
+   boolean    path/property Sample:
+              exists        True
+              success, path A dictionary containing all the properties and their values in the registry key.
+   properties exists and    Sample:
+   dictionary property not  {'': {'raw_value': '', 'type': 'REG_SZ', 'value': ''}, 'binary_property': {'raw_value': ['0x01', '0x16'], 'type': 'REG_BINARY', 'value': [1, 22]},
+              specified     'multi_string_property': {'raw_value': ['a', 'b'], 'type': 'REG_MULTI_SZ', 'value': ['a', 'b']}}
+              success,      Returns the raw value of the registry property, REG_EXPAND_SZ has no string expansion, REG_BINARY or REG_NONE is in hex 0x format. REG_NONE, this value is a hex string
+   raw_value  path/property in the 0x format.
+   string     exists and    Sample:
+              property      %ProgramDir%\\Common Files
+              specified
+              success, path A list of all the sub keys of the key specified.
+   sub_keys   exists and    Sample:
+   list       property not  ['AppHost', 'Casting', 'DateTime']
+              specified
+              success,
+   type       path/property The property type.
+   string     exists and    Sample:
+              property      REG_EXPAND_SZ
+              specified
+              success,
+   value      path/property The value of the property.
+   string     exists and    Sample:
+              property      C:\\Program Files\\Common Files
+              specified
+
+STATUS                   *win_reg_stat-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_reg_stat-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_reg_stat_module.html

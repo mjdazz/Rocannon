@@ -1,26 +1,121 @@
-SYNOPSIS                           *rds_param_group*
+SYNOPSIS                   *rds_param_group*
 
-New in version 1.5.
+     • Creates, modifies, and deletes RDS parameter groups. This module has a dependency on python-boto >= 2.5.
 
-Creates, modifies, and deletes RDS parameter groups. This module has a dependency on python-boto >= 2.5.
+REQUIREMENTS                   *rds_param_group-requirements*
 
-EXAMPLES                           *rds_param_group-examples*
->
-    # Add or change a parameter group, in this case setting auto_increment_increment to 42 * 1024
-    - rds_param_group:
-          state: present
-          name: norwegian_blue
-          description: 'My Fancy Ex Parrot Group'
-          engine: 'mysql5.6'
-          params:
-              auto_increment_increment: "42K"
-   
-    # Remove a parameter group
-    - rds_param_group:
-          state: absent
-          name: norwegian_blue
-   
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *rds_param_group-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   description                                   Database parameter group description. Only set when a new group is added.
+   -
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   engine                                        The type of database for this group. Required for state=present.
+   -                                             Please use following command to get list of all supported db engines and their respective versions.
+                                                 # aws rds describe-db-engine-versions --query "DBEngineVersions[].DBParameterGroupFamily"
+   immediate                      Choices:       Whether to apply the changes immediately, or after the next reboot of any associated instances.
+   boolean                        • no           aliases: apply_immediately
+                                  • yes
+   name                                          Database parameter group identifier.
+   - / required
+   params                                        Map of parameter names and values. Numeric values may be represented as K for kilo (1024), M for mega (1024^2), G for giga (1024^3), or T for tera
+   -                                             (1024^4), and these values will be expanded into the appropriate number before being set in the parameter group.
+                                                 aliases: parameters
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_tags                     Choices:
+   boolean                        • no ←         Whether or not to remove tags that do not appear in the tags list.
+   added in 2.4                   • yes
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   - / required                   • present ←    Specifies whether the group should be present or absent.
+                                  • absent
+   tags
+   -                                             Dictionary of tags to attach to the parameter group
+   added in 2.4
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *rds_param_group-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *rds_param_group-examples*
+
+ # Add or change a parameter group, in this case setting auto_increment_increment to 42 " 1024
+ - rds_param_group:
+       state: present
+       name: norwegian-blue
+       description: 'My Fancy Ex Parrot Group'
+       engine: 'mysql5.6'
+       params:
+           auto_increment_increment: "42K"
+       tags:
+           Environment: production
+           Application: parrot
+
+ # Remove a parameter group
+ - rds_param_group:
+       state: absent
+       name: norwegian-blue
+
+RETURN VALUES                   *rds_param_group-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key                  Returned                                                                           Description
+   db_parameter_group_arn    when state is present ARN of the DB parameter group
+   string
+   db_parameter_group_family when state is present DB parameter group family that this DB parameter group is compatible with.
+   string
+   db_parameter_group_name   when state is present Name of DB parameter group
+   string
+   description               when state is present description of the DB parameter group
+   string
+   errors                    when state is present list of errors from attempting to modify parameters that are not modifiable
+   list
+   tags                      when state is present dictionary of tags
+   dictionary
+
+STATUS                   *rds_param_group-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Scott Anderson (@tastychutney)
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *rds_param_group-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/rds_param_group_module.html
+https://docs.ansible.com/ansible/latest/modules/rds_param_group_module.html

@@ -1,0 +1,326 @@
+SYNOPSIS                   *na_ontap_volume*
+
+     • Create or destroy or modify volumes on NetApp ONTAP.
+
+REQUIREMENTS                   *na_ontap_volume-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_volume-parameters*
+
+           Parameter         Choices/Defaults                                                                         Comments
+   aggr_list
+   list                                        an array of names of aggregates to be used for FlexGroup constituents.
+   added in 2.8
+   aggr_list_multiplier
+   integer                                     The number of times to iterate over the aggregates listed with the aggr_list parameter when creating a FlexGroup.
+   added in 2.8
+   aggregate_name                              The name of the aggregate the flexvol should exist on.
+   string                                      Required when state=present.
+                                               This is an advanced option, the default is True.
+   atime_update                Choices:        If false, prevent the update of inode access times when a file is read.
+   boolean                     • no            This value is useful for volumes with extremely high read traffic, since it prevents writes to the inode file for the volume from contending with
+   added in 2.8                • yes           reads from other files.
+                                               This field should be used carefully.
+                                               That is, use this field when you know in advance that the correct access time for inodes will not be needed for files on that volume.
+   auto_provision_as           Choices:
+   string                      • flexgroup     Automatically provision a FlexGroup volume.
+   added in 2.8
+   comment
+   string                                      Sets a comment associated with the volume.
+   added in 2.9
+   efficiency_policy
+   string                                      Allows a storage efficiency policy to be set on volume creation.
+   added in 2.7
+   encrypt                     Choices:
+   boolean                     • no ←          Whether or not to enable Volume Encryption.
+   added in 2.7                • yes
+   from_name
+   string                                      Name of the existing volume to be renamed to name.
+   added in 2.7
+   hostname                                    The hostname or IP address of the ONTAP instance.
+   string / required
+   http_port                                   Override the default port (80 or 443) with this port
+   integer
+   https                       Choices:
+   boolean                     • no ←          Enable and disable https
+                               • yes
+   is_infinite                 Choices:
+   boolean                     • no            Set True if the volume is an Infinite Volume. Deleting an infinite volume is asynchronous.
+                               • yes
+   is_online                   Choices:
+   boolean                     • no            Whether the specified volume is online, or not.
+                               • yes ←
+   junction_path                               Junction path of the volume.
+   string                                      To unmount, use junction path ''.
+                                               Language to use for Volume
+                                               Default uses SVM language
+                                               Possible values Language
+                                               c POSIX
+                                               ar Arabic
+                                               cs Czech
+                                               da Danish
+                                               de German
+                                               en English
+                                               en_us English (US)
+                                               es Spanish
+                                               fi Finnish
+                                               fr French
+                                               he Hebrew
+                                               hr Croatian
+                                               hu Hungarian
+                                               it Italian
+   language                                    ja Japanese euc-j
+   string                                      ja_v1 Japanese euc-j
+   added in 2.8                                ja_jp.pck Japanese PCK (sjis)
+                                               ja_jp.932 Japanese cp932
+                                               ja_jp.pck_v2 Japanese PCK (sjis)
+                                               ko Korean
+                                               no Norwegian
+                                               nl Dutch
+                                               pl Polish
+                                               pt Portuguese
+                                               ro Romanian
+                                               ru Russian
+                                               sk Slovak
+                                               sl Slovenian
+                                               sv Swedish
+                                               tr Turkish
+                                               zh Simplified Chinese
+                                               zh.gbk Simplified Chinese (GBK)
+                                               zh_tw Traditional Chinese euc-tw
+                                               zh_tw.big5 Traditional Chinese Big 5
+                                               To use UTF-8 as the NFS character set, append '.UTF-8' to the language code
+   name                                        The name of the volume to manage.
+   string / required
+                                               If true, the controller performs additional work at boot and takeover times if it finds that there has been any potential data loss in the volume's
+   nvfail_enabled              Choices:        constituents due to an NVRAM failure.
+   boolean                     • no            The volume's constituents would be put in a special state called 'in-nvfailed-state' such that protocol access is blocked.
+   added in 2.9                • yes           This will cause the client applications to crash and thus prevent access to stale data.
+                                               To get out of this situation, the admin needs to manually clear the 'in-nvfailed-state' on the volume's constituents.
+   ontapi                                      The ontap api version to use
+   integer
+   password                                    Password for the specified user.
+   string / required                           aliases: pass
+   percent_snapshot_space                      Amount of space reserved for snapshot copies of the volume.
+   integer
+   policy                                      Name of the export policy.
+   string
+   qos_adaptive_policy_group
+   -                                           Specifies a QoS adaptive policy group to be set on volume.
+   added in 2.9
+   qos_policy_group
+   -                                           Specifies a QoS policy group to be set on volume.
+   added in 2.9
+   size                                        The size of the volume in (size_unit). Required when state=present.
+   integer
+                               Choices:
+                               • bytes
+                               • b
+                               • kb
+   size_unit                   • mb
+   string                      • gb ←          The unit used to interpret the size parameter.
+                               • tb
+                               • pb
+                               • eb
+                               • zb
+                               • yb
+   snapdir_access              Choices:        This is an advanced option, the default is False.
+   boolean                     • no            Enable the visible '.snapshot' directory that is normally present at system internal mount points.
+   added in 2.8                • yes           This value also turns on access to all other '.snapshot' directories in the volume.
+   snapshot_policy                             The name of the snapshot policy.
+   string                                      the default policy name is 'default'.
+   added in 2.8
+                               Choices:
+   space_guarantee             • none          Space guarantee style for the volume.
+   string                      • file
+                               • volume
+   space_slo                   Choices:        Specifies the space SLO type for the volume. The space SLO type is the Service Level Objective for space management for the volume.
+   string                      • none          The space SLO value is used to enforce existing volume settings so that sufficient space is set aside on the aggregate to meet the space SLO.
+   added in 2.9                • thick         This parameter is not supported on Infinite Volumes.
+                               • semi-thick
+   state                       Choices:
+   -                           • present ←     Whether the specified volume should exist or not.
+                               • absent
+                                               The tiering policy that is to be associated with the volume.
+                               Choices:        This policy decides whether the blocks of a volume will be tiered to the capacity tier.
+   tiering_policy              • snapshot-only snapshot-only policy allows tiering of only the volume snapshot copies not associated with the active file system.
+   string                      • auto          auto policy allows tiering of both snapshot and active file system user data to the capacity tier.
+   added in 2.9                • backup        backup policy on DP volumes allows all transferred user data blocks to start in the capacity tier.
+                               • none          When set to none, the Volume blocks will not be tiered to the capacity tier.
+                                               If no value specified, the volume is assigned snapshot only by default.
+   time_out                                    time to wait for flexGroup creation, modification, or deletion in seconds.
+   integer                   Default:          Error out if task is not completed in defined time.
+   added in 2.8              180               if 0, the request is asynchronous.
+                                               default is set to 3 minutes.
+   type                                        The volume type, either read-write (RW) or data-protection (DP).
+   string
+   unix_permissions                            Unix permission bits in octal or symbolic format.
+   string                                      For example, 0 is equivalent to ------------, 777 is equivalent to ---rwxrwxrwx,both formats are accepted.
+   added in 2.8                                The valid octal value ranges between 0 and 777 inclusive.
+                               Choices:        REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest                    • Never         Always -- will always use the REST API
+   string                      • Always        Never -- will always use the ZAPI
+                               • Auto ←        Auto -- will try to use the REST Api
+   username                                    This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please
+   string / required                           read the documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+                                               aliases: user
+   validate_certs              Choices:        If set to no, the SSL certificates will not be validated.
+   boolean                     • no            This should only set to False used on personally controlled sites using self-signed certificates.
+                               • yes ←
+                               Choices:
+   volume_security_style       • mixed ←
+   string                      • ntfs          The security style associated with this volume.
+                               • unified
+                               • unix
+   vserver                                     Name of the vserver to use.
+   string / required
+   vserver_dr_protection       Choices:
+   string                      • protected     Specifies the protection type for the volume in a Vserver DR setup.
+   added in 2.9                • unprotected
+   wait_for_completion         Choices:        Set this parameter to 'true' for synchronous execution during create (wait until volume status is online)
+   boolean                     • no ←          Set this parameter to 'false' for asynchronous execution
+   added in 2.8                • yes           For asynchronous, execution exits as soon as the request is sent, without checking volume status
+
+NOTES                   *na_ontap_volume-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_volume-examples*
+
+ - name: Create FlexVol
+   na_ontap_volume:
+     state: present
+     name: ansibleVolume12
+     is_infinite: False
+     aggregate_name: ansible_aggr
+     size: 100
+     size_unit: mb
+     space_guarantee: none
+     tiering_policy: auto
+     policy: default
+     percent_snapshot_space: 60
+     qos_policy_group: max_performance_gold
+     vserver: ansibleVServer
+     wait_for_completion: True
+     space_slo: none
+     nvfail_enabled: False
+     comment: ansible created volume
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Volume Delete
+   na_ontap_volume:
+     state: absent
+     name: ansibleVolume12
+     aggregate_name: ansible_aggr
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Make FlexVol offline
+   na_ontap_volume:
+     state: present
+     name: ansibleVolume
+     is_infinite: False
+     is_online: False
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Create flexGroup volume manually
+   na_ontap_volume:
+     state: present
+     name: ansibleVolume
+     is_infinite: False
+     aggr_list: "{{ aggr_list }}"
+     aggr_list_multiplier: 2
+     size: 200
+     size_unit: mb
+     space_guarantee: none
+     policy: default
+     vserver: "{{ vserver }}"
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     https: False
+     unix_permissions: 777
+     snapshot_policy: default
+     time_out: 0
+
+ - name: Create flexGroup volume auto provision as flex group
+   na_ontap_volume:
+     state: present
+     name: ansibleVolume
+     is_infinite: False
+     auto_provision_as: flexgroup
+     size: 200
+     size_unit: mb
+     space_guarantee: none
+     policy: default
+     vserver: "{{ vserver }}"
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     https: False
+     unix_permissions: 777
+     snapshot_policy: default
+     time_out: 0
+
+ - name: Create FlexVol with QoS adaptive
+   na_ontap_volume:
+     state: present
+     name: ansibleVolume15
+     is_infinite: False
+     aggregate_name: ansible_aggr
+     size: 100
+     size_unit: gb
+     space_guarantee: none
+     policy: default
+     percent_snapshot_space: 10
+     qos_adaptive_policy_group: extreme
+     vserver: ansibleVServer
+     wait_for_completion: True
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Modify volume dr protection (vserver of the volume must be in a snapmirror relationship)
+   na_ontap_volume:
+     state: present
+     name: ansibleVolume
+     vserver_dr_protection: protected
+     vserver: "{{ vserver }}"
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     https: False
+
+STATUS                   *na_ontap_volume-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_volume-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_volume_module.html

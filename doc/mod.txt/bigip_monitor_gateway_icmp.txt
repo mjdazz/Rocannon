@@ -1,0 +1,177 @@
+SYNOPSIS                   *bigip_monitor_gateway_icmp*
+
+     • Manages gateway ICMP monitors on a BIG-IP.
+
+PARAMETERS                   *bigip_monitor_gateway_icmp-parameters*
+
+          Parameter            Choices/Defaults                                                                         Comments
+                              Choices:             Specifies whether adaptive response time monitoring is enabled for this monitor.
+   adaptive                   • no                 When yes, the monitor determines the state of a service based on how divergent from the mean latency a monitor probe for that service is allowed
+   boolean                    • yes                to be. Also, values for the allowed_divergence, adaptive_limit, and and sampling_timespan will be enforced.
+                                                   When disabled, the monitor determines the state of a service based on the interval, up_interval, time_until_up, and timeout monitor settings.
+                                                   Specifies the absolute number of milliseconds that may not be exceeded by a monitor probe, regardless of allowed_divergence setting, for a probe
+   adaptive_limit                                  to be considered successful.
+   integer                                         This value applies regardless of the value of the allowed_divergence setting.
+                                                   While this value can be configured when adaptive is no, it will not take effect on the system until adaptive is yes.
+                                                   When specifying a new monitor, if adaptive is yes, the default is relative
+                              Choices:             When absolute, the number of milliseconds the latency of a monitor probe can exceed the mean latency of a monitor probe for the service being
+   allowed_divergence_type    • relative           probed. In typical cases, if the monitor detects three probes in a row that miss the latency value you set, the pool member or node is marked
+   string                     • absolute           down.
+                                                   When relative, the percentage of deviation the latency of a monitor probe can exceed the mean latency of a monitor probe for the service being
+                                                   probed.
+   allowed_divergence_value                        When specifying a new monitor, if adaptive is yes, and type is relative, the default is 25 percent.
+   integer
+   description                                     The description of the monitor.
+   string
+   interval                                        Specifies, in seconds, the frequency at which the system issues the monitor check when either the resource is down or the status of the resource
+   integer                                         is unknown.
+   ip                                              IP address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'.
+   string
+                              Choices:             Specifies whether the system automatically changes the status of a resource to enabled at the next successful monitor check.
+   manual_resume              • no                 If you set this option to yes, you must manually re-enable the resource before the system can use it for load balancing connections.
+   boolean                    • yes                When yes, specifies that you must manually re-enable the resource after an unsuccessful monitor check.
+                                                   When no, specifies that the system automatically changes the status of a resource to enabled at the next successful monitor check.
+   name                                            Monitor name.
+   string / required
+   parent                   Default:               The parent template of this monitor template. Once this value has been set, it cannot be changed. By default, this value is the gateway_icmp
+   string                   "/Common/gateway_icmp" parent on the Common partition.
+   partition                Default:               Device partition to manage resources on.
+   string                   "Common"
+   port                                            Port address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'.
+   string                                          Note that if specifying an IP address, a value between 1 and 65535 must be specified.
+   provider
+   dictionary                                      A dict object containing connection details.
+   added in 2.5
+        auth_provider                              Configures the auth provider for to obtain authentication tokens from the remote device.
+        string                                     This option is really used when working with BIG-IQ devices.
+        password                                   The password for the user account used to connect to the BIG-IP.
+        string / required                          You may omit this option by setting the environment variable F5_PASSWORD.
+                                                   aliases: pass, pwd
+        server                                     The BIG-IP host.
+        string / required                          You may omit this option by setting the environment variable F5_SERVER.
+        server_port         Default:               The BIG-IP server port.
+        integer             443                    You may omit this option by setting the environment variable F5_SERVER_PORT.
+        ssh_keyfile                                Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+        path                                       You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+        timeout                                    Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+        integer                                    before the operation is completed, the module will error.
+        transport             Choices:
+        string                • cli                Configures the transport connection to use when connecting to the remote device.
+                              • rest ←
+        user                                       The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+        string / required                          You may omit this option by setting the environment variable F5_USER.
+        validate_certs        Choices:             If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+        boolean               • no                 You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                              • yes ←
+   sampling_timespan                               Specifies the length, in seconds, of the probe history window that the system uses to calculate the mean latency and standard deviation of a
+   integer                                         monitor probe.
+                                                   While this value can be configured when adaptive is no, it will not take effect on the system until adaptive is yes.
+   state                      Choices:             When present, ensures that the monitor exists.
+   string                     • present ←          When absent, ensures the monitor is removed.
+                              • absent
+                                                   Specifies the number of seconds to wait after a resource first responds correctly to the monitor before setting the resource to 'up'.
+   time_until_up                                   During the interval, all responses from the resource must be correct.
+   integer                                         When the interval expires, the resource is marked 'up'.
+                                                   A value of 0, means that the resource is marked up immediately upon receipt of the first correct response.
+                                                   Specifies the number of seconds the target has in which to respond to the monitor request.
+   timeout                                         If the target responds within the set time period, it is considered 'up'. If the target does not respond within the set time period, it is
+   integer                                         considered 'down'. When this value is set to 0 (zero), the system uses the interval from the parent monitor.
+                                                   Note that timeout and time_until_up combine to control when a resource is set to up.
+                                                   Specifies whether the monitor operates in transparent mode.
+                              Choices:             A monitor in transparent mode directs traffic through the associated pool members or nodes (usually a router or firewall) to the aliased
+   transparent                • no                 destination (that is, it probes the ip-port combination specified in the monitor).
+   boolean                    • yes                If the monitor cannot successfully reach the aliased destination, the pool member or node through which the monitor traffic was sent is marked
+                                                   down.
+                                                   When creating a new monitor, if this parameter is not provided, then the default value will be whatever is provided by the parent.
+   up_interval                                     Specifies the interval for the system to use to perform the health check when a resource is up.
+   integer                                         When 0, specifies that the system uses the interval specified in interval to check the health of the resource.
+                                                   When any other number, enables specification of a different interval to use when checking the health of a resource that is up.
+
+NOTES                   *bigip_monitor_gateway_icmp-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_monitor_gateway_icmp-examples*
+
+ - name: Create a monitor
+   bigip_monitor_gateway_icmp:
+     name: gw1
+     adaptive: no
+     interval: 1
+     time_until_up: 0
+     timeout: 3
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_monitor_gateway_icmp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key            Returned                                                                           Description
+   adaptive                          Whether adaptive is enabled or not.
+   boolean                  changed  Sample:
+                                     True
+   adaptive_limit                    Absolute number of milliseconds that may not be exceeded by a monitor probe.
+   integer                  changed  Sample:
+                                     200
+   allowed_divergence_type           Type of divergence used for adaptive response time monitoring.
+   string                   changed  Sample:
+                                     absolute
+                                     Value of the type of divergence used for adaptive response time monitoring.
+   allowed_divergence_value changed  May be percent or ms depending on whether relative or absolute.
+   integer                           Sample:
+                                     25
+   description                       The description of the monitor.
+   string                   changed  Sample:
+                                     Important Monitor
+   interval                          The new interval in which to run the monitor check.
+   integer                  changed  Sample:
+                                     2
+   ip                                The new IP of IP/port definition.
+   string                   changed  Sample:
+                                     10.12.13.14
+   parent                            New parent template of the monitor.
+   string                   changed  Sample:
+                                     gateway-icmp
+   port                              Alias port or service for the monitor to check, on behalf of the pools or pool members with which the monitor is associated.
+   string                   changed  Sample:
+                                     80
+   sampling_timespan                 Absolute number of milliseconds that may not be exceeded by a monitor probe.
+   integer                  changed  Sample:
+                                     200
+   time_until_up                     The new time in which to mark a system as up after first successful response.
+   integer                  changed  Sample:
+                                     2
+   timeout                           The new timeout in which the remote system must respond to the monitor.
+   integer                  changed  Sample:
+                                     10
+   transparent              changed  Whether the monitor operates in transparent mode.
+   boolean
+   up_interval              changed  Interval for the system to use to perform the health check when a resource is up.
+   integer
+
+STATUS                   *bigip_monitor_gateway_icmp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_monitor_gateway_icmp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_monitor_gateway_icmp_module.html

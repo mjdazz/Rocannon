@@ -1,0 +1,147 @@
+SYNOPSIS                   *vmware_dvswitch_lacp*
+
+     • This module can be used to configure Link Aggregation Control Protocol (LACP) support mode and Link Aggregation Groups (LAGs).
+
+REQUIREMENTS                   *vmware_dvswitch_lacp-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_dvswitch_lacp-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+   hostname                                 The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                   If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                            Environment variable support added in Ansible 2.6.
+                                            Can only be used if lacp_support is set to enhanced.
+                                            The following parameters are required:
+                                            - name (string): Name of the LAG.
+                                            - uplink_number (int): Number of uplinks. Can 1 to 30.
+                                            - mode (string): The negotiating state of the uplinks/ports.
+                                            - choices: [ active, passive ]
+                                            - load_balancing_mode (string): Load balancing algorithm.
+                                            - Valid attributes are:
+                                            - srcTcpUdpPort: Source TCP/UDP port number.
+                                            - srcDestIpTcpUdpPortVlan: Source and destination IP, source and destination TCP/UDP port number and VLAN.
+                                            - srcIpVlan: Source IP and VLAN.
+                                            - srcDestTcpUdpPort: Source and destination TCP/UDP port number.
+                                            - srcMac: Source MAC address.
+                                            - destIp: Destination IP.
+   link_aggregation_groups                  - destMac: Destination MAC address.
+   list                                     - vlan: VLAN only.
+                                            - srcDestIp: Source and Destination IP.
+                                            - srcIpTcpUdpPortVlan: Source IP, TCP/UDP port number and VLAN.
+                                            - srcDestIpTcpUdpPort: Source and destination IP and TCP/UDP port number.
+                                            - srcDestMac: Source and destination MAC address.
+                                            - destIpTcpUdpPort: Destination IP and TCP/UDP port number.
+                                            - srcPortId: Source Virtual Port Id.
+                                            - srcIp: Source IP.
+                                            - srcIpTcpUdpPort: Source IP and TCP/UDP port number.
+                                            - destIpTcpUdpPortVlan: Destination IP, TCP/UDP port number and VLAN.
+                                            - destTcpUdpPort: Destination TCP/UDP port number.
+                                            - destIpVlan: Destination IP and VLAN.
+                                            - srcDestIpVlan: Source and destination IP and VLAN.
+                                            - The default load balancing mode in the vSphere Client is srcDestIpTcpUdpPortVlan.
+                                            Please see examples for more information.
+                                            The password of the vSphere vCenter or ESXi server.
+   password                                 If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                   Environment variable support added in Ansible 2.6.
+                                            aliases: pass, pwd
+   port                    Default:         The port number of the vSphere vCenter or ESXi server.
+   integer                 443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                             Environment variable support added in Ansible 2.6.
+   proxy_host                               Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                   The format is a hostname or a IP.
+   added in 2.9                             If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                            This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                               Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                  If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   support_mode              Choices:       The LACP support mode.
+   string                    • basic ←      basic: One Link Aggregation Control Protocol group in the switch (singleLag).
+                             • enhanced     enhanced: Multiple Link Aggregation Control Protocol groups in the switch (multipleLag).
+   switch                                   The name of the Distributed Switch to manage.
+   string / required                        aliases: dvswitch
+                                            The username of the vSphere vCenter or ESXi server.
+   username                                 If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                   Environment variable support added in Ansible 2.6.
+                                            aliases: admin, user
+                             Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs            • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                   • yes ←        Environment variable support added in Ansible 2.6.
+                                            If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_dvswitch_lacp-notes*
+
+   Note
+
+     • Tested on vSphere 6.7
+     • You need to run the task two times if you want to remove all LAGs and change the support mode to ‘basic’
+
+EXAMPLES                   *vmware_dvswitch_lacp-examples*
+
+ - name: Enable enhanced mode on a Distributed Switch
+   vmware_dvswitch_lacp:
+     hostname: '{{ inventory_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     switch: dvSwitch
+     support_mode: enhanced
+     validate_certs: "{{ validate_vcenter_certs }}"
+   delegate_to: localhost
+   loop_control:
+     label: "{{ item.name }}"
+   with_items: "{{ vcenter_distributed_switches }}"
+
+ - name: Enable enhanced mode and create two LAGs on a Distributed Switch
+   vmware_dvswitch_lacp:
+     hostname: '{{ inventory_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     switch: dvSwitch
+     support_mode: enhanced
+     link_aggregation_groups:
+         - name: lag1
+           uplink_number: 2
+           mode: active
+           load_balancing_mode: srcDestIpTcpUdpPortVlan
+         - name: lag2
+           uplink_number: 2
+           mode: passive
+           load_balancing_mode: srcDestIp
+     validate_certs: "{{ validate_vcenter_certs }}"
+   delegate_to: localhost
+   loop_control:
+     label: "{{ item.name }}"
+   with_items: "{{ vcenter_distributed_switches }}"
+
+RETURN VALUES                   *vmware_dvswitch_lacp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+                   information about performed operation
+   result          Sample:
+   string always   {'changed': True, 'dvswitch': 'dvSwitch', 'link_aggregation_groups': [{'load_balancing_mode': 'srcDestIpTcpUdpPortVlan', 'mode': 'active', 'name': 'lag1', 'uplink_number': 2},
+                   {'load_balancing_mode': 'srcDestIp', 'mode': 'active', 'name': 'lag2', 'uplink_number': 2}], 'link_aggregation_groups_previous': [], 'support_mode': 'enhanced', 'result': 'lacp
+                   lags changed'}
+
+STATUS                   *vmware_dvswitch_lacp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Christian Kotte (@ckotte)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_dvswitch_lacp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_dvswitch_lacp_module.html

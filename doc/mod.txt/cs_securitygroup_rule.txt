@@ -1,0 +1,168 @@
+SYNOPSIS                   *cs_securitygroup_rule*
+
+     • Add and remove security group rules.
+
+REQUIREMENTS                   *cs_securitygroup_rule-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_securitygroup_rule-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+                         Choices:       HTTP method used to query the API endpoint.
+   api_http_method       • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                        Fallback value is get if not specified.
+   api_key                              API key of the CloudStack API.
+   string                               If not given, the CLOUDSTACK_KEY env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+   api_region          Default:         Name of the ini section in the cloustack.ini file.
+   string              "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                           Secret key of the CloudStack API.
+   string                               If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+                                        HTTP timeout in seconds.
+   api_timeout                          If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                              As the last option, the value is taken from the ini config file, also see the notes.
+                                        Fallback value is 10 seconds if not specified.
+   api_url                              URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                               If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+   cidr                Default:         CIDR (full notation) to be used for security group rule.
+   string              "0.0.0.0/0"
+   end_port                             End port for this rule. Required if protocol=tcp or protocol=udp, but start_port will be used if not set.
+   integer
+   icmp_code                            Error code for this icmp message. Required if protocol=icmp.
+   integer
+   icmp_type                            Type of the icmp message being sent. Required if protocol=icmp.
+   integer
+   poll_async            Choices:
+   boolean               • no           Poll async jobs until job has finished.
+                         • yes ←
+   project                              Name of the project the security group to be created in.
+   string
+                         Choices:
+                         • tcp ←
+   protocol              • udp
+   string                • icmp         Protocol of the security group rule.
+                         • ah
+                         • esp
+                         • gre
+   security_group                       Name of the security group the rule is related to. The security group must be existing.
+   string / required
+   start_port                           Start port for this rule. Required if protocol=tcp or protocol=udp.
+   integer                              aliases: port
+   state                 Choices:
+   string                • present ←    State of the security group rule.
+                         • absent
+   type                  Choices:
+   string                • ingress ←    Ingress or egress security group rule.
+                         • egress
+   user_security_group                  Security group this rule is based of.
+   string
+
+NOTES                   *cs_securitygroup_rule-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_securitygroup_rule-examples*
+
+ ---
+ - name: allow inbound port 80/tcp from 1.2.3.4 added to security group 'default'
+   cs_securitygroup_rule:
+     security_group: default
+     port: 80
+     cidr: 1.2.3.4/32
+   delegate_to: localhost
+
+ - name: allow tcp/udp outbound added to security group 'default'
+   cs_securitygroup_rule:
+     security_group: default
+     type: egress
+     start_port: 1
+     end_port: 65535
+     protocol: '{{ item }}'
+   with_items:
+   - tcp
+   - udp
+   delegate_to: localhost
+
+ - name: allow inbound icmp from 0.0.0.0/0 added to security group 'default'
+   cs_securitygroup_rule:
+     security_group: default
+     protocol: icmp
+     icmp_code: -1
+     icmp_type: -1
+   delegate_to: localhost
+
+ - name: remove rule inbound port 80/tcp from 0.0.0.0/0 from security group 'default'
+   cs_securitygroup_rule:
+     security_group: default
+     port: 80
+     state: absent
+   delegate_to: localhost
+
+ - name: allow inbound port 80/tcp from security group web added to security group 'default'
+   cs_securitygroup_rule:
+     security_group: default
+     port: 80
+     user_security_group: web
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_securitygroup_rule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key                          Returned                                                                              Description
+   cidr                                                           CIDR of the rule.
+   string              success and cidr is defined                Sample:
+                                                                  0.0.0.0/0
+   end_port                                                       end port of the rule.
+   integer             success                                    Sample:
+                                                                  80
+   id                                                             UUID of the of the rule.
+   string              success                                    Sample:
+                                                                  a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   protocol                                                       protocol of the rule.
+   string              success                                    Sample:
+                                                                  tcp
+   security_group                                                 security group of the rule.
+   string              success                                    Sample:
+                                                                  default
+   start_port                                                     start port of the rule.
+   integer             success                                    Sample:
+                                                                  80
+   type                                                           type of the rule.
+   string              success                                    Sample:
+                                                                  ingress
+   user_security_group                                            user security group of the rule.
+   string              success and user_security_group is defined Sample:
+                                                                  default
+
+STATUS                   *cs_securitygroup_rule-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_securitygroup_rule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_securitygroup_rule_module.html

@@ -1,0 +1,159 @@
+SYNOPSIS                   *vmware_local_role_manager*
+
+     • This module can be used to manage local roles on an ESXi host.
+
+REQUIREMENTS                   *vmware_local_role_manager-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_local_role_manager-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   action                Choices:       This parameter is only valid while updating an existing role with privileges.
+   string                • add          add will add the privileges to the existing privilege list.
+   added in 2.8          • remove       remove will remove the privileges from the existing privilege list.
+                         • set ←        set will replace the privileges of the existing privileges with user defined list of privileges.
+   force_remove          Choices:
+   boolean               • no ←         If set to False then prevents the role from being removed if any permissions are using it.
+                         • yes
+   hostname                             The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                               If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                        Environment variable support added in Ansible 2.6.
+   local_privilege_ids Default:         The list of privileges that role needs to have.
+   list                []               Please see https://docs.vmware.com/en/VMware-vSphere/6.0/com.vmware.vsphere.security.doc/GUID-ED56F3C4-77D0-49E3-88B6-B99B8B437B62.html
+   local_role_name                      The local role name to be managed.
+   string / required
+                                        The password of the vSphere vCenter or ESXi server.
+   password                             If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                               Environment variable support added in Ansible 2.6.
+                                        aliases: pass, pwd
+   port                Default:         The port number of the vSphere vCenter or ESXi server.
+   integer             443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                         Environment variable support added in Ansible 2.6.
+   proxy_host                           Address of a proxy that will receive all HTTPS requests and relay them.
+   string                               The format is a hostname or a IP.
+   added in 2.9                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                        This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                           Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                              If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   state                 Choices:       Indicate desired state of the role.
+   string                • present ←    If the role already exists when state=present, the role info is updated.
+                         • absent
+                                        The username of the vSphere vCenter or ESXi server.
+   username                             If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                               Environment variable support added in Ansible 2.6.
+                                        aliases: admin, user
+                         Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs        • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean               • yes ←        Environment variable support added in Ansible 2.6.
+                                        If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_local_role_manager-notes*
+
+   Note
+
+     • Tested on ESXi 6.5
+     • Be sure that the ESXi user used for login, has the appropriate rights to create / delete / edit roles
+
+EXAMPLES                   *vmware_local_role_manager-examples*
+
+ - name: Add local role to ESXi
+   vmware_local_role_manager:
+     hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     local_role_name: vmware_qa
+     state: present
+   delegate_to: localhost
+
+ - name: Add local role with privileges to ESXi
+   vmware_local_role_manager:
+     hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     local_role_name: vmware_qa
+     local_privilege_ids: [ 'Folder.Create', 'Folder.Delete']
+     state: present
+   delegate_to: localhost
+
+ - name: Remove local role from ESXi
+   vmware_local_role_manager:
+     hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     local_role_name: vmware_qa
+     state: absent
+   delegate_to: localhost
+
+ - name: Add a privilege to an existing local role
+   vmware_local_role_manager:
+     hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     local_role_name: vmware_qa
+     local_privilege_ids: [ 'Folder.Create' ]
+     action: add
+   delegate_to: localhost
+
+ - name: Remove a privilege to an existing local role
+   vmware_local_role_manager:
+     hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     local_role_name: vmware_qa
+     local_privilege_ids: [ 'Folder.Create' ]
+     action: remove
+   delegate_to: localhost
+
+ - name: Set a privilege to an existing local role
+   vmware_local_role_manager:
+     hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     local_role_name: vmware_qa
+     local_privilege_ids: [ 'Folder.Create' ]
+     action: set
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_local_role_manager-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+   local_role_name     always    Name of local role
+   string
+   new_privileges      always    List of privileges
+   list
+   old_privileges      on update List of privileges of role before the update
+   list
+   privileges          always    List of privileges
+   list
+   privileges_previous on update List of privileges of role before the update
+   list
+   role_id             always    ESXi generated local role id
+   integer
+   role_name           always    Name of local role
+   string
+
+STATUS                   *vmware_local_role_manager-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Abhijeet Kasurde (@Akasurde)
+     • Christian Kotte (@ckotte)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_local_role_manager-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_local_role_manager_module.html

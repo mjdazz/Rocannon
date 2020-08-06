@@ -1,0 +1,131 @@
+SYNOPSIS                   *openssl_dhparam*
+
+     • This module allows one to (re)generate OpenSSL DH-params.
+     • This module uses file common arguments to specify generated file permissions.
+     • Please note that the module regenerates existing DH params if they don’t match the module’s options. If you are concerned that this could overwrite your existing DH params, consider using
+       the backup option.
+
+REQUIREMENTS                   *openssl_dhparam-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • OpenSSL
+
+PARAMETERS                   *openssl_dhparam-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+                                  The attributes the resulting file or directory should have.
+   attributes                     To get supported flags look at the man page for chattr on the target system.
+   string                         This string should contain the attributes in the same order as the one displayed by lsattr.
+                                  The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                  aliases: attr
+   backup          Choices:
+   boolean         • no ←         Create a backup file including a timestamp so you can get the original DH params back if you overwrote them with new ones by accident.
+   added in 2.8    • yes
+   force           Choices:
+   boolean         • no ←         Should the parameters be regenerated even it it already exists.
+                   • yes
+   group                          Name of the group that should own the file/directory, as would be fed to chown.
+   string
+                                  The permissions the resulting file or directory should have.
+                                  For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                           octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                         Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                  As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                  As of Ansible 2.6, the mode may also be the special string preserve.
+                                  When set to preserve the file will be given the same permissions as the source file.
+   owner                          Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path
+   path /                         Name of the file in which the generated parameters will be saved.
+   required
+   selevel       Default:         The level part of the SELinux file context.
+   string        "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                  When set to _default, it will use the level portion of the policy if available.
+   serole                         The role part of the SELinux file context.
+   string                         When set to _default, it will use the role portion of the policy if available.
+   setype                         The type part of the SELinux file context.
+   string                         When set to _default, it will use the type portion of the policy if available.
+   seuser                         The user part of the SELinux file context.
+   string                         By default it uses the system policy, where applicable.
+                                  When set to _default, it will use the user portion of the policy if available.
+   size          Default:         Size (in bits) of the generated DH-params.
+   integer       4096
+   state           Choices:
+   string          • absent       Whether the parameters should exist or not, taking action if the state is different from what is stated.
+                   • present ←
+                                  Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                  By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or just
+   unsafe_writes   Choices:       broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written in an
+   boolean         • no ←         unsafe manner.
+                   • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                  writes).
+                                  IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+
+SEE ALSO                   *openssl_dhparam-see also*
+
+   See also
+
+   openssl_certificate – Generate and/or check OpenSSL certificates
+   The official documentation on the openssl_certificate module.
+
+   openssl_csr – Generate OpenSSL Certificate Signing Request (CSR)
+   The official documentation on the openssl_csr module.
+
+   openssl_pkcs12 – Generate OpenSSL PKCS#12 archive
+   The official documentation on the openssl_pkcs12 module.
+
+   openssl_privatekey – Generate OpenSSL private keys
+   The official documentation on the openssl_privatekey module.
+
+   openssl_publickey – Generate an OpenSSL public key from its private key
+   The official documentation on the openssl_publickey module.
+
+EXAMPLES                   *openssl_dhparam-examples*
+
+ - name: Generate Diffie-Hellman parameters with the default size (4096 bits)
+   openssl_dhparam:
+     path: /etc/ssl/dhparams.pem
+
+ - name: Generate DH Parameters with a different size (2048 bits)
+   openssl_dhparam:
+     path: /etc/ssl/dhparams.pem
+     size: 2048
+
+ - name: Force regenerate an DH parameters if they already exist
+   openssl_dhparam:
+     path: /etc/ssl/dhparams.pem
+     force: yes
+
+RETURN VALUES                   *openssl_dhparam-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key               Returned                                                                                  Description
+   backup_file                              Name of backup file created.
+   string      changed and if backup is yes Sample:
+                                            /path/to/[email protected]:22~
+   filename                                 Path to the generated Diffie-Hellman parameters.
+   string      changed or success           Sample:
+                                            /etc/ssl/dhparams.pem
+   size                                     Size (in bits) of the Diffie-Hellman parameters.
+   integer     changed or success           Sample:
+                                            4096
+
+STATUS                   *openssl_dhparam-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Thom Wiggers (@thomwiggers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *openssl_dhparam-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/openssl_dhparam_module.html

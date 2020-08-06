@@ -1,0 +1,204 @@
+SYNOPSIS                   *azure_rm_sqldatabase*
+
+     • Create, update and delete instance of SQL Database.
+
+REQUIREMENTS                   *azure_rm_sqldatabase-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_sqldatabase-parameters*
+
+                    Parameter                              Choices/Defaults                                                               Comments
+   ad_user                                                                             Active Directory username. Use when authenticating with an Active Directory user rather than service
+   string                                                                              principal.
+   adfs_authority_url
+   string                                                                              Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile                                  Default:                               Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate
+   string                                       "latest"                               for public clouds; future values will allow use with Azure Stack.
+   added in 2.5
+   append_tags                                    Choices:                             Use to control if tags field is canonical or just appends to existing tags.
+   boolean                                        • no                                 When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
+                                                  • yes ←
+                                                                                       Controls the source of the credentials to use for authentication.
+                                                                                       If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable
+                                                  Choices:                             is not defined.
+                                                  • auto                               auto will follow the default precedence of module parameters -> environment variables -> default profile in
+   auth_source                                    • cli                                credential file ~/.azure/credentials.
+   string                                         • credential_file                    When set to cli, the credentials will be sources from the default Azure CLI profile.
+   added in 2.5                                   • env                                Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+                                                  • msi                                When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or
+                                                                                       the environment variable AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is
+                                                                                       granted access to more than one subscription, otherwise the first subscription is chosen.
+                                                                                       The msi was added in Ansible 2.6.
+   cert_validation_mode                           Choices:                             Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the
+   string                                         • ignore                             server certificate, but when an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable
+   added in 2.5                                   • validate                           this behavior by passing ignore. Can also be set via credential file profile or the AZURE_CERT_VALIDATION
+                                                                                       environment variable.
+   client_id                                                                           Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment                            Default:                               For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK,
+   string                                       "AzureCloud"                           eg, AzureChinaCloud, AzureUSGovernment), or a metadata discovery endpoint URL (required for Azure Stack). Can
+   added in 2.4                                                                        also be set via credential file profile or the AZURE_CLOUD_ENVIRONMENT environment variable.
+   collation                                                                           The collation of the database. If not create_mode=default, this value is ignored.
+   -
+                                                                                       Specifies the mode of database creation.
+                                                  Choices:                             default, regular database creation.
+                                                  • copy                               copy, creates a database as a copy of an existing database.
+                                                  • default                            online_secondary/non_readable_secondary, creates a database as a (readable or nonreadable) secondary replica
+   create_mode                                    • non_readable_secondary             of an existing database.
+   -                                              • online_secondary                   point_in_time_restore, Creates a database by restoring a point in time backup of an existing database.
+                                                  • point_in_time_restore              recovery, Creates a database by restoring a geo-replicated backup.
+                                                  • recovery                           restore, Creates a database by restoring a backup of a deleted database.
+                                                  • restore                            restore_long_term_retention_backup, Creates a database by restoring from a long term retention vault.
+                                                  • restore_long_term_retention_backup copy, non_readable_secondary, online_secondary and restore_long_term_retention_backup are not supported for
+                                                                                       data_warehouse edition.
+                                                  Choices:
+                                                  • web
+                                                  • business
+                                                  • basic                              The edition of the database. The DatabaseEditions enumeration contains all the valid editions.
+   edition                                        • standard                           If create_mode=non_readable_secondary or create_mode=online_secondary, this value is ignored.
+   -                                              • premium                            To see possible values, query the capabilities API
+                                                  • free                               (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities) referred to by
+                                                  • stretch                            operationId:'Capabilities_ListByLocation'.
+                                                  • data_warehouse
+                                                  • system
+                                                  • system2
+   elastic_pool_name                                                                   The name of the elastic pool the database is in. Not supported for edition=data_warehouse.
+   -
+   force_update                                   Choices:                             SQL Database will be updated if given parameters differ from existing resource state.
+   boolean                                        • no                                 To force SQL Database update in any circumstances set this parameter to True.
+                                                  • yes
+   location                                                                            Resource location. If not set, location from the resource group will be used as default.
+   -
+                                                                                       The max size of the database expressed in bytes.
+   max_size_bytes                                                                      If not create_mode=default, this value is ignored.
+   -                                                                                   To see possible values, query the capabilities API
+                                                                                       (/subscriptions/{subscriptionId}/providers/Microsoft.Sql/locations/{locationID}/capabilities). referred to by
+                                                                                       operationId:'Capabilities_ListByLocation'.
+   name                                                                                The name of the database to be operated on (updated or created).
+   - / required
+   password                                                                            Active Directory user password. Use when authenticating with an Active Directory user rather than service
+   string                                                                              principal.
+   profile                                                                             Security profile found in ~/.azure/credentials file.
+   string
+   read_scale                                     Choices:                             If the database is a geo-secondary, indicates whether read-only connections are allowed to this database or
+   boolean                                        • no ←                               not.
+                                                  • yes                                Not supported for edition=data_warehouse.
+   recovery_services_recovery_point_resource_id                                        Required if create_mode=restore_long_term_retention_backup, then this value is required.
+   -                                                                                   Specifies the resource ID of the recovery point to restore from.
+   resource_group                                                                      The name of the resource group that contains the resource. You can obtain this value from the Azure Resource
+   - / required                                                                        Manager API or the portal.
+                                                                                       Required if create_mode=point_in_time_restore, this value is required. If create_mode=restore, this value is
+   restore_point_in_time                                                               optional.
+   -                                                                                   Specifies the point in time (ISO8601 format) of the source database that will be restored to create the new
+                                                                                       database.
+                                                                                       Must be greater than or equal to the source database's earliestRestoreDate value.
+   sample_name                                    Choices:                             Indicates the name of the sample schema to apply when creating this database.
+   -                                              • adventure_works_lt                 If not create_mode=default, this value is ignored.
+                                                                                       Not supported for edition=data_warehouse.
+   secret                                                                              Azure client secret. Use when authenticating with a Service Principal.
+   string
+   server_name                                                                         The name of the server.
+   - / required
+   source_database_deletion_date                                                       Required if create_mode=restore and source_database_id is the deleted database's original resource id when it
+   -                                                                                   existed (as opposed to its current restorable dropped database ID), then this value is required. Specifies the
+                                                                                       time that the database was deleted.
+   source_database_id                                                                  Required unless create_mode=default or create_mode=restore_long_term_retention_backup.
+   -                                                                                   Specifies the resource ID of the source database.
+   state                                          Choices:
+   -                                              • absent                             Assert the state of the SQL Database. Use present to create or update an SQL Database and absent to delete it.
+                                                  • present ←
+   subscription_id                                                                     Your Azure subscription Id.
+   string
+   tags                                                                                Dictionary of string:string pairs to assign as metadata to the object.
+   dictionary                                                                          Metadata tags on the object will be updated with any provided values.
+                                                                                       To remove tags set append_tags option to false.
+   tenant                                                                              Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+   zone_redundant                                 Choices:                             Is this database is zone redundant? It means the replicas of this database will be spread across multiple
+   boolean                                        • no ←                               availability zones.
+                                                  • yes
+
+NOTES                   *azure_rm_sqldatabase-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_sqldatabase-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_sqldatabase-examples*
+
+ - name: Create (or update) SQL Database
+   azure_rm_sqldatabase:
+     resource_group: myResourceGroup
+     server_name: sqlcrudtest-5961
+     name: testdb
+     location: eastus
+
+ - name: Restore SQL Database
+   azure_rm_sqldatabase:
+     resource_group: myResourceGroup
+     server_name: sqlcrudtest-5961
+     name: restoreddb
+     location: eastus
+     create_mode: restore
+     restorable_dropped_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/s
+                                      ervers/testsvr/restorableDroppedDatabases/testdb2,131444841315030000"
+
+ - name: Create SQL Database in Copy Mode
+   azure_rm_sqldatabase:
+     resource_group: myResourceGroup
+     server_name: sqlcrudtest-5961
+     name: copydb
+     location: eastus
+     create_mode: copy
+     source_database_id: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/tests
+                          vr/databases/testdb"
+
+RETURN VALUES                   *azure_rm_sqldatabase-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+   database_id          The ID of the database.
+   string      always   Sample:
+                        database_id
+   id                   Resource ID.
+   string      always   Sample:
+                        /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Sql/servers/sqlcrudtest-5961/databases/t estdb
+   status               The status of the database.
+   string      always   Sample:
+                        Online
+
+STATUS                   *azure_rm_sqldatabase-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Zim Kalinowski (@zikalino)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_sqldatabase-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_sqldatabase_module.html

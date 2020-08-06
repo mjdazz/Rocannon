@@ -1,0 +1,115 @@
+SYNOPSIS                   *wait_for_connection*
+
+     • Waits for a total of timeout seconds.
+     • Retries the transport connection after a timeout of connect_timeout.
+     • Tests the transport connection every sleep seconds.
+     • This module makes use of internal ansible transport (and configuration) and the ping/win_ping module to guarantee correct end-to-end functioning.
+     • This module is also supported for Windows targets.
+
+PARAMETERS                   *wait_for_connection-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   connect_timeout Default:         Maximum number of seconds to wait for a connection to happen before closing and retrying.
+   integer         5
+   delay           Default:         Number of seconds to wait before starting to poll.
+   integer         0
+   sleep           Default:         Number of seconds to sleep between checks.
+   integer         1
+   timeout         Default:         Maximum number of seconds to wait for.
+   integer         600
+
+NOTES                   *wait_for_connection-notes*
+
+   Note
+
+     • This module is also supported for Windows targets.
+
+SEE ALSO                   *wait_for_connection-see also*
+
+   See also
+
+   wait_for – Waits for a condition before continuing
+   The official documentation on the wait_for module.
+
+   win_wait_for – Waits for a condition before continuing
+   The official documentation on the win_wait_for module.
+
+   win_wait_for_process – Waits for a process to exist or not exist before continuing
+   The official documentation on the win_wait_for_process module.
+
+EXAMPLES                   *wait_for_connection-examples*
+
+ - name: Wait 600 seconds for target connection to become reachable/usable
+   wait_for_connection:
+
+ - name: Wait 300 seconds, but only start checking after 60 seconds
+   wait_for_connection:
+     delay: 60
+     timeout: 300
+
+ # Wake desktops, wait for them to become ready and continue playbook
+ - hosts: all
+   gather_facts: no
+   tasks:
+   - name: Send magic Wake-On-Lan packet to turn on individual systems
+     wakeonlan:
+       mac: '{{ mac }}'
+       broadcast: 192.168.0.255
+     delegate_to: localhost
+
+   - name: Wait for system to become reachable
+     wait_for_connection:
+
+   - name: Gather facts for first time
+     setup:
+
+ # Build a new VM, wait for it to become ready and continue playbook
+ - hosts: all
+   gather_facts: no
+   tasks:
+   - name: Clone new VM, if missing
+     vmware_guest:
+       hostname: '{{ vcenter_ipaddress }}'
+       name: '{{ inventory_hostname_short }}'
+       template: Windows 2012R2
+       customization:
+         hostname: '{{ vm_shortname }}'
+         runonce:
+         - powershell.exe -ExecutionPolicy Unrestricted -File C:\Windows\Temp\ConfigureRemotingForAnsible.ps1 -ForceNewSSLCert -EnableCredSSP
+     delegate_to: localhost
+
+   - name: Wait for system to become reachable over WinRM
+     wait_for_connection:
+       timeout: 900
+
+   - name: Gather facts for first time
+     setup:
+
+RETURN VALUES                   *wait_for_connection-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   elapsed          The number of seconds that elapsed waiting for the connection to appear.
+   float   always   Sample:
+                    23.1
+
+STATUS                   *wait_for_connection-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *wait_for_connection-red hat support*
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *wait_for_connection-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/wait_for_connection_module.html

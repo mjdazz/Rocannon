@@ -1,0 +1,58 @@
+SYNOPSIS                   *known_hosts*
+
+     • The known_hosts module lets you add or remove a host keys from the known_hosts file.
+     • Starting at Ansible 2.2, multiple entries per host are allowed, but only one for each key type supported by ssh. This is useful if you’re going to want to use the git module over ssh, for
+       example.
+     • If you have a very large number of host keys to manage, you will find the template module more useful.
+
+PARAMETERS                   *known_hosts-parameters*
+
+   Parameter       Choices/Defaults                                                                                 Comments
+   hash_host   Choices:
+   boolean     • no ←                      Hash the hostname in the known_hosts file
+               • yes
+                                           The SSH public host key, as a string (required if state=present, optional when state=absent, in which case all keys for the host are removed). The key
+   key                                     must be in the right format for ssh (see sshd(8), section "SSH_KNOWN_HOSTS FILE FORMAT"). Specifically, the key should not match the format that is found
+   -                                       in an SSH pubkey file, but should rather have the hostname prepended to a line that includes the pubkey, the same way that it would appear in the
+                                           known_hosts file. The value prepended to the line must also match the value of the name parameter. Should be of format `<hostname[,IP]> ssh-rsa <pubkey>`
+   name                                    The host to add or remove (must match a host specified in key). It will be converted to lowercase so that ssh-keygen can find it.
+   - /                                     Must match with <hostname> or <ip> present in key attribute.
+   required                                aliases: host
+   path      Default:                      The known_hosts file to edit
+   -         "(homedir)+/.ssh/known_hosts"
+   state       Choices:
+   -           • present ←                 present to add the host key, absent to remove it.
+               • absent
+
+EXAMPLES                   *known_hosts-examples*
+
+ - name: tell the host about our servers it might want to ssh to
+   known_hosts:
+     path: /etc/ssh/ssh_known_hosts
+     name: foo.com.invalid
+     key: "{{ lookup('file', 'pubkeys/foo.com.invalid') }}"
+
+ - name: Another way to call known_hosts
+   known_hosts:
+     hostname: host1.example.com   # or 10.9.8.77
+     key: host1.example.com,10.9.8.77 ssh-rsa ASDeararAIUHI324324  # some key gibberish
+     path: /etc/ssh/ssh_known_hosts
+     state: present
+
+STATUS                   *known_hosts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Matthew Vernon (@mcv21)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *known_hosts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/known_hosts_module.html

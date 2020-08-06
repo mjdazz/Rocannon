@@ -1,0 +1,189 @@
+SYNOPSIS                   *route53_info*
+
+     • Gets various details related to Route53 zone, record set or health check details.
+     • This module was called route53_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: route53_facts
+
+REQUIREMENTS                   *route53_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *route53_info-parameters*
+
+            Parameter                Choices/Defaults                                                                       Comments
+   aws_access_key                                           AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                                   aliases: ec2_access_key, access_key
+   aws_secret_key                                           AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                                   aliases: ec2_secret_key, secret_key
+   change_id                                                The ID of the change batch request.
+   -                                                        The value that you specify here is the value that ChangeResourceRecordSets returned in the Id element when you submitted the request.
+                                                            Required if query is set to change.
+   debug_botocore_endpoint_logs   Choices:                  Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set
+   boolean                        • no ←                    to the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes                     ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   delegation_set_id                                        The DNS Zone delegation set ID.
+   -
+   dns_name                                                 The first name in the lexicographic ordering of domain names that you want the list_command to start listing from.
+   -
+   ec2_url                                                  Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                                   required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable,
+                                                            if any, is used.
+   health_check_id                                          The ID of the health check.
+   -                                                        Required if query is set to health_check and health_check_method is set to details or status or failure_reason.
+                                  Choices:
+                                  • list ←
+   health_check_method            • details
+   -                              • status                  This is used in conjunction with query: health_check. It allows for listing details, counts or tags of various health check details.
+                                  • failure_reason
+                                  • count
+                                  • tags
+   hosted_zone_id                                           The Hosted Zone ID of the DNS zone.
+   -                                                        Required if query is set to hosted_zone and hosted_zone_method is set to details.
+                                                            Required if query is set to record_sets.
+                                  Choices:
+                                  • details
+   hosted_zone_method             • list ←                  This is used in conjunction with query: hosted_zone. It allows for listing details, counts or tags of various hosted zone details.
+   -                              • list_by_name
+                                  • count
+                                  • tags
+   max_items                                                Maximum number of items to return for various get/list requests.
+   -
+   next_marker                                              Some requests such as list_command: hosted_zones will return a maximum number of entries - EG 100 or the number specified by max_items.
+   -                                                        If the number of entries exceeds this maximum another request can be sent using the NextMarker entry from the first response to get the
+                                                            next page of results.
+   profile                                                  Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+                                  Choices:
+                                  • change
+   query                          • checker_ip_range
+   - / required                   • health_check            specifies the query action to take.
+                                  • hosted_zone
+                                  • record_sets
+                                  • reusable_delegation_set
+   region                                                   The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                                   http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                            aliases: aws_region, ec2_region
+                                                            The ID/s of the specified resource/s.
+   resource_id                                              Required if query is set to health_check and health_check_method is to tags.
+   -                                                        Required if query is set to hosted_zone and hosted_zone_method is to tags.
+                                                            aliases: resource_ids
+   security_token                                           AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                                   aliases: access_token
+   start_record_name                                        The first name in the lexicographic ordering of domain names that you want the list_command: record_sets to start listing from.
+   -
+                                  Choices:
+                                  • A
+                                  • CNAME
+                                  • MX
+   type                           • AAAA
+   -                              • TXT                     The type of DNS record
+                                  • PTR
+                                  • SRV
+                                  • SPF
+                                  • CAA
+                                  • NS
+   validate_certs                 Choices:
+   boolean                        • no                      When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *route53_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *route53_info-examples*
+
+ # Simple example of listing all hosted zones
+ - name: List all hosted zones
+   route53_info:
+     query: hosted_zone
+   register: hosted_zones
+
+ # Getting a count of hosted zones
+ - name: Return a count of all hosted zones
+   route53_info:
+     query: hosted_zone
+     hosted_zone_method: count
+   register: hosted_zone_count
+
+ - name: List the first 20 resource record sets in a given hosted zone
+   route53_info:
+     profile: account_name
+     query: record_sets
+     hosted_zone_id: ZZZ1111112222
+     max_items: 20
+   register: record_sets
+
+ - name: List first 20 health checks
+   route53_info:
+     query: health_check
+     health_check_method: list
+     max_items: 20
+   register: health_checks
+
+ - name: Get health check last failure_reason
+   route53_info:
+     query: health_check
+     health_check_method: failure_reason
+     health_check_id: 00000000-1111-2222-3333-12345678abcd
+   register: health_check_failure_reason
+
+ - name: Retrieve reusable delegation set details
+   route53_info:
+     query: reusable_delegation_set
+     delegation_set_id: delegation id
+   register: delegation_sets
+
+ - name: setup of example for using next_marker
+   route53_info:
+     query: hosted_zone
+     max_items: 1
+   register: first_info
+
+ - name: example for using next_marker
+   route53_info:
+     query: hosted_zone
+     next_marker: "{{ first_info.NextMarker }}"
+     max_items: 1
+   when: "{{ 'NextMarker' in first_info }}"
+
+ - name: retrieve host entries starting with host1.workshop.test.io
+   block:
+     - name: grab zone id
+       route53_zone:
+         zone: "test.io"
+       register: AWSINFO
+
+     - name: grab Route53 record information
+       route53_info:
+         type: A
+         query: record_sets
+         hosted_zone_id: "{{ AWSINFO.zone_id }}"
+         start_record_name: "host1.workshop.test.io"
+       register: RECORDS
+
+STATUS                   *route53_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Karen Cheng (@Etherdaemon)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *route53_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/route53_info_module.html

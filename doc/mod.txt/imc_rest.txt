@@ -1,0 +1,203 @@
+SYNOPSIS                   *imc_rest*
+
+     • Provides direct access to the Cisco IMC REST API.
+     • Perform any configuration changes and actions that the Cisco IMC supports.
+     • More information about the IMC REST API is available from http://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/c/sw/api/3_0/b_Cisco_IMC_api_301.html
+
+REQUIREMENTS                   *imc_rest-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • lxml
+     • xmljson >= 0.1.8
+
+PARAMETERS                   *imc_rest-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+                                   When used instead of path, sets the content of the API requests directly.
+   content                         This may be convenient to template simple requests, for anything complex use the template module.
+   -                               You can collate multiple IMC XML fragments and they will be processed sequentially in a single stream, the Cisco IMC output is subsequently merged.
+                                   Parameter content is mutual exclusive with parameter path.
+   hostname                        IP Address or hostname of Cisco IMC, resolvable by Ansible control host.
+   - / required                    aliases: host, ip
+   password       Default:         The password to use for authentication.
+   -              "password"
+   path                            Name of the absolute path of the filename that includes the body of the http request being sent to the Cisco IMC REST API.
+   -                               Parameter path is mutual exclusive with parameter content.
+                                   aliases: src, config_file
+   protocol         Choices:
+   -                • http         Connection protocol to use.
+                    • https ←
+   timeout        Default:         The socket level timeout in seconds.
+   -              60               This is the time that every single connection (every fragment) can spend. If this timeout is reached, the module will fail with a Connection failure indicating
+                                   that The read operation timed out.
+   username       Default:         Username used to login to the switch.
+   -              "admin"          aliases: user
+   validate_certs   Choices:       If no, SSL certificates will not be validated.
+   boolean          • no           This should only set to no used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+NOTES                   *imc_rest-notes*
+
+   Note
+
+     • The XML fragments don’t need an authentication cookie, this is injected by the module automatically.
+     • The Cisco IMC XML output is being translated to JSON using the Cobra convention.
+     • Any configConfMo change requested has a return status of ‘modified’, even if there was no actual change from the previous configuration. As a result, this module will always report a change
+       on subsequent runs. In case this behaviour is fixed in a future update to Cisco IMC, this module will automatically adapt.
+     • If you get a Connection failure related to The read operation timed out increase the timeout parameter. Some XML fragments can take longer than the default timeout.
+     • More information about the IMC REST API is available from http://www.cisco.com/c/en/us/td/docs/unified_computing/ucs/c/sw/api/3_0/b_Cisco_IMC_api_301.html
+
+EXAMPLES                   *imc_rest-examples*
+
+ - name: Power down server
+   imc_rest:
+     hostname: '{{ imc_hostname }}'
+     username: '{{ imc_username }}'
+     password: '{{ imc_password }}'
+     validate_certs: no
+     content: |
+       <configConfMo><inConfig>
+         <computeRackUnit dn="sys/rack-unit-1" adminPower="down"/>
+       </inConfig></configConfMo>
+   delegate_to: localhost
+
+ - name: Configure IMC using multiple XML fragments
+   imc_rest:
+     hostname: '{{ imc_hostname }}'
+     username: '{{ imc_username }}'
+     password: '{{ imc_password }}'
+     validate_certs: no
+     timeout: 120
+     content: |
+       <!-- Configure Serial-on-LAN -->
+       <configConfMo><inConfig>
+         <solIf dn="sys/rack-unit-1/sol-if" adminState="enable" speed=="115200" comport="com0"/>
+       </inConfig></configConfMo>
+
+       <!-- Configure Console Redirection -->
+       <configConfMo><inConfig>
+         <biosVfConsoleRedirection dn="sys/rack-unit-1/bios/bios-settings/Console-redirection"
+           vpBaudRate="115200"
+           vpConsoleRedirection="com-0"
+           vpFlowControl="none"
+           vpTerminalType="vt100"
+           vpPuttyKeyPad="LINUX"
+           vpRedirectionAfterPOST="Always Enable"/>
+       </inConfig></configConfMo>
+   delegate_to: localhost
+
+ - name: Enable PXE boot and power-cycle server
+   imc_rest:
+     hostname: '{{ imc_hostname }}'
+     username: '{{ imc_username }}'
+     password: '{{ imc_password }}'
+     validate_certs: no
+     content: |
+       <!-- Configure PXE boot -->
+       <configConfMo><inConfig>
+         <lsbootLan dn="sys/rack-unit-1/boot-policy/lan-read-only" access="read-only" order="1" prot="pxe" type="lan"/>
+       </inConfig></configConfMo>
+
+       <!-- Power cycle server -->
+       <configConfMo><inConfig>
+         <computeRackUnit dn="sys/rack-unit-1" adminPower="cycle-immediate"/>
+       </inConfig></configConfMo>
+   delegate_to: localhost
+
+ - name: Reconfigure IMC to boot from storage
+   imc_rest:
+     hostname: '{{ imc_host }}'
+     username: '{{ imc_username }}'
+     password: '{{ imc_password }}'
+     validate_certs: no
+     content: |
+       <configConfMo><inConfig>
+         <lsbootStorage dn="sys/rack-unit-1/boot-policy/storage-read-write" access="read-write" order="1" type="storage"/>
+       </inConfig></configConfMo>
+   delegate_to: localhost
+
+ - name: Add customer description to server
+   imc_rest:
+     hostname: '{{ imc_host }}'
+     username: '{{ imc_username }}'
+     password: '{{ imc_password }}'
+     validate_certs: no
+     content: |
+         <configConfMo><inConfig>
+           <computeRackUnit dn="sys/rack-unit-1" usrLbl="Customer Lab - POD{{ pod_id }} - {{ inventory_hostname_short }}"/>
+         </inConfig></configConfMo>
+     delegate_to: localhost
+
+ - name: Disable HTTP and increase session timeout to max value 10800 secs
+   imc_rest:
+     hostname: '{{ imc_host }}'
+     username: '{{ imc_username }}'
+     password: '{{ imc_password }}'
+     validate_certs: no
+     timeout: 120
+     content: |
+         <configConfMo><inConfig>
+           <commHttp dn="sys/svc-ext/http-svc" adminState="disabled"/>
+         </inConfig></configConfMo>
+
+         <configConfMo><inConfig>
+           <commHttps dn="sys/svc-ext/https-svc" adminState="enabled" sessionTimeout="10800"/>
+         </inConfig></configConfMo>
+     delegate_to: localhost
+
+RETURN VALUES                   *imc_rest-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+                         Cisco IMC XML output for the login, translated to JSON using Cobra convention
+   aaLogin      success  Sample:
+   dictionary            "attributes": { "cookie": "", "outCookie": "1498902428/9de6dc36-417c-157c-106c-139efe2dc02a", "outPriv": "admin", "outRefreshPeriod": "600", "outSessionId": "114",
+                         "outVersion": "2.0(13e)", "response": "yes" }
+   configConfMo success  Cisco IMC XML output for any configConfMo XML fragments, translated to JSON using Cobra convention
+   dictionary
+   elapsed               Elapsed time in seconds
+   integer      always   Sample:
+                         31
+                         Cisco IMC XML error output for last request, translated to JSON using Cobra convention
+   error        failed   Sample:
+   dictionary            "attributes": { "cookie": "", "errorCode": "ERR-xml-parse-error", "errorDescr": "XML PARSING ERROR: Element 'computeRackUnit', attribute 'admin_Power': The attribute
+                         'admin_Power' is not allowed. ", "invocationResult": "594", "response": "yes" }
+   error_code            Cisco IMC error code
+   string       failed   Sample:
+                         ERR-xml-parse-error
+   error_text            Cisco IMC error message
+   string       failed   Sample:
+                         XML PARSING ERROR: Element 'computeRackUnit', attribute 'admin_Power': The attribute 'admin_Power' is not allowed.
+   input                 RAW XML input sent to the Cisco IMC, causing the error
+   string       failed   Sample:
+                         <configConfMo><inConfig><computeRackUnit dn="sys/rack-unit-1" admin_Power="down"/></inConfig></configConfMo>
+                         RAW XML output received from the Cisco IMC, with error details
+   output       failed   Sample:
+   string                <error cookie="" response="yes" errorCode="ERR-xml-parse-error" invocationResult="594" errorDescr="XML PARSING ERROR: Element 'computeRackUnit', attribute 'admin_Power':
+                         The attribute 'admin_Power' is not allowed.\n"/>
+   response              HTTP response message, including content length
+   string       always   Sample:
+                         OK (729 bytes)
+   status                The HTTP response status code
+   dictionary   always   Sample:
+                         200
+
+STATUS                   *imc_rest-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *imc_rest-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/imc_rest_module.html

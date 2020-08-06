@@ -1,30 +1,146 @@
-SYNOPSIS                           *portage*
+SYNOPSIS                   *portage*
 
-New in version 1.6.
+     • Manages Gentoo packages
 
-Manages Gentoo packages
+REQUIREMENTS                   *portage-requirements*
 
-EXAMPLES                           *portage-examples*
->
-    # Make sure package foo is installed
-    - portage: package=foo state=present
-   
-    # Make sure package foo is not installed
-    - portage: package=foo state=absent
-   
-    # Update package foo to the "best" version
-    - portage: package=foo update=yes
-   
-    # Sync repositories and update world
-    - portage: package=@world update=yes deep=yes sync=yes
-   
-    # Remove unneeded packages
-    - portage: depclean=yes
-   
-    # Remove package foo if it is not explicitly needed
-    - portage: package=foo state=absent depclean=yes
-   
+   The below requirements are needed on the host that executes this module.
+
+     • gentoolkit
+
+PARAMETERS                   *portage-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   changed_use    Choices:       Include installed packages where USE flags have changed, except when
+   boolean        • no ←         flags that the user has not enabled are added or removed
+                  • yes          (--changed-use)
+   deep           Choices:
+   boolean        • no ←         Consider the entire dependency tree of packages (--deep)
+                  • yes
+   depclean       Choices:       Remove packages not needed by explicitly merged packages (--depclean)
+   boolean        • no ←         If no package is specified, clean up the world's dependencies
+                  • yes          Otherwise, --depclean serves as a dependency aware version of --unmerge
+   getbinpkg      Choices:
+   boolean        • no ←         Prefer packages specified at PORTAGE_BINHOST in make.conf
+                  • yes
+   jobs                          Specifies the number of packages to build simultaneously.
+   -                             Since version 2.6: Value of 0 or False resets any previously added
+                                 --jobs setting values
+   keepgoing      Choices:
+   boolean        • no ←         Continue as much as possible after an error.
+                  • yes
+                                 Specifies that no new builds should be started if there are
+   loadavg                       other builds running and the load average is at least LOAD
+   -                             Since version 2.6: Value of 0 or False resets any previously added
+                                 --load-average setting values
+   newuse         Choices:
+   boolean        • no ←         Include installed packages where USE flags have changed (--newuse)
+                  • yes
+   nodeps         Choices:
+   boolean        • no ←         Only merge packages but not their dependencies (--nodeps)
+                  • yes
+   noreplace      Choices:
+   boolean        • no           Do not re-emerge installed packages (--noreplace)
+                  • yes ←
+   oneshot        Choices:
+   boolean        • no ←         Do not add the packages to the world file (--oneshot)
+                  • yes
+   onlydeps       Choices:
+   boolean        • no ←         Only merge packages' dependencies but not the packages (--onlydeps)
+                  • yes
+   package                       Package atom or set, e.g. sys-apps/foo or >foo-2.13 or @world
+   -
+   quiet          Choices:
+   boolean        • no ←         Run emerge in quiet mode (--quiet)
+                  • yes
+   quietbuild     Choices:       Redirect all build output to logs alone, and do not display it
+   boolean        • no ←         on stdout (--quiet-build)
+   added in 2.6   • yes
+   quietfail      Choices:       Suppresses display of the build log on stdout (--quiet-fail)
+   boolean        • no ←         Only the die message and the path of the build log will be
+   added in 2.6   • yes          displayed on stdout.
+                  Choices:
+                  • present ←
+                  • installed
+   state          • emerged      State of the package atom
+   -              • absent
+                  • removed
+                  • unmerged
+                  • latest
+                  Choices:       Sync package repositories first
+   sync           • web          If yes, perform "emerge --sync"
+   -              • yes          If web, perform "emerge-webrsync"
+                  • no
+   update         Choices:
+   boolean        • no ←         Update packages to the best version available (--update)
+                  • yes
+   usepkgonly     Choices:
+   boolean        • no ←         Merge only binaries (no compiling). This sets getbinpkg=yes.
+                  • yes
+   verbose        Choices:
+   boolean        • no ←         Run emerge in verbose mode (--verbose)
+                  • yes
+
+EXAMPLES                   *portage-examples*
+
+ # Make sure package foo is installed
+ - portage:
+     package: foo
+     state: present
+
+ # Make sure package foo is not installed
+ - portage:
+     package: foo
+     state: absent
+
+ # Update package foo to the "latest" version ( os specific alternative to latest )
+ - portage:
+     package: foo
+     update: yes
+
+ # Install package foo using PORTAGE_BINHOST setup
+ - portage:
+     package: foo
+     getbinpkg: yes
+
+ # Re-install world from binary packages only and do not allow any compiling
+ - portage:
+     package: '@world'
+     usepkgonly: yes
+
+ # Sync repositories and update world
+ - portage:
+     package: '@world'
+     update: yes
+     deep: yes
+     sync: yes
+
+ # Remove unneeded packages
+ - portage:
+     depclean: yes
+
+ # Remove package foo if it is not explicitly needed
+ - portage:
+     package: foo
+     state: absent
+     depclean: yes
+
+STATUS                   *portage-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • William L Thomson Jr (@wltjr)
+     • Yap Sok Ann (@sayap)
+     • Andrew Udvare (@Tatsh)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *portage-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/portage_module.html
+https://docs.ansible.com/ansible/latest/modules/portage_module.html

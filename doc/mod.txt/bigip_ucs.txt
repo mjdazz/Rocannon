@@ -1,0 +1,160 @@
+SYNOPSIS                   *bigip_ucs*
+
+     • Manage upload, installation and removal of UCS files.
+
+PARAMETERS                   *bigip_ucs-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   force                          Choices:       If yes will upload the file every time and replace the file on the device. If no, the file will only be uploaded if it does not already exist.
+   boolean                        • no ←         Generally should be yes only in cases where you have reason to believe that the image was corrupted during upload.
+                                  • yes
+   include_chassis_level_config   Choices:       During restore of the UCS file, include chassis level configuration that is shared among boot volume sets. For example, cluster default
+   boolean                        • no           configuration.
+                                  • yes
+   no_license                     Choices:       Performs a full restore of the UCS file and all the files it contains, with the exception of the license file. The option must be used to restore a
+   boolean                        • no           UCS on RMA devices (Returned Materials Authorization).
+                                  • yes
+   no_platform_check              Choices:       Bypasses the platform check and allows a UCS that was created using a different platform to be installed. By default (without this option), a UCS
+   boolean                        • no           created from a different platform is not allowed to be installed.
+                                  • yes
+   passphrase                                    Specifies the passphrase that is necessary to load the specified UCS file.
+   string
+   provider
+   dictionary                                    A dict object containing connection details.
+   added in 2.5
+         auth_provider                           Configures the auth provider for to obtain authentication tokens from the remote device.
+         string                                  This option is really used when working with BIG-IQ devices.
+         password                                The password for the user account used to connect to the BIG-IP.
+         string / required                       You may omit this option by setting the environment variable F5_PASSWORD.
+                                                 aliases: pass, pwd
+         server                                  The BIG-IP host.
+         string / required                       You may omit this option by setting the environment variable F5_SERVER.
+         server_port            Default:         The BIG-IP server port.
+         integer                443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+         ssh_keyfile                             Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+         path                                    You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+         timeout                                 Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+         integer                                 before the operation is completed, the module will error.
+         transport                Choices:
+         string                   • cli          Configures the transport connection to use when connecting to the remote device.
+                                  • rest ←
+         user                                    The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+         string / required                       You may omit this option by setting the environment variable F5_USER.
+         validate_certs           Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+         boolean                  • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                                  • yes ←
+   reset_trust                    Choices:
+   boolean                        • no           When specified, the device and trust domain certs and keys are not loaded from the UCS. Instead, a new set is regenerated.
+                                  • yes
+                                  Choices:       When installed, ensures that the UCS is uploaded and installed, on the system. When present, ensures that the UCS is uploaded. When absent, the UCS
+   state                          • absent       will be removed from the system. When installed, the uploading of the UCS is idempotent, however the installation of that configuration is not
+   string                         • installed    idempotent.
+                                  • present ←
+   ucs                                           The path to the UCS file to install. The parameter must be provided if the state is either installed or activated. When state is absent, the full
+   string                                        path for this parameter will be ignored and only the filename will be used to select a UCS for removal. Therefore you could specify
+                                                 /mickey/mouse/test.ucs and this module would only look for test.ucs.
+
+NOTES                   *bigip_ucs-notes*
+
+   Note
+
+     • Only the most basic checks are performed by this module. Other checks and considerations need to be taken into account. See the following URL.
+       https://support.f5.com/kb/en-us/solutions/public/11000/300/sol11318.html
+     • This module does not handle devices with the FIPS 140 HSM
+     • This module does not handle BIG-IPs systems on the 6400, 6800, 8400, or 8800 hardware platform.
+     • This module does not verify that the new or replaced SSH keys from the UCS file are synchronized between the BIG-IP system and the SCCP
+     • This module does not support the ‘rma’ option
+     • This module does not support restoring a UCS archive on a BIG-IP 1500, 3400, 4100, 6400, 6800, or 8400 hardware platform other than the system from which the backup was created
+     • The UCS restore operation restores the full configuration only if the hostname of the target system matches the hostname on which the UCS archive was created. If the hostname does not match,
+       only the shared configuration is restored. You can ensure hostnames match by using the bigip_hostname Ansible module in a task before using this module.
+     • This module does not support re-licensing a BIG-IP restored from a UCS
+     • This module does not support restoring encrypted archives on replacement RMA units.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_ucs-examples*
+
+ - name: Upload UCS
+   bigip_ucs:
+     ucs: /root/bigip.localhost.localdomain.ucs
+     state: present
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Install (upload, install) UCS.
+   bigip_ucs:
+     ucs: /root/bigip.localhost.localdomain.ucs
+     state: installed
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Install (upload, install) UCS without installing the license portion
+   bigip_ucs:
+     ucs: /root/bigip.localhost.localdomain.ucs
+     state: installed
+     no_license: yes
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Install (upload, install) UCS except the license, and bypassing the platform check
+   bigip_ucs:
+     ucs: /root/bigip.localhost.localdomain.ucs
+     state: installed
+     no_license: yes
+     no_platform_check: yes
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Install (upload, install) UCS using a passphrase necessary to load the UCS
+   bigip_ucs:
+     ucs: /root/bigip.localhost.localdomain.ucs
+     state: installed
+     passphrase: MyPassphrase1234
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Remove uploaded UCS file
+   bigip_ucs:
+     ucs: bigip.localhost.localdomain.ucs
+     state: absent
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+STATUS                   *bigip_ucs-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_ucs-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_ucs_module.html

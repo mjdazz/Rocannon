@@ -1,0 +1,154 @@
+SYNOPSIS                   *maven_artifact*
+
+     • Downloads an artifact from a maven repository given the maven coordinates provided to the module.
+     • Can retrieve snapshots or release versions of the artifact and will resolve the latest available version if one is not available.
+
+REQUIREMENTS                   *maven_artifact-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • lxml
+     • boto if using a S3 repository (s3://…)
+
+PARAMETERS                   *maven_artifact-parameters*
+
+      Parameter           Choices/Defaults                                                                              Comments
+   artifact_id                                     The maven artifactId coordinate
+   - / required
+                                                   The attributes the resulting file or directory should have.
+   attributes                                      To get supported flags look at the man page for chattr on the target system.
+   string                                          This string should contain the attributes in the same order as the one displayed by lsattr.
+                                                   The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                                   aliases: attr
+   classifier                                      The maven classifier coordinate
+   -
+   dest                                            The path where the artifact should be written to
+   - / required                                    If file mode or ownerships are specified and destination path already exists, they affect the downloaded file
+   extension       Default:                        The maven type/extension coordinate
+   -               "jar"
+   group                                           Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   group_id                                        The Maven groupId coordinate
+   - / required
+   headers
+   dictionary                                      Add custom HTTP headers to a request in hash/dict format.
+   added in 2.8
+   keep_name         Choices:                      If yes, the downloaded artifact's name is preserved, i.e the version number remains part of it.
+   boolean           • no ←                        This option only has effect when dest is a directory and version is set to latest.
+   added in 2.4      • yes
+                                                   The permissions the resulting file or directory should have.
+                                                   For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser
+                                                   knows it is an octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion
+   mode                                            from string into number.
+   string                                          Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                                   As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                                   As of Ansible 2.6, the mode may also be the special string preserve.
+                                                   When set to preserve the file will be given the same permissions as the source file.
+   owner                                           Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   password                                        The password to authenticate with to the Maven Repository. Use AWS secret access key of the repository is hosted on S3
+   -                                               aliases: aws_secret_access_key
+   repository_url  Default:                        The URL of the Maven Repository to download from.
+   -               "http://repo1.maven.org/maven2" Use s3://... if the repository is hosted on Amazon S3, added in version 2.2.
+                                                   Use file://... if the repository is local, added in version 2.6
+   selevel         Default:                        The level part of the SELinux file context.
+   string          "s0"                            This is the MLS/MCS attribute, sometimes known as the range.
+                                                   When set to _default, it will use the level portion of the policy if available.
+   serole                                          The role part of the SELinux file context.
+   string                                          When set to _default, it will use the role portion of the policy if available.
+   setype                                          The type part of the SELinux file context.
+   string                                          When set to _default, it will use the type portion of the policy if available.
+   seuser                                          The user part of the SELinux file context.
+   string                                          By default it uses the system policy, where applicable.
+                                                   When set to _default, it will use the user portion of the policy if available.
+   state             Choices:
+   -                 • present ←                   The desired state of the artifact
+                     • absent
+   timeout         Default:                        Specifies a timeout in seconds for the connection attempt
+   -               10
+                                                   Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                                   By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are
+   unsafe_writes     Choices:                      configured or just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the
+   boolean           • no ←                        container and can only be written in an unsafe manner.
+                     • yes                         This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to
+                                                   perform unsafe writes).
+                                                   IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   username                                        The username to authenticate as to the Maven Repository. Use AWS secret key of the repository is hosted on S3
+   -                                               aliases: aws_secret_key
+   validate_certs    Choices:
+   boolean           • no                          If no, SSL certificates will not be validated. This should only be set to no when no other option exists.
+                     • yes ←
+                                                   If never, the md5 checksum will never be downloaded and verified.
+                     Choices:                      If download, the md5 checksum will be downloaded and verified only after artifact download. This is the default.
+   verify_checksum   • never                       If change, the md5 checksum will be downloaded and verified if the destination already exist, to verify if they are identical. This was the
+   -                 • download ←                  behaviour before 2.6. Since it downloads the md5 before (maybe) downloading the artifact, and since some repository software, when acting as a
+   added in 2.6      • change                      proxy/cache, return a 404 error if the artifact has not been cached yet, it may fail unexpectedly. If you still need it, you should consider using
+                     • always                      always instead - if you deal with a checksum, it is better to use it to verify integrity after download.
+                                                   always combines download and change.
+   version         Default:                        The maven version coordinate
+   -               "latest"
+
+EXAMPLES                   *maven_artifact-examples*
+
+ # Download the latest version of the JUnit framework artifact from Maven Central
+ - maven_artifact:
+     group_id: junit
+     artifact_id: junit
+     dest: /tmp/junit-latest.jar
+
+ # Download JUnit 4.11 from Maven Central
+ - maven_artifact:
+     group_id: junit
+     artifact_id: junit
+     version: 4.11
+     dest: /tmp/junit-4.11.jar
+
+ # Download an artifact from a private repository requiring authentication
+ - maven_artifact:
+     group_id: com.company
+     artifact_id: library-name
+     repository_url: 'https://repo.company.com/maven'
+     username: user
+     password: pass
+     dest: /tmp/library-name-latest.jar
+
+ # Download a WAR File to the Tomcat webapps directory to be deployed
+ - maven_artifact:
+     group_id: com.company
+     artifact_id: web-app
+     extension: war
+     repository_url: 'https://repo.company.com/maven'
+     dest: /var/lib/tomcat7/webapps/web-app.war
+
+ # Keep a downloaded artifact's name, i.e. retain the version
+ - maven_artifact:
+     version: latest
+     artifact_id: spring-core
+     group_id: org.springframework
+     dest: /tmp/
+     keep_name: yes
+
+ # Download the latest version of the JUnit framework artifact from Maven local
+ - maven_artifact:
+     group_id: junit
+     artifact_id: junit
+     dest: /tmp/junit-latest.jar
+     repository_url: "file://{{ lookup('env','HOME') }}/.m2/repository"
+
+STATUS                   *maven_artifact-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Schmidt (@chrisisbeef)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *maven_artifact-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/maven_artifact_module.html

@@ -1,0 +1,92 @@
+SYNOPSIS                   *vmware_category_info*
+
+     • This module can be used to gather information about VMware tag categories.
+     • Tag feature is introduced in vSphere 6 version, so this module is not supported in earlier versions of vSphere.
+     • All variables and VMware object names are case sensitive.
+
+REQUIREMENTS                   *vmware_category_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+     • vSphere Automation SDK
+
+PARAMETERS                   *vmware_category_info-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   hostname                        The hostname or IP address of the vSphere vCenter server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+   password                        The password of the vSphere vCenter server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+                                   aliases: pass, pwd
+   protocol         Choices:
+   string           • http         The connection to protocol.
+                    • https ←
+   username                        The username of the vSphere vCenter server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+                                   aliases: admin, user
+   validate_certs   Choices:       Allows connection when SSL certificates are not valid.
+   boolean          • no           Set to no when certificates are not trusted.
+                    • yes ←        If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+
+NOTES                   *vmware_category_info-notes*
+
+   Note
+
+     • Tested on vSphere 6.5
+
+EXAMPLES                   *vmware_category_info-examples*
+
+ - name: Gather info about tag categories
+   vmware_category_info:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+   delegate_to: localhost
+   register: all_tag_category_info
+
+ - name: Gather category id from given tag category
+   vmware_category_info:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+   delegate_to: localhost
+   register: tag_category_results
+
+ - set_fact:
+     category_id: "{{ item.category_id }}"
+   loop: "{{ tag_category_results.tag_category_info|json_query(query) }}"
+   vars:
+     query: "[?category_name==`Category0001`]"
+ - debug: var=category_id
+
+RETURN VALUES                   *vmware_category_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+                              metadata of tag categories
+                              Sample:
+   tag_category_info always   [{'category_associable_types': [], 'category_cardinality': 'MULTIPLE', 'category_description': 'awesome description', 'category_id':
+   list                       'urn:vmomi:InventoryServiceCategory:e785088d-6981-4b1c-9fb8-1100c3e1f742:GLOBAL', 'category_name': 'Category0001', 'category_used_by': []},
+                              {'category_associable_types': ['VirtualMachine'], 'category_cardinality': 'SINGLE', 'category_description': 'another awesome description', 'category_id':
+                              'urn:vmomi:InventoryServiceCategory:ae5b7c6c-e622-4671-9b96-76e93adb70f2:GLOBAL', 'category_name': 'template_tag', 'category_used_by': []}]
+
+STATUS                   *vmware_category_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_category_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_category_info_module.html

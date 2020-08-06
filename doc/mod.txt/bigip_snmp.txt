@@ -1,0 +1,120 @@
+SYNOPSIS                   *bigip_snmp*
+
+     • Manipulate general SNMP settings on a BIG-IP.
+
+PARAMETERS                   *bigip_snmp-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   agent_authentication_traps   Choices:
+   string                       • enabled      When enabled, ensures that the system sends authentication warning traps to the trap destinations. This is usually disabled by default on a BIG-IP.
+                                • disabled
+   agent_status_traps           Choices:       When enabled, ensures that the system sends a trap whenever the SNMP agent starts running or stops running. This is usually enabled by default on a
+   string                       • enabled      BIG-IP.
+                                • disabled
+   allowed_addresses                           Configures the IP addresses of the SNMP clients from which the snmpd daemon accepts requests.
+   raw                                         This value can be hostnames, IP addresses, or IP networks.
+   added in 2.6                                You may specify a single list item of default to set the value back to the system's default of 127.0.0.0/8.
+                                               You can remove all allowed addresses by either providing the word none, or by providing the empty string "".
+   contact                                     Specifies the name of the person who administers the SNMP service for this system.
+   string
+   device_warning_traps         Choices:
+   string                       • enabled      When enabled, ensures that the system sends device warning traps to the trap destinations. This is usually enabled by default on a BIG-IP.
+                                • disabled
+   location                                    Specifies the description of this system's physical location.
+   string
+   provider
+   dictionary                                  A dict object containing connection details.
+   added in 2.5
+        auth_provider                          Configures the auth provider for to obtain authentication tokens from the remote device.
+        string                                 This option is really used when working with BIG-IQ devices.
+        password                               The password for the user account used to connect to the BIG-IP.
+        string / required                      You may omit this option by setting the environment variable F5_PASSWORD.
+                                               aliases: pass, pwd
+        server                                 The BIG-IP host.
+        string / required                      You may omit this option by setting the environment variable F5_SERVER.
+        server_port           Default:         The BIG-IP server port.
+        integer               443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+        ssh_keyfile                            Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+        path                                   You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+        timeout                                Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+        integer                                before the operation is completed, the module will error.
+        transport               Choices:
+        string                  • cli          Configures the transport connection to use when connecting to the remote device.
+                                • rest ←
+        user                                   The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+        string / required                      You may omit this option by setting the environment variable F5_USER.
+        validate_certs          Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+        boolean                 • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                                • yes ←
+
+NOTES                   *bigip_snmp-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_snmp-examples*
+
+ - name: Set snmp contact
+   bigip_snmp:
+     contact: Joe User
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set snmp location
+   bigip_snmp:
+     location: US West 1
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_snmp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   agent_authentication_traps          Value that the authentication status traps was set to.
+   string                     changed  Sample:
+                                       enabled
+   agent_status_traps                  Value that the agent status traps was set to.
+   string                     changed  Sample:
+                                       enabled
+   allowed_addresses                   The new allowed addresses for SNMP client connections.
+   list                       changed  Sample:
+                                       ['127.0.0.0/8', 'foo.bar.com', '10.10.10.10']
+   contact                             The new value for the person who administers SNMP on the device.
+   string                     changed  Sample:
+                                       Joe User
+   device_warning_traps                Value that the warning status traps was set to.
+   string                     changed  Sample:
+                                       enabled
+   location                            The new value for the system's physical location.
+   string                     changed  Sample:
+                                       US West 1a
+
+STATUS                   *bigip_snmp-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_snmp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_snmp_module.html

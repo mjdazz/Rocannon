@@ -1,0 +1,183 @@
+SYNOPSIS                   *sns_topic*
+
+     • The sns_topic module allows you to create, delete, and manage subscriptions for AWS SNS topics. As of 2.6, this module can be use to subscribe and unsubscribe to topics outside of your AWS
+       account.
+
+REQUIREMENTS                   *sns_topic-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • python >= 2.6
+
+PARAMETERS                   *sns_topic-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   delivery_policy                               Delivery policy to apply to the SNS topic
+   -
+   display_name                                  Display name of the topic
+   -
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   name                                          The name or ARN of the SNS topic to manage
+   - / required
+   policy                                        Policy to apply to the SNS topic
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_subscriptions            Choices:       Whether to purge any subscriptions not listed here. NOTE: AWS does not allow you to purge any PendingConfirmation subscriptions, so if any exist and
+   boolean                        • no           would be purged, they are silently skipped. This means that somebody could come back later and confirm the subscription. Sorry. Blame Amazon.
+                                  • yes ←
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • absent       Whether to create or destroy an SNS topic
+                                  • present ←
+   subscriptions                Default:         List of subscriptions to apply to the topic. Note that AWS requires subscriptions to be confirmed, so you will need to confirm any new
+   -                            []               subscriptions.
+             endpoint                            Endpoint of subscription
+             - / required
+             protocol                            Protocol of subscription
+             - / required
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *sns_topic-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *sns_topic-examples*
+
+ - name: Create alarm SNS topic
+   sns_topic:
+     name: "alarms"
+     state: present
+     display_name: "alarm SNS topic"
+     delivery_policy:
+       http:
+         defaultHealthyRetryPolicy:
+             minDelayTarget: 2
+             maxDelayTarget: 4
+             numRetries: 3
+             numMaxDelayRetries: 5
+             backoffFunction: "<linear|arithmetic|geometric|exponential>"
+         disableSubscriptionOverrides: True
+         defaultThrottlePolicy:
+             maxReceivesPerSecond: 10
+     subscriptions:
+       - endpoint: "[email protected]"
+         protocol: "email"
+       - endpoint: "my_mobile_number"
+         protocol: "sms"
+
+RETURN VALUES                   *sns_topic-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key            Returned                                                                           Description
+   sns_arn                            The ARN of the topic you are modifying
+   string                    always   Sample:
+                                      arn:aws:sns:us-east-2:111111111111:my_topic_name
+   sns_topic                 always   Dict of sns topic details
+   complex
+     attributes_set          always   list of attributes set during this run
+     list
+     check_mode              always   whether check mode was on
+     boolean
+                             when     Delivery policy for the SNS topic
+     delivery_policy         topic is Sample:
+     string                  owned by {"http":{"defaultHealthyRetryPolicy":{"minDelayTarget":20,"maxDelayTarget":20,"numRetries":3,"numMaxDelayRetries":0,
+                             this AWS "numNoDelayRetries":0,"numMinDelayRetries":0,"backoffFunction":"linear"},"disableSubscriptionOverrides":false}}
+                             account
+                             when
+     display_name            topic is Display name for SNS topic
+     string                  owned by Sample:
+                             this AWS My topic name
+                             account
+     name                             Topic name
+     string                  always   Sample:
+                                      ansible-test-dummy-topic
+                             when
+     owner                   topic is AWS account that owns the topic
+     string                  owned by Sample:
+                             this AWS 111111111111
+                             account
+                             when     Policy for the SNS topic
+     policy                  topic is Sample:
+     string                  owned by {"Version":"2012-10-17","Id":"SomePolicyId","Statement":[{"Sid":"ANewSid","Effect":"Allow","Principal":{"AWS":"arn:aws:iam::111111111111:root"},
+                             this AWS "Action":"sns:Subscribe","Resource":"arn:aws:sns:us-east-2:111111111111:ansible-test-dummy-topic","Condition":{"StringEquals":{"sns:Protocol":"email"}}}]}
+                             account
+     state                            whether the topic is present or absent
+     string                  always   Sample:
+                                      present
+     subscriptions           always   List of subscribers to the topic in this AWS account
+     list
+     subscriptions_added     always   List of subscribers added in this run
+     list
+                             when
+     subscriptions_confirmed topic is Count of confirmed subscriptions
+     string                  owned by Sample:
+                             this AWS 0
+                             account
+                             when
+     subscriptions_deleted   topic is Count of deleted subscriptions
+     string                  owned by Sample:
+                             this AWS 0
+                             account
+     subscriptions_existing  always   List of existing subscriptions
+     list
+     subscriptions_new       always   List of new subscriptions
+     list
+                             when
+     subscriptions_pending   topic is Count of pending subscriptions
+     string                  owned by Sample:
+                             this AWS 0
+                             account
+     subscriptions_purge              Whether or not purge_subscriptions was set
+     boolean                 always   Sample:
+                                      True
+                             when
+     topic_arn               topic is ARN of the SNS topic (equivalent to sns_arn)
+     string                  owned by Sample:
+                             this AWS arn:aws:sns:us-east-2:111111111111:ansible-test-dummy-topic
+                             account
+     topic_created           always   Whether the topic was created
+     boolean
+     topic_deleted           always   Whether the topic was deleted
+     boolean
+
+STATUS                   *sns_topic-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joel Thompson (@joelthompson)
+     • Fernando Jose Pando (@nand0p)
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sns_topic-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sns_topic_module.html

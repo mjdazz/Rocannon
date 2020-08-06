@@ -1,0 +1,143 @@
+SYNOPSIS                   *nsupdate*
+
+     • Create, update and remove DNS records using DDNS updates
+
+REQUIREMENTS                   *nsupdate-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • dnspython
+
+PARAMETERS                   *nsupdate-parameters*
+
+     Parameter          Choices/Defaults                                                                              Comments
+                   Choices:
+                   • HMAC-MD5.SIG-ALG.REG.INT
+                   • hmac-md5 ←
+   key_algorithm   • hmac-sha1                  Specify key algorithm used by key_secret.
+   -               • hmac-sha224
+                   • hmac-sha256
+                   • hmac-sha384
+                   • hmac-sha512
+   key_name                                     Use TSIG key name to authenticate against DNS server
+   -
+   key_secret                                   Use TSIG key secret, associated with key_name, to authenticate against server
+   -
+   port          Default:
+   -             53                             Use this TCP port when connecting to server.
+   added in 2.5
+   protocol        Choices:
+   -               • tcp ←                      Sets the transport protocol (TCP or UDP). TCP is the recommended and a more robust option.
+   added in 2.8    • udp
+   record                                       Sets the DNS record to modify. When zone is omitted this has to be absolute (ending with a dot).
+   - / required
+   server                                       Apply DNS modification on this server.
+   - / required
+   state           Choices:
+   -               • present ←                  Manage DNS record.
+                   • absent
+   ttl           Default:                       Sets the record TTL.
+   -             3600
+   type          Default:                       Sets the record type.
+   -             "A"
+   value                                        Sets the record value.
+   -
+   zone                                         DNS record will be modified on this zone.
+   -                                            When omitted DNS will be queried to attempt finding the correct zone.
+                                                Starting with Ansible 2.7 this parameter is optional.
+
+EXAMPLES                   *nsupdate-examples*
+
+ - name: Add or modify ansible.example.org A to 192.168.1.1"
+   nsupdate:
+     key_name: "nsupdate"
+     key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+     server: "10.1.1.1"
+     zone: "example.org"
+     record: "ansible"
+     value: "192.168.1.1"
+
+ - name: Add or modify ansible.example.org A to 192.168.1.1, 192.168.1.2 and 192.168.1.3"
+   nsupdate:
+     key_name: "nsupdate"
+     key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+     server: "10.1.1.1"
+     zone: "example.org"
+     record: "ansible"
+     value: ["192.168.1.1", "192.168.1.2", "192.168.1.3"]
+
+ - name: Remove puppet.example.org CNAME
+   nsupdate:
+     key_name: "nsupdate"
+     key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+     server: "10.1.1.1"
+     zone: "example.org"
+     record: "puppet"
+     type: "CNAME"
+     state: absent
+
+ - name: Add 1.1.168.192.in-addr.arpa. PTR for ansible.example.org
+   nsupdate:
+     key_name: "nsupdate"
+     key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+     server: "10.1.1.1"
+     record: "1.1.168.192.in-addr.arpa."
+     type: "PTR"
+     value: "ansible.example.org."
+     state: present
+
+ - name: Remove 1.1.168.192.in-addr.arpa. PTR
+   nsupdate:
+     key_name: "nsupdate"
+     key_secret: "+bFQtBCta7j2vWkjPkAFtgA=="
+     server: "10.1.1.1"
+     record: "1.1.168.192.in-addr.arpa."
+     type: "PTR"
+     state: absent
+
+RETURN VALUES                   *nsupdate-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed    success  If module has modified record
+   string
+   dns_rc              dnspython return code
+   integer    always   Sample:
+                       4
+   dns_rc_str          dnspython return code (string representation)
+   string     always   Sample:
+                       REFUSED
+   record              DNS record
+   string     success  Sample:
+                       ansible
+   ttl                 DNS record TTL
+   integer    success  Sample:
+                       86400
+   type                DNS record type
+   string     success  Sample:
+                       CNAME
+   value               DNS record value(s)
+   list       success  Sample:
+                       192.168.1.1
+   zone                DNS record zone
+   string     success  Sample:
+                       example.org.
+
+STATUS                   *nsupdate-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Loic Blot (@nerzhul)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nsupdate-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nsupdate_module.html

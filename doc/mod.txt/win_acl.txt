@@ -1,0 +1,124 @@
+SYNOPSIS                   *win_acl*
+
+     • Add or remove rights/permissions for a given user or group for the specified file, folder, registry key or AppPool identifies.
+
+PARAMETERS                   *win_acl-parameters*
+
+    Parameter     Choices/Defaults                                                                               Comments
+                                      Inherit flags on the ACL rules.
+   inherit       Choices:             Can be specified as a comma separated list, e.g. ContainerInherit, ObjectInherit.
+   string        • ContainerInherit   For more information on the choices see MSDN InheritanceFlags enumeration at
+                 • ObjectInherit      https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx.
+                                      Defaults to ContainerInherit, ObjectInherit for Directories.
+   path
+   string /                           The path to the file or directory.
+   required
+                 Choices:             Propagation flag on the ACL rules.
+   propagation   • InheritOnly        For more information on the choices see MSDN PropagationFlags enumeration at
+   string        • None ←             https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.propagationflags.aspx.
+                 • NoPropagateInherit
+                                      The rights/permissions that are to be allowed/denied for the specified user or group for the item at path.
+   rights                             If path is a file or directory, rights can be any right under MSDN FileSystemRights
+   string /                           https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights.aspx.
+   required                           If path is a registry key, rights can be any right under MSDN RegistryRights
+                                      https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx.
+   state         Choices:
+   string        • absent             Specify whether to add present or remove absent the specified access rule.
+                 • present ←
+   type          Choices:
+   string /      • allow              Specify whether to allow or deny the rights specified.
+   required      • deny
+   user
+   string /                           User or Group to add specified rights to act on src file/folder or registry key.
+   required
+
+NOTES                   *win_acl-notes*
+
+   Note
+
+     • If adding ACL’s for AppPool identities (available since 2.3), the Windows Feature “Web-Scripting-Tools” must be enabled.
+
+SEE ALSO                   *win_acl-see also*
+
+   See also
+
+   win_acl_inheritance – Change ACL inheritance
+   The official documentation on the win_acl_inheritance module.
+
+   win_file – Creates, touches or removes files or directories
+   The official documentation on the win_file module.
+
+   win_owner – Set owner
+   The official documentation on the win_owner module.
+
+   win_stat – Get information about Windows files
+   The official documentation on the win_stat module.
+
+EXAMPLES                   *win_acl-examples*
+
+ - name: Restrict write and execute access to User Fed-Phil
+   win_acl:
+     user: Fed-Phil
+     path: C:\Important\Executable.exe
+     type: deny
+     rights: ExecuteFile,Write
+
+ - name: Add IIS_IUSRS allow rights
+   win_acl:
+     path: C:\inetpub\wwwroot\MySite
+     user: IIS_IUSRS
+     rights: FullControl
+     type: allow
+     state: present
+     inherit: ContainerInherit, ObjectInherit
+     propagation: 'None'
+
+ - name: Set registry key right
+   win_acl:
+     path: HKCU:\Bovine\Key
+     user: BUILTIN\Users
+     rights: EnumerateSubKeys
+     type: allow
+     state: present
+     inherit: ContainerInherit, ObjectInherit
+     propagation: 'None'
+
+ - name: Remove FullControl AccessRule for IIS_IUSRS
+   win_acl:
+     path: C:\inetpub\wwwroot\MySite
+     user: IIS_IUSRS
+     rights: FullControl
+     type: allow
+     state: absent
+     inherit: ContainerInherit, ObjectInherit
+     propagation: 'None'
+
+ - name: Deny Intern
+   win_acl:
+     path: C:\Administrator\Documents
+     user: Intern
+     rights: Read,Write,Modify,FullControl,Delete
+     type: deny
+     state: present
+
+STATUS                   *win_acl-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_acl-red hat support*
+
+     • Phil Schwartz (@schwartzmx)
+     • Trond Hindenes (@trondhindenes)
+     • Hans-Joachim Kliemeck (@h0nIg)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_acl-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_acl_module.html

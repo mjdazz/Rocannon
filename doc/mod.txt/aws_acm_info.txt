@@ -1,0 +1,192 @@
+SYNOPSIS                   *aws_acm_info*
+
+     • Retrieve information for ACM certificates
+     • This module was called aws_acm_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: aws_acm_facts
+
+REQUIREMENTS                   *aws_acm_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *aws_acm_info-parameters*
+
+            Parameter               Choices/Defaults                                                                       Comments
+   aws_access_key                                        AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                                aliases: ec2_access_key, access_key
+   aws_secret_key                                        AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                                aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:               Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to
+   boolean                        • no ←                 the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes                  ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   domain_name                                           The domain name of an ACM certificate to limit the search to
+   -                                                     aliases: name
+   ec2_url                                               Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                                required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if
+                                                         any, is used.
+   profile                                               Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                                The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                                http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                         aliases: aws_region, ec2_region
+   security_token                                        AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                                aliases: access_token
+                                  Choices:
+                                  • PENDING_VALIDATION
+                                  • ISSUED
+   statuses                       • INACTIVE             Status to filter the certificate results
+   -                              • EXPIRED
+                                  • VALIDATION_TIMED_OUT
+                                  • REVOKED
+                                  • FAILED
+   validate_certs                 Choices:
+   boolean                        • no                   When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *aws_acm_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_acm_info-examples*
+
+ - name: obtain all ACM certificates
+   aws_acm_info:
+
+ - name: obtain all information for a single ACM certificate
+   aws_acm_info:
+     domain_name: "".example_com"
+
+ - name: obtain all certificates pending validation
+   aws_acm_info:
+     statuses:
+     - PENDING_VALIDATION
+
+RETURN VALUES                   *aws_acm_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key                                           Returned                                                                         Description
+   certificates                  always                                                              A list of certificates
+   complex
+     certificate                                                                                     The ACM Certificate body
+     string                      when certificate creation is complete                               Sample:
+                                                                                                     -----BEGIN CERTIFICATE-----\nMII.....-----END CERTIFICATE-----\n
+     certificate_arn                                                                                 Certificate ARN
+     string                      always                                                              Sample:
+                                                                                                     arn:aws:acm:ap-southeast-2:123456789012:certificate/abcd1234-abcd-1234-abcd-123456789abc
+     certificate_chain                                                                               Full certificate chain for the certificate
+     string                      when certificate creation is complete                               Sample:
+                                                                                                     -----BEGIN CERTIFICATE-----\nMII...\n-----END CERTIFICATE-----\n-----BEGIN CERTIFICATE-----\n...
+     created_at                                                                                      Date certificate was created
+     string                      always                                                              Sample:
+                                                                                                     2017-08-15T10:31:19+10:00
+     domain_name                                                                                     Domain name for the certificate
+     string                      always                                                              Sample:
+                                                                                                     ".example.com
+     domain_validation_options   when certificate type is AMAZON_ISSUED                              Options used by ACM to validate the certificate
+     complex
+       domain_name                                                                                   Fully qualified domain name of the certificate
+       string                    always                                                              Sample:
+                                                                                                     example.com
+       validation_domain                                                                             The domain name ACM used to send validation emails
+       string                    always                                                              Sample:
+                                                                                                     example.com
+       validation_emails                                                                             A list of email addresses that ACM used to send domain validation emails
+       list                      always                                                              Sample:
+                                                                                                     ['[email protected]', '[email protected]']
+       validation_status                                                                             Validation status of the domain
+       string                    always                                                              Sample:
+                                                                                                     SUCCESS
+     failure_reason                                                                                  Reason certificate request failed
+     string                      only when certificate issuing failed                                Sample:
+                                                                                                     NO_AVAILABLE_CONTACTS
+     in_use_by                   always                                                              A list of ARNs for the AWS resources that are using the certificate.
+     list
+     issued_at                                                                                       Date certificate was issued
+     string                      always                                                              Sample:
+                                                                                                     2017-01-01T00:00:00+10:00
+     issuer                                                                                          Issuer of the certificate
+     string                      always                                                              Sample:
+                                                                                                     Amazon
+     key_algorithm                                                                                   Algorithm used to generate the certificate
+     string                      always                                                              Sample:
+                                                                                                     RSA-2048
+     not_after                                                                                       Date after which the certificate is not valid
+     string                      always                                                              Sample:
+                                                                                                     2019-01-01T00:00:00+10:00
+     not_before                                                                                      Date before which the certificate is not valid
+     string                      always                                                              Sample:
+                                                                                                     2017-01-01T00:00:00+10:00
+     renewal_summary             when certificate is issued by Amazon and a renewal has been started Information about managed renewal process
+     complex
+       domain_validation_options when certificate type is AMAZON_ISSUED                              Options used by ACM to validate the certificate
+       complex
+            domain_name                                                                              Fully qualified domain name of the certificate
+            string               always                                                              Sample:
+                                                                                                     example.com
+            validation_domain                                                                        The domain name ACM used to send validation emails
+            string               always                                                              Sample:
+                                                                                                     example.com
+            validation_emails                                                                        A list of email addresses that ACM used to send domain validation emails
+            list                 always                                                              Sample:
+                                                                                                     ['[email protected]', '[email protected]']
+            validation_status                                                                        Validation status of the domain
+            string               always                                                              Sample:
+                                                                                                     SUCCESS
+       renewal_status                                                                                Status of the domain renewal
+       string                    always                                                              Sample:
+                                                                                                     PENDING_AUTO_RENEWAL
+     revocation_reason                                                                               Reason for certificate revocation
+     string                      when the certificate has been revoked                               Sample:
+                                                                                                     SUPERCEDED
+     revoked_at                                                                                      Date certificate was revoked
+     string                      when the certificate has been revoked                               Sample:
+                                                                                                     2017-09-01T10:00:00+10:00
+     serial                                                                                          The serial number of the certificate
+     string                      always                                                              Sample:
+                                                                                                     00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f
+     signature_algorithm                                                                             Algorithm used to sign the certificate
+     string                      always                                                              Sample:
+                                                                                                     SHA256WITHRSA
+     status                                                                                          Status of the certificate in ACM
+     string                      always                                                              Sample:
+                                                                                                     ISSUED
+     subject                                                                                         The name of the entity that is associated with the public key contained in the certificate
+     string                      always                                                              Sample:
+                                                                                                     CN=".example.com
+     subject_alternative_names                                                                       Subject Alternative Names for the certificate
+     list                        always                                                              Sample:
+                                                                                                     ['".example.com']
+     tags                                                                                            Tags associated with the certificate
+     dictionary                  always                                                              Sample:
+                                                                                                     {'Application': 'helloworld', 'Environment': 'test'}
+     type                                                                                            The source of the certificate
+     string                      always                                                              Sample:
+                                                                                                     AMAZON_ISSUED
+
+STATUS                   *aws_acm_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_acm_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_acm_info_module.html

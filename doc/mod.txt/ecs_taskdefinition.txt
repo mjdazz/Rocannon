@@ -1,0 +1,203 @@
+SYNOPSIS                   *ecs_taskdefinition*
+
+     • Registers or deregisters task definitions in the Amazon Web Services (AWS) EC2 Container Service (ECS)
+
+REQUIREMENTS                   *ecs_taskdefinition-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • json
+     • python >= 2.6
+
+PARAMETERS                   *ecs_taskdefinition-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   arn                                           The arn of the task description to delete
+   -
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   containers                                    A list of containers definitions
+   -
+   cpu                                           The number of cpu units used by the task. If using the EC2 launch type, this field is optional and any value can be used. If using the Fargate
+   -                                             launch type, this field is required and you must use one of [256, 512, 1024, 2048, 4096]
+   added in 2.7
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   execution_role_arn
+   -                                             The Amazon Resource Name (ARN) of the task execution role that the Amazon ECS container agent and the Docker daemon can assume.
+   added in 2.7
+   family                                        A Name that would be given to the task definition
+   -
+   force_create                   Choices:
+   boolean                        • no           Always create new task definition
+   added in 2.5                   • yes
+   launch_type                    Choices:
+   -                              • EC2          The launch type on which to run your task
+   added in 2.7                   • FARGATE
+   memory                                        The amount (in MiB) of memory used by the task. If using the EC2 launch type, this field is optional and any value can be used. If using the Fargate
+   -                                             launch type, this field is required and is limited by the cpu
+   added in 2.7
+                                  Choices:
+   network_mode                   • bridge ←     The Docker networking mode to use for the containers in the task.
+   -                              • host         awsvpc mode was added in Ansible 2.5
+                                  • none
+                                  • awsvpc
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   revision                                      A revision number for the task definition
+   -
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   - / required                   • present      State whether the task definition should exist or be deleted
+                                  • absent
+   task_role_arn                                 The Amazon Resource Name (ARN) of the IAM role that containers in this task can assume. All containers in this task are granted the permissions that
+   -                                             are specified in this role.
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   volumes                                       A list of names of volumes to be attached
+   -
+
+NOTES                   *ecs_taskdefinition-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ecs_taskdefinition-examples*
+
+ - name: Create task definition
+   ecs_taskdefinition:
+     containers:
+     - name: simple-app
+       cpu: 10
+       essential: true
+       image: "httpd:2.4"
+       memory: 300
+       mountPoints:
+       - containerPath: /usr/local/apache2/htdocs
+         sourceVolume: my-vol
+       portMappings:
+       - containerPort: 80
+         hostPort: 80
+       logConfiguration:
+         logDriver: awslogs
+         options:
+           awslogs-group: /ecs/test-cluster-taskdef
+           awslogs-region: us-west-2
+           awslogs-stream-prefix: ecs
+     - name: busybox
+       command:
+         - >
+           /bin/sh -c "while true; do echo '<html><head><title>Amazon ECS Sample App</title></head><body><div><h1>Amazon ECS Sample App</h1><h2>Congratulations!
+           </h2><p>Your application is now running on a container in Amazon ECS.</p>' > top; /bin/date > date ; echo '</div></body></html>' > bottom;
+           cat top date bottom > /usr/local/apache2/htdocs/index.html ; sleep 1; done"
+       cpu: 10
+       entryPoint:
+       - sh
+       - "-c"
+       essential: false
+       image: busybox
+       memory: 200
+       volumesFrom:
+       - sourceContainer: simple-app
+     volumes:
+     - name: my-vol
+     family: test-cluster-taskdef
+     state: present
+   register: task_output
+
+ - name: Create task definition
+   ecs_taskdefinition:
+     family: nginx
+     containers:
+     - name: nginx
+       essential: true
+       image: "nginx"
+       portMappings:
+       - containerPort: 8080
+         hostPort:      8080
+       cpu: 512
+       memory: 1024
+     state: present
+
+ - name: Create task definition
+   ecs_taskdefinition:
+     family: nginx
+     containers:
+     - name: nginx
+       essential: true
+       image: "nginx"
+       portMappings:
+       - containerPort: 8080
+         hostPort:      8080
+     launch_type: FARGATE
+     cpu: 512
+     memory: 1024
+     state: present
+     network_mode: awsvpc
+
+ # Create Task Definition with Environment Variables and Secrets
+ - name: Create task definition
+   ecs_taskdefinition:
+     family: nginx
+     containers:
+     - name: nginx
+       essential: true
+       image: "nginx"
+       environment:
+         - name: "PORT"
+           value: "8080"
+       secrets:
+         # For variables stored in Secrets Manager
+         - name: "NGINX_HOST"
+           valueFrom: "arn:aws:secretsmanager:us-west-2:123456789012:secret:nginx/NGINX_HOST"
+         # For variables stored in Parameter Store
+         - name: "API_KEY"
+           valueFrom: "arn:aws:ssm:us-west-2:123456789012:parameter/nginx/API_KEY"
+     launch_type: FARGATE
+     cpu: 512
+     memory: 1GB
+     state: present
+     network_mode: awsvpc
+
+RETURN VALUES                   *ecs_taskdefinition-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   taskdefinition always   a reflection of the input parameters
+   dictionary
+
+STATUS                   *ecs_taskdefinition-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mark Chance (@Java1Guy)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ecs_taskdefinition-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ecs_taskdefinition_module.html

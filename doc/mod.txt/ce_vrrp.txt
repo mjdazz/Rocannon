@@ -1,0 +1,178 @@
+SYNOPSIS                   *ce_vrrp*
+
+     • Manages VRRP interface attributes on HUAWEI CloudEngine devices.
+
+PARAMETERS                   *ce_vrrp-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+   admin_flowdown            Choices:
+   boolean                   • no ←         Disable the flowdown function for service VRRP.
+                             • yes
+   admin_ignore_if_down      Choices:
+   boolean                   • no ←         mVRRP ignores an interface Down event.
+                             • yes
+   admin_interface                          Tracked mVRRP interface name. The value is a string of 1 to 63 characters.
+   -
+   admin_vrid                               Tracked mVRRP ID. The value is an integer ranging from 1 to 255.
+   -
+   advertise_interval                       Configured interval between sending advertisements, in milliseconds. Only the master router sends VRRP advertisements. The default value is 1000
+   -                                        milliseconds.
+   auth_key                                 This object is set based on the authentication type. When noAuthentication is specified, the value is empty. When simpleTextPassword or md5Authentication
+   -                                        is specified, the value is a string of 1 to 8 characters in plaintext and displayed as a blank text for security.
+                             Choices:
+   auth_mode                 • simple       Authentication type used for VRRP packet exchanges between virtual routers. The values are noAuthentication, simpleTextPassword, md5Authentication. The
+   string                    • md5          default value is noAuthentication.
+                             • none
+   fast_resume               Choices:
+   string                    • enable       mVRRP's fast resume mode.
+                             • disable
+   gratuitous_arp_interval                  Interval at which gratuitous ARP packets are sent, in seconds. The value ranges from 30 to 1200.The default value is 300.
+   -
+   holding_multiplier                       The configured holdMultiplier.The value is an integer ranging from 3 to 10. The default value is 3.
+   -
+   interface                                Name of an interface. The value is a string of 1 to 63 characters.
+   -
+   is_plain                  Choices:
+   boolean                   • no ←         Select the display mode of an authentication key. By default, an authentication key is displayed in ciphertext.
+                             • yes
+   preempt_timer_delay                      Preemption delay. The value is an integer ranging from 0 to 3600. The default value is 0.
+   -
+   priority                                 Configured VRRP priority. The value ranges from 1 to 254. The default value is 100. A larger value indicates a higher priority.
+   -
+   recover_delay                            Delay in recovering after an interface goes Up. The delay is used for interface flapping suppression. The value is an integer ranging from 0 to 3600. The
+   -                                        default value is 0 seconds.
+   state                     Choices:
+   string                    • present ←    Specify desired state of the resource.
+                             • absent
+   version                   Choices:
+   string                    • v2           VRRP version. The default version is v2.
+                             • v3
+   virtual_ip                               Virtual IP address. The value is a string of 0 to 255 characters.
+   -
+   vrid                    Default:         VRRP backup group ID. The value is an integer ranging from 1 to 255.
+   -                       "present"
+                             Choices:
+   vrrp_type                 • normal       Type of a VRRP backup group.
+   string                    • member
+                             • admin
+
+NOTES                   *ce_vrrp-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_vrrp-examples*
+
+ - name: vrrp module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+   tasks:
+   - name: Set vrrp version
+     ce_vrrp:
+       version: v3
+       provider: "{{ cli }}"
+   - name: Set vrrp gratuitous-arp interval
+     ce_vrrp:
+       gratuitous_arp_interval: 40
+       mlag_id: 4
+       provider: "{{ cli }}"
+   - name: Set vrrp recover-delay
+     ce_vrrp:
+       recover_delay: 10
+       provider: "{{ cli }}"
+   - name: Set vrrp vrid virtual-ip
+     ce_vrrp:
+       interface: 40GE2/0/8
+       vrid: 1
+       virtual_ip: 10.14.2.7
+       provider: "{{ cli }}"
+   - name: Set vrrp vrid admin
+     ce_vrrp:
+       interface: 40GE2/0/8
+       vrid: 1
+       vrrp_type: admin
+       provider: "{{ cli }}"
+   - name: Set vrrp vrid fast_resume
+     ce_vrrp:
+       interface: 40GE2/0/8
+       vrid: 1
+       fast_resume: enable
+       provider: "{{ cli }}"
+   - name: Set vrrp vrid holding-multiplier
+     ce_vrrp:
+       interface: 40GE2/0/8
+       vrid: 1
+       holding_multiplier: 4
+       provider: "{{ cli }}"
+   - name: Set vrrp vrid preempt timer delay
+     ce_vrrp:
+       interface: 40GE2/0/8
+       vrid: 1
+       preempt_timer_delay: 10
+       provider: "{{ cli }}"
+   - name: Set vrrp vrid admin-vrrp
+     ce_vrrp:
+       interface: 40GE2/0/8
+       vrid: 1
+       admin_interface: 40GE2/0/9
+       admin_vrid: 2
+       vrrp_type: member
+       provider: "{{ cli }}"
+   - name: Set vrrp vrid authentication-mode
+     ce_vrrp:
+       interface: 40GE2/0/8
+       vrid: 1
+       is_plain: true
+       auth_mode: simple
+       auth_key: aaa
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_vrrp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of aaa params after module execution
+   dictionary always   Sample:
+                       {'auth_mode': 'simple', 'interface': '40GE2/0/8', 'is_plain': 'true', 'vrid': '1', 'vrrp_type': 'normal'}
+   existing            k/v pairs of existing aaa server
+   dictionary always   Sample:
+                       {'auth_mode': 'none', 'interface': '40GE2/0/8', 'is_plain': 'false', 'vrid': '1', 'vrrp_type': 'normal'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'auth_key': 'aaa', 'auth_mode': 'simple', 'interface': '40GE2/0/8', 'is_plain': True, 'state': 'present', 'vrid': '1'}
+   updates             command sent to the device
+   list       always   Sample:
+                       {'interface 40GE2/0/8': None, 'vrrp vrid 1 authentication-mode simple plain aaa': None}
+
+STATUS                   *ce_vrrp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Li Yanfeng (@numone213)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_vrrp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_vrrp_module.html

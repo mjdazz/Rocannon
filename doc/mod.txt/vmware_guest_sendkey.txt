@@ -1,0 +1,150 @@
+SYNOPSIS                   *vmware_guest_sendkey*
+
+     • This module is used to send keystrokes to given virtual machine.
+     • All parameters and VMware object names are case sensitive.
+
+REQUIREMENTS                   *vmware_guest_sendkey-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_guest_sendkey-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   cluster                         The name of cluster where the virtual machine is running.
+   string                          This is a required parameter, if esxi_hostname is not set.
+                                   esxi_hostname and cluster are mutually exclusive parameters.
+   datacenter                      The datacenter name to which virtual machine belongs to.
+   string
+   esxi_hostname                   The ESXi hostname where the virtual machine is running.
+   string                          This is a required parameter, if cluster is not set.
+                                   esxi_hostname and cluster are mutually exclusive parameters.
+                                   Destination folder, absolute or relative path to find an existing guest.
+                                   This is a required parameter, only if multiple VMs are found with same name.
+                                   The folder should include the datacenter. ESXi server's datacenter is ha-datacenter.
+                                   Examples:
+                                   folder: /ha-datacenter/vm
+   folder                          folder: ha-datacenter/vm
+   string                          folder: /datacenter1/vm
+                                   folder: datacenter1/vm
+                                   folder: /datacenter1/vm/folder1
+                                   folder: datacenter1/vm/folder1
+                                   folder: /folder1/datacenter1/vm
+                                   folder: folder1/datacenter1/vm
+                                   folder: /folder1/datacenter1/vm/folder2
+   hostname                        The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                   Environment variable support added in Ansible 2.6.
+   keys_send                       The list of the keys will be sent to the virtual machine.
+   list                            Valid values are ENTER, ESC, BACKSPACE, TAB, SPACE, CAPSLOCK, DELETE, CTRL_ALT_DEL, CTRL_C and F1 to F12, RIGHTARROW, LEFTARROW, DOWNARROW, UPARROW.
+                                   If both keys_send and string_send are specified, keys in keys_send list will be sent in front of the string_send.
+   moid                            Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+   string                          This is required if name or uuid is not supplied.
+   name                            Name of the virtual machine.
+   string                          This is a required parameter, if parameter uuid or moid is not supplied.
+                                   The password of the vSphere vCenter or ESXi server.
+   password                        If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: pass, pwd
+   port           Default:         The port number of the vSphere vCenter or ESXi server.
+   integer        443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                    Environment variable support added in Ansible 2.6.
+   proxy_host                      Address of a proxy that will receive all HTTPS requests and relay them.
+   string                          The format is a hostname or a IP.
+   added in 2.9                    If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                   This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                      Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   string_send                     The string will be sent to the virtual machine.
+   string                          This string can contain valid special character, alphabet and digit on the keyboard.
+                                   The username of the vSphere vCenter or ESXi server.
+   username                        If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: admin, user
+   uuid                            UUID of the instance to gather facts if known, this is VMware's unique identifier.
+   string                          This is a required parameter, if parameter name or moid is not supplied.
+                    Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs   • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean          • yes ←        Environment variable support added in Ansible 2.6.
+                                   If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_guest_sendkey-notes*
+
+   Note
+
+     • Tested on vSphere 6.5 and 6.7
+
+EXAMPLES                   *vmware_guest_sendkey-examples*
+
+ - name: Send list of keys to virtual machine
+   vmware_guest_sendkey:
+     validate_certs: no
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter_name }}"
+     folder: "{{ folder_name }}"
+     name: "{{ vm_name }}"
+     keys_send:
+       - TAB
+       - TAB
+       - ENTER
+   delegate_to: localhost
+   register: keys_num_sent
+
+ - name: Send list of keys to virtual machine using MoID
+   vmware_guest_sendkey:
+     validate_certs: no
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter_name }}"
+     folder: "{{ folder_name }}"
+     moid: vm-42
+     keys_send:
+       - CTRL_ALT_DEL
+   delegate_to: localhost
+   register: ctrl_alt_del_sent
+
+ - name: Send a string to virtual machine
+   vmware_guest_sendkey:
+     validate_certs: no
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter_name }}"
+     folder: "{{ folder_name }}"
+     name: "{{ vm_name }}"
+     string_send: "user_logon"
+   delegate_to: localhost
+   register: keys_num_sent
+
+RETURN VALUES                   *vmware_guest_sendkey-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   sendkey_info          display the keys and the number of keys sent to the virtual machine
+   dictionary   always   Sample:
+                         {'virtual_machine': 'test_vm', 'keys_send': ['SPACE', 'DOWNARROW', 'DOWNARROW', 'ENTER'], 'string_send': None, 'keys_send_number': 4, 'returned_keys_send_number': 4}
+
+STATUS                   *vmware_guest_sendkey-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Diane Wang (@Tomorrow9) <dianew@vmware.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_guest_sendkey-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_guest_sendkey_module.html

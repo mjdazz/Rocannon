@@ -1,0 +1,421 @@
+SYNOPSIS                   *one_vm*
+
+     • Manages OpenNebula instances
+
+REQUIREMENTS                   *one_vm-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-oca
+
+PARAMETERS                   *one_vm-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+                                     Password of the user to login into OpenNebula RPC server. If not set
+   api_password                      then the value of the ONE_PASSWORD environment variable is used.
+   -                                 if both api_username or api_password are not set, then it will try
+                                     authenticate with ONE auth file. Default path is "~/.one/one_auth".
+                                     Set environment variable ONE_AUTH to override this path.
+                                     URL of the OpenNebula RPC server.
+   api_url                           It is recommended to use HTTPS so that the username/password are not
+   -                                 transferred over the network unencrypted.
+                                     If not set then the value of the ONE_URL environment variable is used.
+   api_username                      Name of the user to login into the OpenNebula RPC server. If not set
+   -                                 then the value of the ONE_USERNAME environment variable is used.
+                                     A dictionary of key/value attributes to add to new instances, or for
+                                     setting state of instances with these attributes.
+                                     Keys are case insensitive and OpenNebula automatically converts them to upper case.
+   attributes       Default:         Be aware NAME is a special attribute which sets the name of the VM when it's deployed.
+   -                {}               # character(s) can be appended to the NAME and the module will automatically add
+                                     indexes to the names of VMs.
+                                     For example':' NAME':' foo-### would create VMs with names foo-000, foo-001,...
+                                     When used with count_attributes and exact_count the module will
+                                     match the base name without the index part.
+   count            Default:         Number of instances to launch
+   -                1
+                                     A dictionary of key/value attributes that can only be used with
+   count_attributes                  exact_count to determine how many nodes based on a specific
+   -                                 attributes criteria should be deployed. This can be expressed in
+                                     multiple ways and is shown in the EXAMPLES section.
+                                     A list of labels that can only be used with exact_count to determine
+   count_labels                      how many nodes based on a specific labels criteria should be deployed.
+   -                                 This can be expressed in multiple ways and is shown in the EXAMPLES
+                                     section.
+   cpu                               Percentage of CPU divided by 100 required for the new instance. Half a
+   -                                 processor is written 0.5.
+                                     Creates an image from a VM disk.
+                                     It is a dictionary where you have to specify name of the new image.
+   disk_saveas                       Optionally you can specify disk_id of the disk you want to save. By default disk_id is 0.
+   -                                 NOTE':' This operation will only be performed on the first VM (if more than one VM ID is passed)
+                                     and the VM has to be in the poweredoff state.
+                                     Also this operation will fail if an image with specified name already exists.
+   disk_size                         The size of the disk created for new instances (in MB, GB, TB,...).
+   -                                 NOTE':' This option can be used only if the VM template specified with
+                                     template_id/template_name has exactly one disk.
+                                     Indicates how many instances that match count_attributes and
+   exact_count                       count_labels parameters should be deployed. Instances are either
+   -                                 created or terminated based on this value.
+                                     NOTE':' Instances with the least IDs will be terminated first.
+   group_id                          ID of the group which will be set as the group of the instance
+   -
+   hard               Choices:
+   boolean            • no ←         Reboot, power-off or terminate instances hard
+                      • yes
+   instance_ids                      A list of instance ids used for states':' absent, running, rebooted, poweredoff
+   -                                 aliases: ids
+   labels           Default:         A list of labels to associate with new instances, or for setting
+   -                []               state of instances with these labels.
+   memory                            The size of the memory for new instances (in MB, GB, ...)
+   -
+   mode                              Set permission mode of the instance in octet format, e.g. 600 to give owner use and manage and nothing to group and others.
+   -
+   networks         Default:         A list of dictionaries with network parameters. See examples for more details.
+   -                []
+   owner_id                          ID of the user which will be set as the owner of the instance
+   -
+                      Choices:       present - create instances from a template specified with template_id/template_name.
+                      • present ←    running - run instances
+   state              • absent       poweredoff - power-off instances
+   -                  • running      rebooted - reboot instances
+                      • rebooted     absent - terminate instances
+                      • poweredoff
+   template_id                       ID of a VM template to use to create a new instance
+   -
+   template_name                     Name of VM template to use to create a new instace
+   -
+   vcpu                              Number of CPUs (cores) new VM will have.
+   -
+   vm_start_on_hold Default:
+   -                "no"             Set to true to put vm on hold while creating
+   added in 2.9
+                                     Wait for the instance to reach its desired state before returning. Keep
+   wait               Choices:       in mind if you are waiting for instance to be in running state it
+   boolean            • no           doesn't mean that you will be able to SSH on that machine only that
+                      • yes ←        boot process have started on that instance, see 'wait_for' example for
+                                     details.
+   wait_timeout     Default:         How long before wait gives up, in seconds
+   -                300
+
+EXAMPLES                   *one_vm-examples*
+
+ # Create a new instance
+ - one_vm:
+     template_id: 90
+   register: result
+
+ # Print VM properties
+ - debug:
+     msg: result
+
+ # Deploy a new VM on hold
+ - one_vm:
+     template_name: 'app1_template'
+     vm_start_on_hold: 'True'
+
+ # Deploy a new VM and set its name to 'foo'
+ - one_vm:
+     template_name: 'app1_template'
+     attributes:
+       name: foo
+
+ # Deploy a new VM and set its group_id and mode
+ - one_vm:
+     template_id: 90
+     group_id: 16
+     mode: 660
+
+ # Change VM's permissions to 640
+ - one_vm:
+     instance_ids: 5
+     mode: 640
+
+ # Deploy 2 new instances and set memory, vcpu, disk_size and 3 networks
+ - one_vm:
+     template_id: 15
+     disk_size: 35.2 GB
+     memory: 4 GB
+     vcpu: 4
+     count: 2
+     networks:
+       - NETWORK_ID: 27
+       - NETWORK: "default-network"
+         NETWORK_UNAME: "app-user"
+         SECURITY_GROUPS: "120,124"
+       - NETWORK_ID: 27
+         SECURITY_GROUPS: "10"
+
+ # Deploy an new instance with attribute 'bar: bar1' and set its name to 'foo'
+ - one_vm:
+     template_id: 53
+     attributes:
+       name: foo
+       bar: bar1
+
+ # Enforce that 2 instances with attributes 'foo1: app1' and 'foo2: app2' are deployed
+ - one_vm:
+     template_id: 53
+     attributes:
+       foo1: app1
+       foo2: app2
+     exact_count: 2
+     count_attributes:
+       foo1: app1
+       foo2: app2
+
+ # Enforce that 4 instances with an attribute 'bar' are deployed
+ - one_vm:
+     template_id: 53
+     attributes:
+       name: app
+       bar: bar2
+     exact_count: 4
+     count_attributes:
+       bar:
+
+ # Deploy 2 new instances with attribute 'foo: bar' and labels 'app1' and 'app2' and names in format 'fooapp-##'
+ # Names will be: fooapp-00 and fooapp-01
+ - one_vm:
+     template_id: 53
+     attributes:
+       name: fooapp-##
+       foo: bar
+     labels:
+       - app1
+       - app2
+     count: 2
+
+ # Deploy 2 new instances with attribute 'app: app1' and names in format 'fooapp-###'
+ # Names will be: fooapp-002 and fooapp-003
+ - one_vm:
+     template_id: 53
+     attributes:
+       name: fooapp-###
+       app: app1
+     count: 2
+
+ # Reboot all instances with name in format 'fooapp-#'
+ # Instances 'fooapp-00', 'fooapp-01', 'fooapp-002' and 'fooapp-003' will be rebooted
+ - one_vm:
+     attributes:
+       name: fooapp-#
+     state: rebooted
+
+ # Enforce that only 1 instance with name in format 'fooapp-#' is deployed
+ # The task will delete oldest instances, so only the 'fooapp-003' will remain
+ - one_vm:
+     template_id: 53
+     exact_count: 1
+     count_attributes:
+       name: fooapp-#
+
+ # Deploy an new instance with a network
+ - one_vm:
+     template_id: 53
+     networks:
+       - NETWORK_ID: 27
+   register: vm
+
+ # Wait for SSH to come up
+ - wait_for_connection:
+   delegate_to: '{{ vm.instances[0].networks[0].ip }}'
+
+ # Terminate VMs by ids
+ - one_vm:
+     instance_ids:
+       - 153
+       - 160
+     state: absent
+
+ # Reboot all VMs that have labels 'foo' and 'app1'
+ - one_vm:
+     labels:
+       - foo
+       - app1
+     state: rebooted
+
+ # Fetch all VMs that have name 'foo' and attribute 'app: bar'
+ - one_vm:
+     attributes:
+       name: foo
+       app: bar
+   register: results
+
+ # Deploy 2 new instances with labels 'foo1' and 'foo2'
+ - one_vm:
+     template_name: app_template
+     labels:
+       - foo1
+       - foo2
+     count: 2
+
+ # Enforce that only 1 instance with label 'foo1' will be running
+ - one_vm:
+     template_name: app_template
+     labels:
+       - foo1
+     exact_count: 1
+     count_labels:
+       - foo1
+
+ # Terminate all instances that have attribute foo
+ - one_vm:
+     template_id: 53
+     exact_count: 0
+     count_attributes:
+       foo:
+
+ # Power-off the VM and save VM's disk with id=0 to the image with name 'foo-image'
+ - one_vm:
+     instance_ids: 351
+     state: powered-off
+     disk_saveas:
+       name: foo-image
+
+ # Save VM's disk with id=1 to the image with name 'bar-image'
+ - one_vm:
+     instance_ids: 351
+     disk_saveas:
+       name: bar-image
+       disk_id: 1
+
+RETURN VALUES                   *one_vm-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   instances        success  a list of instances info whose state is changed or which are fetched with instance_ids option.
+   complex
+       attributes            A dictionary of key/values attributes that are associated with the instance
+       dictionary            Sample:
+                             {'HYPERVISOR': 'kvm', 'LOGO': 'images/logos/centos.png', 'TE_GALAXY': 'bar', 'USER_INPUTS': None}
+       cpu                   Percentage of CPU divided by 100
+       float                 Sample:
+                             0.2
+       disk_size             The size of the disk in MB
+       string                Sample:
+                             20480 MB
+       group_id              vm's group id
+       integer               Sample:
+                             1
+       group_name            vm's group name
+       string                Sample:
+                             one-users
+       labels                A list of string labels that are associated with the instance
+       list                  Sample:
+                             ['foo', 'spec-label']
+       lcm_state             lcm state of an instance that is only relevant when the state is ACTIVE
+       string                Sample:
+                             RUNNING
+       memory                The size of the memory in MB
+       string                Sample:
+                             4096 MB
+       mode                  vm's mode
+       string       success  Sample:
+                             660
+                             a list of dictionaries with info about IP, NAME, MAC, SECURITY_GROUPS for each NIC
+       networks              Sample:
+       list                  [{'ip': '10.120.5.33', 'mac': '02:00:0a:78:05:21', 'name': 'default-test-private', 'security_groups': '0,10'}, {'ip': '10.120.5.34', 'mac': '02:00:0a:78:05:22', 'name':
+                             'default-test-private', 'security_groups': '0'}]
+       owner_id              vm's owner id
+       integer               Sample:
+                             143
+       owner_name            vm's owner name
+       string                Sample:
+                             app-user
+       state                 state of an instance
+       string                Sample:
+                             ACTIVE
+       template_id           vm's template id
+       integer               Sample:
+                             153
+       uptime_h              Uptime of the instance in hours
+       integer               Sample:
+                             35
+       vcpu                  Number of CPUs (cores)
+       integer               Sample:
+                             2
+       vm_id                 vm id
+       integer               Sample:
+                             153
+       vm_name               vm name
+       string                Sample:
+                             foo
+   instances_ids             a list of instances ids whose state is changed or which are fetched with instance_ids option.
+   list             success  Sample:
+                             [1234, 1235]
+   tagged_instances          A list of instances info based on a specific attributes and/or
+   complex          success  labels that are specified with count_attributes and count_labels
+                             options.
+       attributes            A dictionary of key/values attributes that are associated with the instance
+       dictionary            Sample:
+                             {'HYPERVISOR': 'kvm', 'LOGO': 'images/logos/centos.png', 'TE_GALAXY': 'bar', 'USER_INPUTS': None}
+       cpu                   Percentage of CPU divided by 100
+       float                 Sample:
+                             0.2
+       disk_size             The size of the disk in MB
+       string                Sample:
+                             20480 MB
+       group_id              vm's group id
+       integer               Sample:
+                             1
+       group_name            vm's group name
+       string                Sample:
+                             one-users
+       labels                A list of string labels that are associated with the instance
+       list                  Sample:
+                             ['foo', 'spec-label']
+       lcm_state             lcm state of an instance that is only relevant when the state is ACTIVE
+       string                Sample:
+                             RUNNING
+       memory                The size of the memory in MB
+       string                Sample:
+                             4096 MB
+       mode                  vm's mode
+       string       success  Sample:
+                             660
+                             a list of dictionaries with info about IP, NAME, MAC, SECURITY_GROUPS for each NIC
+       networks              Sample:
+       list                  [{'ip': '10.120.5.33', 'mac': '02:00:0a:78:05:21', 'name': 'default-test-private', 'security_groups': '0,10'}, {'ip': '10.120.5.34', 'mac': '02:00:0a:78:05:22', 'name':
+                             'default-test-private', 'security_groups': '0'}]
+       owner_id              vm's user id
+       integer               Sample:
+                             143
+       owner_name            vm's user name
+       string                Sample:
+                             app-user
+       state                 state of an instance
+       string                Sample:
+                             ACTIVE
+       template_id           vm's template id
+       integer               Sample:
+                             153
+       uptime_h              Uptime of the instance in hours
+       integer               Sample:
+                             35
+       vcpu                  Number of CPUs (cores)
+       integer               Sample:
+                             2
+       vm_id                 vm id
+       integer               Sample:
+                             153
+       vm_name               vm name
+       string                Sample:
+                             foo
+
+STATUS                   *one_vm-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Milan Ilic (@ilicmilan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *one_vm-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/one_vm_module.html

@@ -1,89 +1,334 @@
-SYNOPSIS                           *ec2_asg*
+SYNOPSIS                   *ec2_asg*
 
-New in version 1.6.
+     • Can create or delete AWS Autoscaling Groups
+     • Can be used with the ec2_lc module to manage Launch Configurations
 
-Can create or delete AWS Autoscaling Groups Works with the ec2_lc module to manage Launch Configurations
+REQUIREMENTS                   *ec2_asg-requirements*
 
-EXAMPLES                           *ec2_asg-examples*
->
-    # Basic configuration
-   
-    - ec2_asg:
-        name: special
-        load_balancers: [ 'lb1', 'lb2' ]
-        availability_zones: [ 'eu-west-1a', 'eu-west-1b' ]
-        launch_config_name: 'lc-1'
-        min_size: 1
-        max_size: 10
-        desired_capacity: 5
-        vpc_zone_identifier: [ 'subnet-abcd1234', 'subnet-1a2b3c4d' ]
-        tags:
-          - environment: production
-            propagate_at_launch: no
-   
-    # Rolling ASG Updates
-   
-    Below is an example of how to assign a new launch config to an ASG and terminate old instances.
-   
-    All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
-    a rolling fashion with instances using the current launch configuration, "my_new_lc".
-   
-    This could also be considered a rolling deploy of a pre-baked AMI.
-   
-    If this is a newly created group, the instances will not be replaced since all instances
-    will have the current launch configuration.
-   
-    - name: create launch config
-      ec2_lc:
-        name: my_new_lc
-        image_id: ami-lkajsf
-        key_name: mykey
-        region: us-east-1
-        security_groups: sg-23423
-        instance_type: m1.small
-        assign_public_ip: yes
-   
-    - ec2_asg:
-        name: myasg
-        launch_config_name: my_new_lc
-        health_check_period: 60
-        health_check_type: ELB
-        replace_all_instances: yes
-        min_size: 5
-        max_size: 5
-        desired_capacity: 5
-        region: us-east-1
-   
-    To only replace a couple of instances instead of all of them, supply a list
-    to "replace_instances":
-   
-    - ec2_asg:
-        name: myasg
-        launch_config_name: my_new_lc
-        health_check_period: 60
-        health_check_type: ELB
-        replace_instances:
-        - i-b345231
-        - i-24c2931
-        min_size: 5
-        max_size: 5
-        desired_capacity: 5
-        region: us-east-1
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *ec2_asg-parameters*
+
+            Parameter                        Choices/Defaults                                                                       Comments
+   availability_zones                                                       List of availability zone names in which to create the group. Defaults to all the availability zones in the region if
+   -                                                                        vpc_zone_identifier is not set.
+   aws_access_key                                                           AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable
+   string                                                                   is used.
+                                                                            aliases: ec2_access_key, access_key
+   aws_secret_key                                                           AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment
+   string                                                                   variable is used.
+                                                                            aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:                                  Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task,
+   boolean                        • no ←                                    outputing the set to the resource_actions key in the task results. Use the aws_resource_action callback to output to
+   added in 2.8                   • yes                                     total list made during a playbook. The ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   default_cooldown             Default:                                    The number of seconds after a scaling activity completes before another can begin.
+   -                            "300 seconds"
+   desired_capacity                                                         Desired number of instances in group, if unspecified then the current group value will be used.
+   -
+   ec2_url                                                                  Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules
+   string                                                                   where region is required. Must be specified for all other modules if region is not used. If not set then the value of the
+                                                                            EC2_URL environment variable, if any, is used.
+   health_check_period          Default:                                    Length of time in seconds after a new EC2 instance comes into service that Auto Scaling starts checking its health.
+   -                            "300 seconds"
+   health_check_type              Choices:
+   -                              • EC2 ←                                   The service you want the health status from, Amazon EC2 or Elastic Load Balancer.
+                                  • ELB
+   launch_config_name                                                       Name of the Launch configuration to use for the group. See the ec2_lc module for managing these. If unspecified then the
+   -                                                                        current group value will be used. One of launch_config_name or launch_template must be provided.
+   launch_template
+   -                                                                        Dictionary describing the Launch Template to use
+   added in 2.8
+        launch_template_id                                                  The id of the launch template. Only one of launch_template_name or launch_template_id is required.
+        -
+        launch_template_name                                                The name of the launch template. Only one of launch_template_name or launch_template_id is required.
+        -
+        version                 Default:                                    The version number of the launch template to use. Defaults to latest version if not provided.
+        -                       "latest"
+   lc_check                       Choices:                                  Check to make sure instances that are being replaced with replace_instances do not already have the current
+   boolean                        • no                                      launch_config.
+                                  • yes ←
+   load_balancers                                                           List of ELB names to use for the group. Use for classic load balancers.
+   -
+   lt_check                       Choices:                                  Check to make sure instances that are being replaced with replace_instances do not already have the current
+   boolean                        • no                                      launch_template or launch_template version.
+   added in 2.8                   • yes ←
+   max_size                                                                 Maximum number of instances in group, if unspecified then the current group value will be used.
+   -
+   metrics_collection             Choices:
+   boolean                        • no ←                                    Enable ASG metrics collection
+   added in 2.6                   • yes
+   metrics_granularity          Default:
+   -                            "1minute"                                   When metrics_collection is enabled this will determine granularity of metrics collected by CloudWatch
+   added in 2.6
+                                Default:
+                                ["GroupMinSize", "GroupMaxSize",
+   metrics_list                 "GroupDesiredCapacity",
+   -                            "GroupInServiceInstances",                  List of autoscaling metrics to collect when enabling metrics_collection
+   added in 2.6                 "GroupPendingInstances",
+                                "GroupStandbyInstances",
+                                "GroupTerminatingInstances",
+                                "GroupTotalInstances"]
+   min_size                                                                 Minimum number of instances in group, if unspecified then the current group value will be used.
+   -
+   name                                                                     Unique name for group to be created or deleted
+   - / required
+   notification_topic                                                       A SNS topic ARN to send auto scaling notifications to.
+   -
+                                Default:
+   notification_types           ["autoscaling:EC2_INSTANCE_LAUNCH",
+   -                            "autoscaling:EC2_INSTANCE_LAUNCH_ERROR",    A list of auto scaling events to trigger notifications on.
+                                "autoscaling:EC2_INSTANCE_TERMINATE",
+                                "autoscaling:EC2_INSTANCE_TERMINATE_ERROR"]
+   placement_group                                                          Physical location of your cluster placement group created in Amazon EC2.
+   -
+   profile                                                                  Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                                                   The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is
+   string                                                                   used. See http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                                            aliases: aws_region, ec2_region
+                                  Choices:                                  In a rolling fashion, replace all instances that used the old launch configuration with one from the new launch
+   replace_all_instances          • no ←                                    configuration. It increases the ASG size by replace_batch_size, waits for the new instances to be up and running. After
+   boolean                        • yes                                     that, it terminates a batch of old instances, waits for the replacements, and repeats, until all old instances are
+                                                                            replaced. Once that's done the ASG size is reduced back to the expected size.
+   replace_batch_size           Default:                                    Number of instances you'd like to replace at a time. Used with replace_all_instances.
+   -                            1
+   replace_instances                                                        List of instance_ids belonging to the named ASG that you would like to terminate and be replaced with instances matching
+   -                                                                        the current launch configuration.
+   security_token                                                           AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is
+   string                                                                   used.
+                                                                            aliases: access_token
+   state                          Choices:
+   -                              • present ←                               register or deregister the instance
+                                  • absent
+                                  Choices:
+                                  • Launch
+                                  • Terminate
+                                  • HealthCheck
+                                  • ReplaceUnhealthy
+   suspend_processes              • AZRebalance                             A list of scaling processes to suspend.
+   -                              • AlarmNotification
+                                  • ScheduledActions
+                                  • AddToLoadBalancer
+
+                                Default:
+                                []
+   tags                                                                     A list of tags to add to the Auto Scale Group. Optional key is 'propagate_at_launch', which defaults to true.
+   -
+   target_group_arns
+   -                                                                        List of target group ARNs to use for the group. Use for application load balancers.
+   added in 2.4
+                                  Choices:
+                                  • OldestInstance                          An ordered list of criteria used for selecting instances to be removed from the Auto Scaling group when reducing
+   termination_policies           • NewestInstance                          capacity.
+   -                              • OldestLaunchConfiguration               For 'Default', when used to create a new autoscaling group, the "Default"i value is used. When used to change an existent
+                                  • ClosestToNextInstanceHour               autoscaling group, the current termination policies are maintained.
+                                  • Default ←
+   validate_certs                 Choices:
+   boolean                        • no                                      When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   vpc_zone_identifier                                                      List of VPC subnets to use
+   -
+   wait_for_instances             Choices:                                  Wait for the ASG instances to be in a ready state before exiting. If instances are behind an ELB, it will wait until the
+   boolean                        • no                                      ELB determines all instances have a lifecycle_state of "InService" and a health_status of "Healthy".
+                                  • yes ←
+   wait_timeout                 Default:                                    How long to wait for instances to become viable when replaced. If you experience the error "Waited too long for ELB
+   -                            300                                         instances to be healthy", try increasing this value.
+
+NOTES                   *ec2_asg-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_asg-examples*
+
+ # Basic configuration with Launch Configuration
+
+ - ec2_asg:
+     name: special
+     load_balancers: [ 'lb1', 'lb2' ]
+     availability_zones: [ 'eu-west-1a', 'eu-west-1b' ]
+     launch_config_name: 'lc-1'
+     min_size: 1
+     max_size: 10
+     desired_capacity: 5
+     vpc_zone_identifier: [ 'subnet-abcd1234', 'subnet-1a2b3c4d' ]
+     tags:
+       - environment: production
+         propagate_at_launch: no
+
+ # Rolling ASG Updates
+
+ # Below is an example of how to assign a new launch config to an ASG and terminate old instances.
+ #
+ # All instances in "myasg" that do not have the launch configuration named "my_new_lc" will be terminated in
+ # a rolling fashion with instances using the current launch configuration, "my_new_lc".
+ #
+ # This could also be considered a rolling deploy of a pre-baked AMI.
+ #
+ # If this is a newly created group, the instances will not be replaced since all instances
+ # will have the current launch configuration.
+
+ - name: create launch config
+   ec2_lc:
+     name: my_new_lc
+     image_id: ami-lkajsf
+     key_name: mykey
+     region: us-east-1
+     security_groups: sg-23423
+     instance_type: m1.small
+     assign_public_ip: yes
+
+ - ec2_asg:
+     name: myasg
+     launch_config_name: my_new_lc
+     health_check_period: 60
+     health_check_type: ELB
+     replace_all_instances: yes
+     min_size: 5
+     max_size: 5
+     desired_capacity: 5
+     region: us-east-1
+
+ # To only replace a couple of instances instead of all of them, supply a list
+ # to "replace_instances":
+
+ - ec2_asg:
+     name: myasg
+     launch_config_name: my_new_lc
+     health_check_period: 60
+     health_check_type: ELB
+     replace_instances:
+     - i-b345231
+     - i-24c2931
+     min_size: 5
+     max_size: 5
+     desired_capacity: 5
+     region: us-east-1
+
+ # Basic Configuration with Launch Template
+
+ - ec2_asg:
+     name: special
+     load_balancers: [ 'lb1', 'lb2' ]
+     availability_zones: [ 'eu-west-1a', 'eu-west-1b' ]
+     launch_template:
+         version: '1'
+         launch_template_name: 'lt-example'
+         launch_template_id: 'lt-123456'
+     min_size: 1
+     max_size: 10
+     desired_capacity: 5
+     vpc_zone_identifier: [ 'subnet-abcd1234', 'subnet-1a2b3c4d' ]
+     tags:
+       - environment: production
+         propagate_at_launch: no
+
+RETURN VALUES                   *ec2_asg-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key           Returned                                                                            Description
+   auto_scaling_group_arn           The unique ARN of the autoscaling group
+   string                  success  Sample:
+                                    arn:aws:autoscaling:us-east-1:123456789012:autoScalingGroup:6a09ad6d-eeee-1234-b987-ee123ced01ad:autoScalingGroupName/myasg
+   auto_scaling_group_name          The unique name of the auto scaling group
+   string                  success  Sample:
+                                    myasg
+   availability_zones               The availability zones for the auto scaling group
+   list                    success  Sample:
+                                    ['us-east-1d']
+   created_time                     Timestamp of create time of the auto scaling group
+   string                  success  Sample:
+                                    2017-11-08T14:41:48.272000+00:00
+   default_cooldown                 The default cooldown time in seconds.
+   integer                 success  Sample:
+                                    300
+   desired_capacity                 The number of EC2 instances that should be running in this group.
+   integer                 success  Sample:
+                                    3
+   healthcheck_period               Length of time in seconds after a new EC2 instance comes into service that Auto Scaling starts checking its health.
+   integer                 success  Sample:
+                                    30
+   healthcheck_type                 The service you want the health status from, one of "EC2" or "ELB".
+   string                  success  Sample:
+                                    ELB
+   healthy_instances                Number of instances in a healthy state
+   integer                 success  Sample:
+                                    5
+   in_service_instances             Number of instances in service
+   integer                 success  Sample:
+                                    3
+   instance_facts                   Dictionary of EC2 instances and their status as it relates to the ASG.
+   dictionary              success  Sample:
+                                    {'i-0123456789012': {'health_status': 'Healthy', 'launch_config_name': 'public-webapp-production-1', 'lifecycle_state': 'InService'}}
+   instances                        list of instance IDs in the ASG
+   list                    success  Sample:
+                                    ['i-0123456789012']
+   launch_config_name               Name of launch configuration associated with the ASG. Same as launch_configuration_name, provided for compatibility with ec2_asg module.
+   string                  success  Sample:
+                                    public-webapp-production-1
+   load_balancers                   List of load balancers names attached to the ASG.
+   list                    success  Sample:
+                                    ['elb-webapp-prod']
+   max_size                         Maximum size of group
+   integer                 success  Sample:
+                                    3
+   metrics_collection               List of enabled AutosSalingGroup metrics
+   list                    success  Sample:
+                                    [{'Granularity': '1Minute', 'Metric': 'GroupInServiceInstances'}]
+   min_size                         Minimum size of group
+   integer                 success  Sample:
+                                    1
+   pending_instances                Number of instances in pending state
+   integer                 success  Sample:
+                                    1
+                                    List of tags for the ASG, and whether or not each tag propagates to instances at launch.
+   tags                             Sample:
+   list                    success  [{'key': 'Name', 'value': 'public-webapp-production-1', 'resource_id': 'public-webapp-production-1', 'resource_type': 'auto-scaling-group',
+                                    'propagate_at_launch': 'true'}, {'key': 'env', 'value': 'production', 'resource_id': 'public-webapp-production-1', 'resource_type': 'auto-scaling-group',
+                                    'propagate_at_launch': 'true'}]
+                                    List of ARNs of the target groups that the ASG populates
+   target_group_arns       success  Sample:
+   list                             ['arn:aws:elasticloadbalancing:ap-southeast-2:123456789012:targetgroup/target-group-host-hello/1a2b3c4d5e6f1a2b',
+                                    'arn:aws:elasticloadbalancing:ap-southeast-2:123456789012:targetgroup/target-group-path-world/abcd1234abcd1234']
+   target_group_names               List of names of the target groups that the ASG populates
+   list                    success  Sample:
+                                    ['target-group-host-hello', 'target-group-path-world']
+   termination_policies             A list of termination policies for the group.
+   string                  success  Sample:
+                                    ['Default']
+   unhealthy_instances     success  Number of instances in an unhealthy state
+   integer
+   viable_instances                 Number of instances in a viable state
+   integer                 success  Sample:
+                                    1
+   vpc_zone_identifier              VPC zone ID / subnet id for the auto scaling group
+   string                  success  Sample:
+                                    subnet-a31ef45f
+
+STATUS                   *ec2_asg-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Gareth Rushgrove (@garethr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_asg-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_asg_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_asg_module.html

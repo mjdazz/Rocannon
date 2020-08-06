@@ -1,24 +1,126 @@
-SYNOPSIS                           *pacman*
+SYNOPSIS                   *pacman*
 
-New in version 1.0.
+     • Manage packages with the pacman package manager, which is used by Arch Linux and its variants.
 
-Manage packages with the pacman package manager, which is used by Arch Linux and its variants.
+PARAMETERS                   *pacman-parameters*
 
-EXAMPLES                           *pacman-examples*
->
-    # Install package foo
-    - pacman: name=foo state=present
-   
-    # Remove packages foo and bar
-    - pacman: name=foo,bar state=absent
-   
-    # Recursively remove package baz
-    - pacman: name=baz state=absent recurse=yes
-   
-    # Run the equivalent of "pacman -Syy" as a separate step
-    - pacman: update_cache=yes
-   
+          Parameter        Choices/Defaults                                                                         Comments
+   extra_args              Default:
+   -                       null             Additional option to pass to pacman when enforcing state.
+   added in 2.8
+   force                     Choices:       When removing package, force remove package, without any checks. Same as `extra_args="--nodeps --nodeps"`. When update_cache, force redownload repo
+   boolean                   • no ←         databases. Same as `update_cache_extra_args="--refresh --refresh"`.
+                             • yes
+   name                                     Name or list of names of the package(s) or file(s) to install, upgrade, or remove. Can't be used in combination with upgrade.
+   -                                        aliases: package, pkg
+   recurse                   Choices:       When removing a package, also remove its dependencies, provided that they are not required by other packages and were not explicitly installed by a user.
+   boolean                   • no ←         This option is deprecated since 2.8 and will be removed in 2.10, use `extra_args=--recursive`.
+                             • yes
+                             Choices:
+   state                     • absent       Desired state of the package.
+   -                         • latest
+                             • present ←
+   update_cache              Choices:       Whether or not to refresh the master package lists.
+   boolean                   • no ←         This can be run as part of a package installation or as a separate step.
+                             • yes          aliases: update-cache
+   update_cache_extra_args Default:
+   -                       null             Additional option to pass to pacman when enforcing update_cache.
+   added in 2.8
+   upgrade                   Choices:
+   boolean                   • no ←         Whether or not to upgrade the whole system. Can't be used in combination with name.
+                             • yes
+   upgrade_extra_args      Default:
+   -                       null             Additional option to pass to pacman when enforcing upgrade.
+   added in 2.8
+
+NOTES                   *pacman-notes*
+
+   Note
+
+     • When used with a loop: each package will be processed individually, it is much more efficient to pass the list directly to the name option.
+
+EXAMPLES                   *pacman-examples*
+
+ - name: Install package foo from repo
+   pacman:
+     name: foo
+     state: present
+
+ - name: Install package bar from file
+   pacman:
+     name: ~/bar-1.0-1-any.pkg.tar.xz
+     state: present
+
+ - name: Install package foo from repo and bar from file
+   pacman:
+     name:
+       - foo
+       - ~/bar-1.0-1-any.pkg.tar.xz
+     state: present
+
+ - name: Upgrade package foo
+   pacman:
+     name: foo
+     state: latest
+     update_cache: yes
+
+ - name: Remove packages foo and bar
+   pacman:
+     name:
+       - foo
+       - bar
+     state: absent
+
+ - name: Recursively remove package baz
+   pacman:
+     name: baz
+     state: absent
+     extra_args: --recursive
+
+ - name: Run the equivalent of "pacman -Sy" as a separate step
+   pacman:
+     update_cache: yes
+
+ - name: Run the equivalent of "pacman -Su" as a separate step
+   pacman:
+     upgrade: yes
+
+ - name: Run the equivalent of "pacman -Syu" as a separate step
+   pacman:
+     update_cache: yes
+     upgrade: yes
+
+ - name: Run the equivalent of "pacman -Rdd", force remove package baz
+   pacman:
+     name: baz
+     state: absent
+     force: yes
+
+RETURN VALUES                   *pacman-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key             Returned                                                                                   Description
+   packages                            a list of packages that have been changed
+   list     when upgrade is set to yes Sample:
+                                       ['package', 'other-package']
+
+STATUS                   *pacman-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Indrajit Raychaudhuri (@indrajitr)
+     • Aaron Bull Schaefer (@elasticdog) <aaron@elasticdog.com>
+     • Maxime de Roucy (@tchernomax)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *pacman-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/pacman_module.html
+https://docs.ansible.com/ansible/latest/modules/pacman_module.html

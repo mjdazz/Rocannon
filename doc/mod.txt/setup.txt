@@ -1,38 +1,98 @@
-SYNOPSIS                           *setup*
+SYNOPSIS                   *setup*
 
-This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks. It can also be executed directly by /usr/bin/ansible to check what
-variables are available to a host. Ansible provides many facts about the system, automatically.
+     • This module is automatically called by playbooks to gather useful variables about remote hosts that can be used in playbooks. It can also be executed directly by /usr/bin/ansible to check
+       what variables are available to a host. Ansible provides many facts about the system, automatically.
+     • This module is also supported for Windows targets.
 
-EXAMPLES                           *setup-examples*
->
-    # Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
-    ansible all -m setup --tree /tmp/facts
-   
-    # Display only facts regarding memory found by ansible on all hosts and output them.
-    ansible all -m setup -a 'filter=ansible_*_mb'
-   
-    # Display only facts returned by facter.
-    ansible all -m setup -a 'filter=facter_*'
-   
-    # Display only facts about certain interfaces.
-    ansible all -m setup -a 'filter=ansible_eth[0-2]'
-   
-      Note
-   
-      More ansible facts will be added with successive releases. If facter or ohai are installed, variables from these programs will also be snapshotted into the JSON file for usage in templating.
-      These variables are prefixed with facter_ and ohai_ so it’s easy to tell their source. All variables are bubbled up to the caller. Using the ansible facts and choosing to not install facter and
-      ohai means you can avoid Ruby-dependencies on your remote systems. (See also facter and ohai.)
-   
-      Note
-   
-      The filter option filters only the first level subkey below ansible_facts.
-   
-      Note
-   
-      If the target host is Windows, you will not currently have the ability to use fact_path or filter as this is provided by a simpler implementation of the module. Different facts are returned for
-      Windows hosts.
-   
+PARAMETERS                   *setup-parameters*
+
+     Parameter       Choices/Defaults                                                                              Comments
+   fact_path      Default:               Path used for local ansible facts (".fact) - files in this dir will be run (if executable) and their results be added to ansible_local facts if a file is
+   -              "/etc/ansible/facts.d" not executable it is read. Check notes for Windows options. (from 2.1 on) File/results format can be JSON or INI-format. The default fact_path can be
+                                         specified in ansible.cfg for when setup is automatically called as part of gather_facts.
+   filter         Default:               If supplied, only return facts that match this shell-style (fnmatch) wildcard.
+   -              """
+                                         If supplied, restrict the additional facts collected to the given subset. Possible values: all, min, hardware, network, virtual, ohai, and facter. Can
+   gather_subset  Default:               specify a list of values to specify a larger subset. Values can also be used with an initial ! to specify that that specific subset should not be collected.
+   -              "all"                  For instance: !hardware,!network,!virtual,!ohai,!facter. If !all is specified then only the min subset is collected. To avoid collecting even the min
+                                         subset, specify !all,!min. To collect only specific facts, use !all,!min, and specify the particular fact subsets. Use the filter parameter if you do not
+                                         want to display some collected facts.
+   gather_timeout Default:               Set the default timeout in seconds for individual fact gathering.
+   -              10
+
+NOTES                   *setup-notes*
+
+   Note
+
+     • More ansible facts will be added with successive releases. If facter or ohai are installed, variables from these programs will also be snapshotted into the JSON file for usage in templating.
+       These variables are prefixed with facter_ and ohai_ so it’s easy to tell their source. All variables are bubbled up to the caller. Using the ansible facts and choosing to not install facter
+       and ohai means you can avoid Ruby-dependencies on your remote systems. (See also facter and ohai.)
+     • The filter option filters only the first level subkey below ansible_facts.
+     • If the target host is Windows, you will not currently have the ability to use filter as this is provided by a simpler implementation of the module.
+     • If the target host is Windows you can now use fact_path. Make sure that this path exists on the target host. Files in this path MUST be PowerShell scripts (".ps1) and their output must be
+       formattable in JSON (Ansible will take care of this). Test the output of your scripts. This option was added in Ansible 2.1.
+     • This module is also supported for Windows targets.
+     • This module should be run with elevated privileges on BSD systems to gather facts like ansible_product_version.
+
+EXAMPLES                   *setup-examples*
+
+ # Display facts from all hosts and store them indexed by I(hostname) at C(/tmp/facts).
+ # ansible all -m setup --tree /tmp/facts
+
+ # Display only facts regarding memory found by ansible on all hosts and output them.
+ # ansible all -m setup -a 'filter=ansible_"_mb'
+
+ # Display only facts returned by facter.
+ # ansible all -m setup -a 'filter=facter_"'
+
+ # Collect only facts returned by facter.
+ # ansible all -m setup -a 'gather_subset=!all,!any,facter'
+
+ - name: Collect only facts returned by facter
+   setup:
+     gather_subset:
+       - '!all'
+       - '!any'
+       - facter
+
+ # Display only facts about certain interfaces.
+ # ansible all -m setup -a 'filter=ansible_eth[0-2]'
+
+ # Restrict additional gathered facts to network and virtual (includes default minimum facts)
+ # ansible all -m setup -a 'gather_subset=network,virtual'
+
+ # Collect only network and virtual (excludes default minimum facts)
+ # ansible all -m setup -a 'gather_subset=!all,!any,network,virtual'
+
+ # Do not call puppet facter or ohai even if present.
+ # ansible all -m setup -a 'gather_subset=!facter,!ohai'
+
+ # Only collect the default minimum amount of facts:
+ # ansible all -m setup -a 'gather_subset=!all'
+
+ # Collect no facts, even the default minimum subset of facts:
+ # ansible all -m setup -a 'gather_subset=!all,!min'
+
+ # Display facts from Windows hosts with custom facts stored in C(C:\custom_facts).
+ # ansible windows -m setup -a "fact_path='c:\custom_facts'"
+
+STATUS                   *setup-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *setup-red hat support*
+
+     • Ansible Core Team
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *setup-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/setup_module.html
+https://docs.ansible.com/ansible/latest/modules/setup_module.html

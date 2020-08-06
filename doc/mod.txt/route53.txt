@@ -1,57 +1,308 @@
-SYNOPSIS                           *route53*
+SYNOPSIS                   *route53*
 
-New in version 1.3.
+     • Creates and deletes DNS records in Amazons Route53 service
 
-Creates and deletes DNS records in Amazons Route53 service
+REQUIREMENTS                   *route53-requirements*
 
-EXAMPLES                           *route53-examples*
->
-    # Add new.foo.com as an A record with 3 IPs
-    - route53:
-          command: create
-          zone: foo.com
-          record: new.foo.com
-          type: A
-          ttl: 7200
-          value: 1.1.1.1,2.2.2.2,3.3.3.3
-   
-    # Retrieve the details for new.foo.com
-    - route53:
-          command: get
-          zone: foo.com
-          record: new.foo.com
-          type: A
-      register: rec
-   
-    # Delete new.foo.com A record using the results from the get command
-    - route53:
-          command: delete
-          zone: foo.com
-          record: "{{ rec.set.record }}"
-          type: "{{ rec.set.type }}"
-          value: "{{ rec.set.value }}"
-   
-    # Add an AAAA record.  Note that because there are colons in the value
-    # that the entire parameter list must be quoted:
-    - route53:
-          command: "create"
-          zone: "foo.com"
-          record: "localhost.foo.com"
-          type: "AAAA"
-          ttl: "7200"
-          value: "::1"
-   
-    # Add a TXT record. Note that TXT and SPF records must be surrounded
-    # by quotes when sent to Route 53:
-    - route53:
-          command: "create"
-          zone: "foo.com"
-          record: "localhost.foo.com"
-          type: "TXT"
-          ttl: "7200"
-          value: '"bar"'
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *route53-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   alias                          Choices:
+   boolean                        • no ←         Indicates if this is an alias record.
+                                  • yes
+   alias_evaluate_target_health   Choices:
+   boolean                        • no ←         Whether or not to evaluate an alias target health. Useful for aliases to Elastic Load Balancers.
+                                  • yes
+   alias_hosted_zone_id                          The hosted zone identifier.
+   -
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   failover                                      Failover resource record sets only. Whether this is the primary or secondary resource record set. Allowed values are PRIMARY and SECONDARY
+   -
+   health_check                                  Health check to associate with this record
+   -
+   hosted_zone_id                                The Hosted Zone ID of the DNS zone to modify
+   -                                             This is a required parameter, if parameter zone is not supplied.
+   identifier                                    Have to be specified for Weighted, latency-based and failover resource record sets only. An identifier that differentiates among multiple resource
+   -                                             record sets that have the same combination of DNS name and type.
+   overwrite                      Choices:
+   boolean                        • no           Whether an existing record should be overwritten on create if values do not match
+                                  • yes
+   private_zone                   Choices:       If set to yes, the private zone matching the requested name within the domain will be used if there are both public and private zones. The default
+   boolean                        • no ←         is to use the public zone.
+                                  • yes
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   record                                        The full DNS record to create or delete
+   - / required
+   region                                        Latency-based resource record sets only Among resource record sets that have the same combination of DNS name and type, a value that determines
+   -                                             which region this should be associated with for the latency-based routing
+   retry_interval               Default:         In the case that route53 is still servicing a prior request, this module will wait and try again after this many seconds. If you have many domain
+   -                            500              names, the default of 500 seconds may be too long.
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+                                  Choices:
+                                  • present      Specifies the state of the resource record. As of Ansible 2.4, the command option has been changed to state as default and the choices 'present' and
+   state                          • absent       'absent' have been added, but command still works as well.
+   - / required                   • get          aliases: command
+                                  • create
+                                  • delete
+   ttl                          Default:
+   -                            "3600 (one       The TTL to give the new record
+                                hour)"
+                                  Choices:
+                                  • A
+                                  • CNAME
+                                  • MX
+                                  • AAAA
+   type                           • TXT          The type of DNS record to create
+   - / required                   • PTR
+                                  • SRV
+                                  • SPF
+                                  • CAA
+                                  • NS
+                                  • SOA
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   value                                         The new value when creating a DNS record. YAML lists or multiple comma-spaced values are allowed for non-alias records.
+   -                                             When deleting a record all values for the record must be specified or Route53 will not delete it.
+   vpc_id                                        When used in conjunction with private_zone: true, this will only modify records in the private hosted zone attached to this VPC.
+   -                                             This allows you to have multiple private hosted zones, all with the same name, attached to different VPCs.
+   wait                           Choices:
+   boolean                        • no ←         Wait until the changes have been replicated to all Amazon Route 53 DNS servers.
+                                  • yes
+   wait_timeout                 Default:         How long to wait for the changes to be replicated, in seconds.
+   -                            300
+   weight                                        Weighted resource record sets only. Among resource record sets that have the same combination of DNS name and type, a value that determines what
+   -                                             portion of traffic for the current resource record set is routed to the associated location.
+   zone                                          The DNS zone to modify
+   -                                             This is a required parameter, if parameter hosted_zone_id is not supplied.
+
+NOTES                   *route53-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *route53-examples*
+
+ # Add new.foo.com as an A record with 3 IPs and wait until the changes have been replicated
+ - route53:
+       state: present
+       zone: foo.com
+       record: new.foo.com
+       type: A
+       ttl: 7200
+       value: 1.1.1.1,2.2.2.2,3.3.3.3
+       wait: yes
+
+ # Update new.foo.com as an A record with a list of 3 IPs and wait until the changes have been replicated
+ - route53:
+       state: present
+       zone: foo.com
+       record: new.foo.com
+       type: A
+       ttl: 7200
+       value:
+         - 1.1.1.1
+         - 2.2.2.2
+         - 3.3.3.3
+       wait: yes
+
+ # Retrieve the details for new.foo.com
+ - route53:
+       state: get
+       zone: foo.com
+       record: new.foo.com
+       type: A
+   register: rec
+
+ # Delete new.foo.com A record using the results from the get command
+ - route53:
+       state: absent
+       zone: foo.com
+       record: "{{ rec.set.record }}"
+       ttl: "{{ rec.set.ttl }}"
+       type: "{{ rec.set.type }}"
+       value: "{{ rec.set.value }}"
+
+ # Add an AAAA record.  Note that because there are colons in the value
+ # that the IPv6 address must be quoted. Also shows using the old form command=create.
+ - route53:
+       command: create
+       zone: foo.com
+       record: localhost.foo.com
+       type: AAAA
+       ttl: 7200
+       value: "::1"
+
+ # Add a SRV record with multiple fields for a service on port 22222
+ # For more information on SRV records see:
+ # https://en.wikipedia.org/wiki/SRV_record
+ - route53:
+       state: present
+       zone: foo.com
+       record: "_example-service._tcp.foo.com"
+       type: SRV
+       value: "0 0 22222 host1.foo.com,0 0 22222 host2.foo.com"
+
+ # Add a TXT record. Note that TXT and SPF records must be surrounded
+ # by quotes when sent to Route 53:
+ - route53:
+       state: present
+       zone: foo.com
+       record: localhost.foo.com
+       type: TXT
+       ttl: 7200
+       value: '"bar"'
+
+ # Add an alias record that points to an Amazon ELB:
+ - route53:
+       state: present
+       zone: foo.com
+       record: elb.foo.com
+       type: A
+       value: "{{ elb_dns_name }}"
+       alias: True
+       alias_hosted_zone_id: "{{ elb_zone_id }}"
+
+ # Retrieve the details for elb.foo.com
+ - route53:
+       state: get
+       zone: foo.com
+       record: elb.foo.com
+       type: A
+   register: rec
+
+ # Delete an alias record using the results from the get command
+ - route53:
+       state: absent
+       zone: foo.com
+       record: "{{ rec.set.record }}"
+       ttl: "{{ rec.set.ttl }}"
+       type: "{{ rec.set.type }}"
+       value: "{{ rec.set.value }}"
+       alias: True
+       alias_hosted_zone_id: "{{ rec.set.alias_hosted_zone_id }}"
+
+ # Add an alias record that points to an Amazon ELB and evaluates it health:
+ - route53:
+     state: present
+     zone: foo.com
+     record: elb.foo.com
+     type: A
+     value: "{{ elb_dns_name }}"
+     alias: True
+     alias_hosted_zone_id: "{{ elb_zone_id }}"
+     alias_evaluate_target_health: True
+
+ # Add an AAAA record with Hosted Zone ID.
+ - route53:
+       state: present
+       zone: foo.com
+       hosted_zone_id: Z2AABBCCDDEEFF
+       record: localhost.foo.com
+       type: AAAA
+       ttl: 7200
+       value: "::1"
+
+ # Use a routing policy to distribute traffic:
+ - route53:
+       state: present
+       zone: foo.com
+       record: www.foo.com
+       type: CNAME
+       value: host1.foo.com
+       ttl: 30
+       # Routing policy
+       identifier: "[email protected]"
+       weight: 100
+       health_check: "d994b780-3150-49fd-9205-356abdd42e75"
+
+ # Add a CAA record (RFC 6844):
+ - route53:
+       state: present
+       zone: example.com
+       record: example.com
+       type: CAA
+       value:
+         - 0 issue "ca.example.net"
+         - 0 issuewild ";"
+         - 0 iodef "mailto:[email protected]"
+
+RETURN VALUES                   *route53-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key            Returned                                                                                 Description
+   nameservers                        nameservers associated with the zone
+   list           when state is 'get' Sample:
+                                      ['ns-1036.awsdns-00.org.', 'ns-516.awsdns-00.net.', 'ns-1504.awsdns-00.co.uk.', 'ns-1.awsdns-00.com.']
+   set            when state is 'get' info specific to the resource record
+   complex
+     alias        always              whether this is an alias
+     boolean
+     failover     always
+     NoneType
+     health_check always              health_check associated with this record
+     NoneType
+     identifier   always
+     NoneType
+     record                           domain name for the record set
+     string       always              Sample:
+                                      new.foo.com.
+     region       always
+     None
+     ttl                              resource record cache TTL
+     string       always              Sample:
+                                      3600
+     type                             record set type
+     string       always              Sample:
+                                      A
+     value                            value
+     string       always              Sample:
+                                      52.43.18.27
+     values                           values
+     list         always              Sample:
+                                      ['52.43.18.27']
+     weight                           weight of the record
+     string       always              Sample:
+                                      3
+     zone                             zone this record set belongs to
+     string       always              Sample:
+                                      foo.bar.com.
+
+STATUS                   *route53-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Bruce Pennypacker (@bpennypacker)
+     • Mike Buzzetti (@jimbydamonk)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *route53-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/route53_module.html
+https://docs.ansible.com/ansible/latest/modules/route53_module.html

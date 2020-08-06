@@ -1,0 +1,939 @@
+SYNOPSIS                   *ovirt_vm*
+
+     • This module manages whole lifecycle of the Virtual Machine(VM) in oVirt/RHV.
+     • Since VM can hold many states in oVirt/RHV, this see notes to see how the states of the VM are handled.
+
+REQUIREMENTS                   *ovirt_vm-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • ovirt-engine-sdk-python >= 4.3.0
+
+PARAMETERS                   *ovirt_vm-parameters*
+
+            Parameter             Choices/Defaults                                                                       Comments
+   affinity_group_mappings                           Mapper which maps affinity name between VM's OVF and the destination affinity this VM should be registered to, relevant when state is
+   -                                                 registered.
+   added in 2.5
+   affinity_label_mappings                           Mapper which maps affinity label name between VM's OVF and the destination label this VM should be registered to, relevant when state is
+   -                                                 registered.
+   added in 2.5
+   allow_partial_import           Choices:
+   boolean                        • no               Boolean indication whether to allow partial registration of Virtual Machine when state is registered.
+   added in 2.4                   • yes
+   auth                                              Dictionary with values needed to create HTTP/HTTPS connection to oVirt:
+   dictionary / required
+                                                     A PEM file containing the trusted CA certificates.
+        ca_file                                      The certificate presented by the server will be verified using these CA certificates.
+        string                                       If ca_file parameter is not set, system wide CA certificate store is used.
+                                                     Default value is set by OVIRT_CAFILE environment variable.
+        headers                                      Dictionary of HTTP headers to be added to each API call.
+        dictionary
+        hostname                                     A string containing the hostname of the server, usually something like `server.example.com`.
+        string                                       Default value is set by OVIRT_HOSTNAME environment variable.
+                                                     Either url or hostname is required.
+        insecure                  Choices:
+        boolean                   • no               A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                                  • yes
+        kerberos                  Choices:
+        boolean                   • no               A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                                  • yes
+        password                                     The password of the user.
+        string / required                            Default value is set by OVIRT_PASSWORD environment variable.
+        token                                        Token to be used instead of login with username/password.
+        string                                       Default value is set by OVIRT_TOKEN environment variable.
+        url                                          A string containing the API URL of the server, usually something like `https://server.example.com/ovirt-engine/api`.
+        string                                       Default value is set by OVIRT_URL environment variable.
+                                                     Either url or hostname is required.
+        username                                     The name of the user, something like [email protected].
+        string / required                            Default value is set by OVIRT_USERNAME environment variable.
+   ballooning_enabled             Choices:           If true, use memory ballooning.
+   boolean                        • no               Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory based on VM needs in a dynamic way. In this way
+   added in 2.5                   • yes              it's possible to create memory over commitment states.
+                                  Choices:
+   boot_devices                   • cdrom            List of boot devices which should be used to boot. For example [ cdrom, hd ].
+   -                              • hd               Default value is set by oVirt/RHV engine.
+                                  • network
+   boot_menu                      Choices:
+   boolean                        • no               True enable menu to select boot device, False to disable it. By default is chosen by oVirt/RHV engine.
+   added in 2.5                   • yes
+                                                     ISO file from ISO storage domain which should be attached to Virtual Machine.
+   cd_iso                                            If you have multiple ISO disks with the same name use disk ID to specify which should be used.
+   -                                                 If you pass empty string the CD will be ejected from VM.
+                                                     If used with state running or present and VM is running the CD will be attached to VM.
+                                                     If used with state running or present and VM is down the CD will be attached to VM persistently.
+   clone                          Choices:           If yes then the disks of the created virtual machine will be cloned and independent of the template.
+   boolean                        • no ←             This parameter is used only when state is running or present and VM didn't exist before.
+                                  • yes
+   clone_permissions              Choices:           If yes then the permissions of the template (only the direct ones, not the inherited ones) will be copied to the created virtual machine.
+   boolean                        • no ←             This parameter is used only when state is running or present and VM didn't exist before.
+                                  • yes
+   cloud_init                                        Dictionary with values for Unix-like Virtual Machine initialization using cloud init.
+   -
+        authorized_ssh_keys                          Use this SSH keys to login to Virtual Machine.
+        -
+        custom_script                                Cloud-init script which will be executed on Virtual Machine when deployed.
+        -                                            This is appended to the end of the cloud-init script generated by any other options.
+        dns_search                                   DNS search domains to be configured on Virtual Machine.
+        -
+        dns_servers                                  DNS servers to be configured on Virtual Machine.
+        -
+        host_name                                    Hostname to be set to Virtual Machine when deployed.
+        -
+                                  Choices:
+        nic_boot_protocol         • none             Set boot protocol of the network interface of Virtual Machine.
+        -                         • dhcp
+                                  • static
+        nic_boot_protocol_v6      Choices:
+        -                         • none             Set boot protocol of the network interface of Virtual Machine.
+        added in 2.9              • dhcp
+                                  • static
+        nic_gateway                                  If boot protocol is static, set this gateway to network interface of Virtual Machine.
+        -
+        nic_gateway_v6                               If boot protocol is static, set this gateway to network interface of Virtual Machine.
+        -                                            For IPv6 addresses the value is an integer in the range of 0-128, which represents the subnet prefix.
+        added in 2.9
+        nic_ip_address                               If boot protocol is static, set this IP address to network interface of Virtual Machine.
+        -
+        nic_ip_address_v6
+        -                                            If boot protocol is static, set this IP address to network interface of Virtual Machine.
+        added in 2.9
+        nic_name                                     Set name to network interface of Virtual Machine.
+        -
+        nic_netmask                                  If boot protocol is static, set this netmask to network interface of Virtual Machine.
+        -
+        nic_netmask_v6
+        -                                            If boot protocol is static, set this netmask to network interface of Virtual Machine.
+        added in 2.9
+        nic_on_boot               Choices:
+        boolean                   • no               If True network interface will be set to start on boot.
+                                  • yes
+        regenerate_ssh_keys       Choices:
+        boolean                   • no               If True SSH keys will be regenerated on Virtual Machine.
+                                  • yes
+        root_password                                Password to be set for user specified by user_name parameter.
+        -
+        timezone                                     Timezone to be set to Virtual Machine when deployed.
+        -
+        user_name                                    Username to be used to set password to Virtual Machine when deployed.
+        -
+                                                     List of dictionaries representing network interfaces to be setup by cloud init.
+   cloud_init_nics                                   This option is used, when user needs to setup more network interfaces via cloud init.
+   -                                                 If one network interface is enough, user should use cloud_init nic_" parameters. cloud_init nic_" parameters are merged with cloud_init_nics
+                                                     parameters.
+        nic_boot_protocol                            Set boot protocol of the network interface of Virtual Machine. Can be one of none, dhcp or static.
+        -
+        nic_boot_protocol_v6
+        -                                            Set boot protocol of the network interface of Virtual Machine. Can be one of none, dhcp or static.
+        added in 2.9
+        nic_gateway                                  If boot protocol is static, set this gateway to network interface of Virtual Machine.
+        -
+        nic_gateway_v6                               If boot protocol is static, set this gateway to network interface of Virtual Machine.
+        -                                            For IPv6 addresses the value is an integer in the range of 0-128, which represents the subnet prefix.
+        added in 2.9
+        nic_ip_address                               If boot protocol is static, set this IP address to network interface of Virtual Machine.
+        -
+        nic_ip_address_v6
+        -                                            If boot protocol is static, set this IP address to network interface of Virtual Machine.
+        added in 2.9
+        nic_name                                     Set name to network interface of Virtual Machine.
+        -
+        nic_netmask                                  If boot protocol is static, set this netmask to network interface of Virtual Machine.
+        -
+        nic_netmask_v6
+        -                                            If boot protocol is static, set this netmask to network interface of Virtual Machine.
+        added in 2.9
+        nic_on_boot               Choices:
+        boolean                   • no               If True network interface will be set to start on boot.
+                                  • yes
+   cloud_init_persist             Choices:           If yes the cloud_init or sysprep parameters will be saved for the virtual machine and the virtual machine won't be started as run-once.
+   boolean                        • no ←             aliases: sysprep_persist
+   added in 2.5                   • yes
+   cluster                                           Name of the cluster, where Virtual Machine should be created.
+   -                                                 Required if creating VM.
+   cluster_mappings                                  Mapper which maps cluster name between VM's OVF and the destination cluster this VM should be registered to, relevant when state is registered.
+   -                                                 Cluster mapping is described by the following dictionary:
+   added in 2.5
+        dest_name                                    The name of the destination cluster.
+        -
+        source_name                                  The name of the source cluster.
+        -
+   comment                                           Comment of the Virtual Machine.
+   -
+   cpu_cores                                         Number of virtual CPUs cores of the Virtual Machine.
+   -                                                 Default value is set by oVirt/RHV engine.
+   cpu_mode                                          CPU mode of the virtual machine. It can be some of the following: host_passthrough, host_model or custom.
+   -                                                 For host_passthrough CPU type you need to set placement_policy to pinned.
+   added in 2.5                                      If no value is passed, default value is set by oVirt/RHV engine.
+   cpu_pinning                                       CPU Pinning topology to map virtual machine CPU to host CPU.
+   -                                                 CPU Pinning topology is a list of dictionary which can have following values:
+   added in 2.5
+        cpu                                          Number of the host CPU.
+        -
+        vcpu                                         Number of the virtual machine CPU.
+        -
+   cpu_shares                                        Set a CPU shares for this Virtual Machine.
+   -                                                 Default value is set by oVirt/RHV engine.
+   cpu_sockets                                       Number of virtual CPUs sockets of the Virtual Machine.
+   -                                                 Default value is set by oVirt/RHV engine.
+   cpu_threads                                       Number of threads per core of the Virtual Machine.
+   -                                                 Default value is set by oVirt/RHV engine.
+   added in 2.5
+   custom_compatibility_version                      Enables a virtual machine to be customized to its own compatibility version. If 'custom_compatibility_version' is set, it overrides the
+   -                                                 cluster's compatibility version for this particular virtual machine.
+   added in 2.7
+   custom_properties                                 Properties sent to VDSM to configure various hooks.
+   -                                                 Custom properties is a list of dictionary which can have following values:
+   added in 2.5
+        name                                         Name of the custom property. For example: hugepages, vhost, sap_agent, etc.
+        -
+        regexp                                       Regular expression to set for custom property.
+        -
+        value                                        Value to set for custom property.
+        -
+   delete_protected               Choices:           If yes Virtual Machine will be set as delete protected.
+   boolean                        • no               If no Virtual Machine won't be set as delete protected.
+                                  • yes              If no value is passed, default value is set by oVirt/RHV engine.
+   description                                       Description of the Virtual Machine.
+   -
+                                                     Specify format of the disk.
+   disk_format                    Choices:           If cow format is used, disk will by created as sparse, so space will be allocated for the volume as needed, also known as thin provision.
+   -                              • cow ←            If raw format is used, disk storage will be allocated right away, also known as preallocated.
+   added in 2.4                   • raw              Note that this option isn't idempotent as it's not currently possible to change format of the disk via API.
+                                                     This parameter is considered only when template and storage domain is provided.
+   disks                                             List of disks, which should be attached to Virtual Machine. Disk is described by following dictionary.
+   -
+        activate                  Choices:           True if the disk should be activated, default is activated.
+        boolean                   • no               NOTE - This parameter is used only when state is running or present and is able to only attach disks. To manage disks of the VM in more depth
+                                  • yes              please use ovirt_disk module instead.
+        bootable                  Choices:
+        boolean                   • no               True if the disk should be bootable, default is non bootable.
+                                  • yes
+        id                                           ID of the disk. Either name or id is required.
+        -
+        interface                 Choices:
+        -                         • virtio ←         Interface of the disk.
+                                  • ide
+        name                                         Name of the disk. Either name or id is required.
+        -
+   domain_mappings                                   Mapper which maps aaa domain name between VM's OVF and the destination aaa domain this VM should be registered to, relevant when state is
+   -                                                 registered. The aaa domain mapping is described by the following dictionary:
+   added in 2.5
+        dest_name                                    The name of the destination aaa domain.
+        -
+        source_name                                  The name of the source aaa domain.
+        -
+   exclusive                      Choices:
+   boolean                        • no               When state is exported this parameter indicates if the existing VM with the same name should be overwritten.
+   added in 2.8                   • yes
+   export_domain
+   -                                                 When state is exportedthis parameter specifies the name of the export storage domain.
+   added in 2.8
+   export_ova
+   -                                                 Dictionary of values to be used to export VM as OVA.
+   added in 2.8
+        directory                                    The name of the directory where the OVA has to be exported.
+        -
+        filename                                     The name of the exported OVA file.
+        -
+        host                                         The name of the destination host where the OVA has to be exported.
+        -
+   fetch_nested                   Choices:           If True the module will fetch additional data from the API.
+   boolean                        • no               It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other attributes of the nested entities by specifying
+                                  • yes              nested_attributes.
+   force                          Choices:
+   boolean                        • no ←             Please check to Synopsis to more detailed description of force parameter, it can behave differently in different situations.
+                                  • yes
+   force_migrate                  Choices:
+   boolean                        • no               If true, the VM will migrate when placement_policy=user-migratable but not when placement_policy=pinned.
+   added in 2.8                   • yes
+   graphical_console
+   -                                                 Assign graphical console to the virtual machine.
+   added in 2.5
+        headless_mode             Choices:
+        boolean                   • no               If true disable the graphics console for this virtual machine.
+                                  • yes
+        protocol                                     Graphical protocol, a list of spice, vnc, or both.
+        -
+   high_availability              Choices:           If yes Virtual Machine will be set as highly available.
+   boolean                        • no               If no Virtual Machine won't be set as highly available.
+                                  • yes              If no value is passed, default value is set by oVirt/RHV engine.
+   high_availability_priority                        Indicates the priority of the virtual machine inside the run and migration queues. Virtual machines with higher priorities will be started and
+   -                                                 migrated before virtual machines with lower priorities. The value is an integer between 0 and 100. The higher the value, the higher the
+   added in 2.5                                      priority.
+                                                     If no value is passed, default value is set by oVirt/RHV engine.
+   host                                              Specify host where Virtual Machine should be running. By default the host is chosen by engine scheduler.
+   -                                                 This parameter is used only when state is running or present.
+   host_devices                                      Single Root I/O Virtualization - technology that allows single device to expose multiple endpoints that can be passed to VMs
+   -                                                 host_devices is an list which contain dictionary with name and state of device
+   added in 2.7
+   id                                                ID of the Virtual Machine to manage.
+   -
+   initrd_path                                       Path to an initial ramdisk to be used with the kernel specified by kernel_path option.
+   -                                                 Ramdisk image must be stored on either the ISO domain or on the host's storage.
+   instance_type                                     Name of virtual machine's hardware configuration.
+   -                                                 By default no instance type is used.
+   io_threads
+   -                                                 Number of IO threads used by virtual machine. 0 means IO threading disabled.
+   added in 2.5
+   kernel_params                                     Kernel command line parameters (formatted as string) to be used with the kernel specified by kernel_path option.
+   -
+   kernel_params_persist          Choices:
+   boolean                        • no               If true kernel_params, initrd_path and kernel_path will persist in virtual machine configuration, if False it will be used for run once.
+   added in 2.8                   • yes
+   kernel_path                                       Path to a kernel image used to boot the virtual machine.
+   -                                                 Kernel image must be stored on either the ISO domain or on the host's storage.
+   kvm                                               Dictionary of values to be used to connect to kvm and import a virtual machine to oVirt.
+   -
+        drivers_iso                                  The name of the ISO containing drivers that can be used during the virt-v2v conversion process.
+        -
+        name                                         The name of the KVM virtual machine.
+        -
+        password                                     The password to authenticate against the KVM.
+        -
+        sparse                    Choices:
+        boolean                   • no               Specifies the disk allocation policy of the resulting virtual machine. true for sparse, false for preallocated.
+                                  • yes ←
+        storage_domain                               Specifies the target storage domain for converted disks. This is required parameter.
+        -
+        url                                          The URL to be passed to the virt-v2v tool for conversion.
+        -                                            For example qemu:///system. This is required parameter.
+        username                                     The username to authenticate against the KVM.
+        -
+   lease                                             Name of the storage domain this virtual machine lease reside on. Pass an empty string to remove the lease.
+   -                                                 NOTE - Supported since oVirt 4.1.
+   added in 2.4
+                                                     Mapper which maps lun between VM's OVF and the destination lun this VM should contain, relevant when state is registered. lun_mappings is
+   lun_mappings                                      described by the following dictionary: - logical_unit_id: The logical unit number to identify a logical unit, - logical_unit_port: The port
+   -                                                 being used to connect with the LUN disk. - logical_unit_portal: The portal being used to connect with the LUN disk. - logical_unit_address: The
+   added in 2.5                                      address of the block storage host. - logical_unit_target: The iSCSI specification located on an iSCSI server - logical_unit_username: Username
+                                                     to be used to connect to the block storage host. - logical_unit_password: Password to be used to connect to the block storage host. -
+                                                     storage_type: The storage type which the LUN reside on (iscsi or fcp)
+   memory                                            Amount of memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+   -                                                 Default value is set by engine.
+   memory_guaranteed                                 Amount of minimal guaranteed memory of the Virtual Machine. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+   -                                                 memory_guaranteed parameter can't be lower than memory parameter.
+                                                     Default value is set by engine.
+   memory_max                                        Upper bound of virtual machine memory up to which memory hot-plug can be performed. Prefix uses IEC 60027-2 standard (for example 1GiB,
+   -                                                 1024MiB).
+   added in 2.5                                      Default value is set by engine.
+   migrate                        Choices:
+   boolean                        • no               If true, the VM will migrate to any available host.
+   added in 2.8                   • yes
+   name                                              Name of the Virtual Machine to manage.
+   -                                                 If VM don't exists name is required. Otherwise id or name can be used.
+   nested_attributes                                 Specifies list of the attributes which should be fetched from the API.
+   list                                              This parameter apply only when fetch_nested is true.
+   next_run                       Choices:           If true, the update will not be applied to the VM immediately and will be only applied when virtual machine is restarted.
+   boolean                        • no               NOTE - If there are multiple next run configuration changes on the VM, the first change may get reverted if this option is not passed.
+   added in 2.8                   • yes
+   nics                                              List of NICs, which should be attached to Virtual Machine. NIC is described by following dictionary.
+   -
+                                  Choices:
+        interface                 • virtio ←         Type of the network interface.
+        -                         • e1000
+                                  • rtl8139
+        mac_address                                  Custom MAC address of the network interface, by default it's obtained from MAC pool.
+        -                                            NOTE - This parameter is used only when state is running or present and is able to only create NICs. To manage NICs of the VM in more depth
+                                                     please use ovirt_nic module instead.
+        name                                         Name of the NIC.
+        -
+        profile_name                                 Profile name where NIC should be attached.
+        -
+   numa_nodes                                        List of vNUMA Nodes to set for this VM and pin them to assigned host's physical NUMA node.
+   -                                                 Each vNUMA node is described by following dictionary:
+   added in 2.6
+        cores                                        List of VM CPU cores indexes to be included in this NUMA node.
+        list / required
+        index                                        The index of this NUMA node.
+        - / required
+        memory                                       Memory size of the NUMA node in MiB.
+        - / required
+        numa_node_pins                               List of physical NUMA node indexes to pin this virtual NUMA node to.
+        list
+   numa_tune_mode                 Choices:           Set how the memory allocation for NUMA nodes of this VM is applied (relevant if NUMA nodes are set for this VM).
+   -                              • interleave       It can be one of the following: interleave, preferred or strict.
+   added in 2.6                   • preferred        If no value is passed, default value is set by oVirt/RHV engine.
+                                  • strict
+                                                     Operating system of the Virtual Machine.
+                                                     Default value is set by oVirt/RHV engine.
+                                                     Possible values: debian_7, freebsd, freebsdx64, other, other_linux, other_linux_kernel_4, other_linux_ppc64, other_linux_s390x, other_ppc64,
+   operating_system                                  other_s390x, rhcos_x64, rhel_3, rhel_3x64, rhel_4, rhel_4x64, rhel_5, rhel_5x64, rhel_6, rhel_6_9_plus_ppc64, rhel_6_ppc64, rhel_6x64,
+   -                                                 rhel_7_ppc64, rhel_7_s390x, rhel_7x64, rhel_8x64, rhel_atomic7x64, sles_11, sles_11_ppc64, sles_12_s390x, ubuntu_12_04, ubuntu_12_10,
+                                                     ubuntu_13_04, ubuntu_13_10, ubuntu_14_04, ubuntu_14_04_ppc64, ubuntu_16_04_s390x, windows_10, windows_10x64, windows_2003, windows_2003x64,
+                                                     windows_2008, windows_2008R2x64, windows_2008x64, windows_2012R2x64, windows_2012x64, windows_2016x64, windows_2019x64, windows_7, windows_7x64,
+                                                     windows_8, windows_8x64, windows_xp
+   placement_policy                                  The configuration of the virtual machine's placement policy.
+   -                                                 If no value is passed, default value is set by oVirt/RHV engine.
+   added in 2.5                                      Placement policy can be one of the following values:
+        migratable                                   Allow manual and automatic migration.
+        -
+        pinned                                       Do not allow migration.
+        -
+        user_migratable                              Allow manual migration only.
+        -
+   poll_interval                Default:             Number of the seconds the module waits until another poll request on entity status is sent.
+   integer                      3
+   quota_id
+   -                                                 Virtual Machine quota ID to be used for disk. By default quota is chosen by oVirt/RHV engine.
+   added in 2.5
+   reassign_bad_macs              Choices:
+   boolean                        • no               Boolean indication whether to reassign bad macs when state is registered.
+   added in 2.5                   • yes
+   rng_device                                        Random number generator (RNG). You can choose of one the following devices urandom, random or hwrng.
+   -                                                 In order to select hwrng, you must have it enabled on cluster first.
+   added in 2.5                                      /dev/urandom is used for cluster version >= 4.1, and /dev/random for cluster version <= 4.0
+   role_mappings                                     Mapper which maps role name between VM's OVF and the destination role this VM should be registered to, relevant when state is registered. Role
+   -                                                 mapping is described by the following dictionary:
+   added in 2.5
+        dest_name                                    The name of the destination role.
+        -
+        source_name                                  The name of the source role.
+        -
+   serial_console                 Choices:
+   boolean                        • no               True enable VirtIO serial console, False to disable it. By default is chosen by oVirt/RHV engine.
+   added in 2.5                   • yes
+                                  Choices:           Specify a serial number policy for the Virtual Machine.
+   serial_policy                  • vm               Following options are supported.
+   -                              • host             vm - Sets the Virtual Machine's UUID as its serial number.
+                                  • custom           host - Sets the host's UUID as the Virtual Machine's serial number.
+                                                     custom - Allows you to specify a custom serial number in serial_policy_value.
+   serial_policy_value                               Allows you to specify a custom serial number.
+   -                                                 This parameter is used only when serial_policy is custom.
+   smartcard_enabled              Choices:
+   boolean                        • no               If true, use smart card authentication.
+   added in 2.5                   • yes
+   snapshot_name                                     Snapshot to clone VM from.
+   -                                                 Snapshot with description specified should exist.
+   added in 2.9                                      You have to specify snapshot_vm parameter with virtual machine name of this snapshot.
+   snapshot_vm                                       Source VM to clone VM from.
+   -                                                 VM should have snapshot specified by snapshot.
+   added in 2.9                                      If snapshot_name specified snapshot_vm is required.
+   soundcard_enabled              Choices:
+   boolean                        • no               If true, the sound card is added to the virtual machine.
+   added in 2.5                   • yes
+   sso                            Choices:
+   boolean                        • no               True enable Single Sign On by Guest Agent, False to disable it. By default is chosen by oVirt/RHV engine.
+   added in 2.5                   • yes
+                                  Choices:           Should the Virtual Machine be running/stopped/present/absent/suspended/next_run/registered/exported. When state is registered and the
+                                  • absent           unregistered VM's name belongs to an already registered in engine VM in the same DC then we fail to register the unregistered template.
+                                  • next_run         present state will create/update VM and don't change its state if it already exists.
+   state                          • present ←        running state will create/update VM and start it.
+   -                              • registered       next_run state updates the VM and if the VM has next run configuration it will be rebooted.
+                                  • running          Please check notes to more detailed description of states.
+                                  • stopped          exported state will export the VM to export domain or as OVA.
+                                  • suspended        registered is supported since 2.4.
+                                  • exported
+   stateless                      Choices:           If yes Virtual Machine will be set as stateless.
+   boolean                        • no               If no Virtual Machine will be unset as stateless.
+                                  • yes              If no value is passed, default value is set by oVirt/RHV engine.
+   storage_domain                                    Name of the storage domain where all template disks should be created.
+   -                                                 This parameter is considered only when template is provided.
+   added in 2.4                                      IMPORTANT - This parameter is not idempotent, if the VM exists and you specify different storage domain, disk won't move.
+   sysprep                                           Dictionary with values for Windows Virtual Machine initialization using sysprep.
+   -
+        active_directory_ou                          Active Directory Organizational Unit, to be used for login of user.
+        -
+        domain                                       Domain to be set to Windows Virtual Machine.
+        -
+        host_name                                    Hostname to be set to Virtual Machine when deployed.
+        -
+        input_locale                                 Input localization of the Windows Virtual Machine.
+        -
+        org_name                                     Organization name to be set to Windows Virtual Machine.
+        -
+        root_password                                Password to be set for username to Windows Virtual Machine.
+        -
+        system_locale                                System localization of the Windows Virtual Machine.
+        -
+        timezone                                     Timezone to be set to Windows Virtual Machine.
+        -
+        ui_language                                  UI language of the Windows Virtual Machine.
+        -
+        user_name                                    Username to be used for set password to Windows Virtual Machine.
+        -
+        windows_license_key                          License key to be set to Windows Virtual Machine.
+        -
+   template                                          Name of the template, which should be used to create Virtual Machine.
+   -                                                 Required if creating VM.
+                                                     If template is not specified and VM doesn't exist, VM will be created from Blank template.
+   template_version                                  Version number of the template to be used for VM.
+   -                                                 By default the latest available version of the template is used.
+   ticket                         Choices:           If true, in addition return remote_vv_file inside vm dictionary, which contains compatible content for remote-viewer application. Works only
+   boolean                        • no               state is running.
+   added in 2.7                   • yes
+   timeout                      Default:             The amount of time in seconds the module should wait for the instance to get into desired state.
+   integer                      180
+   timezone                                          Sets time zone offset of the guest hardware clock.
+   -                                                 For example Etc/GMT
+                                  Choices:           Type of the Virtual Machine.
+   type                           • desktop          Default value is set by oVirt/RHV engine.
+   -                              • server           high_performance is supported since Ansible 2.5 and oVirt/RHV 4.2.
+                                  • high_performance
+   usb_support                    Choices:
+   boolean                        • no               True enable USB support, False to disable it. By default is chosen by oVirt/RHV engine.
+   added in 2.5                   • yes
+   use_latest_template_version    Choices:           Specify if latest template version should be used, when running a stateless VM.
+   boolean                        • no               If this parameter is set to yes stateless VM is created.
+                                  • yes
+   vmware                                            Dictionary of values to be used to connect to VMware and import a virtual machine to oVirt.
+   -
+        drivers_iso                                  The name of the ISO containing drivers that can be used during the virt-v2v conversion process.
+        -
+        password                                     The password to authenticate against the VMware.
+        -
+        sparse                    Choices:
+        boolean                   • no               Specifies the disk allocation policy of the resulting virtual machine. true for sparse, false for preallocated.
+                                  • yes ←
+        storage_domain                               Specifies the target storage domain for converted disks. This is required parameter.
+        -
+        url                                          The URL to be passed to the virt-v2v tool for conversion.
+        -                                            For example vpx://[email protected]/DataCenter/Cluster/esxi-host?no_verify=1
+        username                                     The username to authenticate against the VMware.
+        -
+   vnic_profile_mappings                             Mapper which maps an external virtual NIC profile to one that exists in the engine when state is registered. vnic_profile is described by the
+   -                                                 following dictionary:
+   added in 2.5
+        source_network_name                          The network name of the source network.
+        -
+        source_profile_name                          The profile name related to the source network.
+        -
+        target_profile_id                            The id of the target profile id to be mapped to in the engine.
+        -
+   wait                           Choices:
+   boolean                        • no               yes if the module should wait for the entity to get into desired state.
+                                  • yes ←
+   watchdog                                          Assign watchdog device for the virtual machine.
+   -                                                 Watchdogs is a dictionary which can have following values:
+   added in 2.5
+        action                                       Watchdog action to be performed when watchdog is triggered. For example: none, reset, poweroff, pause or dump.
+        -
+        model                                        Model of the watchdog device. For example: i6300esb, diag288 or null.
+        -
+   xen                                               Dictionary of values to be used to connect to XEN and import a virtual machine to oVirt.
+   -
+        drivers_iso                                  The name of the ISO containing drivers that can be used during the virt-v2v conversion process.
+        -
+        sparse                    Choices:
+        boolean                   • no               Specifies the disk allocation policy of the resulting virtual machine. true for sparse, false for preallocated.
+                                  • yes ←
+        storage_domain                               Specifies the target storage domain for converted disks. This is required parameter.
+        -
+        url                                          The URL to be passed to the virt-v2v tool for conversion.
+        -                                            For example xen+ssh://[email protected]. This is required parameter.
+
+NOTES                   *ovirt_vm-notes*
+
+   Note
+
+     • If VM is in UNASSIGNED or UNKNOWN state before any operation, the module will fail. If VM is in IMAGE_LOCKED state before any operation, we try to wait for VM to be DOWN. If VM is in
+       SAVING_STATE state before any operation, we try to wait for VM to be SUSPENDED. If VM is in POWERING_DOWN state before any operation, we try to wait for VM to be UP or DOWN. VM can get into
+       UP state from POWERING_DOWN state, when there is no ACPI or guest agent running inside VM, or if the shutdown operation fails. When user specify UP state, we always wait to VM to be in UP
+       state in case VM is MIGRATING, REBOOTING, POWERING_UP, RESTORING_STATE, WAIT_FOR_LAUNCH. In other states we run start operation on VM. When user specify stopped state, and If user pass force
+       parameter set to true we forcibly stop the VM in any state. If user don’t pass force parameter, we always wait to VM to be in UP state in case VM is MIGRATING, REBOOTING, POWERING_UP,
+       RESTORING_STATE, WAIT_FOR_LAUNCH. If VM is in PAUSED or SUSPENDED state, we start the VM. Then we gracefully shutdown the VM. When user specify suspended state, we always wait to VM to be in
+       UP state in case VM is MIGRATING, REBOOTING, POWERING_UP, RESTORING_STATE, WAIT_FOR_LAUNCH. If VM is in PAUSED or DOWN state, we start the VM. Then we suspend the VM. When user specify
+       absent state, we forcibly stop the VM in any state and remove it.
+     • If you update a VM parameter that requires a reboot, the oVirt engine always creates a new snapshot for the VM, and an Ansible playbook will report this as changed.
+     • In order to use this module you have to install oVirt Python SDK. To ensure it’s installed with correct version you can create the following task: pip: name=ovirt-engine-sdk-python
+       version=4.3.0
+
+EXAMPLES                   *ovirt_vm-examples*
+
+ # Examples don't contain auth parameter for simplicity,
+ # look at ovirt_auth module to see how to reuse authentication:
+
+ - name: Creates a new Virtual Machine from template named 'rhel7_template'
+   ovirt_vm:
+     state: present
+     name: myvm
+     template: rhel7_template
+     cluster: mycluster
+
+ - name: Register VM
+   ovirt_vm:
+     state: registered
+     storage_domain: mystorage
+     cluster: mycluster
+     name: myvm
+
+ - name: Register VM using id
+   ovirt_vm:
+     state: registered
+     storage_domain: mystorage
+     cluster: mycluster
+     id: 1111-1111-1111-1111
+
+ - name: Register VM, allowing partial import
+   ovirt_vm:
+     state: registered
+     storage_domain: mystorage
+     allow_partial_import: "True"
+     cluster: mycluster
+     id: 1111-1111-1111-1111
+
+ - name: Register VM with vnic profile mappings and reassign bad macs
+   ovirt_vm:
+     state: registered
+     storage_domain: mystorage
+     cluster: mycluster
+     id: 1111-1111-1111-1111
+     vnic_profile_mappings:
+     - source_network_name: mynetwork
+       source_profile_name: mynetwork
+       target_profile_id: 3333-3333-3333-3333
+     - source_network_name: mynetwork2
+       source_profile_name: mynetwork2
+       target_profile_id: 4444-4444-4444-4444
+     reassign_bad_macs: "True"
+
+ - name: Register VM with mappings
+   ovirt_vm:
+     state: registered
+     storage_domain: mystorage
+     cluster: mycluster
+     id: 1111-1111-1111-1111
+     role_mappings:
+       - source_name: Role_A
+         dest_name: Role_B
+     domain_mappings:
+       - source_name: Domain_A
+         dest_name: Domain_B
+     lun_mappings:
+       - source_storage_type: iscsi
+         source_logical_unit_id: 1IET_000d0001
+         source_logical_unit_port: 3260
+         source_logical_unit_portal: 1
+         source_logical_unit_address: 10.34.63.203
+         source_logical_unit_target: iqn.2016-08-09.brq.str-01:omachace
+         dest_storage_type: iscsi
+         dest_logical_unit_id: 1IET_000d0002
+         dest_logical_unit_port: 3260
+         dest_logical_unit_portal: 1
+         dest_logical_unit_address: 10.34.63.204
+         dest_logical_unit_target: iqn.2016-08-09.brq.str-02:omachace
+     affinity_group_mappings:
+       - source_name: Affinity_A
+         dest_name: Affinity_B
+     affinity_label_mappings:
+       - source_name: Label_A
+         dest_name: Label_B
+     cluster_mappings:
+       - source_name: cluster_A
+         dest_name: cluster_B
+
+ - name: Creates a stateless VM which will always use latest template version
+   ovirt_vm:
+     name: myvm
+     template: rhel7
+     cluster: mycluster
+     use_latest_template_version: true
+
+ # Creates a new server rhel7 Virtual Machine from Blank template
+ # on brq01 cluster with 2GiB memory and 2 vcpu cores/sockets
+ # and attach bootable disk with name rhel7_disk and attach virtio NIC
+ - ovirt_vm:
+     state: present
+     cluster: brq01
+     name: myvm
+     memory: 2GiB
+     cpu_cores: 2
+     cpu_sockets: 2
+     cpu_shares: 1024
+     type: server
+     operating_system: rhel_7x64
+     disks:
+       - name: rhel7_disk
+         bootable: True
+     nics:
+       - name: nic1
+
+ # Change VM Name
+ - ovirt_vm:
+     id: 00000000-0000-0000-0000-000000000000
+     name: "new_vm_name"
+
+ - name: Run VM with cloud init
+   ovirt_vm:
+     name: rhel7
+     template: rhel7
+     cluster: Default
+     memory: 1GiB
+     high_availability: true
+     high_availability_priority: 50  # Available from Ansible 2.5
+     cloud_init:
+       nic_boot_protocol: static
+       nic_ip_address: 10.34.60.86
+       nic_netmask: 255.255.252.0
+       nic_gateway: 10.34.63.254
+       nic_name: eth1
+       nic_on_boot: true
+       host_name: example.com
+       custom_script: |
+         write_files:
+          - content: |
+              Hello, world!
+            path: /tmp/greeting.txt
+            permissions: '0644'
+       user_name: root
+       root_password: super_password
+
+ - name: Run VM with cloud init, with multiple network interfaces
+   ovirt_vm:
+     name: rhel7_4
+     template: rhel7
+     cluster: mycluster
+     cloud_init_nics:
+     - nic_name: eth0
+       nic_boot_protocol: dhcp
+       nic_on_boot: true
+     - nic_name: eth1
+       nic_boot_protocol: static
+       nic_ip_address: 10.34.60.86
+       nic_netmask: 255.255.252.0
+       nic_gateway: 10.34.63.254
+       nic_on_boot: true
+     # IP version 6 parameters are supported since ansible 2.9
+     - nic_name: eth2
+       nic_boot_protocol_v6: static
+       nic_ip_address_v6: '2620:52:0:2282:b898:1f69:6512:36c5'
+       nic_gateway_v6: '2620:52:0:2282:b898:1f69:6512:36c9'
+       nic_netmask_v6: '120'
+       nic_on_boot: true
+     - nic_name: eth3
+       nic_on_boot: true
+       nic_boot_protocol_v6: dhcp
+
+ - name: Run VM with sysprep
+   ovirt_vm:
+     name: windows2012R2_AD
+     template: windows2012R2
+     cluster: Default
+     memory: 3GiB
+     high_availability: true
+     sysprep:
+       host_name: windowsad.example.com
+       user_name: Administrator
+       root_password: SuperPassword123
+
+ - name: Migrate/Run VM to/on host named 'host1'
+   ovirt_vm:
+     state: running
+     name: myvm
+     host: host1
+
+ - name: Migrate VM to any available host
+   ovirt_vm:
+     state: running
+     name: myvm
+     migrate: true
+
+ - name: Change VMs CD
+   ovirt_vm:
+     name: myvm
+     cd_iso: drivers.iso
+
+ - name: Eject VMs CD
+   ovirt_vm:
+     name: myvm
+     cd_iso: ''
+
+ - name: Boot VM from CD
+   ovirt_vm:
+     name: myvm
+     cd_iso: centos7_x64.iso
+     boot_devices:
+         - cdrom
+
+ - name: Stop vm
+   ovirt_vm:
+     state: stopped
+     name: myvm
+
+ - name: Upgrade memory to already created VM
+   ovirt_vm:
+     name: myvm
+     memory: 4GiB
+
+ - name: Hot plug memory to already created and running VM (VM won't be restarted)
+   ovirt_vm:
+     name: myvm
+     memory: 4GiB
+
+ # Create/update a VM to run with two vNUMA nodes and pin them to physical NUMA nodes as follows:
+ # vnuma index 0-> numa index 0, vnuma index 1-> numa index 1
+ - name: Create a VM to run with two vNUMA nodes
+   ovirt_vm:
+     name: myvm
+     cluster: mycluster
+     numa_tune_mode: "interleave"
+     numa_nodes:
+     - index: 0
+       cores: [0]
+       memory: 20
+       numa_node_pins: [0]
+     - index: 1
+       cores: [1]
+       memory: 30
+       numa_node_pins: [1]
+
+ - name: Update an existing VM to run without previously created vNUMA nodes (i.e. remove all vNUMA nodes+NUMA pinning setting)
+   ovirt_vm:
+     name: myvm
+     cluster: mycluster
+     state: "present"
+     numa_tune_mode: "interleave"
+     numa_nodes:
+     - index: -1
+
+ # When change on the VM needs restart of the VM, use next_run state,
+ # The VM will be updated and rebooted if there are any changes.
+ # If present state would be used, VM won't be restarted.
+ - ovirt_vm:
+     state: next_run
+     name: myvm
+     boot_devices:
+       - network
+
+ - name: Import virtual machine from VMware
+   ovirt_vm:
+     state: stopped
+     cluster: mycluster
+     name: vmware_win10
+     timeout: 1800
+     poll_interval: 30
+     vmware:
+       url: vpx://[email protected]/Folder1/Cluster1/2.3.4.5?no_verify=1
+       name: windows10
+       storage_domain: mynfs
+       username: user
+       password: password
+
+ - name: Create vm from template and create all disks on specific storage domain
+   ovirt_vm:
+     name: vm_test
+     cluster: mycluster
+     template: mytemplate
+     storage_domain: mynfs
+     nics:
+     - name: nic1
+
+ - name: Remove VM, if VM is running it will be stopped
+   ovirt_vm:
+     state: absent
+     name: myvm
+
+ # Defining a specific quota for a VM:
+ # Since Ansible 2.5
+ - ovirt_quotas_facts:
+     data_center: Default
+     name: myquota
+ - ovirt_vm:
+     name: myvm
+     sso: False
+     boot_menu: True
+     usb_support: True
+     serial_console: True
+     quota_id: "{{ ovirt_quotas[0]['id'] }}"
+
+ - name: Create a VM that has the console configured for both Spice and VNC
+   ovirt_vm:
+     name: myvm
+     template: mytemplate
+     cluster: mycluster
+     graphical_console:
+       protocol:
+         - spice
+         - vnc
+
+ # Execute remote viewer to VM
+ - block:
+   - name: Create a ticket for console for a running VM
+     ovirt_vm:
+       name: myvm
+       ticket: true
+       state: running
+     register: myvm
+
+   - name: Save ticket to file
+     copy:
+       content: "{{ myvm.vm.remote_vv_file }}"
+       dest: ~/vvfile.vv
+
+   - name: Run remote viewer with file
+     command: remote-viewer ~/vvfile.vv
+
+ # Default value of host_device state is present
+ - name: Attach host devices to virtual machine
+   ovirt_vm:
+     name: myvm
+     host: myhost
+     placement_policy: pinned
+     host_devices:
+       - name: pci_0000_00_06_0
+       - name: pci_0000_00_07_0
+         state: absent
+       - name: pci_0000_00_08_0
+         state: present
+
+ - name: Export the VM as OVA
+   ovirt_vm:
+     name: myvm
+     state: exported
+     cluster: mycluster
+     export_ova:
+         host: myhost
+         filename: myvm.ova
+         directory: /tmp/
+
+ - name: Clone VM from snapshot
+   ovirt_vm:
+     snapshot_vm: myvm
+     snapshot_name: myvm_snap
+     name: myvm_clone
+     state: present
+
+ - name: Import external ova VM
+   ovirt_vm:
+     cluster: mycluster
+     name: myvm
+     host: myhost
+     timeout: 1800
+     poll_interval: 30
+     kvm:
+       name: myvm
+       url: ova:///path/myvm.ova
+       storage_domain: mystorage
+
+RETURN VALUES                   *ovirt_vm-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+              On       ID of the VM which is managed
+   id         success  Sample:
+   string     if VM is 7de90f31-222c-436c-a1ca-7e655bd5b60c
+              found.
+              On       Dictionary of all the VM attributes. VM attributes can be found on your oVirt/RHV instance at following url: http://ovirt.github.io/ovirt-engine-api-model/master/#types/vm.
+   vm         success  Additionally when user sent ticket=true, this module will return also remote_vv_file parameter in vm dictionary, which contains remote-viewer compatible file to open virtual
+   dictionary if VM is machine console. Please note that this file contains sensible information.
+              found.
+
+STATUS                   *ovirt_vm-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ondra Machacek (@machacekondra)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovirt_vm-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovirt_vm_module.html

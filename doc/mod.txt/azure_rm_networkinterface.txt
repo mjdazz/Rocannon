@@ -1,0 +1,359 @@
+SYNOPSIS                   *azure_rm_networkinterface*
+
+     • Create, update or delete a network interface.
+     • When creating a network interface you must provide the name of an existing virtual network, the name of an existing subnet within the virtual network.
+     • A default security group and public IP address will be created automatically.
+     • Or you can provide the name of an existing security group and public IP address.
+     • See the examples below for more details.
+
+REQUIREMENTS                   *azure_rm_networkinterface-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_networkinterface-parameters*
+
+                Parameter                Choices/Defaults                                                                   Comments
+   ad_user                                                  Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   adfs_authority_url
+   string                                                   Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile                          Default:            Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds; future
+   string                               "latest"            values will allow use with Azure Stack.
+   added in 2.5
+   append_tags                            Choices:          Use to control if tags field is canonical or just appends to existing tags.
+   boolean                                • no              When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
+                                          • yes ←
+                                                            Controls the source of the credentials to use for authentication.
+                                                            If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                                          Choices:          auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file
+   auth_source                            • auto            ~/.azure/credentials.
+   string                                 • cli             When set to cli, the credentials will be sources from the default Azure CLI profile.
+   added in 2.5                           • credential_file Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+                                          • env             When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment variable
+                                          • msi             AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one subscription,
+                                                            otherwise the first subscription is chosen.
+                                                            The msi was added in Ansible 2.6.
+   cert_validation_mode                   Choices:          Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when
+   string                                 • ignore          an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can also be set via
+   added in 2.5                           • validate        credential file profile or the AZURE_CERT_VALIDATION environment variable.
+   client_id                                                Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment                    Default:            For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud,
+   string                               "AzureCloud"        AzureUSGovernment), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or the
+   added in 2.4                                             AZURE_CLOUD_ENVIRONMENT environment variable.
+   create_with_security_group             Choices:          Whether a security group should be be created with the NIC.
+   boolean                                • no              If this flag set to True and no security_group set, a default security group will be created.
+   added in 2.6                           • yes ←
+   dns_servers                                              Which DNS servers should the NIC lookup.
+   list                                                     List of IP addresses.
+   added in 2.7
+   enable_accelerated_networking          Choices:
+   boolean                                • no ←            Whether the network interface should be created with the accelerated networking feature or not.
+   added in 2.7                           • yes
+   enable_ip_forwarding                   Choices:          Whether to enable IP forwarding.
+   boolean                                • no ←            aliases: ip_forwarding
+   added in 2.7                           • yes
+   ip_configurations                                        List of IP configurations. Each configuration object should include field private_ip_address, private_ip_allocation_method,
+   -                                                        public_ip_address_name, public_ip, public_ip_allocation_method, name.
+   added in 2.5
+    application_security_groups                             List of application security groups in which the IP configuration is included.
+    -                                                       Element of the list could be a resource id of application security group, or dict of resource_group and name.
+    added in 2.8
+    load_balancer_backend_address_pools                     List of existing load-balancer backend address pools to associate with the network interface.
+    -                                                       Can be written as a resource ID.
+    added in 2.6                                            Also can be a dict of name and load_balancer.
+    name                                                    Name of the IP configuration.
+    - / required
+    primary                               Choices:
+    boolean                               • no ←            Whether the IP configuration is the primary one in the list.
+                                          • yes
+    private_ip_address                                      Private IP address for the IP configuration.
+    -
+    private_ip_allocation_method          Choices:
+    -                                     • Dynamic ←       Private IP allocation method.
+                                          • Static
+    public_ip_address_name                                  Name of the public IP address. None for disable IP address.
+    -                                                       aliases: public_ip_address, public_ip_name
+    public_ip_allocation_method           Choices:
+    -                                     • Dynamic ←       Public IP allocation method.
+                                          • Static
+   location                                                 Valid Azure location. Defaults to location of the resource group.
+   -
+   name                                                     Name of the network interface.
+   - / required
+   open_ports                                               When a default security group is created for a Linux host a rule will be added allowing inbound TCP connections to the default SSH port
+   -                                                        22, and for a Windows host rules will be added allowing inbound access to RDP ports 3389 and 5986. Override the default ports by
+                                                            providing a list of open ports.
+                                          Choices:          Determines any rules to be added to a default security group.
+   os_type                                • Windows         When creating a network interface, if no security group name is provided, a default security group will be created.
+   -                                      • Linux ←         If the os_type=Windows, a rule allowing RDP access will be added.
+                                                            If the os_type=Linux, a rule allowing SSH access will be added.
+   password                                                 Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   private_ip_address                                       (Deprecate) Valid IPv4 address that falls within the specified subnet.
+   -                                                        This option will be deprecated in 2.9, use ip_configurations instead.
+                                          Choices:          (Deprecate) Whether or not the assigned IP address is permanent.
+   private_ip_allocation_method           • Dynamic ←       When creating a network interface, if you specify private_ip_address=Static, you must provide a value for private_ip_address.
+   -                                      • Static          You can update the allocation method to Static after a dynamic private IP address has been assigned.
+                                                            This option will be deprecated in 2.9, use ip_configurations instead.
+   profile                                                  Security profile found in ~/.azure/credentials file.
+   string
+   public_ip                              Choices:          (Deprecate) When creating a network interface, if no public IP address name is provided a default public IP address will be created.
+   boolean                                • no              Set to false if you do not want a public IP address automatically created.
+                                          • yes ←           This option will be deprecated in 2.9, use ip_configurations instead.
+   public_ip_address_name                                   (Deprecate) Name of an existing public IP address object to associate with the security group.
+   -                                                        This option will be deprecated in 2.9, use ip_configurations instead.
+                                                            aliases: public_ip_address, public_ip_name
+   public_ip_allocation_method            Choices:          (Deprecate) If a public_ip_address_name is not provided, a default public IP address will be created.
+   -                                      • Dynamic ←       The allocation method determines whether or not the public IP address assigned to the network interface is permanent.
+                                          • Static          This option will be deprecated in 2.9, use ip_configurations instead.
+   resource_group                                           Name of a resource group where the network interface exists or will be created.
+   - / required
+   secret                                                   Azure client secret. Use when authenticating with a Service Principal.
+   string
+                                                            An existing security group with which to associate the network interface.
+                                                            If not provided, a default security group will be created when create_with_security_group=true.
+   security_group                                           It can be the name of security group.
+   -                                                        Make sure the security group is in the same resource group when you only give its name.
+                                                            It can be the resource id.
+                                                            It can be a dict contains security_group's name and resource_group.
+                                                            aliases: security_group_name
+   state                                  Choices:
+   -                                      • absent          Assert the state of the network interface. Use present to create or update an interface and absent to delete an interface.
+                                          • present ←
+   subnet_name                                              Name of an existing subnet within the specified virtual network. Required when creating a network interface.
+   - / required                                             Use the virtual_network's resource group.
+                                                            aliases: subnet
+   subscription_id                                          Your Azure subscription Id.
+   string
+   tags                                                     Dictionary of string:string pairs to assign as metadata to the object.
+   dictionary                                               Metadata tags on the object will be updated with any provided values.
+                                                            To remove tags set append_tags option to false.
+   tenant                                                   Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+                                                            An existing virtual network with which the network interface will be associated. Required when creating a network interface.
+                                                            It can be the virtual network's name.
+   virtual_network                                          Make sure your virtual network is in the same resource group as NIC when you give only the name.
+   - / required                                             It can be the virtual network's resource id.
+                                                            It can be a dict which contains name and resource_group of the virtual network.
+                                                            aliases: virtual_network_name
+
+NOTES                   *azure_rm_networkinterface-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_networkinterface-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_networkinterface-examples*
+
+ - name: Create a network interface with minimal parameters
+   azure_rm_networkinterface:
+     name: nic001
+     resource_group: myResourceGroup
+     virtual_network: vnet001
+     subnet_name: subnet001
+     ip_configurations:
+       - name: ipconfig1
+         public_ip_address_name: publicip001
+         primary: True
+
+ - name: Create a network interface with private IP address only (no Public IP)
+   azure_rm_networkinterface:
+     name: nic001
+     resource_group: myResourceGroup
+     virtual_network: vnet001
+     subnet_name: subnet001
+     create_with_security_group: False
+     ip_configurations:
+       - name: ipconfig1
+         primary: True
+
+ - name: Create a network interface for use in a Windows host (opens RDP port) with custom RDP port
+   azure_rm_networkinterface:
+     name: nic002
+     resource_group: myResourceGroup
+     virtual_network: vnet001
+     subnet_name: subnet001
+     os_type: Windows
+     rdp_port: 3399
+     security_group: "/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkSecurit
+                      yGroups/nsg001"
+     ip_configurations:
+       - name: ipconfig1
+         public_ip_address_name: publicip001
+         primary: True
+
+ - name: Create a network interface using existing security group and public IP
+   azure_rm_networkinterface:
+     name: nic003
+     resource_group: myResourceGroup
+     virtual_network: vnet001
+     subnet_name: subnet001
+     security_group: secgroup001
+     ip_configurations:
+       - name: ipconfig1
+         public_ip_address_name: publicip001
+         primary: True
+
+ - name: Create a network with multiple ip configurations
+   azure_rm_networkinterface:
+     name: nic004
+     resource_group: myResourceGroup
+     subnet_name: subnet001
+     virtual_network: vnet001
+     security_group:
+       name: testnic002
+       resource_group: Testing1
+     ip_configurations:
+       - name: ipconfig1
+         public_ip_address_name: publicip001
+         primary: True
+       - name: ipconfig2
+         load_balancer_backend_address_pools:
+           - "{{ loadbalancer001.state.backend_address_pools[0].id }}"
+           - name: backendaddrpool1
+             load_balancer: loadbalancer001
+
+ - name: Create a network interface in accelerated networking mode
+   azure_rm_networkinterface:
+     name: nic005
+     resource_group: myResourceGroup
+     virtual_network_name: vnet001
+     subnet_name: subnet001
+     enable_accelerated_networking: True
+
+ - name: Create a network interface with IP forwarding
+   azure_rm_networkinterface:
+     name: nic001
+     resource_group: myResourceGroup
+     virtual_network: vnet001
+     subnet_name: subnet001
+     ip_forwarding: True
+     ip_configurations:
+       - name: ipconfig1
+         public_ip_address_name: publicip001
+         primary: True
+
+ - name: Create a network interface with dns servers
+   azure_rm_networkinterface:
+     name: nic009
+     resource_group: myResourceGroup
+     virtual_network: vnet001
+     subnet_name: subnet001
+     dns_servers:
+       - 8.8.8.8
+
+ - name: Delete network interface
+   azure_rm_networkinterface:
+     resource_group: myResourceGroup
+     name: nic003
+     state: absent
+
+RETURN VALUES                   *azure_rm_networkinterface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                     Key                   Returned                                                                    Description
+   state                                   always   The current state of the network interface.
+   complex
+                                                    Which DNS servers should the NIC lookup.
+     dns_server                                     List of IP addresses.
+     list                                           Sample:
+                                                    ['8.9.10.11', '7.8.9.10']
+     dns_setting                                    The DNS settings in network interface.
+     dictionary                                     Sample:
+                                                    {'applied_dns_servers': [], 'dns_servers': ['8.9.10.11', '7.8.9.10'], 'internal_dns_name_label': None, 'internal_fqdn': None}
+     enable_accelerated_networking                  Whether the network interface should be created with the accelerated networking feature or not.
+     boolean                                        Sample:
+                                                    True
+     enable_ip_forwarding                           Whether to enable IP forwarding.
+     boolean                                        Sample:
+                                                    True
+     etag                                           A unique read-only string that changes whenever the resource is updated.
+     string                                         Sample:
+                                                    W/"be115a43-2148-4545-a324-f33ad444c926"
+     id                                             Id of the network interface.
+     string                                         Sample:
+                                                    /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/networkInterfaces/nic003
+     ip_configurations                              List of IP configurations.
+     complex
+       load_balancer_backend_address_pools          List of existing load-balancer backend address pools to associate with the network interface.
+       list
+       name                                         Name of the IP configuration.
+       string                                       Sample:
+                                                    default
+       private_ip_address                           Private IP address for the IP configuration.
+       string                                       Sample:
+                                                    10.1.0.10
+       private_ip_allocation_method                 Private IP allocation method.
+       string                                       Sample:
+                                                    Static
+                                                    Name of the public IP address. None for disable IP address.
+       public_ip_address                            Sample:
+       dictionary                                   {'id': '/subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/myResourceGroup/providers/Microsoft.Network/publicIPAddresse
+                                                    s/publicip001', 'name': 'publicip001'}
+                                                    The reference of the subnet resource.
+       subnet                                       Sample:
+       dictionary                                   {'id': '/subscriptions/xxxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/
+                                                    myresourcegroup/providers/Microsoft.Network/virtualNetworks/tnb57dc95318/subnets/tnb57dc95318', 'name': 'tnb57dc95318', 'resource_group':
+                                                    'myresourcegroup', 'virtual_network_name': 'tnb57dc95318'}
+     location                                       The network interface resource location.
+     string                                         Sample:
+                                                    eastus
+     mac_address                                    The MAC address of the network interface.
+     string
+     name                                           Name of the network interface.
+     string                                         Sample:
+                                                    nic003
+                                                    The reference of the network security group resource.
+     network_security_group                         Sample:
+     dictionary                                     {'id': '/subscriptions//xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroup/
+                                                    myResourceGroup/providers/Microsoft.Network/networkSecurityGroups/nsg001', 'name': 'nsg001'}
+     primary                                        Get whether this is a primary network interface on virtual machine.
+     boolean                                        Sample:
+                                                    True
+     provisioning_state                             The provisioning state of the public IP resource.
+     string                                         Sample:
+                                                    Succeeded
+     tags                                           -Tags of the network interface.
+     dictionary                                     Sample:
+                                                    {'key': 'value'}
+     type                                           Type of the resource.
+     string                                         Sample:
+                                                    Microsoft.Network/networkInterfaces
+
+STATUS                   *azure_rm_networkinterface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Houseknecht (@chouseknecht)
+     • Matt Davis (@nitzmahone)
+     • Yuwei Zhou (@yuwzho)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_networkinterface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_networkinterface_module.html

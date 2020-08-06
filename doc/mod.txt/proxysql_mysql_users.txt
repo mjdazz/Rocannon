@@ -1,0 +1,120 @@
+SYNOPSIS                   *proxysql_mysql_users*
+
+     • The proxysql_mysql_users module adds or removes mysql users using the proxysql admin interface.
+
+REQUIREMENTS                   *proxysql_mysql_users-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyMySQL (Python 2.7 and Python 3.X), or
+     • MySQLdb (Python 2.x)
+
+PARAMETERS                   *proxysql_mysql_users-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   active                   Choices:       A user with active set to False will be tracked in the database, but will be never loaded in the in-memory data structures. If omitted the proxysql
+   boolean                  • no           database default for active is True.
+                            • yes
+   backend                  Choices:
+   boolean                  • no           If backend is set to True, this (username, password) pair is used for authenticating to the ProxySQL instance.
+                            • yes ←
+   config_file            Default:         Specify a config file from which login_user and login_password are to be read.
+   path                   ""
+   default_hostgroup                       If there is no matching rule for the queries sent by this user, the traffic it generates is sent to the specified hostgroup. If omitted the proxysql
+   -                                       database default for use_ssl is 0.
+   default_schema                          The schema to which the connection should change to by default.
+   -
+   fast_forward             Choices:       If fast_forward is set to True, fast_forward will bypass the query processing layer (rewriting, caching) and pass through the query directly as is to the
+   boolean                  • no           backend server. If omitted the proxysql database default for fast_forward is False.
+                            • yes
+   frontend                 Choices:
+   boolean                  • no           If frontend is set to True, this (username, password) pair is used for authenticating to the mysqld servers against any hostgroup.
+                            • yes ←
+   load_to_runtime          Choices:
+   boolean                  • no           Dynamically load config to runtime memory.
+                            • yes ←
+   login_host             Default:         The host used to connect to ProxySQL admin interface.
+   string                 "127.0.0.1"
+   login_password                          The password used to authenticate to ProxySQL admin interface.
+   string
+   login_port             Default:         The port used to connect to ProxySQL admin interface.
+   integer                6032
+   login_user                              The username used to authenticate to ProxySQL admin interface.
+   string
+   max_connections                         The maximum number of connections ProxySQL will open to the backend for this user. If omitted the proxysql database default for max_connections is 10000.
+   -
+   password                                Password of the user connecting to the mysqld or ProxySQL instance.
+   -
+   save_to_disk             Choices:
+   boolean                  • no           Save config to sqlite db on disk to persist the configuration.
+                            • yes ←
+   state                    Choices:
+   -                        • present ←    When present - adds the user, when absent - removes the user.
+                            • absent
+   transaction_persistent   Choices:       If this is set for the user with which the MySQL client is connecting to ProxySQL (thus a "frontend" user), transactions started within a hostgroup will
+   boolean                  • no           remain within that hostgroup regardless of any other rules. If omitted the proxysql database default for transaction_persistent is False.
+                            • yes
+   use_ssl                  Choices:
+   boolean                  • no           If use_ssl is set to True, connections by this user will be made using SSL connections. If omitted the proxysql database default for use_ssl is False.
+                            • yes
+   username                                Name of the user connecting to the mysqld or ProxySQL instance.
+   - / required
+
+EXAMPLES                   *proxysql_mysql_users-examples*
+
+ ---
+ # This example adds a user, it saves the mysql user config to disk, but
+ # avoids loading the mysql user config to runtime (this might be because
+ # several users are being added and the user wants to push the config to
+ # runtime in a single batch using the M(proxysql_manage_config) module).  It
+ # uses supplied credentials to connect to the proxysql admin interface.
+
+ - proxysql_mysql_users:
+     login_user: 'admin'
+     login_password: 'admin'
+     username: 'productiondba'
+     state: present
+     load_to_runtime: False
+
+ # This example removes a user, saves the mysql user config to disk, and
+ # dynamically loads the mysql user config to runtime.  It uses credentials
+ # in a supplied config file to connect to the proxysql admin interface.
+
+ - proxysql_mysql_users:
+     config_file: '~/proxysql.cnf'
+     username: 'mysqlboy'
+     state: absent
+
+RETURN VALUES                   *proxysql_mysql_users-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                   Description
+              On
+              create/update
+              will return   The mysql user modified or removed from proxysql
+              the newly     Sample:
+   stdout     modified      {'changed': True, 'msg': 'Added user to mysql_users', 'state': 'present', 'user': {'active': 1, 'backend': 1, 'default_hostgroup': 1, 'default_schema': None,
+   dictionary user, on      'fast_forward': 0, 'frontend': 1, 'max_connections': 10000, 'password': 'VALUE_SPECIFIED_IN_NO_LOG_PARAMETER', 'schema_locked': 0, 'transaction_persistent': 0,
+              delete it     'use_ssl': 0, 'username': 'guest_ro'}, 'username': 'guest_ro'}
+              will return
+              the deleted
+              record.
+
+STATUS                   *proxysql_mysql_users-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ben Mildren (@bmildren)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *proxysql_mysql_users-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/proxysql_mysql_users_module.html

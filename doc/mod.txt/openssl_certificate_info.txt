@@ -1,0 +1,214 @@
+SYNOPSIS                   *openssl_certificate_info*
+
+     • This module allows one to query information on OpenSSL certificates.
+     • It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
+       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with select_crypto_backend). Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and
+       will be removed in Ansible 2.13.
+
+REQUIREMENTS                   *openssl_certificate_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyOpenSSL >= 0.15 or cryptography >= 1.6
+
+PARAMETERS                   *openssl_certificate_info-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   path                                   Remote absolute path where the certificate file is loaded from.
+   path / required
+                                          Determines which crypto backend to use.
+                           Choices:       The default choice is auto, which tries to use cryptography if available, and falls back to pyopenssl.
+   select_crypto_backend   • auto ←       If set to pyopenssl, will try to use the pyOpenSSL library.
+   string                  • cryptography If set to cryptography, will try to use the cryptography library.
+                           • pyopenssl    Please note that the pyopenssl backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13. From that point on, only the cryptography
+                                          backend will be available.
+                                          A dict of names mapping to time specifications. Every time specified here will be checked whether the certificate is valid at this point. See the valid_at
+                                          return value for informations on the result.
+   valid_at                               Time can be specified either as relative time or as absolute timestamp.
+   dictionary                             Time will always be interpreted as UTC.
+                                          Valid format is [+-]timespec | ASN.1 TIME where timespec can be an integer + [w | d | h | m | s] (e.g. +32w1d2h, and ASN.1 TIME (i.e. pattern
+                                          YYYYMMDDHHMMSSZ). Note that all timestamps will be treated as being in UTC.
+
+NOTES                   *openssl_certificate_info-notes*
+
+   Note
+
+     • All timestamp values are provided in ASN.1 TIME format, i.e. following the YYYYMMDDHHMMSSZ pattern. They are all in UTC.
+
+SEE ALSO                   *openssl_certificate_info-see also*
+
+   See also
+
+   openssl_certificate – Generate and/or check OpenSSL certificates
+   The official documentation on the openssl_certificate module.
+
+EXAMPLES                   *openssl_certificate_info-examples*
+
+ - name: Generate a Self Signed OpenSSL certificate
+   openssl_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     csr_path: /etc/ssl/csr/ansible.com.csr
+     provider: selfsigned
+
+
+ # Get information on the certificate
+
+ - name: Get information on generated certificate
+   openssl_certificate_info:
+     path: /etc/ssl/crt/ansible.com.crt
+   register: result
+
+ - name: Dump information
+   debug:
+     var: result
+
+
+ # Check whether the certificate is valid or not valid at certain times, fail
+ # if this is not the case. The first task (openssl_certificate_info) collects
+ # the information, and the second task (assert) validates the result and
+ # makes the playbook fail in case something is not as expected.
+
+ - name: Test whether that certificate is valid tomorrow and/or in three weeks
+   openssl_certificate_info:
+     path: /etc/ssl/crt/ansible.com.crt
+     valid_at:
+       point_1: "+1d"
+       point_2: "+3w"
+   register: result
+
+ - name: Validate that certificate is valid tomorrow, but not in three weeks
+   assert:
+     that:
+       - result.valid_at.point_1      # valid in one day
+       - not result.valid_at.point_2  # not valid in three weeks
+
+RETURN VALUES                   *openssl_certificate_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key              Returned                                                                          Description
+                                success
+                                and if    The certificate's authority cert issuer as a list of general names.
+   authority_cert_issuer        the       Is none if the AuthorityKeyIdentifier extension is not present.
+   list / elements=string       pyOpenSSL Sample:
+   added in 2.9                 backend   [DNS:www.ansible.com, IP:1.2.3.4]
+                                is not
+                                used
+                                success
+                                and if    The certificate's authority cert serial number.
+   authority_cert_serial_number the       Is none if the AuthorityKeyIdentifier extension is not present.
+   integer                      pyOpenSSL Sample:
+   added in 2.9                 backend   12345
+                                is not
+                                used
+                                success
+                                and if    The certificate's authority key identifier.
+   authority_key_identifier     the       The identifier is returned in hexadecimal, with : used to separate bytes.
+   string                       pyOpenSSL Is none if the AuthorityKeyIdentifier extension is not present.
+   added in 2.9                 backend   Sample:
+                                is not    00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33
+                                used
+   basic_constraints                      Entries in the basic_constraints extension, or none if extension is not present.
+   list / elements=string       success   Sample:
+                                          [CA:TRUE, pathlen:1]
+   basic_constraints_critical   success   Whether the basic_constraints extension is critical.
+   boolean
+   expired                      success   Whether the certificate is expired (i.e. notAfter is in the past)
+   boolean
+   extended_key_usage                     Entries in the extended_key_usage extension, or none if extension is not present.
+   list / elements=string       success   Sample:
+                                          [Biometric Info, DVCS, Time Stamping]
+   extended_key_usage_critical  success   Whether the extended_key_usage extension is critical.
+   boolean
+   extensions_by_oid                      Returns a dictionary for every extension OID
+   dictionary                   success   Sample:
+                                          {"1.3.6.1.5.5.7.1.24": { "critical": false, "value": "MAMCAQU="}}
+              critical          success   Whether the extension is critical.
+              boolean
+              value                       The Base64 encoded value (in DER format) of the extension
+              string            success   Sample:
+                                          MAMCAQU=
+                                          The certificate's issuer.
+   issuer                       success   Note that for repeated values, only the last one will be returned.
+   dictionary                             Sample:
+                                          {"organizationName": "Ansible", "commonName": "ca.example.com"}
+   issuer_ordered                         The certificate's issuer as an ordered list of tuples.
+   list / elements=list         success   Sample:
+   added in 2.9                           [["organizationName", "Ansible"], ["commonName": "ca.example.com"]]
+   key_usage                              Entries in the key_usage extension, or none if extension is not present.
+   string                       success   Sample:
+                                          [Key Agreement, Data Encipherment]
+   key_usage_critical           success   Whether the key_usage extension is critical.
+   boolean
+   not_after                              notAfter date as ASN.1 TIME
+   string                       success   Sample:
+                                          20190413202428Z
+   not_before                             notBefore date as ASN.1 TIME
+   string                       success   Sample:
+                                          20190331202428Z
+   ocsp_must_staple             success   yes if the OCSP Must Staple extension is present, none otherwise.
+   boolean
+   ocsp_must_staple_critical    success   Whether the ocsp_must_staple extension is critical.
+   boolean
+   ocsp_uri
+   string                       success   The OCSP responder URI, if included in the certificate. Will be none if no OCSP responder URI is included.
+   added in 2.9
+   public_key                             Certificate's public key in PEM format
+   string                       success   Sample:
+                                          -----BEGIN PUBLIC KEY----- MIICIjANBgkqhkiG9w0BAQEFAAOCAg8A...
+                                          Fingerprints of certificate's public key.
+   public_key_fingerprints                For every hash algorithm available, the fingerprint is computed.
+   dictionary                   success   Sample:
+                                          {'sha256': 'd4:b3:aa:6d:c8:04:ce:4e:ba:f6:29:4d:92:a3:94:b0:c2:ff:bd:bf:33:63:11:43:34:0f:51:b0:95:09:2f:63', 'sha512':
+                                          'f7:07:4a:f0:b0:f0:e6:8b:95:5f:f9:e6:61:0a:32:68:f1...
+   serial_number                          The certificate's serial number.
+   integer                      success   Sample:
+                                          1234
+   signature_algorithm                    The signature algorithm used to sign the certificate.
+   string                       success   Sample:
+                                          sha256WithRSAEncryption
+                                          The certificate's subject as a dictionary.
+   subject                      success   Note that for repeated values, only the last one will be returned.
+   dictionary                             Sample:
+                                          {"commonName": "www.example.com", "emailAddress": "[email protected]"}
+   subject_alt_name                       Entries in the subject_alt_name extension, or none if extension is not present.
+   list / elements=string       success   Sample:
+                                          [DNS:www.ansible.com, IP:1.2.3.4]
+   subject_alt_name_critical    success   Whether the subject_alt_name extension is critical.
+   boolean
+                                success
+                                and if    The certificate's subject key identifier.
+   subject_key_identifier       the       The identifier is returned in hexadecimal, with : used to separate bytes.
+   string                       pyOpenSSL Is none if the SubjectKeyIdentifier extension is not present.
+   added in 2.9                 backend   Sample:
+                                is not    00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33
+                                used
+   subject_ordered                        The certificate's subject as an ordered list of tuples.
+   list / elements=list         success   Sample:
+   added in 2.9                           [["commonName", "www.example.com"], ["emailAddress": "[email protected]"]]
+   valid_at                     success   For every time stamp provided in the valid_at option, a boolean whether the certificate is valid at that point in time or not.
+   dictionary
+   version                                The certificate version.
+   integer                      success   Sample:
+                                          3
+
+STATUS                   *openssl_certificate_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Fontein (@felixfontein)
+     • Yanis Guenane (@Spredzy)
+     • Markus Teufelberger (@MarkusTeufelberger)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *openssl_certificate_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/openssl_certificate_info_module.html

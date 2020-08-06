@@ -1,0 +1,273 @@
+SYNOPSIS                   *azure_rm_servicebus_info*
+
+     • Get facts for a specific servicebus or all servicebus in a resource group or subscription.
+
+   Aliases: azure_rm_servicebus_facts
+
+REQUIREMENTS                   *azure_rm_servicebus_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_servicebus_info-parameters*
+
+        Parameter        Choices/Defaults                                                                           Comments
+   ad_user                                  Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   adfs_authority_url
+   string                                   Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile          Default:            Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds; future values will allow
+   string               "latest"            use with Azure Stack.
+   added in 2.5
+                                            Controls the source of the credentials to use for authentication.
+                          Choices:          If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                          • auto            auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file ~/.azure/credentials.
+   auth_source            • cli             When set to cli, the credentials will be sources from the default Azure CLI profile.
+   string                 • credential_file Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+   added in 2.5           • env             When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment variable
+                          • msi             AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one subscription, otherwise the first
+                                            subscription is chosen.
+                                            The msi was added in Ansible 2.6.
+   cert_validation_mode   Choices:          Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when an HTTPS proxy
+   string                 • ignore          is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can also be set via credential file profile or the
+   added in 2.5           • validate        AZURE_CERT_VALIDATION environment variable.
+   client_id                                Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment    Default:            For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud, AzureUSGovernment), or
+   string               "AzureCloud"        a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or the AZURE_CLOUD_ENVIRONMENT environment
+   added in 2.4                             variable.
+   name                                     Limit results to a specific servicebus.
+   -
+                                            Servicebus namespace name.
+   namespace                                A namespace is a scoping container for all messaging components.
+   -                                        Multiple queues and topics can reside within a single namespace, and namespaces often serve as application containers.
+                                            Required when type=namespace.
+   password                                 Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   profile                                  Security profile found in ~/.azure/credentials file.
+   string
+   resource_group                           Limit results in a specific resource group.
+   -
+   secret                                   Azure client secret. Use when authenticating with a Service Principal.
+   string
+   show_sas_policies      Choices:          Whether to show the SAS policies.
+   boolean                • no              Not support when type=subscription.
+                          • yes             Note if enable this option, the facts module will raise two more HTTP call for each resources, need more network overhead.
+   subscription_id                          Your Azure subscription Id.
+   string
+   tags                                     Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+   -
+   tenant                                   Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+   topic                                    Topic name.
+   -                                        Required when type=subscription.
+                          Choices:
+   type                   • namespace
+   -                      • queue           Type of the resource.
+                          • topic
+                          • subscription
+
+NOTES                   *azure_rm_servicebus_info-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_servicebus_info-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_servicebus_info-examples*
+
+ - name: Get all namespaces under a resource group
+   azure_rm_servicebus_info:
+     resource_group: myResourceGroup
+     type: namespace
+
+ - name: Get all topics under a namespace
+   azure_rm_servicebus_info:
+     resource_group: myResourceGroup
+     namespace: bar
+     type: topic
+
+ - name: Get a single queue with SAS policies
+   azure_rm_servicebus_info:
+     resource_group: myResourceGroup
+     namespace: bar
+     type: queue
+     name: sbqueue
+     show_sas_policies: true
+
+ - name: Get all subscriptions under a resource group
+   azure_rm_servicebus_info:
+     resource_group: myResourceGroup
+     type: subscription
+     namespace: bar
+     topic: sbtopic
+
+RETURN VALUES                   *azure_rm_servicebus_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                         Key                        Returned                                                               Description
+   servicebuses                                     always   List of servicebus dicts.
+   complex
+     accessed_at                                             Last time the message was sent, or a request was received for this topic.
+     string                                         always   Sample:
+                                                             2019-01-25 02:46:55.543953+00:00
+                                                             ISO 8061 timeSpan idle interval after which the queue or topic is automatically deleted.
+     auto_delete_on_idle_in_seconds                 always   The minimum duration is 5 minutes.
+     integer                                                 Sample:
+                                                             True
+     count_details                                  always   Message count details.
+     complex
+            active_message_count                    always   Number of active messages in the queue, topic, or subscription.
+            integer
+            dead_letter_message_count               always   Number of messages that are dead lettered.
+            integer
+            scheduled_message_count                 always   Number of scheduled messages.
+            integer
+            transfer_dead_letter_message_count      always   Number of messages transferred into dead letters.
+            integer
+            transfer_message_count                  always   Number of messages transferred to another queue, topic, or subscription.
+            integer
+     created_at                                              Exact time the message was created.
+     string                                         always   Sample:
+                                                             2019-01-25 02:46:55.543953+00:00
+     dead_lettering_on_filter_evaluation_exceptions always   Value that indicates whether a subscription has dead letter support on filter evaluation exceptions.
+     integer
+     dead_lettering_on_message_expiration           always   A value that indicates whether this queue or topic has dead letter support when a message expires.
+     integer
+     default_message_time_to_live_seconds                    ISO 8061 Default message timespan to live value.
+     integer                                        always   This is the duration after which the message expires, starting from when the message is sent to Service Bus.
+                                                             This is the default value used when TimeToLive is not set on a message itself.
+     duplicate_detection_time_in_seconds                     ISO 8601 timeSpan structure that defines the duration of the duplicate detection history.
+     integer                                        always   Sample:
+                                                             600
+     enable_batched_operations                               Value that indicates whether server-side batched operations are enabled.
+     boolean                                        always   Sample:
+                                                             True
+                                                             Value that indicates whether Express Entities are enabled.
+     enable_express                                 always   An express topic holds a message in memory temporarily before writing it to persistent storage.
+     boolean                                                 Sample:
+                                                             True
+     enable_partitioning                                     Value that indicates whether the queue or topic to be partitioned across multiple message brokers is enabled.
+     boolean                                        always   Sample:
+                                                             True
+     forward_dead_lettered_messages_to                       queue or topic name to forward the Dead Letter message.
+     string                                         always   Sample:
+                                                             corge
+     forward_to                                              queue or topic name to forward the messages.
+     string                                         always   Sample:
+                                                             quux
+                                                             Resource ID.
+     id                                             always   Sample:
+     string                                                  /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/foo/providers/Microsoft.ServiceBus/
+                                                             namespaces/bar/topics/baz/subscriptions/qux
+     location                                                The Geo-location where the resource lives.
+     string                                         always   Sample:
+                                                             eastus
+                                                             ISO 8601 timespan duration of a peek-lock.
+     lock_duration_in_seconds                                The amount of time that the message is locked for other receivers.
+     integer                                        always   The maximum value for LockDuration is 5 minutes.
+                                                             Sample:
+                                                             60
+                                                             The maximum delivery count.
+     max_delivery_count                             always   A message is automatically deadlettered after this number of deliveries.
+     integer                                                 Sample:
+                                                             10
+     max_size_in_mb                                          Maximum size of the queue or topic in megabytes, which is the size of the memory allocated for the topic.
+     integer                                        always   Sample:
+                                                             5120
+     message_count                                           Number of messages.
+     integer                                        always   Sample:
+                                                             10
+     metric_id                                               Identifier for Azure Insights metrics of namespace.
+     string                                         always   Sample:
+                                                             XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX:bar
+     name                                                    Resource name.
+     string                                         always   Sample:
+                                                             qux
+     namespace                                               namespace name of the queue or topic, subscription.
+     string                                         always   Sample:
+                                                             bar
+     provisioning_state                                      Provisioning state of the namespace.
+     string                                         always   Sample:
+                                                             Succeeded
+     requires_duplicate_detection                            A value indicating if this queue or topic requires duplicate detection.
+     boolean                                        always   Sample:
+                                                             True
+     requires_session                                        A value that indicates whether the queue or topic supports the concept of sessions.
+     boolean                                        always   Sample:
+                                                             True
+                                                             Dict of SAS policies.
+                                                             Will not be returned until show_sas_policy set.
+                                                             Sample:
+                                                             {'testpolicy1': {'id': '/subscriptions/XXXXXXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/
+     sas_policies                                   always   foo/providers/Microsoft.ServiceBus/namespaces/bar/queues/qux/authorizationRules/testpolicy1', 'keys': {'key_name': 'testpolicy1',
+     dictionary                                              'primary_connection_string': 'Endpoint=sb://bar.servicebus.windows.net/;
+                                                             SharedAccessKeyName=testpolicy1;SharedAccessKey=XXXXXXXXXXXXXXXXX;EntityPath=qux', 'primary_key': 'XXXXXXXXXXXXXXXXX',
+                                                             'secondary_connection_string': 'Endpoint=sb://bar.servicebus.windows.net/;
+                                                             SharedAccessKeyName=testpolicy1;SharedAccessKey=XXXXXXXXXXXXXXX;EntityPath=qux', 'secondary_key': 'XXXXXXXXXXXXXXX'}, 'name':
+                                                             'testpolicy1', 'rights': 'listen_send', 'type': 'Microsoft.ServiceBus/Namespaces/Queues/AuthorizationRules'}}
+     service_bus_endpoint                                    Endpoint you can use to perform Service Bus operations.
+     string                                         always   Sample:
+                                                             https://bar.servicebus.windows.net:443/
+     size_in_bytes                                  always   The size of the queue or topic in bytes.
+     integer
+     sku                                                     Properties of namespace's SKU.
+     string                                         always   Sample:
+                                                             Standard
+     status                                                  The status of a messaging entity.
+     string                                         always   Sample:
+                                                             active
+     subscription_count                                      Number of subscriptions under a topic.
+     integer                                        always   Sample:
+                                                             1
+     support_ordering                                        Value that indicates whether the topic supports ordering.
+     boolean                                        always   Sample:
+                                                             True
+     tags                                                    Resource tags.
+     dictionary                                     always   Sample:
+                                                             {'env': 'sandbox'}
+     topic                                                   Topic name of a subscription.
+     string                                         always   Sample:
+                                                             baz
+                                                             Resource type.
+                                                             Namespace is a scoping container for all messaging components.
+     type                                           always   Queue enables you to store messages until the receiving application is available to receive and process them.
+     string                                                  Topic and subscriptions enable 1:n relationships between publishers and subscribers.
+                                                             Sample:
+                                                             Microsoft.ServiceBus/Namespaces/Topics
+     updated_at                                              The exact time the message was updated.
+     string                                         always   Sample:
+                                                             2019-01-25 02:46:55.543953+00:00
+
+STATUS                   *azure_rm_servicebus_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Yuwei Zhou (@yuwzho)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_servicebus_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_servicebus_info_module.html

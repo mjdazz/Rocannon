@@ -1,0 +1,181 @@
+SYNOPSIS                   *bigip_firewall_schedule*
+
+     • Manage BIG-IP AFM schedule configurations.
+
+PARAMETERS                   *bigip_firewall_schedule-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   daily_hour_end                    Specifies the time of day the rule will stop being used.
+   string                            When not defined, the default of 24:00 is used when creating a new schedule.
+                                     The time zone is always assumed to be UTC and values must be provided as HH:MM using 24hour clock format.
+                                     Specifies the time of day the rule will start to be in use.
+   daily_hour_start                  The value must be a time before daily_hour_end.
+   string                            When not defined, the default of 0:00 is used when creating a new schedule.
+                                     When the value is set to all-day both daily_hour_end and daily_hour_start are reset to their respective defaults.
+                                     The time zone is always assumed to be UTC and values must be provided as HH:MM using 24hour clock format.
+                                     Specifies the end date/time this schedule will apply to the rule.
+   date_valid_end                    The date must be after date_valid_start
+   string                            When not defined the default of indefinite is used when creating a new schedule.
+                                     The time zone is always assumed to be UTC.
+                                     The datetime format should always be the following YYYY-MM-DD:HH:MM:SS format.
+                                     Specifies the start date/time this schedule will apply to the rule.
+   date_valid_start                  When not defined the default of epoch is used when creating a new schedule.
+   string                            The time zone is always assumed to be UTC.
+                                     The datetime format should always be the following YYYY-MM-DD:HH:MM:SS format.
+                      Choices:
+                      • sunday
+                      • monday
+   days_of_week       • tuesday      Specifies which days of the week the rule will be applied.
+   list               • wednesday    When not defined the default value of all is used when creating a new schedule.
+                      • thursday     The all value is mutually exclusive with other choices.
+                      • friday
+                      • saturday
+                      • all
+   description                       Specifies the user defined description text.
+   string
+   name
+   string /                          Specifies the name of the AFM schedule configuration.
+   required
+   partition        Default:         Device partition to manage resources on.
+   string           "Common"
+   provider
+   dictionary                        A dict object containing connection details.
+   added in 2.5
+     auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                          This option is really used when working with BIG-IQ devices.
+     password                        The password for the user account used to connect to the BIG-IP.
+     string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+     required                        aliases: pass, pwd
+     server                          The BIG-IP host.
+     string /                        You may omit this option by setting the environment variable F5_SERVER.
+     required
+     server_port    Default:         The BIG-IP server port.
+     integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                         operation is completed, the module will error.
+     transport        Choices:
+     string           • cli          Configures the transport connection to use when connecting to the remote device.
+                      • rest ←
+     user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string /                        You may omit this option by setting the environment variable F5_USER.
+     required
+     validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                      • yes ←
+   state              Choices:       When present, ensures that the resource exists.
+   string             • present ←    When absent, ensures the resource is removed.
+                      • absent
+
+NOTES                   *bigip_firewall_schedule-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_firewall_schedule-examples*
+
+ - name: Create a 6 hour two day schedule, no start/end date
+   bigip_firewall_schedule:
+     name: barfoo
+     daily_hour_start: 13:00
+     daily_hour_end: 19:00
+     days_of_week:
+       - monday
+       - tuesday
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create a seven day schedule with start/end date
+   bigip_firewall_schedule:
+     name: foobar
+     date_valid_start: "{{ lookup('pipe','date +%Y-%m-%d:%H:%M:%S') }}"
+     date_valid_end: "{{ lookup('pipe','date -d \"now + 7 days\" +%Y-%m-%d:%H:%M:%S') }}"
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify created schedule to all-day
+   bigip_firewall_schedule:
+     name: barfoo
+     daily_hour_start: all-day
+     days_of_week:
+       - monday
+       - tuesday
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify a schedule to have no end date
+   bigip_firewall_schedule:
+     name: foobar
+     date_valid_start: "{{ lookup('pipe','date +%Y-%m-%d:%H:%M:%S') }}"
+     date_valid_end: "indefinite"
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove created schedule
+   bigip_firewall_schedule:
+     name: foobar
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_firewall_schedule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   daily_hour_end            The time of day the rule will stop being used.
+   string           changed  Sample:
+                             18:00
+   daily_hour_start          The time of day the rule will start to be in use.
+   string           changed  Sample:
+                             13:00
+   date_valid_end            The end date/time schedule will apply to the rule.
+   string           changed  Sample:
+                             2019-03-11:15:30:00
+   date_valid_start          The start date/time schedule will apply to the rule.
+   string           changed  Sample:
+                             2019-03-01:15:30:00
+   days_of_week              The days of the week the rule will be applied.
+   list             changed  Sample:
+                             ['monday', 'tuesday']
+   description               The user defined description text.
+   string           changed  Sample:
+                             Foo is bar
+
+STATUS                   *bigip_firewall_schedule-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_firewall_schedule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_firewall_schedule_module.html

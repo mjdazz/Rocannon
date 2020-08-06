@@ -1,0 +1,365 @@
+SYNOPSIS                   *win_disk_facts*
+
+     • With the module you can retrieve and output detailed information about the attached disks of the target and its volumes and partitions if existent.
+
+REQUIREMENTS                   *win_disk_facts-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Windows 8.1 / Windows 2012 (NT 6.2)
+
+NOTES                   *win_disk_facts-notes*
+
+   Note
+
+     • In order to understand all the returned properties and values please visit the following site and open the respective MSFT class
+       https://msdn.microsoft.com/en-us/library/windows/desktop/hh830612.aspx
+
+EXAMPLES                   *win_disk_facts-examples*
+
+ - name: Get disk facts
+   win_disk_facts:
+
+ - name: Output first disk size
+   debug:
+     var: ansible_facts.disks[0].size
+
+ - name: Convert first system disk into various formats
+   debug:
+     msg: '{{ disksize_gib }} vs {{ disksize_gib_human }}'
+   vars:
+     # Get first system disk
+     disk: '{{ ansible_facts.disks|selectattr("system_disk")|first }}'
+
+     # Show disk size in Gibibytes
+     disksize_gib_human: '{{ disk.size|filesizeformat(true) }}'   # returns "223.6 GiB" (human readable)
+     disksize_gib: '{{ (disk.size/1024|pow(3))|round|int }} GiB'  # returns "224 GiB" (value in GiB)
+
+     # Show disk size in Gigabytes
+     disksize_gb_human: '{{ disk.size|filesizeformat }}'        # returns "240.1 GB" (human readable)
+     disksize_gb: '{{ (disk.size/1000|pow(3))|round|int }} GB'  # returns "240 GB" (value in GB)
+
+ - name: Output second disk serial number
+   debug:
+     var: ansible_facts.disks[1].serial_number
+
+RETURNED FACTS                   *win_disk_facts-returned facts*
+
+   Facts returned by this module are added/updated in the hostvars host facts and can be referenced by name just like any other host fact. They do not need to be registered in order to use them.
+
+              Fact                                  Returned                                                                          Description
+   ansible_disks              if disks were found                                  Detailed information about one particular disk.
+   list
+    bootable                  always                                               Information whether the particular disk is a bootable disk.
+    boolean
+    bus_type                                                                       Bus type of the particular disk.
+    string                    always                                               Sample:
+                                                                                   SCSI
+    clustered                 always                                               Information whether the particular disk is clustered (part of a failover cluster).
+    boolean
+    firmware_version                                                               Firmware version of the particular disk.
+    string                    always                                               Sample:
+                                                                                   0001
+    friendly_name                                                                  Friendly name of the particular disk.
+    string                    always                                               Sample:
+                                                                                   Red Hat VirtIO SCSI Disk Device
+    guid                                                                           GUID of the particular disk on the target.
+    string                    if existent                                          Sample:
+                                                                                   {efa5f928-57b9-47fc-ae3e-902e85fbe77f}
+    location                                                                       Location of the particular disk on the target.
+    string                    always                                               Sample:
+                                                                                   PCIROOT(0)#PC0400#SCSP00T00L00
+    manufacturer                                                                   Manufacturer of the particular disk.
+    string                    always                                               Sample:
+                                                                                   Red Hat
+    model                                                                          Model specification of the particular disk.
+    string                    always                                               Sample:
+                                                                                   VirtIO
+    number                    always                                               Disk number of the particular disk.
+    integer
+    operational_status                                                             Operational status of the particular disk.
+    string                    always                                               Sample:
+                                                                                   Online
+    partition_count                                                                Number of partitions on the particular disk.
+    integer                   always                                               Sample:
+                                                                                   4
+    partition_style                                                                Partition style of the particular disk.
+    string                    always                                               Sample:
+                                                                                   MBR
+    partitions                if existent                                          Detailed information about one particular partition on the specified disk.
+    list
+     access_paths                                                                  Access paths of the particular partition.
+     string                   if existent                                          Sample:
+                                                                                   \\?\Volume{85bdc4a8-f8eb-11e6-80fa-806e6f6e6963}\
+     active                   if partition_style property of the particular disk   Information whether the particular partition is an active partition or not.
+     boolean                  has value "MBR"                                      Sample:
+                                                                                   True
+     drive_letter                                                                  Drive letter of the particular partition.
+     string                   if existent                                          Sample:
+                                                                                   C
+     gpt_type                 if partition_style property of the particular disk   gpt type of the particular partition.
+     string                   has value "GPT"                                      Sample:
+                                                                                   {e3c9e316-0b5c-4db8-817d-f92df00215ae}
+     guid                                                                          GUID of the particular partition.
+     string                   if existent                                          Sample:
+                                                                                   {302e475c-6e64-4674-a8e2-2f1c7018bf97}
+     hidden                                                                        Information whether the particular partition is hidden or not.
+     boolean                  always                                               Sample:
+                                                                                   True
+     mbr_type                 if partition_style property of the particular disk   mbr type of the particular partition.
+     integer                  has value "MBR"                                      Sample:
+                                                                                   7
+     no_default_driveletter   if partition_style property of the particular disk   Information whether the particular partition has a default drive letter or not.
+     boolean                  has value "GPT"                                      Sample:
+                                                                                   True
+     number                                                                        Number of the particular partition.
+     integer                  always                                               Sample:
+                                                                                   1
+     offset                                                                        Offset of the particular partition.
+     integer                  always                                               Sample:
+                                                                                   368050176
+     shadow_copy              always                                               Information whether the particular partition is a shadow copy of another partition.
+     boolean
+     size                                                                          Size in bytes of the particular partition.
+     integer                  always                                               Sample:
+                                                                                   838860800
+     transition_state                                                              Transition state of the particular partition.
+     integer                  always                                               Sample:
+                                                                                   1
+     type                                                                          Type of the particular partition.
+     string                   always                                               Sample:
+                                                                                   IFS
+     volumes                  if existent                                          Detailed information about one particular volume on the specified partition.
+     list
+        allocation_unit_size                                                       Allocation unit size in bytes of the particular volume.
+        integer               always                                               Sample:
+                                                                                   4096
+        drive_type                                                                 Drive type of the particular volume.
+        string                always                                               Sample:
+                                                                                   Fixed
+        health_status                                                              Health status of the particular volume.
+        string                always                                               Sample:
+                                                                                   Healthy
+        label                                                                      File system label of the particular volume.
+        string                always                                               Sample:
+                                                                                   System Reserved
+        object_id                                                                  Object ID of the particular volume.
+        string                always                                               Sample:
+                                                                                   \\?\Volume{85bdc4a9-f8eb-11e6-80fa-806e6f6e6963}\
+        path                                                                       Path of the particular volume.
+        string                always                                               Sample:
+                                                                                   \\?\Volume{85bdc4a9-f8eb-11e6-80fa-806e6f6e6963}\
+        size                                                                       Size in bytes of the particular volume.
+        integer               always                                               Sample:
+                                                                                   838856704
+        size_remaining                                                             Remaining size in bytes of the particular volume.
+        integer               always                                               Sample:
+                                                                                   395620352
+        type                                                                       File system type of the particular volume.
+        string                always                                               Sample:
+                                                                                   NTFS
+    path                                                                           Path of the particular disk on the target.
+    string                    always                                               Sample:
+                                                                                   \\?\scsi#disk&ven_red_hat&prod_virtio#4&23208fd0&1&000000#{<id>}
+    physical_disk             if existent                                          Detailed information about physical disk properties of the particular disk.
+    complex
+     allocated_size                                                                Allocated size in bytes of the particular physical disk.
+     integer                  always                                               Sample:
+                                                                                   240057409536
+     bus_type                                                                      Bus type of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   SCSI
+     can_pool                 always                                               Information whether the particular physical disk can be added to a storage pool.
+     boolean
+     cannot_pool_reason                                                            Information why the particular physical disk can not be added to a storage pool.
+     string                   if can_pool property has value false                 Sample:
+                                                                                   Insufficient Capacity
+     device_id                                                                     Device ID of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   0
+     friendly_name                                                                 Friendly name of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   PhysicalDisk0
+     health_status                                                                 Health status of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   Healthy
+     indication_enabled                                                            Information whether indication is enabled for the particular physical disk.
+     boolean                  always                                               Sample:
+                                                                                   True
+     manufacturer                                                                  Manufacturer of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   SUSE
+     media_type                                                                    Media type of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   UnSpecified
+     model                                                                         Model of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   Xen Block
+     object_id                                                                     Object ID of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   {1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_PhysicalDisk.ObjectId=\"{<object_id>}:PD:{<pd>}\"
+     operational_status                                                            Operational status of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   OK
+     partial                  always                                               Information whether the particular physical disk is partial.
+     boolean
+     physical_location                                                             Physical location of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   Integrated : Adapter 3 : Port 0 : Target 0 : LUN 0
+     serial_number                                                                 Serial number of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   b62beac80c3645e5877f
+     size                                                                          Size in bytes of the particular physical disk.
+     integer                  always                                               Sample:
+                                                                                   240057409536
+     spindle_speed                                                                 Spindle speed in rpm of the particular physical disk.
+     integer                  always                                               Sample:
+                                                                                   4294967295
+     supported_usages         always                                               Supported usage types of the particular physical disk.
+     complex
+        Count                                                                      Count of supported usage types.
+        integer               always                                               Sample:
+                                                                                   5
+        value                                                                      List of supported usage types.
+        string                always                                               Sample:
+                                                                                   Auto-Select, Hot Spare
+     unique_id                                                                     Unique ID of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   3141463431303031
+     usage_type                                                                    Usage type of the particular physical disk.
+     string                   always                                               Sample:
+                                                                                   Auto-Select
+    read_only                                                                      Read only status of the particular disk.
+    boolean                   always                                               Sample:
+                                                                                   True
+    sector_size                                                                    Sector size in bytes of the particular disk.
+    integer                   always                                               Sample:
+                                                                                   4096
+    serial_number                                                                  Serial number of the particular disk on the target.
+    string                    always                                               Sample:
+                                                                                   b62beac80c3645e5877f
+    size                                                                           Size in bytes of the particular disk.
+    integer                   always                                               Sample:
+                                                                                   227727638528
+    system_disk                                                                    Information whether the particular disk is a system disk.
+    boolean                   always                                               Sample:
+                                                                                   True
+    unique_id                                                                      Unique ID of the particular disk on the target.
+    string                    always                                               Sample:
+                                                                                   3141463431303031
+    virtual_disk              if existent                                          Detailed information about virtual disk properties of the particular disk.
+    complex
+     access                                                                        Access of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   Read/Write
+     allocated_size                                                                Allocated size in bytes of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   240057409536
+     allocation_unit_size                                                          Allocation unit size in bytes of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   4096
+     available_copies                                                              Number of the available copies of the particular virtual disk.
+     integer                  if existent                                          Sample:
+                                                                                   1
+     columns                                                                       Number of the columns of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   2
+     deduplication_enabled                                                         Information whether deduplication is enabled for the particular virtual disk.
+     boolean                  always                                               Sample:
+                                                                                   True
+     detached_reason                                                               Detached reason of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   None
+     enclosure_aware          always                                               Information whether the particular virtual disk is enclosure aware.
+     boolean
+     fault_domain_awareness                                                        Fault domain awareness of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   PhysicalDisk
+     footprint_on_pool                                                             Footprint on pool in bytes of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   240057409536
+     friendly_name                                                                 Friendly name of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   Prod2 Virtual Disk
+     groups                                                                        Number of the groups of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   1
+     health_status                                                                 Health status of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   Healthy
+     inter_leave                                                                   Inter leave in bytes of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   102400
+     logical_sector_size                                                           Logical sector size in byte of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   512
+     manual_attach                                                                 Information whether the particular virtual disk is manual attached.
+     boolean                  always                                               Sample:
+                                                                                   True
+     media_type                                                                    Media type of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   Unspecified
+     name                                                                          Name of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   vDisk1
+     object_id                                                                     Object ID of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   {1}\\\\HOST\\root/Microsoft/Windows/Storage/Providers_v2\\SPACES_VirtualDisk.ObjectId=\"{<object_id>}:VD:{<vd>}\"
+     operational_status                                                            Operational status of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   OK
+     parity_layout                                                                 Parity layout of the particular virtual disk.
+     integer                  if existent                                          Sample:
+                                                                                   1
+     physical_disk_redundancy                                                      Type of the physical disk redundancy of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   1
+     physical_sector_size                                                          Physical sector size in bytes of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   4096
+     provisioning_type                                                             Provisioning type of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   Thin
+     read_cache_size          always                                               Read cache size in byte of the particular virtual disk.
+     integer
+     request_no_spof                                                               Information whether the particular virtual disk requests no single point of failure.
+     boolean                  always                                               Sample:
+                                                                                   True
+     resiliency_setting_name                                                       Type of the physical disk redundancy of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   1
+     size                                                                          Size in bytes of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   240057409536
+     snapshot                 always                                               Information whether the particular virtual disk is a snapshot.
+     boolean
+     tiered                                                                        Information whether the particular virtual disk is tiered.
+     boolean                  always                                               Sample:
+                                                                                   True
+     unique_id                                                                     Unique ID of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   260542E4C6B01D47A8FA7630FD90FFDE
+     unique_id_format                                                              Unique ID format of the particular virtual disk.
+     string                   always                                               Sample:
+                                                                                   Vendor Specific
+     write_cache_size                                                              Write cache size in byte of the particular virtual disk.
+     integer                  always                                               Sample:
+                                                                                   100
+
+STATUS                   *win_disk_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Marc Tschapek (@marqelme)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_disk_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_disk_facts_module.html

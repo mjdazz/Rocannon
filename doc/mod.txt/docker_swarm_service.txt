@@ -1,0 +1,624 @@
+SYNOPSIS                   *docker_swarm_service*
+
+     • Manages docker services via a swarm manager node.
+
+REQUIREMENTS                   *docker_swarm_service-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.24
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). This module does not work with docker-py.
+     • Docker SDK for Python >= 2.0.2
+     • Python >= 2.7
+
+PARAMETERS                   *docker_swarm_service-parameters*
+
+          Parameter               Choices/Defaults                                                                         Comments
+                                                         The version of the Docker API running on the Docker Host.
+   api_version              Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string                   "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment
+                                                         variable is not set, the default value will be used.
+                                                         aliases: docker_api_version
+   args                                                  List arguments to be passed to the container.
+   list / elements=string                                Corresponds to the ARG parameter of docker service create.
+                                                         Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                               If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified
+   path                                                  in the environment variable DOCKER_CERT_PATH will be used.
+                                                         aliases: tls_ca_cert, cacert_path
+                                                         Path to the client's TLS certificate file.
+   client_cert                                           If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory
+   path                                                  specified in the environment variable DOCKER_CERT_PATH will be used.
+                                                         aliases: tls_client_cert, cert_path
+                                                         Path to the client's TLS key file.
+   client_key                                            If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory
+   path                                                  specified in the environment variable DOCKER_CERT_PATH will be used.
+                                                         aliases: tls_client_key, key_path
+   command                                               Command to execute when the container starts.
+   raw                                                   A command may be either a string or a list or a list of strings.
+   added in 2.8                                          Corresponds to the COMMAND parameter of docker service create.
+   configs                                               List of dictionaries describing the service configs.
+   list /                                                Corresponds to the --config option of docker service create.
+   elements=dictionary                                   Requires API version >= 1.30.
+      config_id                                          Config's ID.
+      string
+      config_name                                        Config's name as defined at its creation.
+      string / required
+      filename                                           Name of the file containing the config. Defaults to the config_name if not specified.
+      string
+      gid                                                GID of the config file's group.
+      string
+      mode                                               File access mode inside the container. Must be an octal number (like 0644 or 0444).
+      integer
+      uid                                                UID of the config file's owner.
+      string
+   constraints                                           List of the service constraints.
+   list / elements=string                                Corresponds to the --constraint option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter placement.constraints instead.
+   container_labels                                      Dictionary of key value pairs.
+   dictionary                                            Corresponds to the --container-label option of docker service create.
+   debug                      Choices:
+   boolean                    • no ←                     Debug mode
+                              • yes
+   dns                                                   List of custom DNS servers.
+   list / elements=string                                Corresponds to the --dns option of docker service create.
+                                                         Requires API version >= 1.25.
+   dns_options                                           List of custom DNS options.
+   list / elements=string                                Corresponds to the --dns-option option of docker service create.
+                                                         Requires API version >= 1.25.
+   dns_search                                            List of custom DNS search domains.
+   list / elements=string                                Corresponds to the --dns-search option of docker service create.
+                                                         Requires API version >= 1.25.
+                                                         The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host              Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string                   "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable
+                                                         is not set, the default value will be used.
+                                                         aliases: docker_url
+   endpoint_mode              Choices:                   Service endpoint mode.
+   string                     • vip                      Corresponds to the --endpoint-mode option of docker service create.
+                              • dnsrr                    Requires API version >= 1.25.
+                                                         List or dictionary of the service environment variables.
+   env                                                   If passed a list each items need to be in the format of KEY=VALUE.
+   raw                                                   If passed a dictionary values which might be parsed as numbers, booleans or other types by the YAML parser must be quoted (e.g. "true") in
+                                                         order to avoid data loss.
+                                                         Corresponds to the --env option of docker service create.
+   env_files                                             List of paths to files, present on the target, containing environment variables FOO=BAR.
+   list / elements=path                                  The order of the list is significant in determining the value assigned to a variable that shows up more than once.
+   added in 2.8                                          If variable also present in env, then env value will override.
+   force_update               Choices:                   Force update even if no changes require it.
+   boolean                    • no ←                     Corresponds to the --force option of docker service update.
+                              • yes                      Requires API version >= 1.25.
+   groups                                                List of additional group names and/or IDs that the container process will run as.
+   list / elements=string                                Corresponds to the --group option of docker service update.
+   added in 2.8                                          Requires API version >= 1.25.
+                                                         Configure a check that is run to determine whether or not containers for this service are "healthy". See the docs for the HEALTHCHECK
+   healthcheck                                           Dockerfile instruction for details on how healthchecks work.
+   dictionary                                            interval, timeout and start_period are specified as durations. They accept duration as a string in a format that look like: 5h34m56s, 1m30s
+   added in 2.8                                          etc. The supported units are us, ms, s, m and h.
+                                                         Requires API version >= 1.25.
+      interval                                           Time between running the check.
+      string
+      retries                                            Consecutive failures needed to report unhealthy. It accept integer value.
+      integer
+      start_period                                       Start period for the container to initialize before starting health-retries countdown.
+      string
+      test                                               Command to run to check health.
+      raw                                                Must be either a string or a list. If it is a list, the first item must be one of NONE, CMD or CMD-SHELL.
+      timeout                                            Maximum time to allow one check to run.
+      string
+   hostname                                              Container hostname.
+   string                                                Corresponds to the --hostname option of docker service create.
+                                                         Requires API version >= 1.25.
+   hosts                                                 Dict of host-to-IP mappings, where each host name is a key in the dictionary. Each host name will be added to the container's /etc/hosts
+   dictionary                                            file.
+   added in 2.8                                          Corresponds to the --host option of docker service create.
+                                                         Requires API version >= 1.25.
+   image                                                 Service image path and tag.
+   string                                                Corresponds to the IMAGE parameter of docker service create.
+   labels                                                Dictionary of key value pairs.
+   dictionary                                            Corresponds to the --label option of docker service create.
+   limit_cpu                                             Service CPU limit. 0 equals no limit.
+   float                                                 Corresponds to the --limit-cpu option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter limits.cpus instead.
+                                                         Service memory limit in format <number>[<unit>]. Number is a positive integer. Unit can be B (byte), K (kibibyte, 1024B), M (mebibyte), G
+                                                         (gibibyte), T (tebibyte), or P (pebibyte).
+   limit_memory                                          0 equals no limit.
+   string                                                Omitting the unit defaults to bytes.
+                                                         Corresponds to the --limit-memory option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter limits.memory instead.
+   limits
+   dictionary                                            Configures service resource limits.
+   added in 2.8
+      cpus                                               Service CPU limit. 0 equals no limit.
+      float                                              Corresponds to the --limit-cpu option of docker service create.
+                                                         Service memory limit in format <number>[<unit>]. Number is a positive integer. Unit can be B (byte), K (kibibyte, 1024B), M (mebibyte), G
+      memory                                             (gibibyte), T (tebibyte), or P (pebibyte).
+      string                                             0 equals no limit.
+                                                         Omitting the unit defaults to bytes.
+                                                         Corresponds to the --limit-memory option of docker service create.
+   log_driver                                            Configure the logging driver for a service.
+   string                                                Corresponds to the --log-driver option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter logging.driver instead.
+   log_driver_options                                    Options for service logging driver.
+   dictionary                                            Corresponds to the --log-opt option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter logging.options instead.
+   logging
+   dictionary                                            Logging configuration for the service.
+   added in 2.8
+      driver                                             Configure the logging driver for a service.
+      string                                             Corresponds to the --log-driver option of docker service create.
+      options                                            Options for service logging driver.
+      dictionary                                         Corresponds to the --log-opt option of docker service create.
+   mode                       Choices:                   Service replication mode.
+   string                     • replicated ←             Service will be removed and recreated when changed.
+                              • global                   Corresponds to the --mode option of docker service create.
+   mounts                                                List of dictionaries describing the service mounts.
+   list /                                                Corresponds to the --mount option of docker service create.
+   elements=dictionary
+      driver_config                                      Volume driver configuration.
+      dictionary                                         Can only be used when mode is volume.
+      added in 2.8
+             name                                        Name of the volume-driver plugin to use for the volume.
+             string
+             options                                     Options as key-value pairs to pass to the driver for this volume.
+             dictionary
+      labels
+      dictionary                                         Volume labels to apply.
+      added in 2.8
+      no_copy                 Choices:                   Disable copying of data from a container when a volume is created.
+      boolean                 • no                       Can only be used when mode is volume.
+      added in 2.8            • yes
+                              Choices:
+                              • shared
+      propagation             • slave                    The propagation mode to use.
+      string                  • private                  Can only be used when mode is bind.
+      added in 2.8            • rshared
+                              • rslave
+                              • rprivate
+      readonly                Choices:
+      boolean                 • no                       Whether the mount should be read-only.
+                              • yes
+      source                                             Mount source (e.g. a volume name or a host path).
+      string                                             Must be specified if type is not tmpfs.
+      target                                             Container path.
+      string / required
+      tmpfs_mode                                         File mode of the tmpfs in octal.
+      integer                                            Can only be used when mode is tmpfs.
+      added in 2.8
+      tmpfs_size                                         Size of the tmpfs mount in format <number>[<unit>]. Number is a positive integer. Unit can be B (byte), K (kibibyte, 1024B), M (mebibyte), G
+      string                                             (gibibyte), T (tebibyte), or P (pebibyte).
+      added in 2.8                                       Can only be used when mode is tmpfs.
+                              Choices:
+      type                    • bind ←                   The mount type.
+      string                  • volume                   Note that npipe is only supported by Docker for Windows. Also note that npipe was added in Ansible 2.9.
+                              • tmpfs
+                              • npipe
+   name                                                  Service name.
+   string / required                                     Corresponds to the --name option of docker service create.
+                                                         List of the service networks names or dictionaries.
+   networks                                              When passed dictionaries valid sub-options are name, which is required, and aliases and options.
+   list / elements=raw                                   Prior to API version 1.29, updating and removing networks is not supported. If changes are made the service will then be removed and
+                                                         recreated.
+                                                         Corresponds to the --network option of docker service create.
+   placement
+   dictionary                                            Configures service placement preferences and constraints.
+   added in 2.8
+      constraints                                        List of the service constraints.
+      list /                                             Corresponds to the --constraint option of docker service create.
+      elements=string
+      preferences                                        List of the placement preferences as key value pairs.
+      list /                                             Corresponds to the --placement-pref option of docker service create.
+      elements=dictionary                                Requires API version >= 1.27.
+   publish                                               List of dictionaries describing the service published ports.
+   list /                                                Corresponds to the --publish option of docker service create.
+   elements=dictionary                                   Requires API version >= 1.25.
+      mode                    Choices:                   What publish mode to use.
+      string                  • ingress                  Requires API version >= 1.32.
+                              • host
+      protocol                Choices:
+      string                  • tcp ←                    What protocol to use.
+                              • udp
+      published_port                                     The port to make externally available.
+      integer / required
+      target_port                                        The port inside the container to expose.
+      integer / required
+   read_only                  Choices:                   Mount the containers root filesystem as read only.
+   boolean                    • no                       Corresponds to the --read-only option of docker service create.
+   added in 2.8               • yes
+                                                         Number of containers instantiated in the service. Valid only if mode is replicated.
+   replicas                 Default:                     If set to -1, and service is not present, service replicas will be set to 1.
+   integer                  -1                           If set to -1, and service is present, service replicas will be unchanged.
+                                                         Corresponds to the --replicas option of docker service create.
+   reservations
+   dictionary                                            Configures service resource reservations.
+   added in 2.8
+      cpus                                               Service CPU reservation. 0 equals no reservation.
+      float                                              Corresponds to the --reserve-cpu option of docker service create.
+                                                         Service memory reservation in format <number>[<unit>]. Number is a positive integer. Unit can be B (byte), K (kibibyte, 1024B), M
+      memory                                             (mebibyte), G (gibibyte), T (tebibyte), or P (pebibyte).
+      string                                             0 equals no reservation.
+                                                         Omitting the unit defaults to bytes.
+                                                         Corresponds to the --reserve-memory option of docker service create.
+   reserve_cpu                                           Service CPU reservation. 0 equals no reservation.
+   float                                                 Corresponds to the --reserve-cpu option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter reservations.cpus instead.
+                                                         Service memory reservation in format <number>[<unit>]. Number is a positive integer. Unit can be B (byte), K (kibibyte, 1024B), M
+                                                         (mebibyte), G (gibibyte), T (tebibyte), or P (pebibyte).
+   reserve_memory                                        0 equals no reservation.
+   string                                                Omitting the unit defaults to bytes.
+                                                         Corresponds to the --reserve-memory option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter reservations.memory instead.
+   resolve_image              Choices:                   If the current image digest should be resolved from registry and updated if changed.
+   boolean                    • no ←                     Requires API version >= 1.30.
+   added in 2.8               • yes
+   restart_config
+   dictionary                                            Configures if and how to restart containers when they exit.
+   added in 2.8
+                              Choices:
+      condition               • none                     Restart condition of the service.
+      string                  • on-failure               Corresponds to the --restart-condition option of docker service create.
+                              • any
+      delay                                              Delay between restarts.
+      string                                             Accepts a a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us, ms, s, m and h.
+                                                         Corresponds to the --restart-delay option of docker service create.
+      max_attempts                                       Maximum number of service restarts.
+      integer                                            Corresponds to the --restart-condition option of docker service create.
+      window                                             Restart policy evaluation window.
+      string                                             Accepts a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us, ms, s, m and h.
+                                                         Corresponds to the --restart-window option of docker service create.
+                              Choices:                   Restart condition of the service.
+   restart_policy             • none                     Corresponds to the --restart-condition option of docker service create.
+   string                     • on-failure               Deprecated in 2.8, will be removed in 2.12. Use parameter restart_config.condition instead.
+                              • any
+   restart_policy_attempts                               Maximum number of service restarts.
+   integer                                               Corresponds to the --restart-condition option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter restart_config.max_attempts instead.
+                                                         Delay between restarts.
+   restart_policy_delay                                  Accepts a duration as an integer in nanoseconds or as a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us,
+   raw                                                   ms, s, m and h.
+                                                         Corresponds to the --restart-delay option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter restart_config.delay instead.
+                                                         Restart policy evaluation window.
+   restart_policy_window                                 Accepts a duration as an integer in nanoseconds or as a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us,
+   raw                                                   ms, s, m and h.
+                                                         Corresponds to the --restart-window option of docker service create.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter restart_config.window instead.
+   rollback_config
+   dictionary                                            Configures how the service should be rolled back in case of a failing update.
+   added in 2.8
+                                                         Delay between task rollbacks.
+      delay                                              Accepts a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us, ms, s, m and h.
+      string                                             Corresponds to the --rollback-delay option of docker service create.
+                                                         Requires API version >= 1.28.
+      failure_action          Choices:                   Action to take in case of rollback failure.
+      string                  • continue                 Corresponds to the --rollback-failure-action option of docker service create.
+                              • pause                    Requires API version >= 1.28.
+      max_failure_ratio                                  Fraction of tasks that may fail during a rollback.
+      float                                              Corresponds to the --rollback-max-failure-ratio option of docker service create.
+                                                         Requires API version >= 1.28.
+                                                         Duration after each task rollback to monitor for failure.
+      monitor                                            Accepts a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us, ms, s, m and h.
+      string                                             Corresponds to the --rollback-monitor option of docker service create.
+                                                         Requires API version >= 1.28.
+      order                                              Specifies the order of operations during rollbacks.
+      string                                             Corresponds to the --rollback-order option of docker service create.
+                                                         Requires API version >= 1.29.
+      parallelism                                        The number of containers to rollback at a time. If set to 0, all containers rollback simultaneously.
+      integer                                            Corresponds to the --rollback-parallelism option of docker service create.
+                                                         Requires API version >= 1.28.
+   secrets                                               List of dictionaries describing the service secrets.
+   list /                                                Corresponds to the --secret option of docker service create.
+   elements=dictionary                                   Requires API version >= 1.25.
+      filename                                           Name of the file containing the secret. Defaults to the secret_name if not specified.
+      string                                             Corresponds to the target key of docker service create --secret.
+      gid                                                GID of the secret file's group.
+      string
+      mode                                               File access mode inside the container. Must be an octal number (like 0644 or 0444).
+      integer
+      secret_id                                          Secret's ID.
+      string
+      secret_name                                        Secret's name as defined at its creation.
+      string / required
+      uid                                                UID of the secret file's owner.
+      string
+   ssl_version                                           Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                                If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+   state                      Choices:                   absent - A service matching the specified name will be removed and have its tasks stopped.
+   string                     • present ←                present - Asserts the existence of a service matching the name and provided configuration parameters. Unspecified configuration parameters
+                              • absent                   will be set to docker defaults.
+   stop_grace_period                                     Time to wait before force killing a container.
+   string                                                Accepts a duration as a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us, ms, s, m and h.
+   added in 2.8                                          Corresponds to the --stop-grace-period option of docker service create.
+   stop_signal                                           Override default signal used to stop the container.
+   string                                                Corresponds to the --stop-signal option of docker service create.
+   added in 2.8
+   timeout                  Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer                  60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment
+                                                         variable is not set, the default value will be used.
+                              Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is
+   tls                        • no ←                     set to yes as well, it will take precedence.
+   boolean                    • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is
+                                                         not set, the default value will be used.
+   tls_hostname             Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string                   "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment
+                                                         variable is not set, the default value will be used.
+   tty                        Choices:                   Allocate a pseudo-TTY.
+   boolean                    • no                       Corresponds to the --tty option of docker service create.
+                              • yes                      Requires API version >= 1.25.
+   update_config
+   dictionary                                            Configures how the service should be updated. Useful for configuring rolling updates.
+   added in 2.8
+      delay                                              Rolling update delay.
+      string                                             Accepts a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us, ms, s, m and h.
+                                                         Corresponds to the --update-delay option of docker service create.
+                              Choices:                   Action to take in case of container failure.
+      failure_action          • continue                 Corresponds to the --update-failure-action option of docker service create.
+      string                  • pause                    Usage of rollback requires API version >= 1.29.
+                              • rollback
+      max_failure_ratio                                  Fraction of tasks that may fail during an update before the failure action is invoked.
+      float                                              Corresponds to the --update-max-failure-ratio option of docker service create.
+                                                         Requires API version >= 1.25.
+                                                         Time to monitor updated tasks for failures.
+      monitor                                            Accepts a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us, ms, s, m and h.
+      string                                             Corresponds to the --update-monitor option of docker service create.
+                                                         Requires API version >= 1.25.
+      order                                              Specifies the order of operations when rolling out an updated task.
+      string                                             Corresponds to the --update-order option of docker service create.
+                                                         Requires API version >= 1.29.
+      parallelism                                        Rolling update parallelism.
+      integer                                            Corresponds to the --update-parallelism option of docker service create.
+                                                         Rolling update delay.
+                                                         Accepts a duration as an integer in nanoseconds or as a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us,
+   update_delay                                          ms, s, m and h.
+   raw                                                   Corresponds to the --update-delay option of docker service create.
+                                                         Before Ansible 2.8, the default value for this option was 10.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter update_config.delay instead.
+                              Choices:                   Action to take in case of container failure.
+   update_failure_action      • continue                 Corresponds to the --update-failure-action option of docker service create.
+   string                     • pause                    Usage of rollback requires API version >= 1.29.
+                              • rollback                 Deprecated in 2.8, will be removed in 2.12. Use parameter update_config.failure_action instead.
+                                                         Fraction of tasks that may fail during an update before the failure action is invoked.
+   update_max_failure_ratio                              Corresponds to the --update-max-failure-ratio option of docker service create.
+   float                                                 Requires API version >= 1.25.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter update_config.max_failure_ratio instead.
+                                                         Time to monitor updated tasks for failures.
+                                                         Accepts a duration as an integer in nanoseconds or as a string in a format that look like: 5h34m56s, 1m30s etc. The supported units are us,
+   update_monitor                                        ms, s, m and h.
+   raw                                                   Corresponds to the --update-monitor option of docker service create.
+                                                         Requires API version >= 1.25.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter update_config.monitor instead.
+                              Choices:                   Specifies the order of operations when rolling out an updated task.
+   update_order               • stop-first               Corresponds to the --update-order option of docker service create.
+   string                     • start-first              Requires API version >= 1.29.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter update_config.order instead.
+                                                         Rolling update parallelism.
+   update_parallelism                                    Corresponds to the --update-parallelism option of docker service create.
+   integer                                               Before Ansible 2.8, the default value for this option was 1.
+                                                         Deprecated in 2.8, will be removed in 2.12. Use parameter update_config.parallelism instead.
+                                                         Sets the username or UID used for the specified command.
+   user                                                  Before Ansible 2.8, the default value for this option was root.
+   string                                                The default has been removed so that the user defined in the image is used if no user is specified here.
+                                                         Corresponds to the --user option of docker service create.
+                              Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs             • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment
+   boolean                    • yes                      variable is not set, the default value will be used.
+                                                         aliases: tls_verify
+   working_dir                                           Path to the working directory.
+   string                                                Corresponds to the --workdir option of docker service create.
+   added in 2.8
+
+NOTES                   *docker_swarm_service-notes*
+
+   Note
+
+     • Images will only resolve to the latest digest when using Docker API >= 1.30 and Docker SDK for Python >= 3.2.0. When using older versions use force_update: true to trigger the swarm to
+       resolve a new image.
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_swarm_service-examples*
+
+ - name: Set command and arguments
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     command: sleep
+     args:
+       - "3600"
+
+ - name: Set a bind mount
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     mounts:
+       - source: /tmp/
+         target: /remote_tmp/
+         type: bind
+
+ - name: Set service labels
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     labels:
+       com.example.description: "Accounting webapp"
+       com.example.department: "Finance"
+
+ - name: Set environment variables
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     env:
+       ENVVAR1: envvar1
+       ENVVAR2: envvar2
+     env_files:
+       - envs/common.env
+       - envs/apps/web.env
+
+ - name: Set fluentd logging
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     logging:
+       driver: fluentd
+       options:
+         fluentd-address: "127.0.0.1:24224"
+         fluentd-async-connect: "true"
+         tag: myservice
+
+ - name: Set restart policies
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     restart_config:
+       condition: on-failure
+       delay: 5s
+       max_attempts: 3
+       window: 120s
+
+ - name: Set update config
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     update_config:
+       parallelism: 2
+       delay: 10s
+       order: stop-first
+
+ - name: Set rollback config
+   docker_swarm_service:
+     name: myservice
+     image: alpine
+     update_config:
+       failure_action: rollback
+     rollback_config:
+       parallelism: 2
+       delay: 10s
+       order: stop-first
+
+ - name: Set placement preferences
+   docker_swarm_service:
+     name: myservice
+     image: alpine:edge
+     placement:
+       preferences:
+         - spread: node.labels.mylabel
+       constraints:
+         - node.role == manager
+         - engine.labels.operatingsystem == ubuntu 14.04
+
+ - name: Set configs
+   docker_swarm_service:
+     name: myservice
+     image: alpine:edge
+     configs:
+       - config_name: myconfig_name
+         filename: "/tmp/config.txt"
+
+ - name: Set networks
+   docker_swarm_service:
+     name: myservice
+     image: alpine:edge
+     networks:
+       - mynetwork
+
+ - name: Set networks as a dictionary
+   docker_swarm_service:
+     name: myservice
+     image: alpine:edge
+     networks:
+       - name: "mynetwork"
+         aliases:
+           - "mynetwork_alias"
+         options:
+           foo: bar
+
+ - name: Set secrets
+   docker_swarm_service:
+     name: myservice
+     image: alpine:edge
+     secrets:
+       - secret_name: mysecret_name
+         filename: "/run/secrets/secret.txt"
+
+ - name: Start service with healthcheck
+   docker_swarm_service:
+     name: myservice
+     image: nginx:1.13
+     healthcheck:
+       # Check if nginx server is healthy by curl'ing the server.
+       # If this fails or timeouts, the healthcheck fails.
+       test: ["CMD", "curl", "--fail", "http://nginx.host.com"]
+       interval: 1m30s
+       timeout: 10s
+       retries: 3
+       start_period: 30s
+
+ - name: Configure service resources
+   docker_swarm_service:
+     name: myservice
+     image: alpine:edge
+     reservations:
+       cpus: 0.25
+       memory: 20M
+     limits:
+       cpus: 0.50
+       memory: 50M
+
+ - name: Remove service
+   docker_swarm_service:
+     name: myservice
+     state: absent
+
+RETURN VALUES                   *docker_swarm_service-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   changes                  List of changed service attributes if a service has been altered, [] otherwise.
+   list /          always   Sample:
+   elements=string          ['container_labels', 'replicas']
+   rebuilt                  True if the service has been recreated (removed and created)
+   boolean         always   Sample:
+                            True
+                            Dictionary of variables representing the current state of the service. Matches the module parameters format.
+                            Note that facts are not part of registered vars but accessible directly.
+                            Note that before Ansible 2.7.9, the return variable was documented as ansible_swarm_service, while the module actually returned a variable called ansible_docker_service.
+                            The variable was renamed to swarm_service in both code and documentation for Ansible 2.7.9 and Ansible 2.8.0. In Ansible 2.7.x, the old name ansible_docker_service can
+                            still be used.
+                            Sample:
+                            { "args": [ "3600" ], "command": [ "sleep" ], "configs": null, "constraints": [ "node.role == manager", "engine.labels.operatingsystem == ubuntu 14.04" ],
+                            "container_labels": null, "dns": null, "dns_options": null, "dns_search": null, "endpoint_mode": null, "env": [ "ENVVAR1=envvar1", "ENVVAR2=envvar2" ], "force_update":
+   swarm_service   always   null, "groups": null, "healthcheck": { "interval": 90000000000, "retries": 3, "start_period": 30000000000, "test": [ "CMD", "curl", "--fail", "http://nginx.host.com" ],
+   dictionary               "timeout": 10000000000 }, "healthcheck_disabled": false, "hostname": null, "hosts": null, "image":
+                            "alpine:[email protected]:b3dbf31b77fd99d9c08f780ce6f5282aba076d70a513a8be859d8d3a4d0c92b8", "labels": { "com.example.department": "Finance", "com.example.description":
+                            "Accounting webapp" }, "limit_cpu": 0.5, "limit_memory": 52428800, "log_driver": "fluentd", "log_driver_options": { "fluentd-address": "127.0.0.1:24224",
+                            "fluentd-async-connect": "true", "tag": "myservice" }, "mode": "replicated", "mounts": [ { "readonly": false, "source": "/tmp/", "target": "/remote_tmp/", "type":
+                            "bind", "labels": null, "propagation": null, "no_copy": null, "driver_config": null, "tmpfs_size": null, "tmpfs_mode": null } ], "networks": null,
+                            "placement_preferences": [ { "spread": "node.labels.mylabel" } ], "publish": null, "read_only": null, "replicas": 1, "reserve_cpu": 0.25, "reserve_memory": 20971520,
+                            "restart_policy": "on-failure", "restart_policy_attempts": 3, "restart_policy_delay": 5000000000, "restart_policy_window": 120000000000, "secrets": null,
+                            "stop_grace_period": null, "stop_signal": null, "tty": null, "update_delay": 10000000000, "update_failure_action": null, "update_max_failure_ratio": null,
+                            "update_monitor": null, "update_order": "stop-first", "update_parallelism": 2, "user": null, "working_dir": null }
+
+STATUS                   *docker_swarm_service-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dario Zanzico (@dariko)
+     • Jason Witkowski (@jwitko)
+     • Hannes Ljungberg (@hannseman)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_swarm_service-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_swarm_service_module.html

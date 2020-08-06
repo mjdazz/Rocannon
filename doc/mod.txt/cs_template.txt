@@ -1,0 +1,294 @@
+SYNOPSIS                   *cs_template*
+
+     • Register templates from an URL.
+     • Create templates from a ROOT volume of a stopped VM or its snapshot.
+     • Update (since version 2.7), extract and delete templates.
+
+REQUIREMENTS                   *cs_template-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_template-parameters*
+
+          Parameter           Choices/Defaults                                                                         Comments
+   account                                        Account the template, snapshot or VM is related to.
+   string
+                             Choices:             HTTP method used to query the API endpoint.
+   api_http_method           • get                If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                    • post               As the last option, the value is taken from the ini config file, also see the notes.
+                                                  Fallback value is get if not specified.
+   api_key                                        API key of the CloudStack API.
+   string                                         If not given, the CLOUDSTACK_KEY env variable is considered.
+                                                  As the last option, the value is taken from the ini config file, also see the notes.
+   api_region              Default:               Name of the ini section in the cloustack.ini file.
+   string                  "cloudstack"           If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                                     Secret key of the CloudStack API.
+   string                                         If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                                  As the last option, the value is taken from the ini config file, also see the notes.
+                                                  HTTP timeout in seconds.
+   api_timeout                                    If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                                        As the last option, the value is taken from the ini config file, also see the notes.
+                                                  Fallback value is 10 seconds if not specified.
+   api_url                                        URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                                         If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                                  As the last option, the value is taken from the ini config file, also see the notes.
+   bits                      Choices:
+   integer                   • 32                 32 or 64 bits support.
+                             • 64 ←
+   checksum                                       The MD5 checksum value of this template.
+   string                                         If set, we search by checksum instead of name.
+   cross_zones               Choices:             Whether the template should be synced or removed across zones.
+   boolean                   • no ←               Only used if state is present or absent.
+                             • yes
+   details                                        Template details in key/value pairs.
+   string
+   display_text                                   Display text of the template.
+   string
+   domain                                         Domain the template, snapshot or VM is related to.
+   string
+                             Choices:
+   format                    • QCOW2              The format for the template.
+   string                    • RAW                Only considered if state=present.
+                             • VHD
+                             • OVA
+   hypervisor                                     Name the hypervisor to be used for creating the new template.
+   string                                         Relevant when using state=present.
+                                                  Possible values are KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator.
+   is_dynamically_scalable   Choices:             Register the template having XS/VMware tools installed in order to support dynamic scaling of VM CPU/memory.
+   boolean                   • no                 Only used if state is present.
+                             • yes
+   is_extractable            Choices:
+   boolean                   • no                 Allows the template or its derivatives to be extractable.
+                             • yes
+   is_featured               Choices:             Register the template to be featured.
+   boolean                   • no                 Only used if state is present.
+                             • yes
+   is_public                 Choices:             Register the template to be publicly available to all users.
+   boolean                   • no                 Only used if state is present.
+                             • yes
+   is_ready                  Choices:             Note: this flag was not implemented and therefore marked as deprecated.
+   boolean                   • no                 Deprecated, will be removed in version 2.11.
+                             • yes
+   is_routing                Choices:             Sets the template type to routing, i.e. if template is used to deploy routers.
+   boolean                   • no                 Only considered if url is used.
+                             • yes
+   mode                      Choices:             Mode for the template extraction.
+   string                    • http_download ←    Only used if state=extracted.
+                             • ftp_upload
+   name                                           Name of the template.
+   string / required
+   os_type                                        OS type that best represents the OS of this template.
+   string
+   password_enabled          Choices:
+   boolean                   • no                 Enable template password reset support.
+                             • yes
+   poll_async                Choices:
+   boolean                   • no                 Poll async jobs until job has finished.
+                             • yes ←
+   project                                        Name of the project the template to be registered in.
+   string
+   requires_hvm              Choices:             Whether the template requires HVM or not.
+   boolean                   • no                 Only considered while creating the template.
+                             • yes
+   snapshot                                       Name of the snapshot, created from the VM ROOT volume, the template will be created from.
+   string                                         vm is required together with this argument.
+   sshkey_enabled            Choices:             True if the template supports the sshkey upload feature.
+   boolean                   • no                 Only considered if url is used (API limitation).
+                             • yes
+                             Choices:
+   state                     • present ←          State of the template.
+   string                    • absent
+                             • extracted
+   tags                                           List of tags. Tags are a list of dictionaries having keys key and value.
+   list                                           To delete all tags, set a empty list e.g. tags: [].
+   added in 2.4                                   aliases: tag
+                             Choices:
+                             • all
+                             • featured
+   template_filter           • self ←             Name of the filter used to search for the template.
+   string                    • selfexecutable     The filter all was added in 2.7.
+                             • sharedexecutable
+                             • executable
+                             • community
+                             Choices:
+                             • display_text
+   template_find_options     • checksum           Options to find a template uniquely.
+   list                      • cross_zones        More than one allowed.
+   added in 2.7                                   aliases: template_find_option
+                           Default:
+                           []
+   template_tag                                   The tag for this template.
+   string
+   url                                            URL of where the template is hosted on state=present.
+   string                                         URL to which the template would be extracted on state=extracted.
+                                                  Mutually exclusive with vm.
+   vm                                             VM name the template will be created from its volume or alternatively from a snapshot.
+   string                                         VM must be in stopped state if created from its volume.
+                                                  Mutually exclusive with url.
+   zone                                           Name of the zone you wish the template to be registered or deleted from.
+   string                                         If not specified, first found zone will be used.
+
+NOTES                   *cs_template-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_template-examples*
+
+ - name: register a systemvm template
+   cs_template:
+     name: systemvm-vmware-4.5
+     url: "http://packages.shapeblue.com/systemvmtemplate/4.5/systemvm64template-4.5-vmware.ova"
+     hypervisor: VMware
+     format: OVA
+     cross_zones: yes
+     os_type: Debian GNU/Linux 7(64-bit)
+   delegate_to: localhost
+
+ - name: Create a template from a stopped virtual machine's volume
+   cs_template:
+     name: Debian 9 (64-bit) 20GB ({{ ansible_date_time.date }})
+     vm: debian-9-base-vm
+     os_type: Debian GNU/Linux 9 (64-bit)
+     zone: tokio-ix
+     password_enabled: yes
+     is_public: yes
+   delegate_to: localhost
+
+ # Note: Use template_find_option(s) when a template name is not unique
+ - name: Create a template from a stopped virtual machine's volume
+   cs_template:
+     name: Debian 9 (64-bit)
+     display_text: Debian 9 (64-bit) 20GB ({{ ansible_date_time.date }})
+     template_find_option: display_text
+     vm: debian-9-base-vm
+     os_type: Debian GNU/Linux 9 (64-bit)
+     zone: tokio-ix
+     password_enabled: yes
+     is_public: yes
+   delegate_to: localhost
+
+ - name: create a template from a virtual machine's root volume snapshot
+   cs_template:
+     name: Debian 9 (64-bit) Snapshot ROOT-233_2015061509114
+     snapshot: ROOT-233_2015061509114
+     os_type: Debian GNU/Linux 9 (64-bit)
+     zone: tokio-ix
+     password_enabled: yes
+     is_public: yes
+   delegate_to: localhost
+
+ - name: Remove a template
+   cs_template:
+     name: systemvm-4.2
+     cross_zones: yes
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_template-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key             Returned                                                                               Description
+   account                             Account the template is related to.
+   string           success            Sample:
+                                       example account
+   checksum                            MD5 checksum of the template.
+   string           if available       Sample:
+                                       0b31bccccb048d20b551f70830bb7ad0
+   created                             Date of registering.
+   string           success            Sample:
+                                       2015-03-29T14:57:06+0200
+   cross_zones      if available       true if the template is managed across all zones, false otherwise.
+   boolean
+   display_text                        Display text of the template.
+   string           if available       Sample:
+                                       Debian 7.7 64-bit minimal 2015-03-19
+   domain                              Domain the template is related to.
+   string           success            Sample:
+                                       example domain
+   format                              Format of the template.
+   string           if available       Sample:
+                                       OVA
+   hypervisor                          Hypervisor related to this template.
+   string           if available       Sample:
+                                       VMware
+   id                                  UUID of the template or extracted object.
+   string           success            Sample:
+                                       a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   is_extractable                      True if the template is extractable.
+   boolean          if available       Sample:
+                                       True
+   is_featured                         True if the template is featured.
+   boolean          if available       Sample:
+                                       True
+   is_public                           True if the template is public.
+   boolean          if available       Sample:
+                                       True
+   is_ready                            True if the template is ready to be deployed from.
+   boolean          if available       Sample:
+                                       True
+   mode                                Mode of extraction
+   string           on state=extracted Sample:
+                                       http_download
+   name                                Name of the template or extracted object.
+   string           success            Sample:
+                                       Debian 7 64-bit
+   os_type                             Type of the OS.
+   string           if available       Sample:
+                                       CentOS 6.5 (64-bit)
+   password_enabled if available       True if the reset password feature is enabled, false otherwise.
+   boolean
+   project                             Name of project the template is related to.
+   string           success            Sample:
+                                       Production
+   sshkey_enabled   if available       true if template is sshkey enabled, false otherwise.
+   boolean
+   state                               State of the extracted template
+   string           on state=extracted Sample:
+                                       DOWNLOAD_URL_CREATED
+   status                              Status of the template or extracted object.
+   string           success            Sample:
+                                       Download Complete
+   tags                                List of resource tags associated with the template.
+   list             if available       Sample:
+                                       [ { "key": "foo", "value": "bar" } ]
+   template_tag                        Template tag related to this template.
+   string           if available       Sample:
+                                       special
+   template_type                       Type of the template.
+   string           if available       Sample:
+                                       USER
+   url                                 Url to which the template is extracted to
+   string           on state=extracted Sample:
+                                       http://1.2.3.4/userdata/eb307f13-4aca-45e8-b157-a414a14e6b04.ova
+   zone                                Name of zone the template is registered in.
+   string           success            Sample:
+                                       zuerich
+
+STATUS                   *cs_template-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_template-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_template_module.html

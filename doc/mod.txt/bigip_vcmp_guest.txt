@@ -1,0 +1,168 @@
+SYNOPSIS                   *bigip_vcmp_guest*
+
+     • Manages vCMP guests on a BIG-IP. This functionality only exists on actual hardware and must be enabled by provisioning vcmp with the bigip_provision module.
+
+PARAMETERS                   *bigip_vcmp_guest-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+                                        Contains those slots that the guest is allowed to be assigned to.
+   allowed_slots                        When the host determines which slots this guest should be assigned to, only slots in this list will be considered.
+   list                                 This is a good way to force guests to be assigned only to particular slots, or, by configuring disjoint allowed_slots on two guests, that those guests are
+   added in 2.7                         never assigned to the same slot.
+                                        By default this list includes every available slot in the cluster. This means, by default, the guest may be assigned to any slot.
+                                        Specifies the number of cores that the system allocates to the guest.
+   cores_per_slot                       Each core represents a portion of CPU and memory. Therefore, the amount of memory allocated per core is directly tied to the amount of CPU. This amount of
+   integer                              memory varies per hardware platform type.
+                                        The number you can specify depends on the type of hardware you have.
+                                        In the event of a reboot, the system persists the guest to the same slot on which it ran prior to the reboot.
+   delete_virtual_disk   Choices:
+   boolean               • no ←         When state is absent, will additionally delete the virtual disk associated with the vCMP guest. By default, this value is no.
+                         • yes
+   initial_hotfix
+   string                               Specifies the hotfix ISO image file which will be applied on top of the base image.
+   added in 2.9
+   initial_image                        Specifies the base software release ISO image file for installing the TMOS hypervisor instance and any licensed BIG-IP modules onto the guest's virtual disk.
+   string                               When creating a new guest, this parameter is required.
+   mgmt_address                         Specifies the IP address, and subnet or subnet mask that you use to access the guest when you want to manage a module running within the guest. This
+   string                               parameter is required if the mgmt_network parameter is bridged.
+                                        When creating a new guest, if you do not specify a network or network mask, a default of /24 (255.255.255.0) will be assumed.
+                                        Specifies the method by which the management address is used in the vCMP guest.
+                                        When bridged, specifies that the guest can communicate with the vCMP host's management network.
+                                        When isolated, specifies that the guest is isolated from the vCMP host's management network. In this case, the only way that a guest can communicate with the
+                         Choices:       vCMP host is through the console port or through a self IP address on the guest that allows traffic through port 22.
+   mgmt_network          • bridged      When host only, prevents the guest from installing images and hotfixes other than those provided by the hypervisor.
+   string                • isolated     If the guest setting is isolated or host only, the mgmt_address does not apply.
+                         • host only    Concerning mode changing, changing bridged to isolated causes the vCMP host to remove all of the guest's management interfaces from its bridged management
+                                        network. This immediately disconnects the guest's VMs from the physical management network. Changing isolated to bridged causes the vCMP host to dynamically
+                                        add the guest's management interfaces to the bridged management network. This immediately connects all of the guest's VMs to the physical management network.
+                                        Changing this property while the guest is in the configured or provisioned state has no immediate effect.
+   mgmt_route                           Specifies the gateway address for the mgmt_address.
+   string                               If this value is not specified when creating a new guest, it is set to none.
+                                        The value none can be used during an update to remove this value.
+                                        Specifies the minimum number of slots that the guest must be assigned to in order to deploy.
+   min_number_of_slots                  This field dictates the number of slots that the guest must be assigned to.
+   integer                              If at the end of any allocation attempt the guest is not assigned to at least this many slots, the attempt fails and the change that initiated it is
+   added in 2.7                         reverted.
+                                        A guest's min_number_of_slots value cannot be greater than its number_of_slots.
+   name                                 The name of the vCMP guest to manage.
+   string / required
+   number_of_slots                      Specifies the number of slots for the system to use for creating the guest.
+   integer                              This value dictates how many cores a guest is allocated from each slot that it is assigned to.
+   added in 2.7                         Possible values are dependent on the type of blades being used in this cluster.
+                                        The default value depends on the type of blades being used in this cluster.
+   partition           Default:         Device partition to manage resources on.
+   string              "Common"
+   provider
+   dictionary                           A dict object containing connection details.
+   added in 2.5
+     auth_provider                      Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                             This option is really used when working with BIG-IQ devices.
+     password                           The password for the user account used to connect to the BIG-IP.
+     string / required                  You may omit this option by setting the environment variable F5_PASSWORD.
+                                        aliases: pass, pwd
+     server                             The BIG-IP host.
+     string / required                  You may omit this option by setting the environment variable F5_SERVER.
+     server_port       Default:         The BIG-IP server port.
+     integer           443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                        Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                               You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                            Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                            operation is completed, the module will error.
+     transport           Choices:
+     string              • cli          Configures the transport connection to use when connecting to the remote device.
+                         • rest ←
+     user                               The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string / required                  You may omit this option by setting the environment variable F5_USER.
+     validate_certs      Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean             • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                         • yes ←
+                         Choices:       The state of the vCMP guest on the system. Each state implies the actions of all states before it.
+                         • configured   When configured, guarantees that the vCMP guest exists with the provided attributes. Additionally, ensures that the vCMP guest is turned off.
+   state                 • disabled     When disabled, behaves the same as configured the name of this state is just a convenience for the user that is more understandable.
+   string                • provisioned  When provisioned, will ensure that the guest is created and installed. This state will not start the guest; use deployed for that. This state is one step
+                         • present ←    beyond present as present will not install the guest; only setup the configuration for it to be installed.
+                         • absent       When present, ensures the guest is properly provisioned and starts the guest so that it is in a running state.
+                                        When absent, removes the vCMP from the system.
+                                        VLANs that the guest uses to communicate with other guests, the host, and with the external network. The available VLANs in the list are those that are
+   vlans                                currently configured on the vCMP host.
+   list                                 The order of these VLANs is not important; in fact, it's ignored. This module will order the VLANs for you automatically. Therefore, if you deliberately
+                                        re-order them in subsequent tasks, you will find that this module will not register a change.
+
+NOTES                   *bigip_vcmp_guest-notes*
+
+   Note
+
+     • This module can take a lot of time to deploy vCMP guests. This is an intrinsic limitation of the vCMP system because it is booting real VMs on the BIG-IP device. This boot time is very
+       similar in length to the time it takes to boot VMs on any other virtualization platform; public or private.
+     • When BIG-IP starts, the VMs are booted sequentially; not in parallel. This means that it is not unusual for a vCMP host with many guests to take a long time (60+ minutes) to reboot and bring
+       all the guests online. The BIG-IP chassis will be available before all vCMP guests are online.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_vcmp_guest-examples*
+
+ - name: Create a vCMP guest
+   bigip_vcmp_guest:
+     name: foo
+     mgmt_network: bridge
+     mgmt_address: 10.20.30.40/24
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create a vCMP guest with specific VLANs
+   bigip_vcmp_guest:
+     name: foo
+     mgmt_network: bridge
+     mgmt_address: 10.20.30.40/24
+     vlans:
+       - vlan1
+       - vlan2
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove vCMP guest and disk
+   bigip_vcmp_guest:
+     name: guest1
+     state: absent
+     delete_virtual_disk: yes
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   register: result
+
+RETURN VALUES                   *bigip_vcmp_guest-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key  Returned                                                                                     Description
+   vlans          The VLANs assigned to the vCMP guest, in their full path format.
+   list  changed  Sample:
+                  ['/Common/vlan1', '/Common/vlan2']
+
+STATUS                   *bigip_vcmp_guest-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_vcmp_guest-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_vcmp_guest_module.html

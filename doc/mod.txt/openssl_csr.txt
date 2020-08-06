@@ -1,0 +1,304 @@
+SYNOPSIS                   *openssl_csr*
+
+     • This module allows one to (re)generate OpenSSL certificate signing requests.
+     • It uses the pyOpenSSL python library to interact with openssl. This module supports the subjectAltName, keyUsage, extendedKeyUsage, basicConstraints and OCSP Must Staple extensions.
+     • Please note that the module regenerates existing CSR if it doesn’t match the module’s options, or if it seems to be corrupt. If you are concerned that this could overwrite your existing CSR,
+       consider using the backup option.
+     • The module can use the cryptography Python library, or the pyOpenSSL Python library. By default, it tries to detect which one is available. This can be overridden with the
+       select_crypto_backend option. Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13.”
+
+REQUIREMENTS                   *openssl_csr-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Either cryptography >= 1.3
+     • Or pyOpenSSL >= 0.15
+
+PARAMETERS                   *openssl_csr-parameters*
+
+             Parameter           Choices/Defaults                                                                      Comments
+                                                  The attributes the resulting file or directory should have.
+   attributes                                     To get supported flags look at the man page for chattr on the target system.
+   string                                         This string should contain the attributes in the same order as the one displayed by lsattr.
+                                                  The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                                  aliases: attr
+                                                  Names that will be present in the authority cert issuer field of the certificate signing request.
+                                                  Values must be prefixed by their options. (i.e., email, URI, DNS, RID, IP, dirName, otherName and the ones specific to your CA)
+                                                  Example: DNS:ca.example.org
+   authority_cert_issuer                          If specified, authority_key_identifier must also be specified.
+   list / elements=string                         Please note that commercial CAs ignore this value, respectively use a value of their own choice. Specifying this option is mostly useful for
+   added in 2.9                                   self-signed certificates or for own CAs.
+                                                  Note that this is only supported if the cryptography backend is used!
+                                                  The AuthorityKeyIdentifier will only be added if at least one of authority_key_identifier, authority_cert_issuer and authority_cert_serial_number
+                                                  is specified.
+                                                  The authority cert serial number.
+   authority_cert_serial_number                   Note that this is only supported if the cryptography backend is used!
+   integer                                        Please note that commercial CAs ignore this value, respectively use a value of their own choice. Specifying this option is mostly useful for
+   added in 2.9                                   self-signed certificates or for own CAs.
+                                                  The AuthorityKeyIdentifier will only be added if at least one of authority_key_identifier, authority_cert_issuer and authority_cert_serial_number
+                                                  is specified.
+                                                  The authority key identifier as a hex string, where two bytes are separated by colons.
+                                                  Example: 00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33
+   authority_key_identifier                       If specified, authority_cert_issuer must also be specified.
+   string                                         Please note that commercial CAs ignore this value, respectively use a value of their own choice. Specifying this option is mostly useful for
+   added in 2.9                                   self-signed certificates or for own CAs.
+                                                  Note that this is only supported if the cryptography backend is used!
+                                                  The AuthorityKeyIdentifier will only be added if at least one of authority_key_identifier, authority_cert_issuer and authority_cert_serial_number
+                                                  is specified.
+   backup                          Choices:
+   boolean                         • no ←         Create a backup file including a timestamp so you can get the original CSR back if you overwrote it with a new one by accident.
+   added in 2.8                    • yes
+   basic_constraints                              Indicates basic constraints, such as if the certificate is a CA.
+   list / elements=string                         aliases: basicConstraints
+   added in 2.5
+   basic_constraints_critical      Choices:       Should the basicConstraints extension be considered as critical.
+   boolean                         • no           aliases: basicConstraints_critical
+   added in 2.5                    • yes
+   common_name                                    The commonName field of the certificate signing request subject.
+   string                                         aliases: CN, commonName
+   country_name                                   The countryName field of the certificate signing request subject.
+   string                                         aliases: C, countryName
+   create_subject_key_identifier   Choices:       Create the Subject Key Identifier from the public key.
+   boolean                         • no ←         Please note that commercial CAs can ignore the value, respectively use a value of their own choice instead. Specifying this option is mostly useful
+   added in 2.9                    • yes          for self-signed certificates or for own CAs.
+                                                  Note that this is only supported if the cryptography backend is used!
+   digest                        Default:         The digest used when signing the certificate signing request with the private key.
+   string                        "sha256"
+   email_address                                  The emailAddress field of the certificate signing request subject.
+   string                                         aliases: E, emailAddress
+   extended_key_usage                             Additional restrictions (e.g. client authentication, server authentication) on the allowed purposes for which the public key may be used.
+   list / elements=string                         aliases: extKeyUsage, extendedKeyUsage
+   extended_key_usage_critical     Choices:       Should the extkeyUsage extension be considered as critical.
+   boolean                         • no           aliases: extKeyUsage_critical, extendedKeyUsage_critical
+                                   • yes
+   force                           Choices:
+   boolean                         • no ←         Should the certificate signing request be forced regenerated by this ansible module.
+                                   • yes
+   group                                          Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   key_usage                                      This defines the purpose (e.g. encipherment, signature, certificate signing) of the key contained in the certificate.
+   list / elements=string                         aliases: keyUsage
+   key_usage_critical              Choices:       Should the keyUsage extension be considered as critical.
+   boolean                         • no           aliases: keyUsage_critical
+                                   • yes
+   locality_name                                  The localityName field of the certificate signing request subject.
+   string                                         aliases: L, localityName
+                                                  The permissions the resulting file or directory should have.
+                                                  For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser
+                                                  knows it is an octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from
+   mode                                           string into number.
+   string                                         Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                                  As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                                  As of Ansible 2.6, the mode may also be the special string preserve.
+                                                  When set to preserve the file will be given the same permissions as the source file.
+   ocsp_must_staple                Choices:       Indicates that the certificate should contain the OCSP Must Staple extension (https://tools.ietf.org/html/rfc7633).
+   boolean                         • no           aliases: ocspMustStaple
+   added in 2.5                    • yes
+   ocsp_must_staple_critical       Choices:       Should the OCSP Must Staple extension be considered as critical
+   boolean                         • no           Note that according to the RFC, this extension should not be marked as critical, as old clients not knowing about OCSP Must Staple are required to
+   added in 2.5                    • yes          reject such certificates (see https://tools.ietf.org/html/rfc7633#section-4).
+                                                  aliases: ocspMustStaple_critical
+   organization_name                              The organizationName field of the certificate signing request subject.
+   string                                         aliases: O, organizationName
+   organizational_unit_name                       The organizationalUnitName field of the certificate signing request subject.
+   string                                         aliases: OU, organizationalUnitName
+   owner                                          Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path                                           The name of the file into which the generated OpenSSL certificate signing request will be written.
+   path / required
+   privatekey_passphrase                          The passphrase for the private key.
+   string                                         This is required if the private key is password protected.
+   privatekey_path                                The path to the private key to use when signing the certificate signing request.
+   path                                           Required if state is present.
+                                                  Determines which crypto backend to use.
+   select_crypto_backend           Choices:       The default choice is auto, which tries to use cryptography if available, and falls back to pyopenssl.
+   string                          • auto ←       If set to pyopenssl, will try to use the pyOpenSSL library.
+   added in 2.8                    • cryptography If set to cryptography, will try to use the cryptography library.
+                                   • pyopenssl    Please note that the pyopenssl backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13. From that point on, only the
+                                                  cryptography backend will be available.
+   selevel                       Default:         The level part of the SELinux file context.
+   string                        "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                                  When set to _default, it will use the level portion of the policy if available.
+   serole                                         The role part of the SELinux file context.
+   string                                         When set to _default, it will use the role portion of the policy if available.
+   setype                                         The type part of the SELinux file context.
+   string                                         When set to _default, it will use the type portion of the policy if available.
+   seuser                                         The user part of the SELinux file context.
+   string                                         By default it uses the system policy, where applicable.
+                                                  When set to _default, it will use the user portion of the policy if available.
+   state                           Choices:
+   string                          • absent       Whether the certificate signing request should exist or not, taking action if the state is different from what is stated.
+                                   • present ←
+   state_or_province_name                         The stateOrProvinceName field of the certificate signing request subject.
+   string                                         aliases: ST, stateOrProvinceName
+   subject                                        Key/value pairs that will be present in the subject name field of the certificate signing request.
+   dictionary                                     If you need to specify more than one value with the same key, use a list as value.
+   added in 2.5
+                                                  SAN extension to attach to the certificate signing request.
+                                                  This can either be a 'comma separated string' or a YAML list.
+   subject_alt_name                               Values must be prefixed by their options. (i.e., email, URI, DNS, RID, IP, dirName, otherName and the ones specific to your CA)
+   list / elements=string                         Note that if no SAN is specified, but a common name, the common name will be added as a SAN except if useCommonNameForSAN is set to false.
+                                                  More at https://tools.ietf.org/html/rfc5280#section-4.2.1.6.
+                                                  aliases: subjectAltName
+   subject_alt_name_critical       Choices:       Should the subjectAltName extension be considered as critical.
+   boolean                         • no           aliases: subjectAltName_critical
+                                   • yes
+                                                  The subject key identifier as a hex string, where two bytes are separated by colons.
+   subject_key_identifier                         Example: 00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33
+   string                                         Please note that commercial CAs ignore this value, respectively use a value of their own choice. Specifying this option is mostly useful for
+   added in 2.9                                   self-signed certificates or for own CAs.
+                                                  Note that this option can only be used if create_subject_key_identifier is no.
+                                                  Note that this is only supported if the cryptography backend is used!
+                                                  Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                                  By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are
+   unsafe_writes                   Choices:       configured or just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the
+   boolean                         • no ←         container and can only be written in an unsafe manner.
+                                   • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to
+                                                  perform unsafe writes).
+                                                  IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   use_common_name_for_san         Choices:       If set to yes, the module will fill the common name in for subject_alt_name with DNS: prefix if no SAN is specified.
+   boolean                         • no           aliases: useCommonNameForSAN
+   added in 2.8                    • yes ←
+   version                       Default:         The version of the certificate signing request.
+   integer                       1                The only allowed value according to RFC 2986 is 1.
+
+NOTES                   *openssl_csr-notes*
+
+   Note
+
+     • If the certificate signing request already exists it will be checked whether subjectAltName, keyUsage, extendedKeyUsage and basicConstraints only contain the requested values, whether OCSP
+       Must Staple is as requested, and if the request was signed by the given private key.
+
+SEE ALSO                   *openssl_csr-see also*
+
+   See also
+
+   openssl_certificate – Generate and/or check OpenSSL certificates
+   The official documentation on the openssl_certificate module.
+
+   openssl_dhparam – Generate OpenSSL Diffie-Hellman Parameters
+   The official documentation on the openssl_dhparam module.
+
+   openssl_pkcs12 – Generate OpenSSL PKCS#12 archive
+   The official documentation on the openssl_pkcs12 module.
+
+   openssl_privatekey – Generate OpenSSL private keys
+   The official documentation on the openssl_privatekey module.
+
+   openssl_publickey – Generate an OpenSSL public key from its private key
+   The official documentation on the openssl_publickey module.
+
+EXAMPLES                   *openssl_csr-examples*
+
+ - name: Generate an OpenSSL Certificate Signing Request
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     common_name: www.ansible.com
+
+ - name: Generate an OpenSSL Certificate Signing Request with a passphrase protected private key
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     privatekey_passphrase: ansible
+     common_name: www.ansible.com
+
+ - name: Generate an OpenSSL Certificate Signing Request with Subject information
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     country_name: FR
+     organization_name: Ansible
+     email_address: [email protected]
+     common_name: www.ansible.com
+
+ - name: Generate an OpenSSL Certificate Signing Request with subjectAltName extension
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     subject_alt_name: 'DNS:www.ansible.com,DNS:m.ansible.com'
+
+ - name: Generate an OpenSSL CSR with subjectAltName extension with dynamic list
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     subject_alt_name: "{{ item.value | map('regex_replace', '^', 'DNS:') | list }}"
+   with_dict:
+     dns_server:
+     - www.ansible.com
+     - m.ansible.com
+
+ - name: Force regenerate an OpenSSL Certificate Signing Request
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     force: yes
+     common_name: www.ansible.com
+
+ - name: Generate an OpenSSL Certificate Signing Request with special key usages
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     common_name: www.ansible.com
+     key_usage:
+       - digitalSignature
+       - keyAgreement
+     extended_key_usage:
+       - clientAuth
+
+ - name: Generate an OpenSSL Certificate Signing Request with OCSP Must Staple
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     common_name: www.ansible.com
+     ocsp_must_staple: yes
+
+RETURN VALUES                   *openssl_csr-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                     Returned                                                                            Description
+   backup_file                                         Name of backup file created.
+   string                 changed and if backup is yes Sample:
+                                                       /path/to/[email protected]:22~
+   basicConstraints                                    Indicates if the certificate belongs to a CA
+   list / elements=string changed or success           Sample:
+                                                       ['CA:TRUE', 'pathLenConstraint:0']
+   extendedKeyUsage                                    Additional restriction on the public key purposes
+   list / elements=string changed or success           Sample:
+                                                       ['clientAuth']
+   filename                                            Path to the generated Certificate Signing Request
+   string                 changed or success           Sample:
+                                                       /etc/ssl/csr/www.ansible.com.csr
+   keyUsage                                            Purpose for which the public key may be used
+   list / elements=string changed or success           Sample:
+                                                       ['digitalSignature', 'keyAgreement']
+   ocsp_must_staple       changed or success           Indicates whether the certificate has the OCSP Must Staple feature enabled
+   boolean
+   privatekey                                          Path to the TLS/SSL private key the CSR was generated for
+   string                 changed or success           Sample:
+                                                       /etc/ssl/private/ansible.com.pem
+   subject                                             A list of the subject tuples attached to the CSR
+   list / elements=list   changed or success           Sample:
+                                                       [('CN', 'www.ansible.com'), ('O', 'Ansible')]
+   subjectAltName                                      The alternative names this CSR is valid for
+   list / elements=string changed or success           Sample:
+                                                       ['DNS:www.ansible.com', 'DNS:m.ansible.com']
+
+STATUS                   *openssl_csr-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Yanis Guenane (@Spredzy)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *openssl_csr-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/openssl_csr_module.html

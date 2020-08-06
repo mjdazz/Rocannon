@@ -1,0 +1,185 @@
+SYNOPSIS                   *os_coe_cluster*
+
+     • Add or Remove COE cluster from the OpenStack Container Infra service.
+
+REQUIREMENTS                   *os_coe_cluster-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_coe_cluster-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   api_timeout                          How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                        Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url, username,
+   auth                                 password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports them. For other
+   dictionary                           plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud is provided or
+                                        OpenStack OS_" environment variables are present.
+   auth_type                            Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and the
+   string                               contents of the auth parameter should be updated accordingly.
+   availability_zone                    Ignored. Present for backwards compatibility
+   -
+   ca_cert                              A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                               aliases: cacert
+   client_cert                          A path to a client certificate to use as part of the SSL transaction.
+   string                               aliases: cert
+   client_key                           A path to a client key to use as part of the SSL transaction.
+   string                               aliases: key
+   cloud                                Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file.
+   raw                                  Provides default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are present. If
+                                        cloud is a dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   cluster_template_id                  The template ID of cluster template.
+   - / required
+   discovery_url                        Url used for cluster node discovery
+   -
+   docker_volume_size                   The size in GB of the docker volume
+   -
+   flavor_id                            The flavor of the minion node for this ClusterTemplate
+   -
+                         Choices:
+   interface             • admin        Endpoint URL type to fetch from the service catalog.
+   string                • internal     aliases: endpoint_type
+                         • public ←
+   keypair                              Name of the keypair to use.
+   -
+   labels                               One or more key/value pairs
+   -
+   master_count        Default:         The number of master nodes for this cluster
+   -                   1
+   master_flavor_id                     The flavor of the master node for this ClusterTemplate
+   -
+   name                                 Name that has to be given to the cluster template
+   - / required
+   node_count          Default:         The number of nodes for this cluster
+   -                   1
+   region_name                          Name of the region.
+   string
+   state                 Choices:
+   -                     • present ←    Indicate desired state of the resource.
+                         • absent
+   timeout             Default:         Timeout for creating the cluster in minutes. Default to 60 mins if not set
+   integer             60
+   validate_certs        Choices:       Whether or not SSL API requests should be verified.
+   boolean               • no ←         Before Ansible 2.3 this defaulted to yes.
+                         • yes          aliases: verify
+   wait                  Choices:
+   boolean               • no           Should ansible wait until the requested resource is complete.
+                         • yes ←
+
+NOTES                   *os_coe_cluster-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_coe_cluster-examples*
+
+ # Create a new Kubernetes cluster
+ - os_coe_cluster:
+     name: k8s
+     cluster_template_id: k8s-ha
+     keypair: mykey
+     master_count: 3
+     node_count: 5
+
+RETURN VALUES                   *os_coe_cluster-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                       Returned                                                                             Description
+   cluster               On success when state is 'present' Dictionary describing the cluster.
+   complex
+     api_address                                            Api address of cluster master node
+     string                                                 Sample:
+                                                            https://172.24.4.30:6443
+     cluster_template_id                                    The cluster_template UUID
+     string                                                 Sample:
+                                                            7b1418c8-cea8-48fc-995d-52b66af9a9aa
+     coe_version                                            Version of the COE software currently running in this cluster
+     string                                                 Sample:
+                                                            v1.11.1
+     container_version                                      Version of the container software. Example: docker version.
+     string                                                 Sample:
+                                                            1.12.6
+     create_timeout                                         Timeout for creating the cluster in minutes. Default to 60 if not set.
+     integer                                                Sample:
+                                                            60
+     created_at                                             The time in UTC at which the cluster is created
+     string                                                 Sample:
+                                                            2018-08-16T10:29:45+00:00
+     discovery_url                                          Url used for cluster node discovery
+     string                                                 Sample:
+                                                            https://discovery.etcd.io/a42ee38e7113f31f4d6324f24367aae5
+     faults                                                 Fault info collected from the Heat resources of this cluster
+     dictionary                                             Sample:
+                                                            {'0': 'ResourceInError: resources[0].resources...'}
+     flavor_id                                              The flavor of the minion node for this cluster
+     string                                                 Sample:
+                                                            c1.c1r1
+     keypair                                                Name of the keypair to use.
+     string                                                 Sample:
+                                                            mykey
+     labels                                                 One or more key/value pairs
+     dictionary                                             Sample:
+                                                            {'key1': 'value1', 'key2': 'value2'}
+     master_addresses                                       IP addresses of cluster master nodes
+     list                                                   Sample:
+                                                            ['172.24.4.5']
+     master_count                                           The number of master nodes for this cluster.
+     integer                                                Sample:
+                                                            1
+     master_flavor_id                                       The flavor of the master node for this cluster
+     string                                                 Sample:
+                                                            c1.c1r1
+     name                                                   Name that has to be given to the cluster
+     string                                                 Sample:
+                                                            k8scluster
+     node_addresses                                         IP addresses of cluster slave nodes
+     list                                                   Sample:
+                                                            ['172.24.4.8']
+     node_count                                             The number of master nodes for this cluster.
+     integer                                                Sample:
+                                                            1
+     stack_id                                               Stack id of the Heat stack
+     string                                                 Sample:
+                                                            07767ec6-85f5-44cb-bd63-242a8e7f0d9d
+     status                                                 Status of the cluster from the heat stack
+     string                                                 Sample:
+                                                            CREATE_COMLETE
+     status_reason                                          Status reason of the cluster from the heat stack
+     string                                                 Sample:
+                                                            Stack CREATE completed successfully
+     updated_at                                             The time in UTC at which the cluster is updated
+     string                                                 Sample:
+                                                            2018-08-16T10:39:25+00:00
+     uuid                                                   Unique UUID for this cluster
+     string                                                 Sample:
+                                                            86246a4d-a16c-4a58-9e96ad7719fe0f9d
+   id                                                       The cluster UUID.
+   string                On success when state is 'present' Sample:
+                                                            39007a7e-ee4f-4d13-8283-b4da2e037c69
+
+STATUS                   *os_coe_cluster-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Feilong Wang (@flwang)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_coe_cluster-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_coe_cluster_module.html

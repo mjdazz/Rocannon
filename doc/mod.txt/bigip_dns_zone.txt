@@ -1,0 +1,221 @@
+SYNOPSIS                   *bigip_dns_zone*
+
+     • Manage DNS zones on BIG-IP. The zones managed here are primarily used for configuring DNS Express on BIG-IP. This module does not configure zones that are found in BIG-IP ZoneRunner.
+
+PARAMETERS                   *bigip_dns_zone-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   dns_express                         DNS express related settings.
+   dictionary
+    allow_notify_from                  Specifies the IP addresses from which the system accepts NOTIFY messages for this DNS Express zone.
+    list
+    enabled             Choices:
+    boolean             • no           Specifies the current status of the DNS Express zone.
+                        • yes
+                                       Specifies the action the system takes when a NOTIFY message is received for this DNS Express zone.
+                        Choices:       If a TSIG key is configured for the zone, the signature is only validated for consume and repeat actions.
+    notify_action       • consume      When consume, the NOTIFY message is seen only by DNS Express.
+    string              • bypass       When bypass, the NOTIFY message does not go to DNS Express, but instead goes to a back-end DNS server (subject to the value of the Unhandled Query Action
+                        • repeat       configured in the DNS profile applied to the listener that handles the DNS request).
+                                       When repeat, the NOTIFY message goes to both DNS Express and any back-end DNS server.
+    response_policy     Choices:
+    boolean             • no           Specifies whether this DNS Express zone is a DNS response policy zone (RPZ).
+                        • yes
+    server                             Specifies the back-end authoritative DNS server from which the BIG-IP system receives AXFR zone transfers for the DNS Express zone.
+    string
+    verify_tsig         Choices:
+    boolean             • no           Specifies whether the system verifies the identity of the authoritative nameserver that sends updated information for this DNS Express zone.
+                        • yes
+   name                                Specifies the name of the DNS zone.
+   string / required                   The name must begin with a letter and contain only letters, numbers, and the underscore character.
+   nameservers                         Specifies the DNS nameservers to which the system sends NOTIFY messages.
+   list
+   partition          Default:         Device partition to manage resources on.
+   string             "Common"
+   provider
+   dictionary                          A dict object containing connection details.
+   added in 2.5
+    auth_provider                      Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                             This option is really used when working with BIG-IQ devices.
+    password                           The password for the user account used to connect to the BIG-IP.
+    string / required                  You may omit this option by setting the environment variable F5_PASSWORD.
+                                       aliases: pass, pwd
+    server                             The BIG-IP host.
+    string / required                  You may omit this option by setting the environment variable F5_SERVER.
+    server_port       Default:         The BIG-IP server port.
+    integer           443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                        Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                               You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                            Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                            operation is completed, the module will error.
+    transport           Choices:
+    string              • cli          Configures the transport connection to use when connecting to the remote device.
+                        • rest ←
+    user                               The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string / required                  You may omit this option by setting the environment variable F5_USER.
+    validate_certs      Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean             • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                        • yes ←
+   state                Choices:       When present, ensures that the resource exists.
+   string               • present ←    When absent, ensures the resource is removed.
+                        • absent
+   tsig_server_key                     Specifies the TSIG key the system uses to authenticate the back-end DNS authoritative server that sends AXFR zone transfers to the BIG-IP system.
+   string
+
+NOTES                   *bigip_dns_zone-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_dns_zone-examples*
+
+ - name: Create a DNS zone for DNS express
+   bigip_dns_zone:
+     name: zone.foo.com
+     dns_express:
+       enabled: yes
+       server: dns-lab
+       allow_notify_from:
+         - 192.168.39.10
+       notify_action: consume
+       verify_tsig: no
+       response_policy: no
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Disable DNS express zone, change server, and modify notify_action to bypass
+   bigip_dns_zone:
+     name: zone.foo.com
+     dns_express:
+       enabled: no
+       server: foo1.server.com
+       allow_notify_from:
+         - 192.168.39.10
+       notify_action: bypass
+       verify_tsig: no
+       response_policy: no
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Add nameservers
+   bigip_dns_zone:
+     name: zone.foo.com
+     nameservers:
+       - foo1.nameserver.com
+       - foo2.nameserver.com
+       - foo3.nameserver.com
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove nameserver
+   bigip_dns_zone:
+     name: zone.foo.com
+     nameservers:
+       - foo1.nameserver.com
+       - foo2.nameserver.com
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove all nameservers
+   bigip_dns_zone:
+     name: zone.foo.com
+     nameservers: none
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Add tsig_server_key
+   bigip_dns_zone:
+     name: zone.foo.com
+     tsig_server_key: key1
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove tsig_server_key
+   bigip_dns_zone:
+     name: zone.foo.com
+     tsig_server_key: none
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove zone
+   bigip_dns_zone:
+     name: zone.foo.com
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_dns_zone-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   allow_notify_from          The new DNS Express Allow NOTIFY From value.
+   list              changed  Sample:
+                              ['1.1.1.1', '2.2.2.2']
+   enabled                    Whether the zone is enabled or not.
+   boolean           changed  Sample:
+                              True
+   express_server             The new DNS Express Server value.
+   string            changed  Sample:
+                              server1
+   nameservers                The new Zone Transfer Clients Nameservers value.
+   list              changed  Sample:
+                              ['/Common/server1', '/Common/server2']
+   notify_action              The new DNS Express Notify Action value.
+   string            changed  Sample:
+                              consume
+   response_policy   changed  The new DNS Express Response Policy value.
+   boolean
+   tsig_server_key            The new TSIG Server Key value.
+   string            changed  Sample:
+                              /Common/key1
+   verify_tsig                The new DNS Express Verify Notify TSIG value.
+   boolean           changed  Sample:
+                              True
+
+STATUS                   *bigip_dns_zone-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Greg Crosby (@crosbygw)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_dns_zone-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_dns_zone_module.html

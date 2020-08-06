@@ -1,0 +1,194 @@
+SYNOPSIS                   *cv_server_provision*
+
+     • This module allows a server team to provision server network ports for new servers without having to access Arista CVP or asking the network team to do it for them. Provide the information
+       for connecting to CVP, switch rack, port the new server is connected to, optional vlan, and an action and the module will apply the configuration to the switch port via CVP. Actions are add
+       (applies template config to port), remove (defaults the interface config) and show (returns the current port config).
+
+REQUIREMENTS                   *cv_server_provision-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Jinja2
+     • cvprac >= 0.7.0
+
+PARAMETERS                   *cv_server_provision-parameters*
+
+    Parameter  Choices/Defaults                                                                               Comments
+                 Choices:
+   action        • show ←       The action for the module to take. The actions are add, which applies the specified template config to port, remove, which defaults the specified interface
+   -             • add          configuration, and show, which will return the current port configuration with no changes.
+                 • remove
+                 Choices:       Flag that determines whether or not the module will execute the CVP task spawned as a result of changes to a switch configlet. When an add or remove action is taken
+   auto_run      • no ←         which results in a change to a switch configlet, CVP will spawn a task that needs to be executed for the configuration to be applied to the switch. If this option is
+   boolean       • yes          True then the module will determined the task number created by the configuration change, execute it and wait for the task to complete. If the option is False then
+                                the task will remain in the Pending state in CVP for a network administrator to review and execute.
+   host
+   - /                          The hostname or IP address of the CVP node being connected to.
+   required
+   password
+   - /                          The password of the user that will be used to connect to CVP for API calls.
+   required
+   port                         The port number to use when making API calls to the CVP node. This will default to the default port for the specified protocol. Port 80 for http and port 443 for
+   -                            https.
+   port_vlan                    The vlan that should be applied to the port for this server. This parameter is dependent on a proper template that supports single vlan provisioning with it. If a
+   -                            port vlan is specified by the template specified does not support this the module will exit out with no changes. If a template is specified that requires a port vlan
+                                but no port vlan is specified the module will exit out with no changes.
+   protocol      Choices:
+   -             • https ←      The protocol to use when making API calls to CVP. CVP defaults to https and newer versions of CVP no longer support http.
+                 • http
+   server_name
+   - /                          The hostname or identifier for the server that is having it's switch port provisioned.
+   required
+   switch_name
+   - /                          The hostname of the switch is being configured for the server being provisioned.
+   required
+   switch_port
+   - /                          The physical port number on the switch that the new server is connected to.
+   required
+   template                     A path to a Jinja formatted template file that contains the configuration block that will be applied to the specified switch port. This template will have variable
+   - /                          fields replaced by the module before being applied to the switch configuration.
+   required
+   username
+   - /                          The user that will be used to connect to CVP for making API calls.
+   required
+
+EXAMPLES                   *cv_server_provision-examples*
+
+ - name: Get current configuration for interface Ethernet2
+   cv_server_provision:
+     host: cvp_node
+     username: cvp_user
+     password: cvp_pass
+     protocol: https
+     server_name: new_server
+     switch_name: eos_switch_1
+     switch_port: 2
+     template: template_file.j2
+     action: show
+
+ - name: Remove existing configuration from interface Ethernet2. Run task.
+   cv_server_provision:
+     host: cvp_node
+     username: cvp_user
+     password: cvp_pass
+     protocol: https
+     server_name: new_server
+     switch_name: eos_switch_1
+     switch_port: 2
+     template: template_file.j2
+     action: remove
+     auto_run: True
+
+ - name: Add template configuration to interface Ethernet2. No VLAN. Run task.
+   cv_server_provision:
+     host: cvp_node
+     username: cvp_user
+     password: cvp_pass
+     protocol: https
+     server_name: new_server
+     switch_name: eos_switch_1
+     switch_port: 2
+     template: single_attached_trunk.j2
+     action: add
+     auto_run: True
+
+ - name: Add template with VLAN configuration to interface Ethernet2. Run task.
+   cv_server_provision:
+     host: cvp_node
+     username: cvp_user
+     password: cvp_pass
+     protocol: https
+     server_name: new_server
+     switch_name: eos_switch_1
+     switch_port: 2
+     port_vlan: 22
+     template: single_attached_vlan.j2
+     action: add
+     auto_run: True
+
+RETURN VALUES                   *cv_server_provision-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key             Returned                                                                            Description
+   changed                               Signifies if a change was made to the configlet
+   boolean                 success       Sample:
+                                         True
+   currentConfigBlock      when action = The current config block for the user specified interface
+   string                  show          Sample:
+                                         interface Ethernet4 !
+   fullConfig              when action = The full config of the configlet after being updated
+   string                  add or remove Sample:
+                                         ! interface Ethernet3 ! interface Ethernet4 !
+   newConfigBlock          when action = The new config block for the user specified interface
+   string                  add or remove Sample:
+                                         interface Ethernet3 description example no switchport !
+   oldConfigBlock          when action = The current config block for the user specified interface before any changes are made
+   string                  add or remove Sample:
+                                         interface Ethernet3 !
+   portConfigurable                      Signifies if the user specified port has an entry in the configlet that Ansible has access to
+   boolean                 success       Sample:
+                                         True
+   switchConfigurable                    Signifies if the user specified switch has a configlet applied to it that CVP is allowed to edit
+   boolean                 success       Sample:
+                                         True
+                                         Information from CVP describing the switch being configured
+                                         Sample:
+   switchInfo                            {'architecture': 'i386', 'bootupTimeStamp': 1491264298.21, 'complianceCode': '0000', 'complianceIndication': 'NONE', 'deviceInfo': 'Registered',
+   dictionary              success       'deviceStatus': 'Registered', 'fqdn': 'veos1', 'hardwareRevision': '', 'internalBuildId': '12-12', 'internalVersion': '4.17.1F-11111.4171F', 'ipAddress':
+                                         '192.168.1.20', 'isDANZEnabled': 'no', 'isMLAGEnabled': 'no', 'key': '00:50:56:5d:e5:e0', 'lastSyncUp': 1496432895799, 'memFree': 472976, 'memTotal':
+                                         1893460, 'modelName': 'vEOS', 'parentContainerId': 'container_13_5776759195930', 'serialNumber': '', 'systemMacAddress': '00:50:56:5d:e5:e0', 'taskIdList':
+                                         [], 'tempAction': None, 'type': 'netelement', 'unAuthorized': False, 'version': '4.17.1F', 'ztpMode': 'false'}
+                           when action =
+                           add or
+   taskCompleted           remove, and   Signifies if the task created and executed has completed successfully
+   boolean                 auto_run =    Sample:
+                           true, and     True
+                           configuration
+                           changes
+                           when action =
+                           add or
+                           remove, and   Signifies if a task was created due to configlet changes
+   taskCreated             auto_run =    Sample:
+   boolean                 true or       True
+                           false, and
+                           configuration
+                           changes
+                           when action =
+                           add or
+   taskExecuted            remove, and   Signifies if the automation executed the spawned task
+   boolean                 auto_run =    Sample:
+                           true, and     True
+                           configuration
+                           changes
+                           when action =
+                           add or
+                           remove, and   The task ID created by CVP because of changes to configlet
+   taskId                  auto_run =    Sample:
+   string                  true or       500
+                           false, and
+                           configuration
+                           changes
+                           when action =
+   updateConfigletResponse add or remove Response returned from CVP when configlet update is triggered
+   string                  and           Sample:
+                           configuration Configlet veos1-server successfully updated and task initiated.
+                           changes
+
+STATUS                   *cv_server_provision-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • EOS+ CS (ansible-dev@arista.com) (@mharista)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cv_server_provision-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cv_server_provision_module.html

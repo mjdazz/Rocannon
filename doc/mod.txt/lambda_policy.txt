@@ -1,0 +1,124 @@
+SYNOPSIS                   *lambda_policy*
+
+     • This module allows the management of AWS Lambda policy statements. It is idempotent and supports “Check” mode. Use module lambda to manage the lambda function itself, lambda_alias to manage
+       function aliases, lambda_event to manage event source mappings such as Kinesis streams, execute_lambda to execute a lambda function and lambda_info to gather information relating to one or
+       more lambda functions.
+
+REQUIREMENTS                   *lambda_policy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *lambda_policy-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   action                                        The AWS Lambda action you want to allow in this statement. Each Lambda action is a string starting with lambda: followed by the API name (see
+   - / required                                  Operations ). For example, lambda:CreateFunction . You can use wildcard (lambda:" ) to grant permission for all AWS Lambda actions.
+   alias                                         Name of the function alias. Mutually exclusive with version.
+   -
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   event_source_token                            Token string representing source ARN or account. Mutually exclusive with source_arn or source_account.
+   -
+                                                 Name of the Lambda function whose resource policy you are updating by adding a new permission.
+                                                 You can specify a function name (for example, Thumbnail ) or you can specify Amazon Resource Name (ARN) of the
+   function_name                                 function (for example, arn:aws:lambda:us-west-2:account-id:function:ThumbNail ). AWS Lambda also allows you to
+   - / required                                  specify partial ARN (for example, account-id:Thumbnail ). Note that the length constraint applies only to the
+                                                 ARN. If you specify only the function name, it is limited to 64 character in length.
+                                                 aliases: lambda_function_arn, function_arn
+   principal                                     The principal who is getting this permission. It can be Amazon S3 service Principal (s3.amazonaws.com ) if you want Amazon S3 to invoke the
+   - / required                                  function, an AWS account ID if you are granting cross-account permission, or any valid AWS service principal such as sns.amazonaws.com . For
+                                                 example, you might want to allow a custom application in another AWS account to push events to AWS Lambda by invoking your function.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+                                                 The AWS account ID (without a hyphen) of the source owner. For example, if the SourceArn identifies a bucket, then this is the bucket owner's
+   source_account                                account ID. You can use this additional condition to ensure the bucket you specify is owned by a specific account (it is possible the bucket owner
+   -                                             deleted the bucket and some other AWS account created the bucket). You can also use this condition to specify all sources (that is, you don't
+                                                 specify the SourceArn ) owned by a specific account.
+   source_arn                                    This is optional; however, when granting Amazon S3 permission to invoke your function, you should specify this field with the bucket Amazon Resource
+   -                                             Name (ARN) as its value. This ensures that only events generated from the specified bucket can invoke the function.
+   state                          Choices:
+   -                              • present ←    Describes the desired state.
+                                  • absent
+   statement_id                                  A unique statement identifier.
+   - / required                                  aliases: sid
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   version                                       Version of the Lambda function. Mutually exclusive with alias.
+   -
+
+NOTES                   *lambda_policy-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *lambda_policy-examples*
+
+ ---
+ - hosts: localhost
+   gather_facts: no
+   vars:
+     state: present
+   tasks:
+   - name: Lambda S3 event notification
+     lambda_policy:
+       state: "{{ state | default('present') }}"
+       function_name: functionName
+       alias: Dev
+       statement_id: lambda-s3-myBucket-create-data-log
+       action: lambda:InvokeFunction
+       principal: s3.amazonaws.com
+       source_arn: arn:aws:s3:eu-central-1:123456789012:bucketName
+       source_account: 123456789012
+     register: lambda_policy_action
+
+   - name: show results
+     debug:
+       var: lambda_policy_action
+
+RETURN VALUES                   *lambda_policy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   lambda_policy_action success  describes what action was taken
+   string
+
+STATUS                   *lambda_policy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pierre Jodouin (@pjodouin)
+     • Michael De La Rue (@mikedlr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *lambda_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/lambda_policy_module.html

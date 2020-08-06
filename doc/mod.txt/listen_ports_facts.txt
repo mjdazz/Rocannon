@@ -1,0 +1,100 @@
+SYNOPSIS                   *listen_ports_facts*
+
+     • Gather facts on processes listening on TCP and UDP ports.
+
+EXAMPLES                   *listen_ports_facts-examples*
+
+ - name: Gather facts on listening ports
+   listen_ports_facts:
+
+ - name: TCP whitelist violation
+   debug:
+     msg: TCP port {{ item.port }} by pid {{ item.pid }} violates the whitelist
+   vars:
+     tcp_listen_violations: "{{ ansible_facts.tcp_listen | selectattr('port', 'in', tcp_whitelist) | list }}"
+     tcp_whitelist:
+       - 22
+       - 25
+   loop: "{{ tcp_listen_violations }}"
+
+ - name: List TCP ports
+   debug:
+     msg: "{{ ansible_facts.tcp_listen  | map(attribute='port') | sort | list }}"
+
+ - name: List UDP ports
+   debug:
+     msg: "{{ ansible_facts.udp_listen | map(attribute='port') | sort | list }}"
+
+ - name: List all ports
+   debug:
+     msg: "{{ (ansible_facts.tcp_listen + ansible_facts.udp_listen) | map(attribute='port') | unique | sort | list }}"
+
+RETURNED FACTS                   *listen_ports_facts-returned facts*
+
+   Facts returned by this module are added/updated in the hostvars host facts and can be referenced by name just like any other host fact. They do not need to be registered in order to use them.
+
+      Fact            Returned                                                                                   Description
+   tcp_listen if TCP servers were found A list of processes that are listening on a TCP port.
+   list
+     address                            The address the server is listening on.
+     string   always                    Sample:
+                                        0.0.0.0
+     name                               The name of the listening process.
+     string   if user permissions allow Sample:
+                                        mysqld
+     pid                                The pid of the listening process.
+     integer  always                    Sample:
+                                        1223
+     port                               The port the server is listening on.
+     integer  always                    Sample:
+                                        3306
+     protocol                           The network protocol of the server.
+     string   always                    Sample:
+                                        tcp
+     stime                              The start time of the listening process.
+     string   always                    Sample:
+                                        Thu Feb 2 13:29:45 2017
+     user                               The user who is running the listening process.
+     string   always                    Sample:
+                                        mysql
+   udp_listen if UDP servers were found A list of processes that are listening on a UDP port.
+   list
+     address                            The address the server is listening on.
+     string   always                    Sample:
+                                        0.0.0.0
+     name                               The name of the listening process.
+     string   if user permissions allow Sample:
+                                        rsyslogd
+     pid                                The pid of the listening process.
+     integer  always                    Sample:
+                                        609
+     port                               The port the server is listening on.
+     integer  always                    Sample:
+                                        514
+     protocol                           The network protocol of the server.
+     string   always                    Sample:
+                                        udp
+     stime                              The start time of the listening process.
+     string   always                    Sample:
+                                        Thu Feb 2 13:29:45 2017
+     user                               The user who is running the listening process.
+     string   always                    Sample:
+                                        root
+
+STATUS                   *listen_ports_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Nathan Davison (@ndavison)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *listen_ports_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/listen_ports_facts_module.html

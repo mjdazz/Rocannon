@@ -1,0 +1,96 @@
+SYNOPSIS                   *win_user_profile*
+
+     • Used to create or remove user profiles on a Windows host.
+     • This can be used to create a profile before a user logs on or delete a profile when removing a user account.
+     • A profile can be created for both a local or domain account.
+
+PARAMETERS                   *win_user_profile-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+                                    Specifies the base name for the profile path.
+                                    When state is present this is used to create the profile for username at a specific path within the profile directory.
+   name                             This cannot be used to specify a path outside of the profile directory but rather it specifies a folder(s) within this directory.
+   string                           If a profile for another user already exists at the same path, then a 3 digit incremental number is appended by Windows automatically.
+                                    When state is absent and username is not set, then the module will remove all profiles that point to the profile path derived by this value.
+                                    This is useful if the account no longer exists but the profile still remains.
+   remove_multiple   Choices:       When state is absent and the value for name matches multiple profiles the module will fail.
+   boolean           • no ←         Set this value to yes to force the module to delete all the profiles found.
+                     • yes
+                     Choices:       Will ensure the profile exists when set to present.
+   state             • absent       When creating a profile the username option must be set to a valid account.
+   string            • present ←    Will remove the profile(s) when set to absent.
+                                    When removing a profile either username must be set to a valid account, or name is set to the profile's base name.
+   username                         The account name of security identifier (SID) for the profile.
+   -                                This must be set when state is present and must be a valid account or the SID of a valid account.
+                                    When state is absent then this must still be a valid account number but the SID can be a deleted user's SID.
+
+SEE ALSO                   *win_user_profile-see also*
+
+   See also
+
+   win_user – Manages local Windows user accounts
+   The official documentation on the win_user module.
+
+   win_domain_user – Manages Windows Active Directory user accounts
+   The official documentation on the win_domain_user module.
+
+EXAMPLES                   *win_user_profile-examples*
+
+ - name: Create a profile for an account
+   win_user_profile:
+     username: ansible-account
+     state: present
+
+ - name: Create a profile for an account at C:\Users\ansible
+   win_user_profile:
+     username: ansible-account
+     name: ansible
+     state: present
+
+ - name: Remove a profile for a still valid account
+   win_user_profile:
+     username: ansible-account
+     state: absent
+
+ - name: Remove a profile for a deleted account
+   win_user_profile:
+     name: ansible
+     state: absent
+
+ - name: Remove a profile for a deleted account based on the SID
+   win_user_profile:
+     username: S-1-5-21-3233007181-2234767541-1895602582-1305
+     state: absent
+
+ - name: Remove multiple profiles that exist at the basename path
+   win_user_profile:
+     name: ansible
+     state: absent
+     remove_multiple: yes
+
+RETURN VALUES                   *win_user_profile-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   path            The full path to the profile for the account. This will be null if state=absent and no profile was deleted.
+   string always   Sample:
+                   C:\Users\ansible
+
+STATUS                   *win_user_profile-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_user_profile-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_user_profile_module.html

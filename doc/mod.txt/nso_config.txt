@@ -1,0 +1,109 @@
+SYNOPSIS                   *nso_config*
+
+     • This module provides support for managing configuration in Cisco NSO and can also ensure services are in sync.
+
+REQUIREMENTS                   *nso_config-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Cisco NSO version 3.4.12 or higher, 4.2.7 or higher, 4.3.8 or higher, 4.4.3 or higher, 4.5 or higher.
+
+PARAMETERS                   *nso_config-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   data                            NSO data in format as | display json converted to YAML. List entries can be annotated with a __state entry. Set to in-sync/deep-in-sync for services to verify
+   - / required                    service is in sync with the network. Set to absent in list entries to ensure they are deleted if they exist in NSO.
+   password
+   string /                        NSO password
+   required
+   timeout        Default:
+   integer        300              JSON-RPC request timeout in seconds
+   added in 2.6
+   url
+   string /                        NSO JSON-RPC URL, http://localhost:8080/jsonrpc
+   required
+   username
+   string /                        NSO username
+   required
+   validate_certs   Choices:
+   boolean          • no ←         When set to true, validates the SSL certificate of NSO when using SSL
+                    • yes
+
+EXAMPLES                   *nso_config-examples*
+
+ - name: Create L3VPN
+   nso_config:
+     url: http://localhost:8080/jsonrpc
+     username: username
+     password: password
+     data:
+       l3vpn:vpn:
+         l3vpn:
+         - name: company
+           route-distinguisher: 999
+           endpoint:
+           - id: branch-office1
+             ce-device: ce6
+             ce-interface: GigabitEthernet0/12
+             ip-network: 10.10.1.0/24
+             bandwidth: 12000000
+             as-number: 65101
+           - id: branch-office2
+             ce-device: ce1
+             ce-interface: GigabitEthernet0/11
+             ip-network: 10.7.7.0/24
+             bandwidth: 6000000
+             as-number: 65102
+           - id: branch-office3
+             __state: absent
+         __state: in-sync
+
+RETURN VALUES                   *nso_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+   changes           List of changes
+   complex  always   Sample:
+                     [{'path': '/l3vpn:vpn/l3vpn{example}/endpoint{office}/bandwidth', 'from': '6000000', 'to': '12000000', 'type': 'set'}]
+            When
+            previous
+     from   value is Previous value if any, else null
+     string present
+            on value
+            change
+     path   always   Path to value changed
+     string
+            When new
+     to     value is
+     -      present  Current value if any, else null.
+            on value
+            change
+     type            Type of change. create|delete|set|re-deploy
+     -
+                     List of sync changes
+   diffs    always   Sample:
+   complex           [{'path': '/l3vpn:vpn/l3vpn{example}', 'diff': ' devices {\n device pe3 {\n config {\n alu:service {\n vprn 65101 {\n bgp {\n group example-ce6 {\n- peer-as 65102;\n+ peer-as
+                     65101;\n }\n }\n }\n }\n }\n }\n }\n'}]
+     diff   always   configuration difference triggered the re-deploy
+     string
+     path   always   keypath to service changed
+     string
+
+STATUS                   *nso_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Claes Nästén (@cnasten)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nso_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nso_config_module.html

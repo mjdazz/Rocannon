@@ -1,0 +1,127 @@
+SYNOPSIS                   *cobbler_system*
+
+     • Add, modify or remove systems in Cobbler
+
+PARAMETERS                   *cobbler_system-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   host           Default:         The name or IP address of the Cobbler system.
+   -              "127.0.0.1"
+   interfaces                      A list of dictionaries containing interface options.
+   -
+   name                            The system name to manage.
+   -
+   password                        The password to log in to Cobbler.
+   - / required
+   port                            Port number to be used for REST connection.
+   -                               The default value depends on parameter use_ssl.
+   properties                      A dictionary with system properties.
+   -
+                    Choices:
+   state            • absent       Whether the system should be present, absent or a query is made.
+   -                • present ←
+                    • query
+   sync             Choices:       Sync on changes.
+   boolean          • no ←         Concurrently syncing Cobbler is bound to fail.
+                    • yes
+   use_ssl          Choices:
+   boolean          • no           If no, an HTTP connection will be used instead of the default HTTPS connection.
+                    • yes ←
+   username       Default:         The username to log in to Cobbler.
+   -              "cobbler"
+   validate_certs   Choices:       If no, SSL certificates will not be validated.
+   boolean          • no           This should only set to no when used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+NOTES                   *cobbler_system-notes*
+
+   Note
+
+     • Concurrently syncing Cobbler is bound to fail with weird errors.
+     • On python 2.7.8 and older (i.e. on RHEL7) you may need to tweak the python behaviour to disable certificate validation. More information at Certificate verification in Python standard
+       library HTTP clients.
+
+EXAMPLES                   *cobbler_system-examples*
+
+ - name: Ensure the system exists in Cobbler
+   cobbler_system:
+     host: cobbler01
+     username: cobbler
+     password: MySuperSecureP4sswOrd
+     name: myhost
+     properties:
+       profile: CentOS6-x86_64
+       name_servers: [ 2.3.4.5, 3.4.5.6 ]
+       name_servers_search: foo.com, bar.com
+     interfaces:
+       eth0:
+         macaddress: 00:01:02:03:04:05
+         ipaddress: 1.2.3.4
+   delegate_to: localhost
+
+ - name: Enable network boot in Cobbler
+   cobbler_system:
+     host: bdsol-aci-cobbler-01
+     username: cobbler
+     password: ins3965!
+     name: bdsol-aci51-apic1.cisco.com
+     properties:
+       netboot_enabled: yes
+     state: present
+   delegate_to: localhost
+
+ - name: Query all systems in Cobbler
+   cobbler_system:
+     host: cobbler01
+     username: cobbler
+     password: MySuperSecureP4sswOrd
+     state: query
+   register: cobbler_systems
+   delegate_to: localhost
+
+ - name: Query a specific system in Cobbler
+   cobbler_system:
+     host: cobbler01
+     username: cobbler
+     password: MySuperSecureP4sswOrd
+     name: '{{ inventory_hostname }}'
+     state: query
+   register: cobbler_properties
+   delegate_to: localhost
+
+ - name: Ensure the system does not exist in Cobbler
+   cobbler_system:
+     host: cobbler01
+     username: cobbler
+     password: MySuperSecureP4sswOrd
+     name: myhost
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cobbler_system-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key                   Returned                                                                                  Description
+   system     when name is provided                (Resulting) information about the system we are working with
+   dictionary
+   systems    state=query and name is not provided List of systems
+   list
+
+STATUS                   *cobbler_system-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cobbler_system-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cobbler_system_module.html

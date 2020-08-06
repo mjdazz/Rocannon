@@ -1,0 +1,151 @@
+SYNOPSIS                   *gcp_compute_target_http_proxy*
+
+     • Represents a TargetHttpProxy resource, which is used by one or more global forwarding rule to route incoming HTTP requests to a URL map.
+
+REQUIREMENTS                   *gcp_compute_target_http_proxy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_compute_target_http_proxy-parameters*
+
+          Parameter          Choices/Defaults                                                                         Comments
+                              Choices:
+   auth_kind                  • application    The type of credential used.
+   string / required          • machineaccount
+                              • serviceaccount
+   description                                 An optional description of this resource.
+   string
+   env_type                                    Specifies which Ansible environment you're running this module within.
+   string                                      This should not be set unless you know what you're doing.
+                                               This only alters the User Agent string for any API requests.
+   name                                        Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035.
+   string / required                           Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first character must
+                                               be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.
+   project                                     The Google Cloud Platform project to use.
+   string
+   scopes                                      Array of scopes to be used.
+   list
+   service_account_contents                    The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                       An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                        The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+   state                      Choices:
+   string                     • present ←      Whether the given object should exist in GCP
+                              • absent
+                                               A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
+   url_map                                     This field represents a link to a UrlMap resource in GCP. It can be specified in two ways. First, you can place a dictionary with key 'selfLink' and
+   dictionary / required                       value of your resource's selfLink Alternatively, you can add `register: name-of-resource` to a gcp_compute_url_map task and then set this url_map
+                                               field to "{{ name-of-resource }}"
+
+NOTES                   *gcp_compute_target_http_proxy-notes*
+
+   Note
+
+     • API Reference: https://cloud.google.com/compute/docs/reference/v1/targetHttpProxies
+     • Official Documentation: https://cloud.google.com/compute/docs/load-balancing/http/target-proxies
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_compute_target_http_proxy-examples*
+
+ - name: create a instance group
+   gcp_compute_instance_group:
+     name: instancegroup-targethttpproxy
+     zone: us-central1-a
+     project: "{{ gcp_project }}"
+     auth_kind: "{{ gcp_cred_kind }}"
+     service_account_file: "{{ gcp_cred_file }}"
+     state: present
+   register: instancegroup
+
+ - name: create a HTTP health check
+   gcp_compute_http_health_check:
+     name: httphealthcheck-targethttpproxy
+     healthy_threshold: 10
+     port: 8080
+     timeout_sec: 2
+     unhealthy_threshold: 5
+     project: "{{ gcp_project }}"
+     auth_kind: "{{ gcp_cred_kind }}"
+     service_account_file: "{{ gcp_cred_file }}"
+     state: present
+   register: healthcheck
+
+ - name: create a backend service
+   gcp_compute_backend_service:
+     name: backendservice-targethttpproxy
+     backends:
+     - group: "{{ instancegroup.selfLink }}"
+     health_checks:
+     - "{{ healthcheck.selfLink }}"
+     enable_cdn: 'true'
+     project: "{{ gcp_project }}"
+     auth_kind: "{{ gcp_cred_kind }}"
+     service_account_file: "{{ gcp_cred_file }}"
+     state: present
+   register: backendservice
+
+ - name: create a URL map
+   gcp_compute_url_map:
+     name: urlmap-targethttpproxy
+     default_service: "{{ backendservice }}"
+     project: "{{ gcp_project }}"
+     auth_kind: "{{ gcp_cred_kind }}"
+     service_account_file: "{{ gcp_cred_file }}"
+     state: present
+   register: urlmap
+
+ - name: create a target HTTP proxy
+   gcp_compute_target_http_proxy:
+     name: test_object
+     url_map: "{{ urlmap }}"
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+     state: present
+
+RETURN VALUES                   *gcp_compute_target_http_proxy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   creationTimestamp success  Creation timestamp in RFC3339 text format.
+   string
+   description       success  An optional description of this resource.
+   string
+   id                success  The unique identifier for the resource.
+   integer
+   name                       Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
+   string            success  be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first character must be a lowercase letter, and all following
+                              characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.
+   urlMap            success  A reference to the UrlMap resource that defines the mapping from URL to the BackendService.
+   dictionary
+
+STATUS                   *gcp_compute_target_http_proxy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_compute_target_http_proxy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_compute_target_http_proxy_module.html

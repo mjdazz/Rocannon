@@ -1,0 +1,122 @@
+SYNOPSIS                   *na_elementsw_cluster_snmp*
+
+     • Configure Element Software cluster SNMP.
+
+REQUIREMENTS                   *na_elementsw_cluster_snmp-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • The modules were developed with SolidFire 10.1
+     • solidfire-sdk-python (1.1.0.92) or greater. Install using ‘pip install solidfire-sdk-python’
+
+PARAMETERS                   *na_elementsw_cluster_snmp-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   hostname                         The hostname or IP address of the SolidFire cluster.
+   - / required
+   networks                         List of networks and what type of access they have to the SNMP servers running on the cluster nodes.
+   -                                This parameter is required if SNMP v3 is disabled.
+                     Choices:       ro for read-only access.
+       access        • ro           rw for read-write access.
+       -             • rw           rosys for read-only access to a restricted set of system information.
+                     • rosys
+       cidr                         A CIDR network mask. This network mask must be an integer greater than or equal to 0, and less than or equal to 32. It must also not be equal to 31.
+       -
+       community                    SNMP community string.
+       -
+       network                      This parameter along with the cidr variable is used to control which network the access and community string apply to.
+       -                            The special value of 'default' is used to specify an entry that applies to all networks.
+                                    The cidr mask is ignored when network value is either a host name or default.
+   password                         Password for the specified user.
+   - / required                     aliases: pass
+   snmp_v3_enabled   Choices:
+   boolean           • no           Which version of SNMP has to be enabled.
+                     • yes
+   state             Choices:       This module enables you to enable SNMP on cluster nodes. When you enable SNMP, the action applies to all nodes in the cluster, and the values that are passed
+   -                 • present ←    replace, in whole, all values set in any previous call to this module.
+                     • absent
+   username                         Please ensure that the user has the adequate permissions. For more information, please read the official documentation
+   - / required                     https://mysupport.netapp.com/documentation/docweb/index.html?productID=62636&language=en-US.
+                                    aliases: user
+   usm_users                        List of users and the type of access they have to the SNMP servers running on the cluster nodes.
+   -                                This parameter is required if SNMP v3 is enabled.
+                     Choices:       rouser for read-only access.
+       access        • rouser       rwuser for read-write access.
+       -             • rwuser       rosys for read-only access to a restricted set of system information.
+                     • rosys
+       name                         The name of the user. Must contain at least one character, but no more than 32 characters.
+       -                            Blank spaces are not allowed.
+       passphrase                   The passphrase of the user. Must be between 8 and 255 characters long (inclusive).
+       -                            Blank spaces are not allowed.
+                                    Required if 'secLevel' is 'priv.'
+       password                     The password of the user. Must be between 8 and 255 characters long (inclusive).
+       -                            Blank spaces are not allowed.
+                                    Required if 'secLevel' is 'auth' or 'priv.'
+                     Choices:
+       secLevel      • noauth       To define the security level of a user.
+       -             • auth
+                     • priv
+
+NOTES                   *na_elementsw_cluster_snmp-notes*
+
+   Note
+
+     • The modules prefixed with na\_elementsw are built to support the SolidFire storage platform.
+
+EXAMPLES                   *na_elementsw_cluster_snmp-examples*
+
+ - name: configure SnmpNetwork
+   tags:
+   - elementsw_cluster_snmp
+   na_elementsw_cluster_snmp:
+     hostname: "{{ elementsw_hostname }}"
+     username: "{{ elementsw_username }}"
+     password: "{{ elementsw_password }}"
+     state: present
+     snmp_v3_enabled: True
+     usm_users:
+       access: rouser
+       name: testuser
+       password: ChangeMe123
+       passphrase: ChangeMe123
+       secLevel: auth
+     networks:
+       access: ro
+       cidr: 24
+       community: TestNetwork
+       network: 192.168.0.1
+
+ - name: Disable SnmpNetwork
+   tags:
+   - elementsw_cluster_snmp
+   na_elementsw_cluster_snmp:
+     hostname: "{{ elementsw_hostname }}"
+     username: "{{ elementsw_username }}"
+     password: "{{ elementsw_password }}"
+     state: absent
+
+RETURN VALUES                   *na_elementsw_cluster_snmp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   msg    success  Success message
+   string
+
+STATUS                   *na_elementsw_cluster_snmp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_elementsw_cluster_snmp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_elementsw_cluster_snmp_module.html

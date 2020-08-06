@@ -1,0 +1,176 @@
+SYNOPSIS                   *bigip_command*
+
+     • Sends a TMSH or BASH command to an BIG-IP node and returns the results read from the device. This module includes an argument that will cause the module to wait for a specific condition
+       before returning or timing out if the condition is not met.
+     • This module is not idempotent, nor will it ever be. It is intended as a stop-gap measure to satisfy automation requirements until such a time as a real module has been developed to configure
+       in the way you need.
+     • If you are using this module, you should probably also be filing an issue to have a real module created for your needs.
+
+PARAMETERS                   *bigip_command-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   chdir
+   string                           Change into this directory before running the command.
+   added in 2.6
+                                    The commands to send to the remote BIG-IP device over the configured provider. The resulting output from the command is returned. If the wait_for argument is
+   commands                         provided, the module is not returned until the condition is satisfied or the number of retries as expired.
+   raw / required                   Only tmsh commands are supported. If you are piping or adding additional logic that is outside of tmsh (such as grep'ing, awk'ing or other shell related things
+                                    that are not tmsh, this behavior is not supported.
+   interval        Default:         Configures the interval in seconds to wait between retries of the command. If the command does not pass the specified conditional, the interval indicates how to
+   integer         1                long to wait before trying the command again.
+   match             Choices:       The match argument is used in conjunction with the wait_for argument to specify the match policy. Valid values are all or any. If the value is set to all then
+   string            • any          all conditionals in the wait_for must be satisfied. If the value is set to any then only one of the values must be satisfied.
+                     • all ←
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   retries         Default:         Specifies the number of retries a command should by tried before it is considered failed. The command is run on the target device every retry and evaluated
+   integer         10               against the wait_for conditionals.
+   transport         Choices:       Configures the transport connection to use when connecting to the remote device. The transport argument supports connectivity to the device over cli (ssh) or
+   - / required      • rest ←       rest.
+   added in 2.5      • cli
+   wait_for                         Specifies what to evaluate from the output of the command and what conditionals to apply. This argument will cause the task to wait for a particular conditional
+   list                             to be true before moving forward. If the conditional is not true by the configured retries, the task fails. See examples.
+                                    aliases: waitfor
+   warn              Choices:       Whether the module should raise warnings related to command idempotency or not.
+   boolean           • no           Note that the F5 Ansible developers specifically leave this on to make you aware that your usage of this module may be better served by official F5 Ansible
+   added in 2.6      • yes ←        modules. This module should always be used as a last resort.
+
+NOTES                   *bigip_command-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_command-examples*
+
+ - name: run show version on remote devices
+   bigip_command:
+     commands: show sys version
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+ - name: run show version and check to see if output contains BIG-IP
+   bigip_command:
+     commands: show sys version
+     wait_for: result[0] contains BIG-IP
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   register: result
+   delegate_to: localhost
+
+ - name: run multiple commands on remote nodes
+   bigip_command:
+     commands:
+       - show sys version
+       - list ltm virtual
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+ - name: run multiple commands and evaluate the output
+   bigip_command:
+     commands:
+       - show sys version
+       - list ltm virtual
+     wait_for:
+       - result[0] contains BIG-IP
+       - result[1] contains my-vs
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   register: result
+   delegate_to: localhost
+
+ - name: tmsh prefixes will automatically be handled
+   bigip_command:
+     commands:
+       - show sys version
+       - tmsh list ltm virtual
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+ - name: Delete all LTM nodes in Partition1, assuming no dependencies exist
+   bigip_command:
+     commands:
+       - delete ltm node all
+     chdir: Partition1
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   failed_conditions          The list of conditionals that have failed.
+   list              failed   Sample:
+                              ['...', '...']
+   stdout                     The set of responses from the commands.
+   list              always   Sample:
+                              ['...', '...']
+   stdout_lines               The value of stdout split into a list.
+   list              always   Sample:
+                              [['...', '...'], ['...'], ['...']]
+   warn                       Whether or not to raise warnings about modification commands.
+   boolean           changed  Sample:
+                              True
+
+STATUS                   *bigip_command-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_command_module.html

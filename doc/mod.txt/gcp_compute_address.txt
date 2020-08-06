@@ -1,0 +1,130 @@
+SYNOPSIS                   *gcp_compute_address*
+
+     • Represents an Address resource.
+     • Each virtual machine instance has an ephemeral internal IP address and, optionally, an external IP address. To communicate between instances on the same network, you can use an instance’s
+       internal IP address. To communicate with the Internet and instances outside of the same network, you must specify the instance’s external IP address.
+     • Internal IP addresses are ephemeral and only belong to an instance for the lifetime of the instance; if the instance is deleted and recreated, the instance is assigned a new internal IP
+       address, either by Compute Engine or by you. External IP addresses can be either ephemeral or static.
+
+REQUIREMENTS                   *gcp_compute_address-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_compute_address-parameters*
+
+          Parameter          Choices/Defaults                                                                         Comments
+   address                                     The static external IP address represented by this resource. Only IPv4 is supported. An address may only be specified for INTERNAL address types. The
+   string                                      IP address must be inside the specified subnetwork, if any.
+   address_type             Default:           The type of address to reserve, either INTERNAL or EXTERNAL.
+   string                   "EXTERNAL"         If unspecified, defaults to EXTERNAL.
+   added in 2.7                                Some valid choices include: "INTERNAL", "EXTERNAL"
+                              Choices:
+   auth_kind                  • application    The type of credential used.
+   string / required          • machineaccount
+                              • serviceaccount
+   description                                 An optional description of this resource.
+   string
+   env_type                                    Specifies which Ansible environment you're running this module within.
+   string                                      This should not be set unless you know what you're doing.
+                                               This only alters the User Agent string for any API requests.
+   name                                        Name of the resource. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must be 1-63 characters long and match
+   string / required                           the regular expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first character must be a lowercase letter, and all following characters must be a
+                                               dash, lowercase letter, or digit, except the last character, which cannot be a dash.
+   network_tier                                The networking tier used for configuring this address. This field can take the following values: PREMIUM or STANDARD. If this field is not specified,
+   string                                      it is assumed to be PREMIUM.
+   added in 2.8                                Some valid choices include: "PREMIUM", "STANDARD"
+   project                                     The Google Cloud Platform project to use.
+   string
+   region                                      URL of the region where the regional address resides.
+   string / required                           This field is not applicable to global addresses.
+   scopes                                      Array of scopes to be used.
+   list
+   service_account_contents                    The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                       An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                        The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+   state                      Choices:
+   string                     • present ←      Whether the given object should exist in GCP
+                              • absent
+                                               The URL of the subnetwork in which to reserve the address. If an IP address is specified, it must be within the subnetwork's IP range.
+   subnetwork                                  This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
+   dictionary                                  This field represents a link to a Subnetwork resource in GCP. It can be specified in two ways. First, you can place a dictionary with key 'selfLink'
+   added in 2.7                                and value of your resource's selfLink Alternatively, you can add `register: name-of-resource` to a gcp_compute_subnetwork task and then set this
+                                               subnetwork field to "{{ name-of-resource }}"
+
+NOTES                   *gcp_compute_address-notes*
+
+   Note
+
+     • API Reference: https://cloud.google.com/compute/docs/reference/beta/addresses
+     • Reserving a Static External IP Address: https://cloud.google.com/compute/docs/instances-and-network
+     • Reserving a Static Internal IP Address: https://cloud.google.com/compute/docs/ip-addresses/reserve-static-internal-ip-address
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_compute_address-examples*
+
+ - name: create a address
+   gcp_compute_address:
+     name: test-address1
+     region: us-west1
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+     state: present
+
+RETURN VALUES                   *gcp_compute_address-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   address           success  The static external IP address represented by this resource. Only IPv4 is supported. An address may only be specified for INTERNAL address types. The IP address must
+   string                     be inside the specified subnetwork, if any.
+   addressType       success  The type of address to reserve, either INTERNAL or EXTERNAL.
+   string                     If unspecified, defaults to EXTERNAL.
+   creationTimestamp success  Creation timestamp in RFC3339 text format.
+   string
+   description       success  An optional description of this resource.
+   string
+   id                success  The unique identifier for the resource.
+   integer
+   name                       Name of the resource. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must be 1-63 characters long and match the regular
+   string            success  expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first character must be a lowercase letter, and all following characters must be a dash, lowercase letter, or
+                              digit, except the last character, which cannot be a dash.
+   networkTier       success  The networking tier used for configuring this address. This field can take the following values: PREMIUM or STANDARD. If this field is not specified, it is assumed to
+   string                     be PREMIUM.
+   region            success  URL of the region where the regional address resides.
+   string                     This field is not applicable to global addresses.
+   subnetwork        success  The URL of the subnetwork in which to reserve the address. If an IP address is specified, it must be within the subnetwork's IP range.
+   dictionary                 This field can only be used with INTERNAL type with GCE_ENDPOINT/DNS_RESOLVER purposes.
+   users             success  The URLs of the resources that are using this address.
+   list
+
+STATUS                   *gcp_compute_address-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_compute_address-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_compute_address_module.html

@@ -1,0 +1,158 @@
+SYNOPSIS                   *postgresql_publication*
+
+     • Add, update, or remove PostgreSQL publication.
+
+REQUIREMENTS                   *postgresql_publication-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_publication-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   ca_cert                            Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                             If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                      aliases: ssl_rootcert
+   cascade             Choices:
+   boolean             • no ←         Drop publication dependencies. Has effect with state=absent only.
+                       • yes
+   db                                 Name of the database to connect to and where the publication state will be changed.
+   string                             aliases: login_db
+   login_host                         Host running the database.
+   string
+   login_password                     The password used to authenticate with.
+   string
+   login_unix_socket                  Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:         The username used to authenticate with.
+   string            "postgres"
+   name                               Name of the publication to add, update, or remove.
+   string / required
+   owner                              Publication owner.
+   string                             If owner is not defined, the owner will be set as login_user or session_role.
+   parameters                         Dictionary with optional publication parameters.
+   dictionary                         Available parameters depend on PostgreSQL version.
+   port              Default:         Database port to connect to.
+   integer           5432             aliases: login_port
+                       Choices:
+                       • allow
+   ssl_mode            • disable      Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←     See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                       • require      Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+   state               Choices:
+   string              • absent       The publication state.
+                       • present ←
+   tables                             List of tables to add to the publication.
+   list /                             If no value is set all tables are targeted.
+   elements=string                    If the publication already exists for specific tables and tables is not passed, nothing will be changed. If you need to add all tables to the publication with
+                                      the same name, drop existent and create new without passing tables.
+
+NOTES                   *postgresql_publication-notes*
+
+   Note
+
+     • PostgreSQL version must be 10 or greater.
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_publication-see also*
+
+   See also
+
+   CREATE PUBLICATION reference
+   Complete reference of the CREATE PUBLICATION command documentation.
+
+   ALTER PUBLICATION reference
+   Complete reference of the ALTER PUBLICATION command documentation.
+
+   DROP PUBLICATION reference
+   Complete reference of the DROP PUBLICATION command documentation.
+
+EXAMPLES                   *postgresql_publication-examples*
+
+ - name: Create a new publication with name "acme" targeting all tables in database "test".
+   postgresql_publication:
+     db: test
+     name: acme
+
+ - name: Create publication "acme" publishing only prices and vehicles tables.
+   postgresql_publication:
+     name: acme
+     tables:
+     - prices
+     - vehicles
+
+ - name: >
+     Create publication "acme", set user alice as an owner, targeting all tables.
+     Allowable DML operations are INSERT and UPDATE only
+   postgresql_publication:
+     name: acme
+     owner: alice
+     parameters:
+       publish: 'insert,update'
+
+ - name: >
+     Assuming publication "acme" exists and there are targeted
+     tables "prices" and "vehicles", add table "stores" to the publication.
+   postgresql_publication:
+     name: acme
+     tables:
+     - prices
+     - vehicles
+     - stores
+
+ - name: Remove publication "acme" if exists in database "test".
+   postgresql_publication:
+     db: test
+     name: acme
+     state: absent
+
+RETURN VALUES                   *postgresql_publication-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key           Returned                                                                                   Description
+   alltables  if publication exists Flag indicates that all tables are published.
+   boolean
+   exists                           Flag indicates the publication exists or not at the end of runtime.
+   boolean    always                Sample:
+                                    True
+   owner                            Owner of the publication at the end of runtime.
+   string     if publication exists Sample:
+                                    alice
+   parameters                       Publication parameters at the end of runtime.
+   dictionary if publication exists Sample:
+                                    {'publish': {'insert': False, 'delete': False, 'update': True}}
+   queries                          List of executed queries.
+   string     always                Sample:
+                                    ['DROP PUBLICATION "acme" CASCADE']
+                                    List of tables in the publication at the end of runtime.
+   tables     if publication exists If all tables are published, returns empty list.
+   list                             Sample:
+                                    ['"public"."prices"', '"public"."vehicles"']
+
+STATUS                   *postgresql_publication-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Loic Blot (@nerzhul) <loic.blot@unix-experience.fr>
+     • Andrew Klychkov (@Andersson007) <aaklychkov@mail.ru>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_publication-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_publication_module.html

@@ -1,23 +1,134 @@
-SYNOPSIS                           *include_vars*
+SYNOPSIS                   *include_vars*
 
-New in version 1.4.
+     • Loads YAML/JSON variables dynamically from a file or directory, recursively, during task runtime.
+     • If loading a directory, the files are sorted alphabetically before being loaded.
+     • This module is also supported for Windows targets.
+     • To assign included variables to a different host than inventory_hostname, use delegate_to and set delegate_facts=yes.
 
-Loads variables from a YAML file dynamically during task runtime. It can work with conditionals, or use host specific variables to determine the path name to load from.
+PARAMETERS                   *include_vars-parameters*
 
-EXAMPLES                           *include_vars-examples*
->
-    # Conditionally decide to load in variables when x is 0, otherwise do not.
-    - include_vars: contingency_plan.yml
-      when: x == 0
-   
-    # Load a variable file based on the OS type, or a default if not found.
-    - include_vars: "{{ item }}"
-      with_first_found:
-       - "{{ ansible_distribution }}.yml"
-       - "{{ ansible_os_family }}.yml"
-       - "default.yml"
-   
+           Parameter         Choices/Defaults                                                                        Comments
+   depth                     Default:         When using dir, this module will, by default, recursively go through each sub directory and load up the variables. By explicitly setting the depth,
+   integer                   0                this module will only go as deep as the depth.
+   dir                                        The directory name from which the variables should be loaded.
+   path                                       If the path is relative and the task is inside a role, it will look inside the role's vars/ subdirectory.
+                                              If the path is relative and not inside a role, it will be parsed relative to the playbook.
+   extensions                Default:
+   list                      ["json", "yaml", List of file extensions to read when using dir.
+                             "yml"]
+   file                                       The file name from which variables should be loaded.
+   path                                       If the path is relative, it will look for the file in vars/ subdirectory of a role or relative to playbook.
+   files_matching                             Limit the files that are loaded within any directory to this regular expression.
+   string
+   free-form                                  This module allows you to specify the 'file' option directly without any other options.
+   -                                          There is no 'free-form' option, this is just an indicator, see example below.
+   ignore_files                               List of file names to ignore.
+   list
+   ignore_unknown_extensions   Choices:       Ignore unknown file extensions within the directory.
+   boolean                     • no ←         This allows users to specify a directory containing vars files that are intermingled with non-vars files extension types (e.g. a directory with a
+   added in 2.7                • yes          README in it and vars files).
+   name                                       The name of a variable into which assign the included vars.
+   string                                     If omitted (null) they will be made top level vars.
+
+NOTES                   *include_vars-notes*
+
+   Note
+
+     • This module is also supported for Windows targets.
+
+SEE ALSO                   *include_vars-see also*
+
+   See also
+
+   set_fact – Set host facts from a task
+   The official documentation on the set_fact module.
+
+   Delegation, Rolling Updates, and Local Actions
+   More information related to task delegation.
+
+EXAMPLES                   *include_vars-examples*
+
+ - name: Include vars of stuff.yaml into the 'stuff' variable (2.2).
+   include_vars:
+     file: stuff.yaml
+     name: stuff
+
+ - name: Conditionally decide to load in variables into 'plans' when x is 0, otherwise do not. (2.2)
+   include_vars:
+     file: contingency_plan.yaml
+     name: plans
+   when: x == 0
+
+ - name: Load a variable file based on the OS type, or a default if not found. Using free-form to specify the file.
+   include_vars: "{{ lookup('first_found', possible_files) }}"
+   vars:
+     possible_files:
+       - "{{ ansible_distribution }}.yaml"
+       - "{{ ansible_os_family }}.yaml"
+       - default.yaml
+
+ - name: Bare include (free-form)
+   include_vars: myvars.yaml
+
+ - name: Include all .json and .jsn files in vars/all and all nested directories (2.3)
+   include_vars:
+     dir: vars/all
+     extensions:
+         - json
+         - jsn
+
+ - name: Include all default extension files in vars/all and all nested directories and save the output in test. (2.2)
+   include_vars:
+     dir: vars/all
+     name: test
+
+ - name: Include default extension files in vars/services (2.2)
+   include_vars:
+     dir: vars/services
+     depth: 1
+
+ - name: Include only files matching bastion.yaml (2.2)
+   include_vars:
+     dir: vars
+     files_matching: bastion.yaml
+
+ - name: Include all .yaml files except bastion.yaml (2.3)
+   include_vars:
+     dir: vars
+     ignore_files: [bastion.yaml]
+     extensions: [yaml]
+
+ - name: Ignore warnings raised for files with unknown extensions while loading (2.7)
+   include_vars:
+     dir: vars
+     ignore_unknown_extensions: True
+     extensions: ['', 'yaml', 'yml', 'json']
+
+RETURN VALUES                   *include_vars-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   ansible_included_var_files          A list of files that were successfully included
+   list                       success  Sample:
+   added in 2.4                        ['/path/to/file.json', '/path/to/file.yaml']
+
+STATUS                   *include_vars-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *include_vars-red hat support*
+
+     • Allen Sanabria (@linuxdynasty)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *include_vars-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/include_vars_module.html
+https://docs.ansible.com/ansible/latest/modules/include_vars_module.html

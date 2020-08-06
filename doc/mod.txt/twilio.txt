@@ -1,31 +1,85 @@
-SYNOPSIS                           *twilio*
+SYNOPSIS                   *twilio*
 
-New in version 1.6.
+     • Sends a text message to a phone number through the Twilio messaging API.
 
-Sends a text message to a phone number through an the Twilio SMS service.
+PARAMETERS                   *twilio-parameters*
 
-EXAMPLES                           *twilio-examples*
->
-    # send a text message from the local server about the build status to (555) 303 5681
-    # note: you have to have purchased the 'from_number' on your Twilio account
-    - local_action: text msg="All servers with webserver role are now configured."
-      account_sid={{ twilio_account_sid }}
-      auth_token={{ twilio_auth_token }}
-      from_number=+15552014545 to_number=+15553035681
-   
-    # send a text message from a server to (555) 111 3232
-    # note: you have to have purchased the 'from_number' on your Twilio account
-    - text: msg="This server's configuration is now complete."
-      account_sid={{ twilio_account_sid }}
-      auth_token={{ twilio_auth_token }}
-      from_number=+15553258899 to_number=+15551113232
-   
-      Note
-   
-      Like the other notification modules, this one requires an external dependency to work. In this case, you’ll need a Twilio account with a purchased or verified phone number to send the text
-      message.
-   
+    Parameter   Choices/Defaults                                                                               Comments
+   account_sid                   user's Twilio account token found on the account page
+   - / required
+   auth_token                    user's Twilio authentication token
+   - / required
+   from_number                   the Twilio number to send the text message from, format +15551112222
+   - / required
+   media_url                     a URL with a picture, video or sound clip to send with an MMS (multimedia message) instead of a plain SMS
+   -
+   msg                           the body of the text message
+   - / required
+   to_numbers                    one or more phone numbers to send the text message to, format +15551112222
+   - / required                  aliases: to_number
+
+NOTES                   *twilio-notes*
+
+   Note
+
+     • This module is non-idempotent because it sends an email through the external API. It is idempotent only in the case that the module fails.
+     • Like the other notification modules, this one requires an external dependency to work. In this case, you’ll need a Twilio account with a purchased or verified phone number to send the text
+       message.
+
+EXAMPLES                   *twilio-examples*
+
+ # send an SMS about the build status to (555) 303 5681
+ # note: replace account_sid and auth_token values with your credentials
+ # and you have to have the 'from_number' on your Twilio account
+ - twilio:
+     msg: All servers with webserver role are now configured.
+     account_sid: ACXXXXXXXXXXXXXXXXX
+     auth_token: ACXXXXXXXXXXXXXXXXX
+     from_number: +15552014545
+     to_number: +15553035681
+   delegate_to: localhost
+
+ # send an SMS to multiple phone numbers about the deployment
+ # note: replace account_sid and auth_token values with your credentials
+ # and you have to have the 'from_number' on your Twilio account
+ - twilio:
+     msg: This server configuration is now complete.
+     account_sid: ACXXXXXXXXXXXXXXXXX
+     auth_token: ACXXXXXXXXXXXXXXXXX
+     from_number: +15553258899
+     to_numbers:
+       - +15551113232
+       - +12025551235
+       - +19735559010
+   delegate_to: localhost
+
+ # send an MMS to a single recipient with an update on the deployment
+ # and an image of the results
+ # note: replace account_sid and auth_token values with your credentials
+ # and you have to have the 'from_number' on your Twilio account
+ - twilio:
+     msg: Deployment complete!
+     account_sid: ACXXXXXXXXXXXXXXXXX
+     auth_token: ACXXXXXXXXXXXXXXXXX
+     from_number: +15552014545
+     to_number: +15553035681
+     media_url: https://demo.twilio.com/logo.png
+   delegate_to: localhost
+
+STATUS                   *twilio-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Matt Makai (@makaimc)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *twilio-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/twilio_module.html
+https://docs.ansible.com/ansible/latest/modules/twilio_module.html

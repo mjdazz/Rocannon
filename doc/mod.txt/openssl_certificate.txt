@@ -1,0 +1,669 @@
+SYNOPSIS                   *openssl_certificate*
+
+     • This module allows one to (re)generate OpenSSL certificates.
+     • It implements a notion of provider (ie. selfsigned, ownca, acme, assertonly, entrust) for your certificate.
+     • The assertonly provider is intended for use cases where one is only interested in checking properties of a supplied certificate. Please note that this provider has been deprecated in Ansible
+       2.9 and will be removed in Ansible 2.13. See the examples on how to emulate assertonly usage with openssl_certificate_info, openssl_csr_info, openssl_privatekey_info and assert. This also
+       allows more flexible checks than the ones offered by the assertonly provider.
+     • The ownca provider is intended for generating OpenSSL certificate signed with your own CA (Certificate Authority) certificate (self-signed certificate).
+     • Many properties that can be specified in this module are for validation of an existing or newly generated certificate. The proper place to specify them, if you want to receive a certificate
+       with these properties is a CSR (Certificate Signing Request).
+     • Please note that the module regenerates existing certificate if it doesn’t match the module’s options, or if it seems to be corrupt. If you are concerned that this could overwrite your
+       existing certificate, consider using the backup option.
+     • It uses the pyOpenSSL or cryptography python library to interact with OpenSSL.
+     • If both the cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements) cryptography will be preferred as a backend over PyOpenSSL (unless the backend is
+       forced with select_crypto_backend). Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13.
+
+REQUIREMENTS                   *openssl_certificate-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyOpenSSL >= 0.15 or cryptography >= 1.6 (if using selfsigned or assertonly provider)
+     • acme-tiny (if using the acme provider)
+
+PARAMETERS                   *openssl_certificate-parameters*
+
+                  Parameter                                             Choices/Defaults                                                                 Comments
+   acme_accountkey_path                                                                                               The path to the accountkey for the acme provider.
+   path                                                                                                               This is only used by the acme provider.
+                                                                                                                      Include the intermediate certificate to the generated certificate
+   acme_chain                                 Choices:                                                                This is only used by the acme provider.
+   boolean                                    • no ←                                                                  Note that this is only available for older versions of acme-tiny. New versions
+   added in 2.5                               • yes                                                                   include the chain automatically, and setting acme_chain to yes results in an
+                                                                                                                      error.
+   acme_challenge_path                                                                                                The path to the ACME challenge directory that is served on
+   path                                                                                                               http://<HOST>:80/.well-known/acme-challenge/
+                                                                                                                      This is only used by the acme provider.
+                                                                                                                      The attributes the resulting file or directory should have.
+                                                                                                                      To get supported flags look at the man page for chattr on the target system.
+   attributes                                                                                                         This string should contain the attributes in the same order as the one
+   string                                                                                                             displayed by lsattr.
+                                                                                                                      The = operator is assumed as default, otherwise + or - operators need to be
+                                                                                                                      included in the string.
+                                                                                                                      aliases: attr
+                                                                                                                      Create a backup file including a timestamp so you can get the original
+   backup                                     Choices:                                                                certificate back if you overwrote it with a new one by accident.
+   boolean                                    • no ←                                                                  This is not used by the assertonly provider.
+   added in 2.8                               • yes                                                                   This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+   csr_path                                                                                                           Path to the Certificate Signing Request (CSR) used to generate this
+   path                                                                                                               certificate.
+                                                                                                                      This is not required in assertonly mode.
+   entrust_api_client_cert_key_path                                                                                   The path to the private key of the client certificate used to authenticate to
+   path                                                                                                               the Entrust Certificate Services (ECS) API.
+   added in 2.9                                                                                                       This is only used by the entrust provider.
+                                                                                                                      This is required if the provider is entrust.
+   entrust_api_client_cert_path                                                                                       The path to the client certificate used to authenticate to the Entrust
+   path                                                                                                               Certificate Services (ECS) API.
+   added in 2.9                                                                                                       This is only used by the entrust provider.
+                                                                                                                      This is required if the provider is entrust.
+   entrust_api_key                                                                                                    The key (password) for authentication to the Entrust Certificate Services (ECS)
+   string                                                                                                             API.
+   added in 2.9                                                                                                       This is only used by the entrust provider.
+                                                                                                                      This is required if the provider is entrust.
+                                                                                                                      The path to the specification file defining the Entrust Certificate Services
+   entrust_api_specification_path           Default:                                                                  (ECS) API configuration.
+   path                                     "https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml" You can use this to keep a local copy of the specification to avoid downloading
+   added in 2.9                                                                                                       it every time the module is used.
+                                                                                                                      This is only used by the entrust provider.
+   entrust_api_user                                                                                                   The username for authentication to the Entrust Certificate Services (ECS) API.
+   string                                                                                                             This is only used by the entrust provider.
+   added in 2.9                                                                                                       This is required if the provider is entrust.
+                                              Choices:
+                                              • STANDARD_SSL ←
+                                              • ADVANTAGE_SSL
+                                              • UC_SSL
+   entrust_cert_type                          • EV_SSL                                                                Specify the type of certificate requested.
+   string                                     • WILDCARD_SSL                                                          This is only used by the entrust provider.
+   added in 2.9                               • PRIVATE_SSL
+                                              • PD_SSL
+                                              • CDS_ENT_LITE
+                                              • CDS_ENT_PRO
+                                              • SMIME_ENT
+                                                                                                                      The point in time at which the certificate stops being valid.
+                                                                                                                      Time can be specified either as relative time or as an absolute timestamp.
+                                                                                                                      A valid absolute time format is ASN.1 TIME such as 2019-06-18.
+                                                                                                                      A valid relative time format is [+-]timespec where timespec can be an integer +
+                                                                                                                      [w | d | h | m | s], such as +365d or +32w1d2h).
+                                                                                                                      Time will always be interpreted as UTC.
+   entrust_not_after                        Default:                                                                  Note that only the date (day, month, year) is supported for specifying the
+   string                                   "+365d"                                                                   expiry date of the issued certificate.
+   added in 2.9                                                                                                       The full date-time is adjusted to EST (GMT -5:00) before issuance, which may
+                                                                                                                      result in a certificate with an expiration date one day earlier than expected
+                                                                                                                      if a relative time is used.
+                                                                                                                      The minimum certificate lifetime is 90 days, and maximum is three years.
+                                                                                                                      If this value is not specified, the certificate will stop being valid 365 days
+                                                                                                                      the date of issue.
+                                                                                                                      This is only used by the entrust provider.
+   entrust_requester_email                                                                                            The email of the requester of the certificate (for tracking purposes).
+   string                                                                                                             This is only used by the entrust provider.
+   added in 2.9                                                                                                       This is required if the provider is entrust.
+   entrust_requester_name                                                                                             The name of the requester of the certificate (for tracking purposes).
+   string                                                                                                             This is only used by the entrust provider.
+   added in 2.9                                                                                                       This is required if the provider is entrust.
+   entrust_requester_phone                                                                                            The phone number of the requester of the certificate (for tracking purposes).
+   string                                                                                                             This is only used by the entrust provider.
+   added in 2.9                                                                                                       This is required if the provider is entrust.
+                                                                                                                      The extended_key_usage extension field must contain all these values.
+                                                                                                                      This is only used by the assertonly provider.
+   extended_key_usage                                                                                                 This option is deprecated since Ansible 2.9 and will be removed with the
+   list / elements=string                                                                                             assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: extendedKeyUsage
+                                                                                                                      If set to yes, the extended_key_usage extension field must contain only these
+                                                                                                                      values.
+   extended_key_usage_strict                  Choices:                                                                This is only used by the assertonly provider.
+   boolean                                    • no ←                                                                  This option is deprecated since Ansible 2.9 and will be removed with the
+                                              • yes                                                                   assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: extendedKeyUsage_strict
+   force                                      Choices:
+   boolean                                    • no ←                                                                  Generate the certificate, even if it already exists.
+                                              • yes
+   group                                                                                                              Name of the group that should own the file/directory, as would be fed to chown.
+   string
+                                                                                                                      Checks if the certificate is expired/not expired at the time the module is
+                                              Choices:                                                                executed.
+   has_expired                                • no ←                                                                  This is only used by the assertonly provider.
+   boolean                                    • yes                                                                   This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      The certificate must be invalid at this point in time.
+                                                                                                                      The timestamp is formatted as an ASN.1 TIME.
+   invalid_at                                                                                                         This is only used by the assertonly provider.
+   string                                                                                                             This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      The key/value pairs that must be present in the issuer name field of the
+                                                                                                                      certificate.
+                                                                                                                      If you need to specify more than one value with the same key, use a list as
+   issuer                                                                                                             value.
+   dictionary                                                                                                         This is only used by the assertonly provider.
+                                                                                                                      This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      If set to yes, the issuer field must contain only these values.
+   issuer_strict                              Choices:                                                                This is only used by the assertonly provider.
+   boolean                                    • no ←                                                                  This option is deprecated since Ansible 2.9 and will be removed with the
+   added in 2.5                               • yes                                                                   assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      The key_usage extension field must contain all these values.
+                                                                                                                      This is only used by the assertonly provider.
+   key_usage                                                                                                          This option is deprecated since Ansible 2.9 and will be removed with the
+   list / elements=string                                                                                             assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: keyUsage
+                                                                                                                      If set to yes, the key_usage extension field must contain only these values.
+                                              Choices:                                                                This is only used by the assertonly provider.
+   key_usage_strict                           • no ←                                                                  This option is deprecated since Ansible 2.9 and will be removed with the
+   boolean                                    • yes                                                                   assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: keyUsage_strict
+                                                                                                                      The permissions the resulting file or directory should have.
+                                                                                                                      For those used to /usr/bin/chmod remember that modes are actually octal
+                                                                                                                      numbers. You must either add a leading zero so that Ansible's YAML parser knows
+                                                                                                                      it is an octal number (like 0644 or 01777) or quote it (like '644' or '1777')
+                                                                                                                      so Ansible receives a string and can do its own conversion from string into
+   mode                                                                                                               number.
+   string                                                                                                             Giving Ansible a number without following one of these rules will end up with a
+                                                                                                                      decimal number which will have unexpected results.
+                                                                                                                      As of Ansible 1.8, the mode may be specified as a symbolic mode (for example,
+                                                                                                                      u+rwx or u=rw,g=r,o=r).
+                                                                                                                      As of Ansible 2.6, the mode may also be the special string preserve.
+                                                                                                                      When set to preserve the file will be given the same permissions as the source
+                                                                                                                      file.
+                                                                                                                      The certificate must expire at this point in time.
+                                                                                                                      The timestamp is formatted as an ASN.1 TIME.
+   not_after                                                                                                          This is only used by the assertonly provider.
+   string                                                                                                             This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: notAfter
+                                                                                                                      The certificate must start to become valid at this point in time.
+                                                                                                                      The timestamp is formatted as an ASN.1 TIME.
+   not_before                                                                                                         This is only used by the assertonly provider.
+   string                                                                                                             This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: notBefore
+                                                                                                                      Create a Authority Key Identifier from the CA's certificate. If the CSR
+                                                                                                                      provided a authority key identifier, it is ignored.
+   ownca_create_authority_key_identifier      Choices:                                                                The Authority Key Identifier is generated from the CA certificate's Subject Key
+   boolean                                    • no                                                                    Identifier, if available. If it is not available, the CA certificate's public
+   added in 2.9                               • yes ←                                                                 key will be used.
+                                                                                                                      This is only used by the ownca provider.
+                                                                                                                      Note that this is only supported if the cryptography backend is used!
+                                                                                                                      Whether to create the Subject Key Identifier (SKI) from the public key.
+                                                                                                                      A value of create_if_not_provided (default) only creates a SKI when the CSR
+                                              Choices:                                                                does not provide one.
+   ownca_create_subject_key_identifier        • create_if_not_provided ←                                              A value of always_create always creates a SKI. If the CSR provides one, that
+   string                                     • always_create                                                         one is ignored.
+   added in 2.9                               • never_create                                                          A value of never_create never creates a SKI. If the CSR provides one, that one
+                                                                                                                      is used.
+                                                                                                                      This is only used by the ownca provider.
+                                                                                                                      Note that this is only supported if the cryptography backend is used!
+   ownca_digest                             Default:                                                                  The digest algorithm to be used for the ownca certificate.
+   string                                   "sha256"                                                                  This is only used by the ownca provider.
+   added in 2.7
+                                                                                                                      The point in time at which the certificate stops being valid.
+                                                                                                                      Time can be specified either as relative time or as absolute timestamp.
+                                                                                                                      Time will always be interpreted as UTC.
+   ownca_not_after                          Default:                                                                  Valid format is [+-]timespec | ASN.1 TIME where timespec can be an integer + [w
+   string                                   "+3650d"                                                                  | d | h | m | s] (e.g. +32w1d2h.
+   added in 2.7                                                                                                       Note that if using relative time this module is NOT idempotent.
+                                                                                                                      If this value is not specified, the certificate will stop being valid 10 years
+                                                                                                                      from now.
+                                                                                                                      This is only used by the ownca provider.
+                                                                                                                      The point in time the certificate is valid from.
+                                                                                                                      Time can be specified either as relative time or as absolute timestamp.
+                                                                                                                      Time will always be interpreted as UTC.
+   ownca_not_before                         Default:                                                                  Valid format is [+-]timespec | ASN.1 TIME where timespec can be an integer + [w
+   string                                   "+0s"                                                                     | d | h | m | s] (e.g. +32w1d2h.
+   added in 2.7                                                                                                       Note that if using relative time this module is NOT idempotent.
+                                                                                                                      If this value is not specified, the certificate will start being valid from
+                                                                                                                      now.
+                                                                                                                      This is only used by the ownca provider.
+   ownca_path                                                                                                         Remote absolute path of the CA (Certificate Authority) certificate.
+   path                                                                                                               This is only used by the ownca provider.
+   added in 2.7
+   ownca_privatekey_passphrase                                                                                        The passphrase for the ownca_privatekey_path.
+   string                                                                                                             This is only used by the ownca provider.
+   added in 2.7
+   ownca_privatekey_path                                                                                              Path to the CA (Certificate Authority) private key to use when signing the
+   path                                                                                                               certificate.
+   added in 2.7                                                                                                       This is only used by the ownca provider.
+   ownca_version                            Default:                                                                  The version of the ownca certificate.
+   integer                                  3                                                                         Nowadays it should almost always be 3.
+   added in 2.7                                                                                                       This is only used by the ownca provider.
+   owner                                                                                                              Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path                                                                                                               Remote absolute path where the generated certificate file should be created or
+   path / required                                                                                                    is already located.
+   privatekey_passphrase                                                                                              The passphrase for the privatekey_path.
+   string                                                                                                             This is required if the private key is password protected.
+   privatekey_path                                                                                                    Path to the private key to use when signing the certificate.
+   path
+                                                                                                                      Name of the provider to use to generate/retrieve the OpenSSL certificate.
+                                              Choices:                                                                The assertonly provider will not generate files and fail if the certificate
+                                              • acme                                                                  file is missing.
+   provider                                   • assertonly                                                            The assertonly provider has been deprecated in Ansible 2.9 and will be removed
+   string                                     • entrust                                                               in Ansible 2.13. Please see the examples on how to emulate it with
+                                              • ownca                                                                 openssl_certificate_info, openssl_csr_info, openssl_privatekey_info and assert.
+                                              • selfsigned                                                            The entrust provider was added for Ansible 2.9 and requires credentials for the
+                                                                                                                      https://www.entrustdatacard.com/products/categories/ssl-certificates (ECS) API.
+                                                                                                                      Required if state is present.
+                                                                                                                      Determines which crypto backend to use.
+                                                                                                                      The default choice is auto, which tries to use cryptography if available, and
+   select_crypto_backend                      Choices:                                                                falls back to pyopenssl.
+   string                                     • auto ←                                                                If set to pyopenssl, will try to use the pyOpenSSL library.
+   added in 2.8                               • cryptography                                                          If set to cryptography, will try to use the cryptography library.
+                                              • pyopenssl                                                             Please note that the pyopenssl backend has been deprecated in Ansible 2.9, and
+                                                                                                                      will be removed in Ansible 2.13. From that point on, only the cryptography
+                                                                                                                      backend will be available.
+   selevel                                  Default:                                                                  The level part of the SELinux file context.
+   string                                   "s0"                                                                      This is the MLS/MCS attribute, sometimes known as the range.
+                                                                                                                      When set to _default, it will use the level portion of the policy if available.
+                                                                                                                      Whether to create the Subject Key Identifier (SKI) from the public key.
+                                                                                                                      A value of create_if_not_provided (default) only creates a SKI when the CSR
+                                              Choices:                                                                does not provide one.
+   selfsigned_create_subject_key_identifier   • create_if_not_provided ←                                              A value of always_create always creates a SKI. If the CSR provides one, that
+   string                                     • always_create                                                         one is ignored.
+   added in 2.9                               • never_create                                                          A value of never_create never creates a SKI. If the CSR provides one, that one
+                                                                                                                      is used.
+                                                                                                                      This is only used by the selfsigned provider.
+                                                                                                                      Note that this is only supported if the cryptography backend is used!
+   selfsigned_digest                        Default:                                                                  Digest algorithm to be used when self-signing the certificate.
+   string                                   "sha256"                                                                  This is only used by the selfsigned provider.
+                                                                                                                      The point in time at which the certificate stops being valid.
+                                                                                                                      Time can be specified either as relative time or as absolute timestamp.
+                                                                                                                      Time will always be interpreted as UTC.
+                                                                                                                      Valid format is [+-]timespec | ASN.1 TIME where timespec can be an integer + [w
+   selfsigned_not_after                     Default:                                                                  | d | h | m | s] (e.g. +32w1d2h.
+   string                                   "+3650d"                                                                  Note that if using relative time this module is NOT idempotent.
+                                                                                                                      If this value is not specified, the certificate will stop being valid 10 years
+                                                                                                                      from now.
+                                                                                                                      This is only used by the selfsigned provider.
+                                                                                                                      aliases: selfsigned_notAfter
+                                                                                                                      The point in time the certificate is valid from.
+                                                                                                                      Time can be specified either as relative time or as absolute timestamp.
+                                                                                                                      Time will always be interpreted as UTC.
+                                                                                                                      Valid format is [+-]timespec | ASN.1 TIME where timespec can be an integer + [w
+   selfsigned_not_before                    Default:                                                                  | d | h | m | s] (e.g. +32w1d2h.
+   string                                   "+0s"                                                                     Note that if using relative time this module is NOT idempotent.
+                                                                                                                      If this value is not specified, the certificate will start being valid from
+                                                                                                                      now.
+                                                                                                                      This is only used by the selfsigned provider.
+                                                                                                                      aliases: selfsigned_notBefore
+   selfsigned_version                       Default:                                                                  Version of the selfsigned certificate.
+   integer                                  3                                                                         Nowadays it should almost always be 3.
+   added in 2.5                                                                                                       This is only used by the selfsigned provider.
+   serole                                                                                                             The role part of the SELinux file context.
+   string                                                                                                             When set to _default, it will use the role portion of the policy if available.
+   setype                                                                                                             The type part of the SELinux file context.
+   string                                                                                                             When set to _default, it will use the type portion of the policy if available.
+   seuser                                                                                                             The user part of the SELinux file context.
+   string                                                                                                             By default it uses the system policy, where applicable.
+                                                                                                                      When set to _default, it will use the user portion of the policy if available.
+                                                                                                                      A list of algorithms that you would accept the certificate to be signed with
+                                                                                                                      (e.g. ['sha256WithRSAEncryption', 'sha512WithRSAEncryption']).
+   signature_algorithms                                                                                               This is only used by the assertonly provider.
+   list / elements=string                                                                                             This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+   state                                      Choices:                                                                Whether the certificate should exist or not, taking action if the state is
+   string                                     • absent                                                                different from what is stated.
+                                              • present ←
+                                                                                                                      The key/value pairs that must be present in the subject name field of the
+                                                                                                                      certificate.
+                                                                                                                      If you need to specify more than one value with the same key, use a list as
+   subject                                                                                                            value.
+   dictionary                                                                                                         This is only used by the assertonly provider.
+                                                                                                                      This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      The subject_alt_name extension field must contain these values.
+                                                                                                                      This is only used by the assertonly provider.
+   subject_alt_name                                                                                                   This option is deprecated since Ansible 2.9 and will be removed with the
+   list / elements=string                                                                                             assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: subjectAltName
+                                                                                                                      If set to yes, the subject_alt_name extension field must contain only these
+                                                                                                                      values.
+   subject_alt_name_strict                    Choices:                                                                This is only used by the assertonly provider.
+   boolean                                    • no ←                                                                  This option is deprecated since Ansible 2.9 and will be removed with the
+                                              • yes                                                                   assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      aliases: subjectAltName_strict
+                                                                                                                      If set to yes, the subject field must contain only these values.
+   subject_strict                             Choices:                                                                This is only used by the assertonly provider.
+   boolean                                    • no ←                                                                  This option is deprecated since Ansible 2.9 and will be removed with the
+   added in 2.5                               • yes                                                                   assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      Influence when to use atomic operation to prevent data corruption or
+                                                                                                                      inconsistent reads from the target file.
+                                                                                                                      By default this module uses atomic operations to prevent data corruption or
+                                                                                                                      inconsistent reads from the target files, but sometimes systems are configured
+                                              Choices:                                                                or just broken in ways that prevent this. One example is docker mounted files,
+   unsafe_writes                              • no ←                                                                  which cannot be updated atomically from inside the container and can only be
+   boolean                                    • yes                                                                   written in an unsafe manner.
+                                                                                                                      This option allows Ansible to fall back to unsafe methods of updating files
+                                                                                                                      when atomic operations fail (however, it doesn't force Ansible to perform
+                                                                                                                      unsafe writes).
+                                                                                                                      IMPORTANT! Unsafe writes are subject to race conditions and can lead to data
+                                                                                                                      corruption.
+                                                                                                                      The certificate must be valid at this point in time.
+                                                                                                                      The timestamp is formatted as an ASN.1 TIME.
+   valid_at                                                                                                           This is only used by the assertonly provider.
+   string                                                                                                             This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      The certificate must still be valid at this relative time offset from now.
+                                                                                                                      Valid format is [+-]timespec | number_of_seconds where timespec can be an
+                                                                                                                      integer + [w | d | h | m | s] (e.g. +32w1d2h.
+   valid_in                                                                                                           Note that if using this parameter, this module is NOT idempotent.
+   string                                                                                                             This is only used by the assertonly provider.
+                                                                                                                      This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+                                                                                                                      The version of the certificate.
+                                                                                                                      Nowadays it should almost always be 3.
+   version                                                                                                            This is only used by the assertonly provider.
+   integer                                                                                                            This option is deprecated since Ansible 2.9 and will be removed with the
+                                                                                                                      assertonly provider in Ansible 2.13. For alternatives, see the example on
+                                                                                                                      replacing assertonly.
+
+NOTES                   *openssl_certificate-notes*
+
+   Note
+
+     • All ASN.1 TIME values should be specified following the YYYYMMDDHHMMSSZ pattern.
+     • Date specified should be UTC. Minutes and seconds are mandatory.
+     • For security reason, when you use ownca provider, you should NOT run openssl_certificate on a target machine, but on a dedicated CA machine. It is recommended not to store the CA private key
+       on the target machine. Once signed, the certificate can be moved to the target machine.
+
+SEE ALSO                   *openssl_certificate-see also*
+
+   See also
+
+   openssl_csr – Generate OpenSSL Certificate Signing Request (CSR)
+   The official documentation on the openssl_csr module.
+
+   openssl_dhparam – Generate OpenSSL Diffie-Hellman Parameters
+   The official documentation on the openssl_dhparam module.
+
+   openssl_pkcs12 – Generate OpenSSL PKCS#12 archive
+   The official documentation on the openssl_pkcs12 module.
+
+   openssl_privatekey – Generate OpenSSL private keys
+   The official documentation on the openssl_privatekey module.
+
+   openssl_publickey – Generate an OpenSSL public key from its private key
+   The official documentation on the openssl_publickey module.
+
+EXAMPLES                   *openssl_certificate-examples*
+
+ - name: Generate a Self Signed OpenSSL certificate
+   openssl_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     csr_path: /etc/ssl/csr/ansible.com.csr
+     provider: selfsigned
+
+ - name: Generate an OpenSSL certificate signed with your own CA certificate
+   openssl_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     csr_path: /etc/ssl/csr/ansible.com.csr
+     ownca_path: /etc/ssl/crt/ansible_CA.crt
+     ownca_privatekey_path: /etc/ssl/private/ansible_CA.pem
+     provider: ownca
+
+ - name: Generate a Let's Encrypt Certificate
+   openssl_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     csr_path: /etc/ssl/csr/ansible.com.csr
+     provider: acme
+     acme_accountkey_path: /etc/ssl/private/ansible.com.pem
+     acme_challenge_path: /etc/ssl/challenges/ansible.com/
+
+ - name: Force (re-)generate a new Let's Encrypt Certificate
+   openssl_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     csr_path: /etc/ssl/csr/ansible.com.csr
+     provider: acme
+     acme_accountkey_path: /etc/ssl/private/ansible.com.pem
+     acme_challenge_path: /etc/ssl/challenges/ansible.com/
+     force: yes
+
+ - name: Generate an Entrust certificate via the Entrust Certificate Services (ECS) API
+   openssl_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     csr_path: /etc/ssl/csr/ansible.com.csr
+     provider: entrust
+     entrust_requester_name: Jo Doe
+     entrust_requester_email: [email protected]
+     entrust_requester_phone: 555-555-5555
+     entrust_cert_type: STANDARD_SSL
+     entrust_api_user: apiusername
+     entrust_api_key: a^lv"32!cd9LnT
+     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-key.crt
+     entrust_api_specification_path: /etc/ssl/entrust/api-docs/cms-api-2.1.0.yaml
+
+ # The following example shows one assertonly usage using all existing options for
+ # assertonly, and shows how to emulate the behavior with the openssl_certificate_info,
+ # openssl_csr_info, openssl_privatekey_info and assert modules:
+
+ - openssl_certificate:
+     provider: assertonly
+     path: /etc/ssl/crt/ansible.com.crt
+     csr_path: /etc/ssl/csr/ansible.com.csr
+     privatekey_path: /etc/ssl/csr/ansible.com.key
+     signature_algorithms:
+       - sha256WithRSAEncryption
+       - sha512WithRSAEncryption
+     subject:
+       commonName: ansible.com
+     subject_strict: yes
+     issuer:
+       commonName: ansible.com
+     issuer_strict: yes
+     has_expired: no
+     version: 3
+     key_usage:
+       - Data Encipherment
+     key_usage_strict: yes
+     extended_key_usage:
+       - DVCS
+     extended_key_usage_strict: yes
+     subject_alt_name:
+       - dns:ansible.com
+     subject_alt_name_strict: yes
+     not_before: 20190331202428Z
+     not_after: 20190413202428Z
+     valid_at: "+1d10h"
+     invalid_at: 20200331202428Z
+     valid_in: 10  # in ten seconds
+
+ - openssl_certificate_info:
+     path: /etc/ssl/crt/ansible.com.crt
+     # for valid_at, invalid_at and valid_in
+     valid_at:
+       one_day_ten_hours: "+1d10h"
+       fixed_timestamp: 20200331202428Z
+       ten_seconds: "+10"
+   register: result
+
+ - openssl_csr_info:
+     # Verifies that the CSR signature is valid; module will fail if not
+     path: /etc/ssl/csr/ansible.com.csr
+   register: result_csr
+
+ - openssl_privatekey_info:
+     path: /etc/ssl/csr/ansible.com.key
+   register: result_privatekey
+
+ - assert:
+     that:
+       # When private key is specified for assertonly, this will be checked:
+       - result.public_key == result_privatekey.public_key
+       # When CSR is specified for assertonly, this will be checked:
+       - result.public_key == result_csr.public_key
+       - result.subject_ordered == result_csr.subject_ordered
+       - result.extensions_by_oid == result_csr.extensions_by_oid
+       # signature_algorithms check
+       - "result.signature_algorithm == 'sha256WithRSAEncryption' or result.signature_algorithm == 'sha512WithRSAEncryption'"
+       # subject and subject_strict
+       - "result.subject.commonName == 'ansible.com'"
+       - "result.subject | length == 1"  # the number must be the number of entries you check for
+       # issuer and issuer_strict
+       - "result.issuer.commonName == 'ansible.com'"
+       - "result.issuer | length == 1"  # the number must be the number of entries you check for
+       # has_expired
+       - not result.expired
+       # version
+       - result.version == 3
+       # key_usage and key_usage_strict
+       - "'Data Encipherment' in result.key_usage"
+       - "result.key_usage | length == 1"  # the number must be the number of entries you check for
+       # extended_key_usage and extended_key_usage_strict
+       - "'DVCS' in result.extended_key_usage"
+       - "result.extended_key_usage | length == 1"  # the number must be the number of entries you check for
+       # subject_alt_name and subject_alt_name_strict
+       - "'dns:ansible.com' in result.subject_alt_name"
+       - "result.subject_alt_name | length == 1"  # the number must be the number of entries you check for
+       # not_before and not_after
+       - "result.not_before == '20190331202428Z'"
+       - "result.not_after == '20190413202428Z'"
+       # valid_at, invalid_at and valid_in
+       - "result.valid_at.one_day_ten_hours"  # for valid_at
+       - "not result.valid_at.fixed_timestamp"  # for invalid_at
+       - "result.valid_at.ten_seconds"  # for valid_in
+
+ # Examples for some checks one could use the assertonly provider for:
+ # (Please note that assertonly has been deprecated!)
+
+ # How to use the assertonly provider to implement and trigger your own custom certificate generation workflow:
+ - name: Check if a certificate is currently still valid, ignoring failures
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     has_expired: no
+   ignore_errors: yes
+   register: validity_check
+
+ - name: Run custom task(s) to get a new, valid certificate in case the initial check failed
+   command: superspecialSSL recreate /etc/ssl/crt/example.com.crt
+   when: validity_check.failed
+
+ - name: Check the new certificate again for validity with the same parameters, this time failing the play if it is still invalid
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     has_expired: no
+   when: validity_check.failed
+
+ # Some other checks that assertonly could be used for:
+ - name: Verify that an existing certificate was issued by the Let's Encrypt CA and is currently still valid
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     issuer:
+       O: Let's Encrypt
+     has_expired: no
+
+ - name: Ensure that a certificate uses a modern signature algorithm (no SHA1, MD5 or DSA)
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     signature_algorithms:
+       - sha224WithRSAEncryption
+       - sha256WithRSAEncryption
+       - sha384WithRSAEncryption
+       - sha512WithRSAEncryption
+       - sha224WithECDSAEncryption
+       - sha256WithECDSAEncryption
+       - sha384WithECDSAEncryption
+       - sha512WithECDSAEncryption
+
+ - name: Ensure that the existing certificate belongs to the specified private key
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     privatekey_path: /etc/ssl/private/example.com.pem
+     provider: assertonly
+
+ - name: Ensure that the existing certificate is still valid at the winter solstice 2017
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     valid_at: 20171221162800Z
+
+ - name: Ensure that the existing certificate is still valid 2 weeks (1209600 seconds) from now
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     valid_in: 1209600
+
+ - name: Ensure that the existing certificate is only used for digital signatures and encrypting other keys
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     key_usage:
+       - digitalSignature
+       - keyEncipherment
+     key_usage_strict: true
+
+ - name: Ensure that the existing certificate can be used for client authentication
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     extended_key_usage:
+       - clientAuth
+
+ - name: Ensure that the existing certificate can only be used for client authentication and time stamping
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     extended_key_usage:
+       - clientAuth
+       - 1.3.6.1.5.5.7.3.8
+     extended_key_usage_strict: true
+
+ - name: Ensure that the existing certificate has a certain domain in its subjectAltName
+   openssl_certificate:
+     path: /etc/ssl/crt/example.com.crt
+     provider: assertonly
+     subject_alt_name:
+       - www.example.com
+       - test.example.com
+
+RETURN VALUES                   *openssl_certificate-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key               Returned                                                                                  Description
+   backup_file                              Name of backup file created.
+   string      changed and if backup is yes Sample:
+                                            /path/to/[email protected]:22~
+   filename                                 Path to the generated Certificate
+   string      changed or success           Sample:
+                                            /etc/ssl/crt/www.ansible.com.crt
+
+STATUS                   *openssl_certificate-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Yanis Guenane (@Spredzy)
+     • Markus Teufelberger (@MarkusTeufelberger)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *openssl_certificate-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/openssl_certificate_module.html

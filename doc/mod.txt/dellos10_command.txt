@@ -1,0 +1,105 @@
+SYNOPSIS                   *dellos10_command*
+
+     • Sends arbitrary commands to a Dell EMC OS10 node and returns the results read from the device. This module includes an argument that will cause the module to wait for a specific condition
+       before returning or timing out if the condition is not met.
+     • This module does not support running commands in configuration mode. Please use dellos10_config to configure Dell EMC OS10 devices.
+
+PARAMETERS                   *dellos10_command-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   commands                      List of commands to send to the remote dellos10 device over the configured provider. The resulting output from the command is returned. If the wait_for argument is
+   list /                        provided, the module is not returned until the condition is satisfied or the number of retries has expired.
+   required
+   interval     Default:         Configures the interval in seconds to wait between retries of the command. If the command does not pass the specified conditions, the interval indicates how long to
+   integer      1                wait before trying the command again.
+   match          Choices:       The match argument is used in conjunction with the wait_for argument to specify the match policy. Valid values are all or any. If the value is set to all then all
+   string         • all ←        conditionals in the wait_for must be satisfied. If the value is set to any then only one of the values must be satisfied.
+   added in 2.5   • any
+   provider                      A dict object containing connection details.
+   dictionary
+    host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+    string /                     the transport.
+    required
+    password                     Password to authenticate the SSH session to the remote device. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD
+    string                       will be used instead.
+    port        Default:         Specifies the port to use when building the connection to the remote device.
+    integer     22
+    ssh_keyfile                  Path to an ssh key used to authenticate the SSH session to the remote device. If the value is not specified in the task, the value of environment variable
+    path                         ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    timeout     Default:         Specifies idle timeout (in seconds) for the connection. Useful if the console freezes before continuing. For example when saving configurations.
+    integer     10
+    username                     User to authenticate the SSH session to the remote device. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be
+    string                       used instead.
+   retries      Default:         Specifies the number of retries a command should be tried before it is considered failed. The command is run on the target device every retry and evaluated against
+   integer      10               the wait_for conditions.
+   wait_for                      List of conditions to evaluate against the output of the command. The task will wait for each condition to be true before moving forward. If the conditional is not
+   list                          true within the configured number of retries, the task fails. See examples.
+
+NOTES                   *dellos10_command-notes*
+
+   Note
+
+     • For more information on using Ansible to manage Dell EMC Network devices see https://www.ansible.com/ansible-dell-networking.
+
+EXAMPLES                   *dellos10_command-examples*
+
+ tasks:
+   - name: run show version on remote devices
+     dellos10_command:
+       commands: show version
+
+   - name: run show version and check to see if output contains OS10
+     dellos10_command:
+       commands: show version
+       wait_for: result[0] contains OS10
+
+   - name: run multiple commands on remote nodes
+     dellos10_command:
+       commands:
+         - show version
+         - show interface
+
+   - name: run multiple commands and evaluate the output
+     dellos10_command:
+       commands:
+         - show version
+         - show interface
+       wait_for:
+         - result[0] contains OS10
+         - result[1] contains Ethernet
+
+RETURN VALUES                   *dellos10_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                                 Returned                                                                               Description
+   failed_conditions                                                            The list of conditionals that have failed
+   list              failed                                                     Sample:
+                                                                                ['...', '...']
+   stdout                                                                       The set of responses from the commands
+   list              always apart from low level errors (such as action plugin) Sample:
+                                                                                ['...', '...']
+   stdout_lines                                                                 The value of stdout split into a list
+   list              always apart from low level errors (such as action plugin) Sample:
+                                                                                [['...', '...'], ['...'], ['...']]
+   warnings                                                                     The list of warnings (if any) generated by module based on arguments
+   list              always                                                     Sample:
+                                                                                ['...', '...']
+
+STATUS                   *dellos10_command-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Senthil Kumar Ganesan (@skg-net)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *dellos10_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/dellos10_command_module.html

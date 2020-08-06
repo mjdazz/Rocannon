@@ -1,0 +1,234 @@
+SYNOPSIS                   *ec2_vpc_vpn*
+
+     • This module creates, modifies, and deletes VPN connections. Idempotence is achieved by using the filters option or specifying the VPN connection identifier.
+
+REQUIREMENTS                   *ec2_vpc_vpn-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_vpn-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   connection_type                Choices:       The type of VPN connection.
+   -                              • ipsec.1 ←
+   customer_gateway_id                           The ID of the customer gateway.
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   delay                        Default:
+   integer                      15               The time to wait before checking operation again. in seconds.
+   added in 2.8
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+                                                 An alternative to using vpn_connection_id. If multiple matches are found, vpn_connection_id is required. If one of the following suboptions is a
+   filters                                       list of items to filter by, only one item needs to match to find the VPN that correlates. e.g. if the filter 'cidr' is ['194.168.2.0/24',
+   -                                             '192.168.2.0/24'] and the VPN route only has the destination cidr block of '192.168.2.0/24' it will be found with this filter (assuming there are
+                                                 not multiple VPNs that are matched). Another example, if the filter 'vpn' is equal to ['vpn-ccf7e7ad', 'vpn-cb0ae2a2'] and one of of the VPNs has
+                                                 the state deleted (exists but is unmodifiable) and the other exists and is not deleted, it will be found via this filter. See examples.
+         bgp                                     The BGP ASN number associated with a BGP device. Only works if the connection is attached. This filtering option is currently not working.
+         -
+         cgw                                     The customer gateway id as a string or a list of those strings.
+         -
+         cgw-config                              The customer gateway configuration of the VPN as a string (in the format of the return value) or a list of those strings.
+         -
+         cidr                                    The destination cidr of the VPN's route as a string or a list of those strings.
+         -
+         static-routes-only                      The type of routing; true or false.
+         -
+         tag-keys                                The key of a tag as a string or a list of those strings.
+         -
+         tag-values                              The value of a tag as a string or a list of those strings.
+         -
+         tags                                    A dict of key value pairs.
+         -
+         vgw                                     The virtual private gateway as a string or a list of those strings.
+         -
+         vpn                                     The VPN connection id as a string or a list of those strings.
+         -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_routes                   Choices:
+   boolean                        • no           Whether or not to delete VPN connections routes that are not specified in the task.
+                                  • yes
+   purge_tags                     Choices:
+   boolean                        • no ←         Whether or not to delete VPN connections tags that are associated with the connection but not specified in the task.
+                                  • yes
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   routes                                        Routes to add to the connection.
+   -
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    The desired state of the VPN connection.
+                                  • absent
+   static_only                    Choices:
+   boolean                        • no ←         Indicates whether the VPN connection uses static routes only. Static routes must be used for devices that don't support BGP.
+                                  • yes
+   tags                                          Tags to attach to the VPN connection.
+   -
+   tunnel_options                                An optional list object containing no more than two dict members, each of which may contain 'TunnelInsideCidr' and/or 'PreSharedKey' keys with
+   -                                             appropriate string values. AWS defaults will apply in absence of either of the aforementioned keys.
+   added in 2.5
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   vpn_connection_id                             The ID of the VPN connection. Required to modify or delete a connection if the filters option does not provide a unique match.
+   -
+   vpn_gateway_id                                The ID of the virtual private gateway.
+   -
+   wait_timeout                 Default:
+   integer                      600              How long before wait gives up, in seconds.
+   added in 2.8
+
+NOTES                   *ec2_vpc_vpn-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_vpn-examples*
+
+ # Note: None of these examples set aws_access_key, aws_secret_key, or region.
+ # It is assumed that their matching environment variables are set.
+
+ - name: create a VPN connection
+   ec2_vpc_vpn:
+     state: present
+     vpn_gateway_id: vgw-XXXXXXXX
+     customer_gateway_id: cgw-XXXXXXXX
+
+ - name: modify VPN connection tags
+   ec2_vpc_vpn:
+     state: present
+     vpn_connection_id: vpn-XXXXXXXX
+     tags:
+       Name: ansible-tag-1
+       Other: ansible-tag-2
+
+ - name: delete a connection
+   ec2_vpc_vpn:
+     vpn_connection_id: vpn-XXXXXXXX
+     state: absent
+
+ - name: modify VPN tags (identifying VPN by filters)
+   ec2_vpc_vpn:
+     state: present
+     filters:
+       cidr: 194.168.1.0/24
+       tag-keys:
+         - Ansible
+         - Other
+     tags:
+       New: Tag
+     purge_tags: true
+     static_only: true
+
+ - name: set up VPN with tunnel options utilizing 'TunnelInsideCidr' only
+   ec2_vpc_vpn:
+     state: present
+     filters:
+       vpn: vpn-XXXXXXXX
+     static_only: true
+     tunnel_options:
+       -
+         TunnelInsideCidr: '169.254.100.1/30'
+       -
+         TunnelInsideCidr: '169.254.100.5/30'
+
+ - name: add routes and remove any preexisting ones
+   ec2_vpc_vpn:
+     state: present
+     filters:
+       vpn: vpn-XXXXXXXX
+     routes:
+       - 195.168.2.0/24
+       - 196.168.2.0/24
+     purge_routes: true
+
+ - name: remove all routes
+   ec2_vpc_vpn:
+     state: present
+     vpn_connection_id: vpn-XXXXXXXX
+     routes: []
+     purge_routes: true
+
+ - name: delete a VPN identified by filters
+   ec2_vpc_vpn:
+     state: absent
+     filters:
+       tags:
+         Ansible: Tag
+
+RETURN VALUES                   *ec2_vpc_vpn-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key                 Returned                                                                         Description
+   changed                                      If the VPN connection has changed.
+   boolean                        always        Sample:
+                                                {'changed': True}
+   customer_gateway_configuration state=present The configuration of the VPN connection.
+   string
+   customer_gateway_id                          The customer gateway connected via the connection.
+   string                         state=present Sample:
+                                                {'customer_gateway_id': 'cgw-1220c87b'}
+   options                        state=present The VPN connection options (currently only containing static_routes_only).
+   complex
+          static_routes_only                    If the VPN connection only allows static routes.
+          string                  state=present Sample:
+                                                {'static_routes_only': True}
+   routes                                       The routes of the VPN connection.
+   list                           state=present Sample:
+                                                {'routes': [{'destination_cidr_block': '192.168.1.0/24', 'state': 'available'}]}
+   state                                        The status of the VPN connection.
+   string                         state=present Sample:
+                                                {'state': 'available'}
+   tags                                         The tags associated with the connection.
+   dictionary                     state=present Sample:
+                                                {'tags': {'name': 'ansible-test', 'other': 'tag'}}
+   type                                         The type of VPN connection (currently only ipsec.1 is available).
+   string                         state=present Sample:
+                                                {'type': 'ipsec.1'}
+                                                The telemetry for the VPN tunnel.
+   vgw_telemetry                  state=present Sample:
+   list                                         {'vgw_telemetry': [{'outside_ip_address': 'string', 'status': 'up', 'last_status_change': 'datetime(2015, 1, 1)', 'status_message': 'string',
+                                                'accepted_route_count': 123}]}
+   vpn_connection_id                            The identifier for the VPN connection.
+   string                         state=present Sample:
+                                                {'vpn_connection_id': 'vpn-781e0e19'}
+   vpn_gateway_id                               The virtual private gateway connected via the connection.
+   string                         state=present Sample:
+                                                {'vpn_gateway_id': 'vgw-cb0ae2a2'}
+
+STATUS                   *ec2_vpc_vpn-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Sloane Hertel (@s-hertel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_vpn-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_vpn_module.html

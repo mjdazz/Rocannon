@@ -1,28 +1,126 @@
-SYNOPSIS                           *virt*
+SYNOPSIS                   *virt*
 
-Manages virtual machines supported by libvirt.
+     • Manages virtual machines supported by libvirt.
 
-EXAMPLES                           *virt-examples*
->
-    # a playbook task line:
-    - virt: name=alpha state=running
-   
-    # /usr/bin/ansible invocations
-    ansible host -m virt -a "name=alpha command=status"
-    ansible host -m virt -a "name=alpha command=get_xml"
-    ansible host -m virt -a "name=alpha command=create uri=lxc:///"
-   
-    # a playbook example of defining and launching an LXC guest
-    tasks:
-      - name: define vm
-        virt: name=foo
-              command=define
-              xml="{{ lookup('template', 'container-template.xml.j2') }}"
-              uri=lxc:///
-      - name: start vm
-        virt: name=foo state=running uri=lxc:///
-   
+REQUIREMENTS                   *virt-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • libvirt-python
+
+PARAMETERS                   *virt-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   autostart   Choices:
+   boolean     • no           start VM at host startup.
+               • yes
+               Choices:
+               • create
+               • define
+               • destroy
+               • freemem
+               • get_xml
+               • info
+   command     • list_vms
+   -           • nodeinfo     In addition to state management, various non-idempotent commands are available.
+               • pause
+               • shutdown
+               • start
+               • status
+               • stop
+               • undefine
+               • unpause
+               • virttype
+   name                       name of the guest VM being managed. Note that VM must be previously defined with xml.
+   -                          This option is required unless command is list_vms.
+               Choices:
+   state       • destroyed    Note that there may be some lag for state requests like shutdown since these refer only to VM states. After starting a guest, it may not be immediately accessible.
+   -           • paused       state and command are mutually exclusive except when command=list_vms. In this case all VMs in specified state will be listed.
+               • running
+               • shutdown
+   uri       Default:         libvirt connection uri.
+   -         "qemu:///system"
+   xml                        XML document used with the define command.
+   -                          Must be raw XML content using lookup. XML cannot be reference to a file.
+
+EXAMPLES                   *virt-examples*
+
+ # a playbook task line:
+ - virt:
+     name: alpha
+     state: running
+
+ # /usr/bin/ansible invocations
+ # ansible host -m virt -a "name=alpha command=status"
+ # ansible host -m virt -a "name=alpha command=get_xml"
+ # ansible host -m virt -a "name=alpha command=create uri=lxc:///"
+
+ # defining and launching an LXC guest
+ - name: define vm
+   virt:
+     command: define
+     xml: "{{ lookup('template', 'container-template.xml.j2') }}"
+     uri: 'lxc:///'
+ - name: start vm
+   virt:
+     name: foo
+     state: running
+     uri: 'lxc:///'
+
+ # setting autostart on a qemu VM (default uri)
+ - name: set autostart for a VM
+   virt:
+     name: foo
+     autostart: yes
+
+ # Defining a VM and making is autostart with host. VM will be off after this task
+ - name: define vm from xml and set autostart
+   virt:
+     command: define
+     xml: "{{ lookup('template', 'vm_template.xml.j2') }}"
+     autostart: yes
+
+ # Listing VMs
+ - name: list all VMs
+   virt:
+     command: list_vms
+   register: all_vms
+
+ - name: list only running VMs
+   virt:
+     command: list_vms
+     state: running
+   register: running_vms
+
+RETURN VALUES                   *virt-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+   list_vms          The list of vms defined on the remote system
+   list     success  Sample:
+                     ['build.example.org', 'dev.example.org']
+   status            The status of the VM, among running, crashed, paused and shutdown
+   string   success  Sample:
+                     success
+
+STATUS                   *virt-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ansible Core Team
+     • Michael DeHaan
+     • Seth Vidal (@skvidal)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *virt-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/virt_module.html
+https://docs.ansible.com/ansible/latest/modules/virt_module.html

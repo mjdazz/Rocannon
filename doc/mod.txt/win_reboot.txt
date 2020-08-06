@@ -1,0 +1,111 @@
+SYNOPSIS                   *win_reboot*
+
+     • Reboot a Windows machine, wait for it to go down, come back up, and respond to commands.
+     • For non-Windows targets, use the reboot module instead.
+
+PARAMETERS                   *win_reboot-parameters*
+
+       Parameter           Choices/Defaults                                                                             Comments
+   connect_timeout   Default:                      Maximum seconds to wait for a single successful TCP connection to the WinRM endpoint before trying again.
+   integer           5                             aliases: connect_timeout_sec
+   msg               Default:                      Message to display to users.
+   string            "Reboot initiated by Ansible"
+   post_reboot_delay Default:                      Seconds to wait after the reboot command was successful before attempting to validate the system rebooted successfully.
+   integer           0                             This is useful if you want wait for something to settle despite your connection already working.
+   added in 2.4                                    aliases: post_reboot_delay_sec
+   pre_reboot_delay  Default:                      Seconds to wait before reboot. Passed as a parameter to the reboot command.
+   integer           2                             aliases: pre_reboot_delay_sec
+   reboot_timeout    Default:                      Maximum seconds to wait for machine to re-appear on the network and respond to a test command.
+   integer           600                           This timeout is evaluated separately for both reboot verification and test command success so maximum clock time is actually twice this value.
+                                                   aliases: reboot_timeout_sec
+                                                   Maximum seconds to wait for shutdown to occur.
+   shutdown_timeout  Default:                      Increase this timeout for very slow hardware, large update applications, etc.
+   integer           600                           This option has been removed since Ansible 2.5 as the win_reboot behavior has changed.
+                                                   aliases: shutdown_timeout_sec
+   test_command      Default:                      Command to expect success for to determine the machine is ready for management.
+   string            "whoami"
+
+NOTES                   *win_reboot-notes*
+
+   Note
+
+     • If a shutdown was already scheduled on the system, win_reboot will abort the scheduled shutdown and enforce its own shutdown.
+     • Beware that when win_reboot returns, the Windows system may not have settled yet and some base services could be in limbo. This can result in unexpected behavior. Check the examples for ways
+       to mitigate this.
+     • The connection user must have the SeRemoteShutdownPrivilege privilege enabled, see
+       https://docs.microsoft.com/en-us/windows/security/threat-protection/security-policy-settings/force-shutdown-from-a-remote-system for more information.
+
+SEE ALSO                   *win_reboot-see also*
+
+   See also
+
+   reboot – Reboot a machine
+   The official documentation on the reboot module.
+
+EXAMPLES                   *win_reboot-examples*
+
+ - name: Reboot the machine with all defaults
+   win_reboot:
+
+ - name: Reboot a slow machine that might have lots of updates to apply
+   win_reboot:
+     reboot_timeout: 3600
+
+ # Install a Windows feature and reboot if necessary
+ - name: Install IIS Web-Server
+   win_feature:
+     name: Web-Server
+   register: iis_install
+
+ - name: Reboot when Web-Server feature requires it
+   win_reboot:
+   when: iis_install.reboot_required
+
+ # One way to ensure the system is reliable, is to set WinRM to a delayed startup
+ - name: Ensure WinRM starts when the system has settled and is ready to work reliably
+   win_service:
+     name: WinRM
+     start_mode: delayed
+
+
+ # Additionally, you can add a delay before running the next task
+ - name: Reboot a machine that takes time to settle after being booted
+   win_reboot:
+     post_reboot_delay: 120
+
+ # Or you can make win_reboot validate exactly what you need to work before running the next task
+ - name: Validate that the netlogon service has started, before running the next task
+   win_reboot:
+     test_command: 'exit (Get-Service -Name Netlogon).Status -ne "Running"'
+
+RETURN VALUES                   *win_reboot-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+   elapsed           The number of seconds that elapsed waiting for the system to be rebooted.
+   float    always   Sample:
+                     23.2
+   rebooted          True if the machine was rebooted.
+   boolean  always   Sample:
+                     True
+
+STATUS                   *win_reboot-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_reboot-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_reboot-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_reboot_module.html

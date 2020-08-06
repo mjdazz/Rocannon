@@ -1,0 +1,142 @@
+SYNOPSIS                   *bigip_profile_oneconnect*
+
+     • Manage OneConnect profiles on a BIG-IP.
+
+PARAMETERS                   *bigip_profile_oneconnect-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   description                            Description of the profile.
+   string
+                                          Specifies the number of seconds that a connection is idle before the connection flow is eligible for deletion.
+   idle_timeout_override                  When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   string                                 You may specify a number of seconds for the timeout override.
+                                          When disabled, specifies that there is no timeout override for the connection.
+                                          When indefinite, Specifies that a connection may be idle with no timeout override.
+                                          When none, simultaneous in-flight requests and responses over TCP connections to a pool member are counted toward the limit. This is the historical
+                                          behavior.
+                           Choices:       When idle, idle connections will be dropped as the TCP connection limit is reached. For short intervals, during the overlap of the idle connection being
+   limit_type              • none         dropped and the new connection being established, the TCP connection limit may be exceeded.
+   string                  • idle         When strict, the TCP connection limit is honored with no exceptions. This means that idle connections will prevent new TCP connections from being made
+                           • strict       until they expire, even if they could otherwise be reused.
+                                          strict is not a recommended configuration except in very special cases with short expiration timeouts.
+                                          When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   maximum_age                            Specifies the maximum number of seconds allowed for a connection in the connection reuse pool.
+   integer                                For any connection with an age higher than this value, the system removes that connection from the re-use pool.
+                                          When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   maximum_reuse                          Specifies the maximum number of times that a server-side connection can be reused.
+   integer                                When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   maximum_size                           Specifies the maximum number of connections that the system holds in the connection reuse pool.
+   integer                                If the pool is already full, then a server-side connection closes after the response is completed.
+                                          When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   name                                   Specifies the name of the OneConnect profile.
+   string / required
+   parent                                 Specifies the profile from which this profile inherits settings.
+   string                                 When creating a new profile, if this parameter is not specified, the default is the system-supplied oneconnect profile.
+   partition             Default:         Device partition to manage resources on.
+   string                "Common"
+   provider
+   dictionary                             A dict object containing connection details.
+   added in 2.5
+      auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+      string                              This option is really used when working with BIG-IQ devices.
+      password                            The password for the user account used to connect to the BIG-IP.
+      string / required                   You may omit this option by setting the environment variable F5_PASSWORD.
+                                          aliases: pass, pwd
+      server                              The BIG-IP host.
+      string / required                   You may omit this option by setting the environment variable F5_SERVER.
+      server_port        Default:         The BIG-IP server port.
+      integer            443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+      ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+      path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+      timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+      integer                             operation is completed, the module will error.
+      transport            Choices:
+      string               • cli          Configures the transport connection to use when connecting to the remote device.
+                           • rest ←
+      user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+      string / required                   You may omit this option by setting the environment variable F5_USER.
+      validate_certs       Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+      boolean              • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                           • yes ←
+   share_pools             Choices:       Indicates that connections may be shared not only within a virtual server, but also among similar virtual servers
+   boolean                 • no           When yes, all virtual servers that use the same OneConnect and other internal network profiles can share connections.
+                           • yes          When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+                                          Specifies a value that the system applies to the source address to determine its eligibility for reuse.
+                                          When creating a new profile, if this parameter is not specified, the default is provided by the parent profile.
+   source_mask                            The system applies the value of this setting to the server-side source address to determine its eligibility for reuse.
+   string                                 A mask of 0 causes the system to share reused connections across all source addresses. A host mask of 32 causes the system to share only those reused
+                                          connections originating from the same source address.
+                                          When you are using a SNAT or SNAT pool, the server-side source address is translated first and then the OneConnect mask is applied to the translated
+                                          address.
+   state                   Choices:       When present, ensures that the profile exists.
+   string                  • present ←    When absent, ensures the profile is removed.
+                           • absent
+
+NOTES                   *bigip_profile_oneconnect-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_profile_oneconnect-examples*
+
+ - name: Create a OneConnect profile
+   bigip_profile_oneconnect:
+     name: foo
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_profile_oneconnect-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key          Returned                                                                             Description
+   description                    Description of the profile.
+   string                changed  Sample:
+                                  My profile
+   idle_timeout_override          The new idle timeout override.
+   string                changed  Sample:
+                                  disabled
+   limit_type                     New limit type of the profile.
+   string                changed  Sample:
+                                  idle
+   maximum_age                    Maximum number of seconds allowed for a connection in the connection reuse pool.
+   integer               changed  Sample:
+                                  2000
+   maximum_reuse                  Maximum number of times that a server-side connection can be reused.
+   integer               changed  Sample:
+                                  1000
+   maximum_size                   Maximum number of connections that the system holds in the connection reuse pool.
+   integer               changed  Sample:
+                                  3000
+   share_pools                    Share connections among similar virtual servers.
+   boolean               changed  Sample:
+                                  True
+   source_mask                    Value that the system applies to the source address to determine its eligibility for reuse.
+   string                changed  Sample:
+                                  255.255.255.255
+
+STATUS                   *bigip_profile_oneconnect-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_profile_oneconnect-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_profile_oneconnect_module.html

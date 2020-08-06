@@ -1,0 +1,480 @@
+SYNOPSIS                   *bigiq_device_info*
+
+     • Collect information from F5 BIG-IQ devices.
+     • This module was called bigiq_device_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: bigiq_device_facts
+
+PARAMETERS                   *bigiq_device_info-parameters*
+
+      Parameter          Choices/Defaults                                                                             Comments
+                     Choices:
+                     • all
+                     • applications
+                     • managed-devices
+                     • purchased-pool-licenses
+                     • regkey-pools
+   gather_subset     • system-info              When supplied, this argument will restrict the information returned to a given subset.
+   list / required   • vlans                    Can specify a list of values to include a larger subset.
+                     • !all                     Values can also be used with an initial ! to specify that a specific subset should not be collected.
+                     • !applications
+                     • !managed-devices
+                     • !purchased-pool-licenses
+                     • !regkey-pools
+                     • !system-info
+                     • !vlans
+   provider
+   dictionary                                   A dict object containing connection details.
+   added in 2.5
+    auth_provider                               Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                                      This option is really used when working with BIG-IQ devices.
+    password                                    The password for the user account used to connect to the BIG-IP.
+    string /                                    You may omit this option by setting the environment variable F5_PASSWORD.
+    required                                    aliases: pass, pwd
+    server                                      The BIG-IP host.
+    string /                                    You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:                     The BIG-IP server port.
+    integer        443                          You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                                 Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                                        You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                                     Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+    integer                                     before the operation is completed, the module will error.
+    transport        Choices:
+    string           • cli                      Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                                        The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                                    You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:                   If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no                       You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+
+NOTES                   *bigiq_device_info-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigiq_device_info-examples*
+
+ - name: Collect BIG-IQ information
+   bigiq_device_info:
+     gather_subset:
+       - system-info
+       - vlans
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Collect all BIG-IQ information
+   bigiq_device_info:
+     gather_subset:
+       - all
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Collect all BIG-IP information except trunks
+   bigiq_device_info:
+     gather_subset:
+       - all
+       - "!trunks"
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigiq_device_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key                      Returned                                                                         Description
+   applications                   When managed-devices is Application related information
+   complex                        specified in            Sample:
+                                  gather_subset.          hash/dictionary of values
+     active_alerts                changed                 Number of alerts active on the application.
+     integer
+                                                          Percent of traffic to application that is determined to be 'bad'.
+     bad_traffic                  changed                 This value is dependent on protection_mode being enabled.
+     float                                                Sample:
+                                                          1.7498
+     bad_traffic_growth           changed                 Whether or not Bad Traffic Growth alerts are configured to be triggered or not.
+     boolean
+     connections                                          Current number of connections established to the application.
+     float                        changed                 Sample:
+                                                          3.06
+     enhanced_analytics                                   Whether enhanced analytics is enabled for the application or not.
+     boolean                      changed                 Sample:
+                                                          True
+     health                                               Health of the application.
+     string                       changed                 Sample:
+                                                          Good
+     id                                                   ID of the application as known to the BIG-IQ.
+     string                       changed                 Sample:
+                                                          996baae8-5d1d-3662-8a2d-3612fa2aceae
+     name                                                 Name of the application.
+     string                       changed                 Sample:
+                                                          site12http.example.com
+     new_connections                                      Number of new connections being established per second.
+     float                        changed                 Sample:
+                                                          0.35
+     protection_mode                                      The type of F5 Web Application Security Service protection on the application.
+     string                       changed                 Sample:
+                                                          Not Protected
+     response_time                                        Measured response time of the application in milliseconds.
+     float                        changed                 Sample:
+                                                          0.02
+     status                                               Current state of the application.
+     string                       changed                 Sample:
+                                                          DEPLOYED
+     transactions_per_second                              Current measurement of Transactions Per second being handled by the application.
+     float                        changed                 Sample:
+                                                          0.87
+   managed_devices                When managed-devices is Managed device related information.
+   complex                        specified in            Sample:
+                                  gather_subset.          hash/dictionary of values
+     address                                              Address where the device was discovered.
+     string                       changed                 Sample:
+                                                          10.10.10.10
+     build                                                Build of the version.
+     string                       changed                 Sample:
+                                                          0.0.4
+     device_uri                                           URI to reach the management interface of the device.
+     string                       changed                 Sample:
+                                                          https://10.10.10.10:443
+     edition                                              Edition string of the product version.
+     string                       changed                 Sample:
+                                                          Final
+     group_name                                           BIG-IQ group that the device is a member of.
+     string                       changed                 Sample:
+                                                          cm-bigip-allBigIpDevices
+     hostname                                             Discovered hostname of the device.
+     string                       changed                 Sample:
+                                                          tier2labB1.lab.fp.foo.com
+     https_port                                           HTTPS port available on the management interface of the device.
+     integer                      changed                 Sample:
+                                                          443
+     is_clustered                 changed                 Whether the device is clustered or not.
+     boolean
+     is_license_expired                                   Whether the license on the device is expired or not.
+     boolean                      changed                 Sample:
+                                                          True
+     is_virtual                                           Whether the device is a virtual edition or not.
+     boolean                      changed                 Sample:
+                                                          True
+     machine_id                                           Machine specific ID assigned to this device by BIG-IQ.
+     string                       changed                 Sample:
+                                                          c141bc88-f734-4434-be64-a3e9ea98356e
+     management_address                                   IP address of the management interface on the device.
+     string                       changed                 Sample:
+                                                          10.10.10.10
+     mcp_device_name                                      Device name as known by MCPD on the BIG-IP.
+     string                       changed                 Sample:
+                                                          /Common/tier2labB1.lab.fp.foo.com
+     product                                              Product that the managed device is identified as.
+     string                       changed                 Sample:
+                                                          BIG-IP
+     rest_framework_version                               REST framework version running on the device
+     string                       changed                 Sample:
+                                                          13.1.1-0.0.4
+     self_link                                            Internal reference to the managed device in BIG-IQ.
+     string                       changed                 Sample:
+                                                          https://localhost/mgmt/shared/resolver/device-groups/cm-bigip-allBigIpDevices/devices/c141bc88-f734-4434-be64-a3e9ea98356e
+     slots                                                Volumes on the device and versions of software installed in those volumes.
+     complex                      changed                 Sample:
+                                                          {'volume': 'HD1.1', 'product': 'BIG-IP', 'version': '13.1.1', 'build': '0.0.4', 'isActive': 'yes'}
+     state                                                State of the device.
+     string                       changed                 Sample:
+                                                          ACTIVE
+     tags                                                 Misc tags that are assigned to the device.
+     complex                      changed                 Sample:
+                                                          {'BIGIQ_tier_2_device': '2018-08-22T13:30:47.693-07:00', 'BIGIQ_SSG_name': 'tim-ssg'}
+     trust_domain_guid                                    GUID of the trust domain the device is part of.
+     string                       changed                 Sample:
+                                                          40ddf541-e604-4905-bde3005056813e36
+     uuid                                                 UUID of the device in BIG-IQ.
+     string                       changed                 Sample:
+                                                          c141bc88-f734-4434-be64-a3e9ea98356e
+     version                                              Version of TMOS installed on the device.
+     string                       changed                 Sample:
+                                                          13.1.1
+                                  When                    Purchased Pool License related information.
+   purchased_pool_licenses        purchased-pool-licenses Sample:
+   complex                        is specified in         hash/dictionary of values
+                                  gather_subset.
+     base_reg_key                                         Base registration key of the purchased pool
+     string                       changed                 Sample:
+                                                          XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
+     dossier                                              Dossier of the purchased pool license
+     string                       changed                 Sample:
+                                                          d6bd4b8ba5...e9a1a1199b73af9932948a
+     evaluation_end_date_time                             Date that evaluation license ends.
+     string                       changed                 Sample:
+                                                          2018-10-11T00:00:00-07:00
+     evaluation_start_date_time                           Date that evaluation license starts.
+     string                       changed                 Sample:
+                                                          2018-09-09T00:00:00-07:00
+     free_device_licenses                                 Number of free licenses remaining.
+     integer                      changed                 Sample:
+                                                          34
+     license_end_date_time                                Date that the license expires.
+     string                       changed                 Sample:
+                                                          2018-10-11T00:00:00-07:00
+     license_start_date_time                              Date that the license starts.
+     string                       changed                 Sample:
+                                                          2018-09-09T00:00:00-07:00
+     licensed_date_time                                   Timestamp that the pool was licensed.
+     string                       changed                 Sample:
+                                                          2018-09-10T00:00:00-07:00
+     licensed_version                                     Version of BIG-IQ that is licensed.
+     string                       changed                 Sample:
+                                                          6.0.1
+     name                                                 Name of the purchased pool
+     string                       changed                 Sample:
+                                                          my-pool1
+     registration_key                                     Purchased pool license key.
+     string                       changed                 Sample:
+                                                          XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
+     state                                                State of the purchased pool license
+     string                       changed                 Sample:
+                                                          LICENSED
+     total_device_licenses                                Total number of licenses in the pool.
+     integer                      changed                 Sample:
+                                                          40
+     uuid                                                 UUID of the purchased pool license
+     string                       changed                 Sample:
+                                                          b2112329-cba7-4f1f-9a26-fab9be416d60
+     vendor                                               Vendor who provided the license
+     string                       changed                 Sample:
+                                                          F5 Networks, Inc
+   regkey_pools                   When regkey-pools is    Regkey Pool related information.
+   complex                        specified in            Sample:
+                                  gather_subset.          hash/dictionary of values
+     id                                                   ID of the regkey pool.
+     string                       changed                 Sample:
+                                                          4f9b565c-0831-4657-b6c2-6dde6182a502
+     name                                                 Name of the regkey pool.
+     string                       changed                 Sample:
+                                                          pool1
+     offerings                                            List of the offerings in the pool.
+     complex                                              Sample:
+                                                          hash/dictionary of values
+       dossier                                            Dossier of the license.
+       string                     changed                 Sample:
+                                                          d6bd4b8ba5...e9a1a1199b73af9932948a
+       evaluation_end_date_time                           Date that evaluation license ends.
+       string                     changed                 Sample:
+                                                          2018-10-11T00:00:00-07:00
+       evaluation_start_date_time                         Date that evaluation license starts.
+       string                     changed                 Sample:
+                                                          2018-09-09T00:00:00-07:00
+       license_end_date_time                              Date that the license expires.
+       string                     changed                 Sample:
+                                                          2018-10-11T00:00:00-07:00
+       license_start_date_time                            Date that the license starts.
+       string                     changed                 Sample:
+                                                          2018-09-09T00:00:00-07:00
+       licensed_date_time                                 Timestamp that the regkey was licensed.
+       string                     changed                 Sample:
+                                                          2018-09-10T00:00:00-07:00
+       licensed_version                                   Version of BIG-IQ that is licensed.
+       string                     changed                 Sample:
+                                                          6.0.1
+       name                                               Name of the regkey.
+       string                     changed                 Sample:
+                                                          regkey1
+       registration_key                                   Registration license key.
+       string                     changed                 Sample:
+                                                          XXXXX-XXXXX-XXXXX-XXXXX-XXXXXXX
+       state                                              State of the regkey license
+       string                     changed                 Sample:
+                                                          LICENSED
+     total_offerings                                      Total number of offerings in the pool
+     integer                      changed                 Sample:
+                                                          10
+   system_info                    When system-info is     System info related information.
+   complex                        specified in            Sample:
+                                  gather_subset.          hash/dictionary of values
+     base_mac_address                                     Media Access Control address (MAC address) of the device.
+     string                       changed                 Sample:
+                                                          fa:16:3e:c3:42:6f
+     chassis_serial                                       Serial of the chassis
+     string                                               Sample:
+                                                          11111111-2222-3333-444444444444
+     hardware_information         changed                 Information related to the hardware (drives and CPUs) of the system.
+     complex
+       model                                              The model of the hardware.
+       string                                             Sample:
+                                                          Virtual Disk
+       name                                               The name of the hardware.
+       string                                             Sample:
+                                                          HD1
+       type                                               The type of hardware.
+       string                                             Sample:
+                                                          physical-disk
+       versions                                           Hardware specific properties
+       complex
+                  name                                    Name of the property
+                  string                                  Sample:
+                                                          Size
+                  version                                 Value of the property
+                  string                                  Sample:
+                                                          154.00G
+     host_board_part_revision                             Revision of the host board.
+     string
+     host_board_serial                                    Serial of the host board.
+     string
+     is_admin_password_changed                            Whether the admin password was changed from its default or not.
+     boolean                      changed                 Sample:
+                                                          True
+     is_root_password_changed     changed                 Whether the root password was changed from its default or not.
+     boolean
+     is_system_setup                                      Whether the system has been setup or not.
+     boolean                      changed                 Sample:
+                                                          True
+     marketing_name                                       Marketing name of the device platform.
+     string                       changed                 Sample:
+                                                          BIG-IQ Virtual Edition
+     package_edition                                      Displays the software edition.
+     string                       changed                 Sample:
+                                                          Point Release 7
+     package_version                                      A string combining the product_build and product_build_date.
+     string                                               Sample:
+                                                          Build 0.0.1 - Tue May 15 15:26:30 PDT 2018
+     platform                                             Platform identifier.
+     string                                               Sample:
+                                                          Z100
+     product_build                                        Build version of the release version.
+     string                                               Sample:
+                                                          0.0.1
+     product_build_date                                   Human readable build date.
+     string                                               Sample:
+                                                          Tue May 15 15:26:30 PDT 2018
+     product_built                                        Unix timestamp of when the product was built.
+     integer                                              Sample:
+                                                          180515152630
+     product_changelist                                   Changelist that product branches from.
+     integer                                              Sample:
+                                                          2557198
+     product_code                                         Code identifying the product.
+     string                                               Sample:
+                                                          BIG-IQ
+     product_jobid                                        ID of the job that built the product version.
+     integer                                              Sample:
+                                                          1012030
+     product_version                                      Major product version of the running software.
+     string                                               Sample:
+                                                          6.0.0
+     switch_board_part_revision                           Switch board revision.
+     string
+     switch_board_serial                                  Serial of the switch board.
+     string
+     time                         changed                 Mapping of the current time information to specific time-named keys.
+     complex
+       day                                                The current day of the month, in numeric form.
+       integer                    changed                 Sample:
+                                                          7
+       hour                                               The current hour of the day in 24-hour form.
+       integer                    changed                 Sample:
+                                                          18
+       minute                                             The current minute of the hour.
+       integer                    changed                 Sample:
+                                                          16
+       month                                              The current month, in numeric form.
+       integer                    changed                 Sample:
+                                                          6
+       second                                             The current second of the minute.
+       integer                    changed                 Sample:
+                                                          51
+       year                                               The current year in 4-digit form.
+       integer                    changed                 Sample:
+                                                          2018
+     uptime                                               Time, in seconds, since the system booted.
+     integer                                              Sample:
+                                                          603202
+   vlans                          When vlans is specified List of VLAN information.
+   complex                        in gather_subset.       Sample:
+                                                          hash/dictionary of values
+                                                          Allows the system to send return traffic to the MAC address that transmitted the request, even if the routing table points to a different
+     auto_lasthop                 changed                 network or interface.
+     string                                               Sample:
+                                                          enabled
+     cmp_hash_algorithm                                   Specifies how the traffic on the VLAN will be disaggregated.
+     string                       changed                 Sample:
+                                                          default
+     description                                          Description of the VLAN.
+     string                       changed                 Sample:
+                                                          My vlan
+     failsafe_action                                      Action for the system to take when the fail-safe mechanism is triggered.
+     string                       changed                 Sample:
+                                                          reboot
+     failsafe_enabled                                     Whether failsafe is enabled or not.
+     boolean                      changed                 Sample:
+                                                          True
+     failsafe_timeout                                     Number of seconds that an active unit can run without detecting network traffic on this VLAN before it starts a failover.
+     integer                      changed                 Sample:
+                                                          90
+     if_index                                             Index assigned to this VLAN. It is a unique identifier assigned for all objects displayed in the SNMP IF-MIB.
+     integer                      changed                 Sample:
+                                                          176
+     interfaces                   changed                 List of tagged or untagged interfaces and trunks that you want to configure for the VLAN.
+     complex
+       full_path                                          Full name of the resource as known to BIG-IP.
+       string                     changed                 Sample:
+                                                          1.3
+       name                                               Relative name of the resource in BIG-IP.
+       string                     changed                 Sample:
+                                                          1.3
+       tagged                     changed                 Whether the interface is tagged or not.
+       boolean
+     learning_mode                                        Whether switch ports placed in the VLAN are configured for switch learning, forwarding only, or dropped.
+     string                       changed                 Sample:
+                                                          enable-forward
+     mtu                                                  Specific maximum transition unit (MTU) for the VLAN.
+     integer                      changed                 Sample:
+                                                          1500
+     sflow_poll_interval          changed                 Maximum interval in seconds between two pollings.
+     integer
+     sflow_poll_interval_global   changed                 Whether the global VLAN poll-interval setting, overrides the object-level poll-interval setting.
+     boolean
+     sflow_sampling_rate          changed                 Ratio of packets observed to the samples generated.
+     integer
+     sflow_sampling_rate_global                           Whether the global VLAN sampling-rate setting, overrides the object-level sampling-rate setting.
+     boolean                      changed                 Sample:
+                                                          True
+     source_check_enabled                                 Specifies that only connections that have a return route in the routing table are accepted.
+     boolean                      changed                 Sample:
+                                                          True
+     tag                                                  Tag number for the VLAN.
+     integer                      changed                 Sample:
+                                                          30
+     true_mac_address                                     Media access control (MAC) address for the lowest-numbered interface assigned to this VLAN.
+     string                       changed                 Sample:
+                                                          fa:16:3e:10:da:ff
+
+STATUS                   *bigiq_device_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigiq_device_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigiq_device_info_module.html

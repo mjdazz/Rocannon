@@ -1,0 +1,101 @@
+SYNOPSIS                   *dconf*
+
+     • This module allows modifications and reading of dconf database. The module is implemented as a wrapper around dconf tool. Please see the dconf(1) man page for more details.
+     • Since dconf requires a running D-Bus session to change values, the module will try to detect an existing session and reuse it, or run the tool via dbus-run-session.
+
+PARAMETERS                   *dconf-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   key
+   - /                        A dconf key to modify or read from the dconf database.
+   required
+               Choices:
+   state       • read         The action to take upon the key/value.
+   -           • present ←
+               • absent
+   value                      Value to set for the specified dconf key. Value should be specified in GVariant format. Due to complexity of this format, it is best to have a look at existing values
+   -                          in the dconf database. Required for state=present.
+
+NOTES                   *dconf-notes*
+
+   Note
+
+     • This module depends on psutil Python library (version 4.0.0 and upwards), dconf, dbus-send, and dbus-run-session binaries. Depending on distribution you are using, you may need to install
+       additional packages to have these available.
+     • Detection of existing, running D-Bus session, required to change settings via dconf, is not 100% reliable due to implementation details of D-Bus daemon itself. This might lead to running
+       applications not picking-up changes on the fly if options are changed via Ansible and dbus-run-session.
+     • Keep in mind that the dconf CLI tool, which this module wraps around, utilises an unusual syntax for the values (GVariant). For example, if you wanted to provide a string value, the correct
+       syntax would be value="'myvalue'" - with single quotes as part of the Ansible parameter value.
+     • When using loops in combination with a value like "[('xkb', 'us'), ('xkb', 'se')]", you need to be aware of possible type conversions. Applying a filter "{{ item.value | string }}" to the
+       parameter variable can avoid potential conversion problems.
+     • The easiest way to figure out exact syntax/value you need to provide for a key is by making the configuration change in application affected by the key, and then having a look at value set
+       via commands dconf dump /path/to/dir/ or dconf read /path/to/key.
+
+EXAMPLES                   *dconf-examples*
+
+ - name: Configure available keyboard layouts in Gnome
+   dconf:
+     key: "/org/gnome/desktop/input-sources/sources"
+     value: "[('xkb', 'us'), ('xkb', 'se')]"
+     state: present
+
+ - name: Read currently available keyboard layouts in Gnome
+   dconf:
+     key: "/org/gnome/desktop/input-sources/sources"
+     state: read
+   register: keyboard_layouts
+
+ - name: Reset the available keyboard layouts in Gnome
+   dconf:
+     key: "/org/gnome/desktop/input-sources/sources"
+     state: absent
+
+ - name: Configure available keyboard layouts in Cinnamon
+   dconf:
+     key: "/org/gnome/libgnomekbd/keyboard/layouts"
+     value: "['us', 'se']"
+     state: present
+
+ - name: Read currently available keyboard layouts in Cinnamon
+   dconf:
+     key: "/org/gnome/libgnomekbd/keyboard/layouts"
+     state: read
+   register: keyboard_layouts
+
+ - name: Reset the available keyboard layouts in Cinnamon
+   dconf:
+     key: "/org/gnome/libgnomekbd/keyboard/layouts"
+     state: absent
+
+ - name: Disable desktop effects in Cinnamon
+   dconf:
+     key: "/org/cinnamon/desktop-effects"
+     value: "false"
+     state: present
+
+RETURN VALUES                   *dconf-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key           Returned                                                                                     Description
+   value                            value associated with the requested key
+   string success, state was "read" Sample:
+                                    'Default'
+
+STATUS                   *dconf-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Branko Majic (@azaghal)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *dconf-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/dconf_module.html

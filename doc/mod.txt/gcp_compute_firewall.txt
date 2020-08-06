@@ -1,0 +1,208 @@
+SYNOPSIS                   *gcp_compute_firewall*
+
+     • Each network has its own firewall controlling access to and from the instances.
+     • All traffic to instances, even from other instances, is blocked by the firewall unless firewall rules are created to allow it.
+     • The default network has automatically created firewall rules that are shown in default firewall rules. No manually created network has automatically created firewall rules except for a
+       default “allow” rule for outgoing traffic and a default “deny” for incoming traffic. For all networks except the default network, you must create any firewall rules you need.
+
+REQUIREMENTS                   *gcp_compute_firewall-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_compute_firewall-parameters*
+
+          Parameter              Choices/Defaults                                                                         Comments
+   allowed                                             The list of ALLOW rules specified by this firewall. Each rule specifies a protocol and port-range tuple that describes a permitted connection.
+   list
+        ip_protocol                                    The IP protocol to which this rule applies. The protocol type is required when creating a firewall rule. This value can either be one of the
+        string / required                              following well known protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol number.
+        ports                                          An optional list of ports to which this rule applies. This field is only applicable for UDP or TCP protocol. Each entry must be either an
+        list                                           integer or a range. If not specified, this rule applies to connections through any port.
+                                                       Example inputs include: ["22"], ["80","443"], and ["12345-12349"].
+                              Choices:
+   auth_kind                  • application            The type of credential used.
+   string / required          • machineaccount
+                              • serviceaccount
+   denied
+   list                                                The list of DENY rules specified by this firewall. Each rule specifies a protocol and port-range tuple that describes a denied connection.
+   added in 2.8
+        ip_protocol                                    The IP protocol to which this rule applies. The protocol type is required when creating a firewall rule. This value can either be one of the
+        string / required                              following well known protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol number.
+        ports                                          An optional list of ports to which this rule applies. This field is only applicable for UDP or TCP protocol. Each entry must be either an
+        list                                           integer or a range. If not specified, this rule applies to connections through any port.
+                                                       Example inputs include: ["22"], ["80","443"], and ["12345-12349"].
+   description                                         An optional description of this resource. Provide this property when you create the resource.
+   string
+   destination_ranges                                  If destination ranges are specified, the firewall will apply only to traffic that has destination IP address in these ranges. These ranges
+   list                                                must be expressed in CIDR format. Only IPv4 is supported.
+   added in 2.8
+   direction                                           Direction of traffic to which this firewall applies; default is INGRESS. Note: For INGRESS traffic, it is NOT supported to specify
+   string                                              destinationRanges; For EGRESS traffic, it is NOT supported to specify sourceRanges OR sourceTags.
+   added in 2.8                                        Some valid choices include: "INGRESS", "EGRESS"
+   disabled                   Choices:                 Denotes whether the firewall rule is disabled, i.e not applied to the network it is associated with. When set to true, the firewall rule is
+   boolean                    • no                     not enforced and the network behaves as if it did not exist. If this is unspecified, the firewall rule will be enabled.
+   added in 2.8               • yes
+   env_type                                            Specifies which Ansible environment you're running this module within.
+   string                                              This should not be set unless you know what you're doing.
+                                                       This only alters the User Agent string for any API requests.
+                                                       Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035.
+   name                                                Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first
+   string / required                                   character must be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character,
+                                                       which cannot be a dash.
+                                                       URL of the network resource for this firewall rule. If not specified when creating a firewall rule, the default network is used:
+                                                       global/networks/default If you choose to specify this property, you can specify the network as a full or partial URL. For example, the
+   network                  Default:                   following are all valid URLs: https://www.googleapis.com/compute/v1/projects/myproject/global/ networks/my-network
+   dictionary               {"selfLink":               projects/myproject/global/networks/my-network global/networks/default .
+                            "global/networks/default"} This field represents a link to a Network resource in GCP. It can be specified in two ways. First, you can place a dictionary with key
+                                                       'selfLink' and value of your resource's selfLink Alternatively, you can add `register: name-of-resource` to a gcp_compute_network task and
+                                                       then set this network field to "{{ name-of-resource }}"
+   priority                 Default:                   Priority for this rule. This is an integer between 0 and 65535, both inclusive. When not specified, the value assumed is 1000. Relative
+   integer                  "1000"                     priorities determine precedence of conflicting rules. Lower value of priority implies higher precedence (eg, a rule with priority 0 has higher
+   added in 2.8                                        precedence than a rule with priority 1). DENY rules take precedence over ALLOW rules having equal priority.
+   project                                             The Google Cloud Platform project to use.
+   string
+   scopes                                              Array of scopes to be used.
+   list
+   service_account_contents                            The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                               An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                                The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+                                                       If source ranges are specified, the firewall will apply only to traffic that has source IP address in these ranges. These ranges must be
+   source_ranges                                       expressed in CIDR format. One or both of sourceRanges and sourceTags may be set. If both properties are set, the firewall will apply to
+   list                                                traffic that has source IP address within sourceRanges OR the source IP that belongs to a tag listed in the sourceTags property. The
+                                                       connection does not need to match both properties for the firewall to apply. Only IPv4 is supported.
+                                                       If source service accounts are specified, the firewall will apply only to traffic originating from an instance with a service account in this
+   source_service_accounts                             list. Source service accounts cannot be used to control traffic to an instance's external IP address because service accounts are associated
+   list                                                with an instance, not an IP address. sourceRanges can be set at the same time as sourceServiceAccounts. If both are set, the firewall will
+   added in 2.8                                        apply to traffic that has source IP address within sourceRanges OR the source IP belongs to an instance with service account listed in
+                                                       sourceServiceAccount. The connection does not need to match both properties for the firewall to apply. sourceServiceAccounts cannot be used at
+                                                       the same time as sourceTags or targetTags.
+                                                       If source tags are specified, the firewall will apply only to traffic with source IP that belongs to a tag listed in source tags. Source tags
+   source_tags                                         cannot be used to control traffic to an instance's external IP address. Because tags are associated with an instance, not an IP address. One
+   list                                                or both of sourceRanges and sourceTags may be set. If both properties are set, the firewall will apply to traffic that has source IP address
+                                                       within sourceRanges OR the source IP that belongs to a tag listed in the sourceTags property. The connection does not need to match both
+                                                       properties for the firewall to apply.
+   state                      Choices:
+   string                     • present ←              Whether the given object should exist in GCP
+                              • absent
+   target_service_accounts                             A list of service accounts indicating sets of instances located in the network that may make network connections as specified in allowed[].
+   list                                                targetServiceAccounts cannot be used at the same time as targetTags or sourceTags. If neither targetServiceAccounts nor targetTags are
+   added in 2.8                                        specified, the firewall rule applies to all instances on the specified network.
+   target_tags                                         A list of instance tags indicating sets of instances located in the network that may make network connections as specified in allowed[].
+   list                                                If no targetTags are specified, the firewall rule applies to all instances on the specified network.
+
+NOTES                   *gcp_compute_firewall-notes*
+
+   Note
+
+     • API Reference: https://cloud.google.com/compute/docs/reference/v1/firewalls
+     • Official Documentation: https://cloud.google.com/vpc/docs/firewalls
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_compute_firewall-examples*
+
+ - name: create a firewall
+   gcp_compute_firewall:
+     name: test_object
+     allowed:
+     - ip_protocol: tcp
+       ports:
+       - '22'
+     target_tags:
+     - test-ssh-server
+     - staging-ssh-server
+     source_tags:
+     - test-ssh-clients
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+     state: present
+
+RETURN VALUES                   *gcp_compute_firewall-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key          Returned                                                                             Description
+   allowed               success  The list of ALLOW rules specified by this firewall. Each rule specifies a protocol and port-range tuple that describes a permitted connection.
+   complex
+         ip_protocol     success  The IP protocol to which this rule applies. The protocol type is required when creating a firewall rule. This value can either be one of the following well known
+         string                   protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol number.
+         ports                    An optional list of ports to which this rule applies. This field is only applicable for UDP or TCP protocol. Each entry must be either an integer or a range. If
+         list            success  not specified, this rule applies to connections through any port.
+                                  Example inputs include: ["22"], ["80","443"], and ["12345-12349"].
+   creationTimestamp     success  Creation timestamp in RFC3339 text format.
+   string
+   denied                success  The list of DENY rules specified by this firewall. Each rule specifies a protocol and port-range tuple that describes a denied connection.
+   complex
+         ip_protocol     success  The IP protocol to which this rule applies. The protocol type is required when creating a firewall rule. This value can either be one of the following well known
+         string                   protocol strings (tcp, udp, icmp, esp, ah, sctp), or the IP protocol number.
+         ports                    An optional list of ports to which this rule applies. This field is only applicable for UDP or TCP protocol. Each entry must be either an integer or a range. If
+         list            success  not specified, this rule applies to connections through any port.
+                                  Example inputs include: ["22"], ["80","443"], and ["12345-12349"].
+   description           success  An optional description of this resource. Provide this property when you create the resource.
+   string
+   destinationRanges     success  If destination ranges are specified, the firewall will apply only to traffic that has destination IP address in these ranges. These ranges must be expressed in
+   list                           CIDR format. Only IPv4 is supported.
+   direction             success  Direction of traffic to which this firewall applies; default is INGRESS. Note: For INGRESS traffic, it is NOT supported to specify destinationRanges; For EGRESS
+   string                         traffic, it is NOT supported to specify sourceRanges OR sourceTags.
+   disabled              success  Denotes whether the firewall rule is disabled, i.e not applied to the network it is associated with. When set to true, the firewall rule is not enforced and the
+   boolean                        network behaves as if it did not exist. If this is unspecified, the firewall rule will be enabled.
+   id                    success  The unique identifier for the resource.
+   integer
+   name                           Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name
+   string                success  must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first character must be a lowercase letter, and all
+                                  following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.
+   network                        URL of the network resource for this firewall rule. If not specified when creating a firewall rule, the default network is used: global/networks/default If you
+   dictionary            success  choose to specify this property, you can specify the network as a full or partial URL. For example, the following are all valid URLs:
+                                  https://www.googleapis.com/compute/v1/projects/myproject/global/ networks/my-network projects/myproject/global/networks/my-network global/networks/default .
+   priority                       Priority for this rule. This is an integer between 0 and 65535, both inclusive. When not specified, the value assumed is 1000. Relative priorities determine
+   integer               success  precedence of conflicting rules. Lower value of priority implies higher precedence (eg, a rule with priority 0 has higher precedence than a rule with priority 1).
+                                  DENY rules take precedence over ALLOW rules having equal priority.
+                                  If source ranges are specified, the firewall will apply only to traffic that has source IP address in these ranges. These ranges must be expressed in CIDR format.
+   sourceRanges          success  One or both of sourceRanges and sourceTags may be set. If both properties are set, the firewall will apply to traffic that has source IP address within
+   list                           sourceRanges OR the source IP that belongs to a tag listed in the sourceTags property. The connection does not need to match both properties for the firewall to
+                                  apply. Only IPv4 is supported.
+                                  If source service accounts are specified, the firewall will apply only to traffic originating from an instance with a service account in this list. Source service
+   sourceServiceAccounts          accounts cannot be used to control traffic to an instance's external IP address because service accounts are associated with an instance, not an IP address.
+   list                  success  sourceRanges can be set at the same time as sourceServiceAccounts. If both are set, the firewall will apply to traffic that has source IP address within
+                                  sourceRanges OR the source IP belongs to an instance with service account listed in sourceServiceAccount. The connection does not need to match both properties for
+                                  the firewall to apply. sourceServiceAccounts cannot be used at the same time as sourceTags or targetTags.
+                                  If source tags are specified, the firewall will apply only to traffic with source IP that belongs to a tag listed in source tags. Source tags cannot be used to
+   sourceTags            success  control traffic to an instance's external IP address. Because tags are associated with an instance, not an IP address. One or both of sourceRanges and sourceTags
+   list                           may be set. If both properties are set, the firewall will apply to traffic that has source IP address within sourceRanges OR the source IP that belongs to a tag
+                                  listed in the sourceTags property. The connection does not need to match both properties for the firewall to apply.
+   targetServiceAccounts          A list of service accounts indicating sets of instances located in the network that may make network connections as specified in allowed[].
+   list                  success  targetServiceAccounts cannot be used at the same time as targetTags or sourceTags. If neither targetServiceAccounts nor targetTags are specified, the firewall rule
+                                  applies to all instances on the specified network.
+   targetTags            success  A list of instance tags indicating sets of instances located in the network that may make network connections as specified in allowed[].
+   list                           If no targetTags are specified, the firewall rule applies to all instances on the specified network.
+
+STATUS                   *gcp_compute_firewall-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_compute_firewall-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_compute_firewall_module.html

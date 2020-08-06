@@ -1,0 +1,174 @@
+SYNOPSIS                   *nxos_lldp_global*
+
+     • This module configures and manages the Link Layer Discovery Protocol(LLDP) attributes on NX-OS platforms.
+
+PARAMETERS                   *nxos_lldp_global-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   config                                A list of link layer discovery configurations
+   dictionary
+    holdtime                             Amount of time the receiving device should hold the information (in seconds)
+    integer
+    port_id               Choices:
+    integer               • 0            This attribute defines if the interface names should be advertised in the long(0) or short(1) form.
+                          • 1
+    reinit                               Amount of time to delay the initialization of LLDP on any interface (in seconds)
+    integer
+    timer                                Frequency at which LLDP updates need to be transmitted (in seconds)
+    integer
+    tlv_select                           This attribute can be used to specify the TLVs that need to be sent and received in the LLDP packets. By default, all TLVs are advertised
+    dictionary
+     dcbxp                Choices:
+     boolean              • no           Used to specify the Data Center Bridging Exchange Protocol TLV
+                          • yes
+     management_address                  Used to specify the management address in TLV messages
+     dictionary
+         v4               Choices:
+         boolean          • no           Management address with TLV v4
+                          • yes
+         v6               Choices:
+         boolean          • no           Management address with TLV v6
+                          • yes
+     port                                Used to manage port based attributes in TLV messages
+     dictionary
+         description      Choices:
+         boolean          • no           Used to specify the port description TLV
+                          • yes
+         vlan             Choices:
+         boolean          • no           Used to specify the port VLAN ID TLV
+                          • yes
+     power_management     Choices:
+     boolean              • no           Used to specify IEEE 802.3 DTE Power via MDI TLV
+                          • yes
+     system                              Used to manage system based attributes in TLV messages
+     dictionary
+         capabilities     Choices:
+         boolean          • no           Used to specify the system capabilities TLV
+                          • yes
+         description      Choices:
+         boolean          • no           Used to specify the system description TLV
+                          • yes
+         name             Choices:
+         boolean          • no           Used to specify the system name TLV
+                          • yes
+                          Choices:
+   state                  • merged ←     The state of the configuration after module completion
+   string                 • replaced
+                          • deleted
+
+NOTES                   *nxos_lldp_global-notes*
+
+   Note
+
+     • Tested against NxOS 7.3.(0)D1(1) on VIRL
+     • The LLDP feature needs to be enabled before using this module
+
+EXAMPLES                   *nxos_lldp_global-examples*
+
+ # Using merged
+ # Before state:
+ # -------------
+ #
+ # user(config)# show running-config | include lldp
+ # feature lldp
+
+ - name: Merge provided configuration with device configuration
+   nxos_lldp_global:
+     config:
+       timer: 35
+       holdtime: 100
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # user(config)# show running-config | include lldp
+ # feature lldp
+ # lldp timer 35
+ # lldp holdtime 100
+
+
+ # Using replaced
+ # Before state:
+ # -------------
+ #
+ # user(config)# show running-config | include lldp
+ # feature lldp
+ # lldp holdtime 100
+ # lldp reinit 5
+ # lldp timer 35
+
+ - name: Replace device configuration of specific LLDP attributes with provided configuration
+   nxos_lldp_global:
+     config:
+       timer: 40
+       tlv_select:
+         system:
+           description: true
+           name: false
+         management_address:
+           v4: true
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # user(config)# show running-config | include lldp
+ # feature lldp
+ # lldp timer 40
+ # no lldp tlv-select system-name
+
+
+ # Using deleted
+ # Before state:
+ # -------------
+ #
+ # user(config)# show running-config | include lldp
+ # feature lldp
+ # lldp holdtime 5
+ # lldp reinit 3
+
+ - name: Delete LLDP configuration (this will by default remove all lldp configuration)
+   nxos_lldp_global:
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # user(config)# show running-config | include lldp
+ # feature lldp
+
+RETURN VALUES                   *nxos_lldp_global-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                  Description
+   after                   The configuration as structured data after module completion.
+   dictionary when changed Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   before                  The configuration as structured data prior to module invocation.
+   dictionary always       Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   commands                The set of commands pushed to the remote device.
+   list       always       Sample:
+                           ['lldp holdtime 125', 'lldp reinit 4', 'no lldp tlv-select system-name']
+
+STATUS                   *nxos_lldp_global-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_lldp_global-red hat support*
+
+     • Adharsh Srivats Rangarajan (@adharshsrivatsr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_lldp_global-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_lldp_global_module.html

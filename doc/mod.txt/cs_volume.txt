@@ -1,0 +1,221 @@
+SYNOPSIS                   *cs_volume*
+
+     • Create, destroy, attach, detach, extract or upload volumes.
+
+REQUIREMENTS                   *cs_volume-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_volume-parameters*
+
+       Parameter       Choices/Defaults                                                                             Comments
+   account                                 Account the volume is related to.
+   string
+                       Choices:            HTTP method used to query the API endpoint.
+   api_http_method     • get               If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string              • post              As the last option, the value is taken from the ini config file, also see the notes.
+                                           Fallback value is get if not specified.
+   api_key                                 API key of the CloudStack API.
+   string                                  If not given, the CLOUDSTACK_KEY env variable is considered.
+                                           As the last option, the value is taken from the ini config file, also see the notes.
+   api_region        Default:              Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"          If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                              Secret key of the CloudStack API.
+   string                                  If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                           As the last option, the value is taken from the ini config file, also see the notes.
+                                           HTTP timeout in seconds.
+   api_timeout                             If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                                 As the last option, the value is taken from the ini config file, also see the notes.
+                                           Fallback value is 10 seconds if not specified.
+   api_url                                 URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                                  If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                           As the last option, the value is taken from the ini config file, also see the notes.
+   custom_id                               Custom id to the resource.
+   string                                  Allowed to Root Admins only.
+   device_id                               ID of the device on a VM the volume is attached to.
+   integer                                 Only considered if state is attached.
+   disk_offering                           Name of the disk offering to be used.
+   string                                  Required one of disk_offering, snapshot if volume is not already state=present.
+   display_volume      Choices:            Whether to display the volume to the end user or not.
+   boolean             • no                Allowed to Root Admins only.
+                       • yes
+   domain                                  Name of the domain the volume to be deployed in.
+   string
+   force               Choices:            Force removal of volume even it is attached to a VM.
+   boolean             • no ←              Considered on state=absent only.
+                       • yes
+                       Choices:
+   format              • QCOW2
+   string              • RAW               The format for the volume.
+   added in 2.8        • VHD               Only considered if state=uploaded.
+                       • VHDX
+                       • OVA
+   max_iops                                Max iops
+   integer
+   min_iops                                Min iops
+   integer
+   mode                Choices:            Mode for the volume extraction.
+   string              • http_download ←   Only considered if state=extracted.
+   added in 2.8        • ftp_upload
+   name                                    Name of the volume.
+   string / required                       name can only contain ASCII letters.
+   poll_async          Choices:
+   boolean             • no                Poll async jobs until job has finished.
+                       • yes ←
+   project                                 Name of the project the volume to be deployed in.
+   string
+   shrink_ok           Choices:
+   boolean             • no ←              Whether to allow to shrink the volume.
+                       • yes
+   size                                    Size of disk in GB
+   integer
+   snapshot                                The snapshot name for the disk volume.
+   string                                  Required one of disk_offering, snapshot if volume is not already state=present.
+                       Choices:
+                       • present ←
+   state               • absent            State of the volume.
+   string              • attached          The choices extracted and uploaded were added in version 2.8.
+                       • detached
+                       • extracted
+                       • uploaded
+   tags                                    List of tags. Tags are a list of dictionaries having keys key and value.
+   list                                    To delete all tags, set a empty list e.g. tags: [].
+   added in 2.4                            aliases: tag
+   url                                     URL to which the volume would be extracted on state=extracted
+   string                                  or the URL where to download the volume on state=uploaded.
+   added in 2.8                            Only considered if state is extracted or uploaded.
+   vm                                      Name of the virtual machine to attach the volume to.
+   string
+   zone                                    Name of the zone in which the volume should be deployed.
+   string                                  If not set, default zone is used.
+
+NOTES                   *cs_volume-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_volume-examples*
+
+ - name: create volume within project and zone with specified storage options
+   cs_volume:
+     name: web-vm-1-volume
+     project: Integration
+     zone: ch-zrh-ix-01
+     disk_offering: PerfPlus Storage
+     size: 20
+   delegate_to: localhost
+
+ - name: create/attach volume to instance
+   cs_volume:
+     name: web-vm-1-volume
+     disk_offering: PerfPlus Storage
+     size: 20
+     vm: web-vm-1
+     state: attached
+   delegate_to: localhost
+
+ - name: detach volume
+   cs_volume:
+     name: web-vm-1-volume
+     state: detached
+   delegate_to: localhost
+
+ - name: remove volume
+   cs_volume:
+     name: web-vm-1-volume
+     state: absent
+   delegate_to: localhost
+
+ # New in version 2.8
+ - name: Extract DATA volume to make it downloadable
+   cs_volume:
+     state: extracted
+     name: web-vm-1-volume
+   register: data_vol_out
+   delegate_to: localhost
+
+ - name: Create new volume by downloading source volume
+   cs_volume:
+     state: uploaded
+     name: web-vm-1-volume-2
+     format: VHD
+     url: "{{ data_vol_out.url }}"
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_volume-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key                Returned                                                                                 Description
+   attached                                  Date of the volume was attached.
+   string       success                      Sample:
+                                             2014-12-01T14:57:57+0100
+   created                                   Date of the volume was created.
+   string       success                      Sample:
+                                             2014-12-01T14:57:57+0100
+   device_id                                 Id of the device on user vm the volume is attached to (not returned when detached)
+   integer      success                      Sample:
+                                             1
+   display_name                              Display name of the volume.
+   string       success                      Sample:
+                                             web-volume-01
+   domain                                    Domain the volume belongs to
+   string       success                      Sample:
+                                             example domain
+   group                                     Group the volume belongs to
+   string       success                      Sample:
+                                             web
+   id           success                      ID of the volume.
+   string
+   name                                      Name of the volume.
+   string       success                      Sample:
+                                             web-volume-01
+   project                                   Project the volume belongs to
+   string       success                      Sample:
+                                             Production
+   size                                      Size of disk volume.
+   integer      success                      Sample:
+                                             20
+   state                                     State of the volume
+   string       success                      Sample:
+                                             Attached
+   type                                      Disk volume type.
+   string       success                      Sample:
+                                             DATADISK
+   url                                       The url of the uploaded volume or the download url depending extraction mode.
+   string       success when state=extracted Sample:
+   added in 2.8                              http://1.12.3.4/userdata/387e2c7c-7c42-4ecc-b4ed-84e8367a1965.vhd
+   vm                                        Name of the vm the volume is attached to (not returned when detached)
+   string       success                      Sample:
+                                             web-01
+   zone                                      Name of zone the volume is in.
+   string       success                      Sample:
+                                             ch-gva-2
+
+STATUS                   *cs_volume-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jefferson Girão (@jeffersongirao)
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_volume-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_volume_module.html

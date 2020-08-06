@@ -1,0 +1,118 @@
+SYNOPSIS                   *gitlab_runner*
+
+     • Register, update and delete runners with the GitLab API.
+     • All operations are performed using the GitLab API v4.
+     • For details, consult the full API documentation at https://docs.gitlab.com/ee/api/runners.html.
+     • A valid private API token is required for all operations. You can create as many tokens as you like using the GitLab web interface at https://$GITLAB_URL/profile/personal_access_tokens.
+     • A valid registration token is required for registering a new runner. To create shared runners, you need to ask your administrator to give you this token. It can be found at
+       https://$GITLAB_URL/admin/runners/.
+
+REQUIREMENTS                   *gitlab_runner-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • python-gitlab <= 1.12.1
+
+PARAMETERS                   *gitlab_runner-parameters*
+
+       Parameter        Choices/Defaults                                                                            Comments
+   access_level         Choices:
+   string               • ref_protected ←   Determines if a runner can pick up jobs from protected branches.
+                        • not_protected
+   active               Choices:
+   boolean              • no                Define if the runners is immediately active after creation.
+                        • yes ←
+   api_password                             The password to use for authentication against the API
+   string
+   api_token                                Your private token to interact with the GitLab API.
+   string / required                        aliases: private_token
+   api_url                                  The resolvable endpoint for the API
+   string
+   api_username                             The username to use for authentication against the API
+   string
+   description                              The unique name of the runner.
+   string / required                        aliases: name
+   locked               Choices:
+   boolean              • no ←              Determines if the runner is locked or not.
+                        • yes
+   maximum_timeout    Default:              The maximum timeout that a runner has to pick up a specific job.
+   integer            3600
+   registration_token                       The registration token is used to register new runners.
+   string / required
+   run_untagged         Choices:
+   boolean              • no                Run untagged jobs or not.
+                        • yes ←
+   state                Choices:
+   string               • present ←         Make sure that the runner with the same name exists with the same configuration or delete the runner with the same name.
+                        • absent
+   tag_list           Default:              The tags that apply to the runner.
+   list               []
+   url                                      The URL of the GitLab server, with protocol (i.e. http or https).
+   string
+   validate_certs       Choices:
+   boolean              • no                Whether or not to validate SSL certs when supplying a https endpoint.
+                        • yes ←
+
+NOTES                   *gitlab_runner-notes*
+
+   Note
+
+     • To create a new runner at least the api_token, description and url options are required.
+     • Runners need to have unique descriptions.
+
+EXAMPLES                   *gitlab_runner-examples*
+
+ - name: "Register runner"
+   gitlab_runner:
+     api_url: https://gitlab.example.com/
+     api_token: "{{ access_token }}"
+     registration_token: 4gfdsg345
+     description: Docker Machine t1
+     state: present
+     active: True
+     tag_list: ['docker']
+     run_untagged: False
+     locked: False
+
+ - name: "Delete runner"
+   gitlab_runner:
+     api_url: https://gitlab.example.com/
+     api_token: "{{ access_token }}"
+     description: Docker Machine t1
+     state: absent
+
+RETURN VALUES                   *gitlab_runner-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   error               the error message returned by the GitLab API
+   string     failed   Sample:
+                       400: path is already in use
+   msg                 Success or failure message
+   string     always   Sample:
+                       Success
+   result     always   json parsed response from the server
+   dictionary
+   runner     always   API object
+   dictionary
+
+STATUS                   *gitlab_runner-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Samy Coenen (@SamyCoenen)
+     • Guillaume Martinez (@Lunik)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gitlab_runner-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gitlab_runner_module.html

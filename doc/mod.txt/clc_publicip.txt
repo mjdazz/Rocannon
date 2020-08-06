@@ -1,0 +1,108 @@
+SYNOPSIS                   *clc_publicip*
+
+     • An Ansible module to add or delete public ip addresses on an existing server or servers in CenturyLink Cloud.
+
+REQUIREMENTS                   *clc_publicip-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python = 2.7
+     • requests >= 2.5.0
+     • clc-sdk
+
+PARAMETERS                   *clc_publicip-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   ports                         A list of ports to expose. This is required when state is 'present'
+   -
+                  Choices:
+   protocol       • TCP ←        The protocol that the public IP will listen for.
+   -              • UDP
+                  • ICMP
+   server_ids                    A list of servers to create public ips on.
+   - / required
+   state          Choices:
+   -              • present ←    Determine whether to create or delete public IPs. If present module will not create a second public ip if one already exists.
+                  • absent
+   wait           Choices:
+   boolean        • no           Whether to wait for the tasks to finish before returning.
+                  • yes ←
+
+NOTES                   *clc_publicip-notes*
+
+   Note
+
+     • To use this module, it is required to set the below environment variables which enables access to the Centurylink Cloud - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
+       - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
+     • Alternatively, the module accepts the API token and account alias. The API token can be generated using the CLC account login and password via the HTTP api call @
+       https://api.ctl.io/v2/authentication/login - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login - CLC_ACCT_ALIAS, the account alias associated with the
+       centurylink cloud
+     • Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
+
+EXAMPLES                   *clc_publicip-examples*
+
+ # Note - You must set the CLC_V2_API_USERNAME And CLC_V2_API_PASSWD Environment variables before running these examples
+
+ - name: Add Public IP to Server
+   hosts: localhost
+   gather_facts: False
+   connection: local
+   tasks:
+     - name: Create Public IP For Servers
+       clc_publicip:
+         protocol: TCP
+         ports:
+           - 80
+         server_ids:
+           - UC1TEST-SVR01
+           - UC1TEST-SVR02
+         state: present
+       register: clc
+
+     - name: debug
+       debug:
+         var: clc
+
+ - name: Delete Public IP from Server
+   hosts: localhost
+   gather_facts: False
+   connection: local
+   tasks:
+     - name: Create Public IP For Servers
+       clc_publicip:
+         server_ids:
+           - UC1TEST-SVR01
+           - UC1TEST-SVR02
+         state: absent
+       register: clc
+
+     - name: debug
+       debug:
+         var: clc
+
+RETURN VALUES                   *clc_publicip-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   server_ids          The list of server ids that are changed
+   list       success  Sample:
+                       ['UC1TEST-SVR01', 'UC1TEST-SVR02']
+
+STATUS                   *clc_publicip-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • CLC Runner (@clc-runner)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *clc_publicip-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/clc_publicip_module.html

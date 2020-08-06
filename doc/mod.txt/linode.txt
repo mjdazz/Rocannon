@@ -1,71 +1,221 @@
-SYNOPSIS                           *linode*
+SYNOPSIS                   *linode*
 
-New in version 1.3.
+     • Manage Linode Public Cloud instances and optionally wait for it to be ‘running’.
 
-creates / deletes a Linode Public Cloud instance and optionally waits for it to be ‘running’.
+REQUIREMENTS                   *linode-requirements*
 
-EXAMPLES                           *linode-examples*
->
-    # Create a server
-    - local_action:
-         module: linode
-         api_key: 'longStringFromLinodeApi'
-         name: linode-test1
-         plan: 1
-         datacenter: 2
-         distribution: 99
-         password: 'superSecureRootPassword'
-         ssh_pub_key: 'ssh-rsa qwerty'
-         swap: 768
-         wait: yes
-         wait_timeout: 600
-         state: present
-   
-    # Ensure a running server (create if missing)
-    - local_action:
-         module: linode
-         api_key: 'longStringFromLinodeApi'
-         name: linode-test1
-         linode_id: 12345678
-         plan: 1
-         datacenter: 2
-         distribution: 99
-         password: 'superSecureRootPassword'
-         ssh_pub_key: 'ssh-rsa qwerty'
-         swap: 768
-         wait: yes
-         wait_timeout: 600
-         state: present
-   
-    # Delete a server
-    - local_action:
-         module: linode
-         api_key: 'longStringFromLinodeApi'
-         name: linode-test1
-         linode_id: 12345678
-         state: absent
-   
-    # Stop a server
-    - local_action:
-         module: linode
-         api_key: 'longStringFromLinodeApi'
-         name: linode-test1
-         linode_id: 12345678
-         state: stopped
-   
-    # Reboot a server
-    - local_action:
-         module: linode
-         api_key: 'longStringFromLinodeApi'
-         name: linode-test1
-         linode_id: 12345678
-         state: restarted
-   
-      Note
-   
-      LINODE_API_KEY env variable can be used instead
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • linode-python
+
+PARAMETERS                   *linode-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+   additional_disks                         List of dictionaries for creating additional disks that are added to the Linode configuration settings.
+   -                                        Dictionary takes Size, Label, Type. Size is in MB.
+   alert_bwin_enabled        Choices:
+   boolean                   • no           Set status of bandwidth in alerts.
+                             • yes
+   alert_bwin_threshold                     Set threshold in MB of bandwidth in alerts.
+   -
+   alert_bwout_enabled       Choices:
+   boolean                   • no           Set status of bandwidth out alerts.
+                             • yes
+   alert_bwout_threshold                    Set threshold in MB of bandwidth out alerts.
+   -
+   alert_bwquota_enabled     Choices:
+   boolean                   • no           Set status of bandwidth quota alerts as percentage of network transfer quota.
+                             • yes
+   alert_bwquota_threshold                  Set threshold in MB of bandwidth quota alerts.
+   -
+   alert_cpu_enabled         Choices:
+   boolean                   • no           Set status of receiving CPU usage alerts.
+                             • yes
+   alert_cpu_threshold                      Set percentage threshold for receiving CPU usage alerts. Each CPU core adds 100% to total.
+   -
+   alert_diskio_enabled      Choices:
+   boolean                   • no           Set status of receiving disk IO alerts.
+                             • yes
+   alert_diskio_threshold                   Set threshold for average IO ops/sec over 2 hour period.
+   -
+   api_key                                  Linode API key
+   -
+   backupweeklyday                          Integer value for what day of the week to store weekly backups.
+   -
+   datacenter                               datacenter to create an instance in (Linode Datacenter)
+   -
+   displaygroup                             Add the instance to a Display Group in Linode Manager.
+   -
+   distribution                             distribution to use for the instance (Linode Distribution)
+   -
+   kernel_id
+   -                                        kernel to use for the instance (Linode Kernel)
+   added in 2.4
+   linode_id                                Unique ID of a linode server. This value is read-only in the sense that if you specify it on creation of a Linode it will not be used. The Linode API
+   -                                        generates these IDs and we can those generated value here to reference a Linode more specifically. This is useful for idempotence.
+                                            aliases: lid
+   name                                     Name to give the instance (alphanumeric, dashes, underscore).
+   - / required                             To keep sanity on the Linode Web Console, name is prepended with LinodeID-.
+   password                                 root password to apply to a new server (auto generated if missing)
+   -
+                             Choices:
+   payment_term              • 1 ←          payment term to use for the instance (payment term in months)
+   -                         • 12
+                             • 24
+   plan                                     plan to use for the instance (Linode plan)
+   -
+   private_ip                Choices:
+   boolean                   • no ←         Add private IPv4 address when Linode is created.
+                             • yes
+   ssh_pub_key                              SSH public key applied to root user
+   -
+                             Choices:
+                             • absent
+                             • active
+   state                     • deleted      Indicate desired state of the resource
+   -                         • present ←
+                             • restarted
+                             • started
+                             • stopped
+   swap                    Default:         swap size in MB
+   -                       512
+   wait                      Choices:
+   boolean                   • no ←         wait for the instance to be in state running before returning
+                             • yes
+   wait_timeout            Default:         how long before wait gives up, in seconds
+   -                       300
+   watchdog                  Choices:
+   boolean                   • no           Set status of Lassie watchdog.
+                             • yes ←
+
+NOTES                   *linode-notes*
+
+   Note
+
+     • Please note, linode-python does not have python 3 support.
+     • This module uses the now deprecated v3 of the Linode API.
+     • LINODE_API_KEY env variable can be used instead.
+     • Please review https://www.linode.com/api/linode for determining the required parameters.
+
+EXAMPLES                   *linode-examples*
+
+ - name: Create a new Linode
+   linode:
+     name: linode-test1
+     plan: 1
+     datacenter: 7
+     distribution: 129
+     state: present
+   register: linode_creation
+
+ - name: Create a server with a private IP Address
+   linode:
+      module: linode
+      api_key: 'longStringFromLinodeApi'
+      name: linode-test1
+      plan: 1
+      datacenter: 2
+      distribution: 99
+      password: 'superSecureRootPassword'
+      private_ip: yes
+      ssh_pub_key: 'ssh-rsa qwerty'
+      swap: 768
+      wait: yes
+      wait_timeout: 600
+      state: present
+   delegate_to: localhost
+   register: linode_creation
+
+ - name: Fully configure new server
+   linode:
+      api_key: 'longStringFromLinodeApi'
+      name: linode-test1
+      plan: 4
+      datacenter: 2
+      distribution: 99
+      kernel_id: 138
+      password: 'superSecureRootPassword'
+      private_ip: yes
+      ssh_pub_key: 'ssh-rsa qwerty'
+      swap: 768
+      wait: yes
+      wait_timeout: 600
+      state: present
+      alert_bwquota_enabled: True
+      alert_bwquota_threshold: 80
+      alert_bwin_enabled: True
+      alert_bwin_threshold: 10
+      alert_cpu_enabled: True
+      alert_cpu_threshold: 210
+      alert_bwout_enabled: True
+      alert_bwout_threshold: 10
+      alert_diskio_enabled: True
+      alert_diskio_threshold: 10000
+      backupweeklyday: 1
+      backupwindow: 2
+      displaygroup: 'test'
+      additional_disks:
+       - {Label: 'disk1', Size: 2500, Type: 'raw'}
+       - {Label: 'newdisk', Size: 2000}
+      watchdog: True
+   delegate_to: localhost
+   register: linode_creation
+
+ - name: Ensure a running server (create if missing)
+   linode:
+      api_key: 'longStringFromLinodeApi'
+      name: linode-test1
+      plan: 1
+      datacenter: 2
+      distribution: 99
+      password: 'superSecureRootPassword'
+      ssh_pub_key: 'ssh-rsa qwerty'
+      swap: 768
+      wait: yes
+      wait_timeout: 600
+      state: present
+   delegate_to: localhost
+   register: linode_creation
+
+ - name: Delete a server
+   linode:
+      api_key: 'longStringFromLinodeApi'
+      name: linode-test1
+      linode_id: "{{ linode_creation.instance.id }}"
+      state: absent
+   delegate_to: localhost
+
+ - name: Stop a server
+   linode:
+      api_key: 'longStringFromLinodeApi'
+      name: linode-test1
+      linode_id: "{{ linode_creation.instance.id }}"
+      state: stopped
+   delegate_to: localhost
+
+ - name: Reboot a server
+   linode:
+      api_key: 'longStringFromLinodeApi'
+      name: linode-test1
+      linode_id: "{{ linode_creation.instance.id }}"
+      state: restarted
+   delegate_to: localhost
+
+STATUS                   *linode-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Vincent Viallet (@zbal)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *linode-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/linode_module.html
+https://docs.ansible.com/ansible/latest/modules/linode_module.html

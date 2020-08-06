@@ -1,0 +1,106 @@
+SYNOPSIS                   *intersight_rest_api*
+
+     • Direct REST API configuration for Cisco Intersight.
+     • All REST API resources and properties must be specified.
+     • For more information see Cisco Intersight.
+
+PARAMETERS                   *intersight_rest_api-parameters*
+
+       Parameter            Choices/Defaults                                                                             Comments
+   api_body                                          The payload for API requests used to modify resources.
+   dictionary
+   api_key_id                                        Public API Key ID associated with the private key.
+   string / required
+   api_private_key                                   Filename (absolute path) of a PEM formatted file that contains your private key to be used for Intersight API authentication.
+   path / required
+   api_uri           Default:                        URI used to access the Intersight API.
+   string            "https://intersight.com/api/v1"
+   query_params                                      Query parameters for the Intersight API query language.
+   dictionary
+   resource_path                                     Resource URI being configured related to api_uri.
+   string / required
+   state               Choices:                      If present, will verify the resource is present and will create if needed.
+   -                   • present ←                   If absent, will verify the resource is absent and will delete if needed.
+                       • absent
+   update_method       Choices:                      The HTTP method used for update operations.
+   string              • patch ←                     Some Intersight resources require POST operations for modifications.
+                       • post
+   use_proxy           Choices:
+   boolean             • no                          If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                       • yes ←
+   validate_certs      Choices:
+   boolean             • no                          Boolean control for verifying the api_uri TLS certificate
+                       • yes ←
+
+EXAMPLES                   *intersight_rest_api-examples*
+
+ - name: Configure Boot Policy
+   intersight_rest_api:
+     api_private_key: "{{ api_private_key }}"
+     api_key_id: "{{ api_key_id }}"
+     api_key_uri: "{{ api_key_uri }}"
+     validate_certs: "{{ validate_certs }}"
+     resource_path: /boot/PrecisionPolicies
+     query_params:
+       $filter: "Name eq 'vmedia-localdisk'"
+     api_body: {
+       "Name": "vmedia-hdd",
+       "ConfiguredBootMode": "Legacy",
+       "BootDevices": [
+         {
+           "ObjectType": "boot.VirtualMedia",
+           "Enabled": true,
+           "Name": "remote-vmedia",
+           "Subtype": "cimc-mapped-dvd"
+         },
+         {
+           "ObjectType": "boot.LocalDisk",
+           "Enabled": true,
+           "Name": "localdisk",
+           "Slot": "MRAID",
+           "Bootloader": null
+         }
+       ],
+     }
+     state: present
+
+ - name: Delete Boot Policy
+   intersight_rest_api:
+     api_private_key: "{{ api_private_key }}"
+     api_key_id: "{{ api_key_id }}"
+     api_key_uri: "{{ api_key_uri }}"
+     validate_certs: "{{ validate_certs }}"
+     resource_path: /boot/PrecisionPolicies
+     query_params:
+       $filter: "Name eq 'vmedia-localdisk'"
+     state: absent
+
+RETURN VALUES                   *intersight_rest_api-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+                         The API response output returned by the specified resource.
+   api_repsonse          Sample:
+   dictionary   always   {'api_response': {'BootDevices': [{'Enabled': True, 'Name': 'remote-vmedia', 'ObjectType': 'boot.VirtualMedia', 'Subtype': 'cimc-mapped-dvd'}, {'Bootloader': None,
+                         'Enabled': True, 'Name': 'boot-lun', 'ObjectType': 'boot.LocalDisk', 'Slot': 'MRAID'}], 'ConfiguredBootMode': 'Legacy', 'Name': 'vmedia-localdisk', 'ObjectType':
+                         'boot.PrecisionPolicy'}}
+
+STATUS                   *intersight_rest_api-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Soper (@dsoper2)
+     • CiscoUcs (@CiscoUcs)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *intersight_rest_api-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/intersight_rest_api_module.html

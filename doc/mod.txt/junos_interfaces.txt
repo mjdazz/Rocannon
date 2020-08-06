@@ -1,0 +1,260 @@
+SYNOPSIS                   *junos_interfaces*
+
+     • This module manages the interfaces on Juniper Junos OS network devices.
+
+REQUIREMENTS                   *junos_interfaces-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.6.4)
+
+PARAMETERS                   *junos_interfaces-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   config                         The provided configuration
+   list
+    description                   Interface description.
+    string
+                   Choices:
+    duplex         • automatic    Interface link status. Applicable for Ethernet interfaces only, either in half duplex, full duplex or in automatic state which negotiates the duplex automatically.
+    string         • full-duplex
+                   • half-duplex
+    enabled        Choices:       Administrative state of the interface.
+    boolean        • no           Set the value to true to administratively enabled the interface or false to disable it.
+                   • yes ←
+    hold_time                     The hold time for given interface name.
+    dictionary
+       down                       The link down hold time in milliseconds.
+       integer
+       up                         The link up hold time in milliseconds.
+       integer
+    mtu                           MTU for a specific interface.
+    integer                       Applicable for Ethernet interfaces only.
+    name
+    string /                      Full name of interface, e.g. ge-0/0/0.
+    required
+    speed                         Interface link speed. Applicable for Ethernet interfaces only.
+    integer
+                   Choices:
+   state           • merged ←
+   string          • replaced     The state of the configuration after module completion
+                   • overridden
+                   • deleted
+
+NOTES                   *junos_interfaces-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 18.4R1.
+     • This module works with connection netconf. See the Junos OS Platform Options.
+
+EXAMPLES                   *junos_interfaces-examples*
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Configured by Ansible-1";
+ #    speed 1g;
+ #    mtu 1800
+ # }
+ # ge-0/0/2 {
+ #    description "Configured by Ansible-2";
+ #    ether-options {
+ #        auto-negotiation;
+ #    }
+ # }
+
+ - name: "Delete given options for the interface (Note: This won't delete the interface itself if any other values are configured for interface)"
+   junos_interfaces:
+     config:
+       - name: ge-0/0/1
+         description: 'Configured by Ansible-1'
+         speed: 1g
+         mtu: 1800
+       - name: ge-0/0/2
+         description: 'Configured by Ansible -2'
+     state: deleted
+
+ # After state:
+ # ------------
+ # [email protected]# show interfaces
+ # ge-0/0/2 {
+ #    ether-options {
+ #        auto-negotiation;
+ #    }
+ # }
+
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "test interface";
+ #    speed 1g;
+ # }
+
+ - name: "Merge provided configuration with device configuration (default operation is merge)"
+   junos_interfaces:
+     config:
+       - name: ge-0/0/1
+         description: 'Configured by Ansible-1'
+         enabled: True
+         mtu: 1800
+       - name: ge-0/0/2
+         description: 'Configured by Ansible-2'
+         enabled: False
+     state: merged
+
+ # After state:
+ # ------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Configured by Ansible-1";
+ #    speed 1g;
+ #    mtu 1800
+ # }
+ # ge-0/0/2 {
+ #    disable;
+ #    description "Configured by Ansible-2";
+ # }
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Configured by Ansible-1";
+ #    speed 1g;
+ #    mtu 1800
+ # }
+ # ge-0/0/2 {
+ #    disable;
+ #    description "Configured by Ansible-2";
+ #    ether-options {
+ #        auto-negotiation;
+ #    }
+ # }
+ # ge-0/0/11 {
+ #    description "Configured by Ansible-11";
+ # }
+
+ - name: "Override device configuration of all interfaces with provided configuration"
+   junos_interfaces:
+     config:
+       - name: ge-0/0/2
+         description: 'Configured by Ansible-2'
+         enabled: False
+         mtu: 2800
+       - name: ge-0/0/3
+         description: 'Configured by Ansible-3'
+     state: overridden
+
+ # After state:
+ # ------------
+ # [email protected]# show interfaces
+ # ge-0/0/2 {
+ #    disable;
+ #    description "Configured by Ansible-2";
+ #    mtu 2800
+ # }
+ # ge-0/0/3 {
+ #    description "Configured by Ansible-3";
+ # }
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Configured by Ansible-1";
+ #    speed 1g;
+ #    mtu 1800
+ # }
+ # ge-0/0/2 {
+ #    disable;
+ #    mtu 1800;
+ #    speed 1g;
+ #    description "Configured by Ansible-2";
+ #    ether-options {
+ #        auto-negotiation;
+ #    }
+ # }
+ # ge-0/0/11 {
+ #    description "Configured by Ansible-11";
+ # }
+
+ - name: "Replaces device configuration of listed interfaces with provided configuration"
+   junos_interfaces:
+     config:
+       - name: ge-0/0/2
+         description: 'Configured by Ansible-2'
+         enabled: False
+         mtu: 2800
+       - name: ge-0/0/3
+         description: 'Configured by Ansible-3'
+     state: replaced
+
+ # After state:
+ # ------------
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "Configured by Ansible-1";
+ #    speed 1g;
+ #    mtu 1800
+ # }
+ # ge-0/0/2 {
+ #    disable;
+ #    description "Configured by Ansible-2";
+ #    mtu 2800
+ # }
+ # ge-0/0/3 {
+ #    description "Configured by Ansible-3";
+ # }
+ # ge-0/0/11 {
+ #    description "Configured by Ansible-11";
+ # }
+
+RETURN VALUES                   *junos_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key     Returned                                                                                    Description
+   after               The configuration as structured data after module completion.
+   list   when changed Sample:
+                       The configuration returned will always be in the same format of the parameters above.
+   before              The configuration as structured data prior to module invocation.
+   list   always       Sample:
+                       The configuration returned will always be in the same format of the parameters above.
+   xml                 The set of xml rpc payload pushed to the remote device.
+   list   always       Sample:
+                       ['xml 1', 'xml 2', 'xml 3']
+
+STATUS                   *junos_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_interfaces-red hat support*
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_interfaces_module.html

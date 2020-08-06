@@ -1,29 +1,242 @@
-SYNOPSIS                           *copy*
+SYNOPSIS                   *copy*
 
-The copy module copies a file on the local box to remote locations. Use the fetch module to copy files from remote locations to the local box.
+     • The copy module copies a file from the local or remote machine to a location on the remote machine.
+     • Use the fetch module to copy files from remote locations to the local box.
+     • If you need variable interpolation in copied files, use the template module. Using a variable in the content field will result in unpredictable output.
+     • For Windows targets, use the win_copy module instead.
 
-EXAMPLES                           *copy-examples*
->
-    # Example from Ansible Playbooks
-    - copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode=0644
-   
-    # The same example as above, but using a symbolic mode equivalent to 0644
-    - copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode="u=rw,g=r,o=r"
-   
-    # Another symbolic mode example, adding some permissions and removing others
-    - copy: src=/srv/myfiles/foo.conf dest=/etc/foo.conf owner=foo group=foo mode="u+rw,g-wx,o-rwx"
-   
-    # Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
-    - copy: src=/mine/ntp.conf dest=/etc/ntp.conf owner=root group=root mode=644 backup=yes
-   
-    # Copy a new "sudoers" file into place, after passing validation with visudo
-    - copy: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
-   
-      Note
-   
-      The “copy” module recursively copy facility does not scale to lots (>hundreds) of files. For alternative, see synchronize module, which is a wrapper around rsync.
-   
+PARAMETERS                   *copy-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+                                   The attributes the resulting file or directory should have.
+   attributes                      To get supported flags look at the man page for chattr on the target system.
+   string                          This string should contain the attributes in the same order as the one displayed by lsattr.
+                                   The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                   aliases: attr
+   backup           Choices:
+   boolean          • no ←         Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                    • yes
+   checksum                        SHA1 checksum of the file being transferred.
+   string                          Used to validate that the copy of the file was successful.
+   added in 2.5                    If this is not provided, ansible will use the local calculated checksum of the src file.
+   content                         When used instead of src, sets the contents of a file directly to the specified value.
+   string                          Works only when dest is a file. Creates the file if it does not exist.
+                                   For advanced formatting or if content contains a variable, use the template module.
+   decrypt          Choices:
+   boolean          • no           This option controls the autodecryption of source files using vault.
+   added in 2.4     • yes ←
+                                   Remote absolute path where the file should be copied to.
+   dest                            If src is a directory, this must be a directory too.
+   path /                          If dest is a non-existent path and if either dest ends with "/" or src is a directory, dest is created.
+   required                        If dest is a relative path, the starting directory is determined by the remote host.
+                                   If src and dest are files, the parent directory of dest is not created and the task fails if it does not already exist.
+   directory_mode                  When doing a recursive copy set the mode for the directories.
+   raw                             If this is not set we will use the system defaults.
+                                   The mode is only set on directories which are newly created, and will not affect those that already existed.
+   follow           Choices:
+   boolean          • no ←         This flag indicates that filesystem links in the destination, if they exist, should be followed.
+                    • yes
+                                   Influence whether the remote file must always be replaced.
+   force            Choices:       If yes, the remote file will be replaced when contents are different than the source.
+   boolean          • no           If no, the file will only be transferred if the destination does not exist.
+                    • yes ←        Alias thirsty has been deprecated and will be removed in 2.13.
+                                   aliases: thirsty
+   group                           Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   local_follow     Choices:
+   boolean          • no           This flag indicates that filesystem links in the source tree, if they exist, should be followed.
+   added in 2.4     • yes ←
+                                   The permissions of the destination file or directory.
+                                   For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                            octal number (like 0644 or 01777)or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number. Giving
+   path                            Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                   As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                   As of Ansible 2.3, the mode may also be the special string preserve.
+                                   preserve means that the file will be given the same permissions as the source file.
+   owner                           Name of the user that should own the file/directory, as would be fed to chown.
+   string
+                                   Influence whether src needs to be transferred or already is present remotely.
+   remote_src       Choices:       If no, it will search for src at originating/master machine.
+   boolean          • no ←         If yes it will go to the remote/target machine for the src.
+                    • yes          remote_src supports recursive copying as of version 2.8.
+                                   remote_src only works with mode=preserve as of version 2.6.
+   selevel        Default:         The level part of the SELinux file context.
+   string         "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                   When set to _default, it will use the level portion of the policy if available.
+   serole                          The role part of the SELinux file context.
+   string                          When set to _default, it will use the role portion of the policy if available.
+   setype                          The type part of the SELinux file context.
+   string                          When set to _default, it will use the type portion of the policy if available.
+   seuser                          The user part of the SELinux file context.
+   string                          By default it uses the system policy, where applicable.
+                                   When set to _default, it will use the user portion of the policy if available.
+                                   Local path to a file to copy to the remote server.
+   src                             This can be absolute or relative.
+   path                            If path is a directory, it is copied recursively. In this case, if path ends with "/", only inside contents of that directory are copied to destination.
+                                   Otherwise, if it does not end with "/", the directory itself with all contents is copied. This behavior is similar to the rsync command line tool.
+                                   Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                   By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or just
+   unsafe_writes    Choices:       broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written in an
+   boolean          • no ←         unsafe manner.
+                    • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                   writes).
+                                   IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   validate                        The validation command to run before copying into place.
+   string                          The path to the file to validate is passed in via '%s' which must be present as in the examples below.
+                                   The command is passed securely so shell features like expansion and pipes will not work.
+
+NOTES                   *copy-notes*
+
+   Note
+
+     • The copy module recursively copy facility does not scale to lots (>hundreds) of files.
+
+SEE ALSO                   *copy-see also*
+
+   See also
+
+   assemble – Assemble configuration files from fragments
+   The official documentation on the assemble module.
+
+   fetch – Fetch files from remote nodes
+   The official documentation on the fetch module.
+
+   file – Manage files and file properties
+   The official documentation on the file module.
+
+   synchronize – A wrapper around rsync to make common tasks in your playbooks quick and easy
+   The official documentation on the synchronize module.
+
+   template – Template a file out to a remote server
+   The official documentation on the template module.
+
+   win_copy – Copies files to remote locations on windows hosts
+   The official documentation on the win_copy module.
+
+EXAMPLES                   *copy-examples*
+
+ - name: Copy file with owner and permissions
+   copy:
+     src: /srv/myfiles/foo.conf
+     dest: /etc/foo.conf
+     owner: foo
+     group: foo
+     mode: '0644'
+
+ - name: Copy file with owner and permission, using symbolic representation
+   copy:
+     src: /srv/myfiles/foo.conf
+     dest: /etc/foo.conf
+     owner: foo
+     group: foo
+     mode: u=rw,g=r,o=r
+
+ - name: Another symbolic mode example, adding some permissions and removing others
+   copy:
+     src: /srv/myfiles/foo.conf
+     dest: /etc/foo.conf
+     owner: foo
+     group: foo
+     mode: u+rw,g-wx,o-rwx
+
+ - name: Copy a new "ntp.conf file into place, backing up the original if it differs from the copied version
+   copy:
+     src: /mine/ntp.conf
+     dest: /etc/ntp.conf
+     owner: root
+     group: root
+     mode: '0644'
+     backup: yes
+
+ - name: Copy a new "sudoers" file into place, after passing validation with visudo
+   copy:
+     src: /mine/sudoers
+     dest: /etc/sudoers
+     validate: /usr/sbin/visudo -csf %s
+
+ - name: Copy a "sudoers" file on the remote machine for editing
+   copy:
+     src: /etc/sudoers
+     dest: /etc/sudoers.edit
+     remote_src: yes
+     validate: /usr/sbin/visudo -csf %s
+
+ - name: Copy using inline content
+   copy:
+     content: '# This file was moved to /etc/other.conf'
+     dest: /etc/mine.conf
+
+ - name: If follow=yes, /path/to/file will be overwritten by contents of foo.conf
+   copy:
+     src: /etc/foo.conf
+     dest: /path/to/link  # link to /path/to/file
+     follow: yes
+
+ - name: If follow=no, /path/to/link will become a file and be overwritten by contents of foo.conf
+   copy:
+     src: /etc/foo.conf
+     dest: /path/to/link  # link to /path/to/file
+     follow: no
+
+RETURN VALUES                   *copy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key             Returned                                                                                  Description
+   backup_file                           Name of backup file created
+   string      changed and if backup=yes Sample:
+                                         /path/to/[email protected]:09~
+   checksum                              SHA1 checksum of the file after running copy
+   string      success                   Sample:
+                                         6e642bb8dd5c2e027bf21dd923337cbb4214f827
+   dest                                  Destination file/path
+   string      success                   Sample:
+                                         /path/to/file.txt
+   gid                                   Group id of the file, after execution
+   integer     success                   Sample:
+                                         100
+   group                                 Group of the file, after execution
+   string      success                   Sample:
+                                         httpd
+   md5sum                                MD5 checksum of the file after running copy
+   string      when supported            Sample:
+                                         2a5aeecc61dc98c4d780b14b330e3282
+   mode                                  Permissions of the target, after execution
+   string      success                   Sample:
+                                         420
+   owner                                 Owner of the file, after execution
+   string      success                   Sample:
+                                         httpd
+   size                                  Size of the target, after execution
+   integer     success                   Sample:
+                                         1220
+   src                                   Source file used for the copy on the target machine
+   string      changed                   Sample:
+                                         /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
+   state                                 State of the target, after execution
+   string      success                   Sample:
+                                         file
+   uid                                   Owner id of the file, after execution
+   integer     success                   Sample:
+                                         100
+
+STATUS                   *copy-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *copy-red hat support*
+
+     • Ansible Core Team
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *copy-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/copy_module.html
+https://docs.ansible.com/ansible/latest/modules/copy_module.html

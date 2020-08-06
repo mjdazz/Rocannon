@@ -1,0 +1,66 @@
+SYNOPSIS                   *win_disk_image*
+
+     • Manages mount behavior for a specified ISO, VHD, or VHDX image on a Windows host. When state is present, the image will be mounted under a system-assigned drive letter, which will be
+       returned in the mount_path value of the module result.
+     • Requires Windows 8+ or Windows Server 2012+.
+
+PARAMETERS                   *win_disk_image-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   image_path                         Path to an ISO, VHD, or VHDX image on the target Windows host (the file cannot reside on a network share)
+   string / required
+   state               Choices:
+   string              • absent       Whether the image should be present as a drive-letter mount or not.
+                       • present ←
+
+EXAMPLES                   *win_disk_image-examples*
+
+ # Run installer from mounted ISO, then unmount
+ - name: Ensure an ISO is mounted
+   win_disk_image:
+     image_path: C:\install.iso
+     state: present
+   register: disk_image_out
+
+ - name: Run installer from mounted ISO
+   win_package:
+     path: '{{ disk_image_out.mount_paths[0] }}setup\setup.exe'
+     product_id: 35a4e767-0161-46b0-979f-e61f282fee21
+     state: present
+
+ - name: Unmount ISO
+   win_disk_image:
+     image_path: C:\install.iso
+     state: absent
+
+RETURN VALUES                   *win_disk_image-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key           Returned                                                                                  Description
+   mount_path                        Filesystem path where the target image is mounted, this has been deprecated in favour of mount_paths.
+   string      when state is present Sample:
+                                     F:\
+   mount_paths                       A list of filesystem paths mounted from the target image.
+   list        when state is present Sample:
+                                     ['E:\\', 'F:\\']
+
+STATUS                   *win_disk_image-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_disk_image-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_disk_image-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_disk_image_module.html

@@ -1,0 +1,162 @@
+SYNOPSIS                   *azure_rm_virtualnetwork_info*
+
+     • Get facts for a specific virtual network or all virtual networks within a resource group.
+
+   Aliases: azure_rm_virtualnetwork_facts
+
+REQUIREMENTS                   *azure_rm_virtualnetwork_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_virtualnetwork_info-parameters*
+
+        Parameter        Choices/Defaults                                                                           Comments
+   ad_user                                  Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   adfs_authority_url
+   string                                   Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile          Default:            Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds; future values will allow
+   string               "latest"            use with Azure Stack.
+   added in 2.5
+                                            Controls the source of the credentials to use for authentication.
+                          Choices:          If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                          • auto            auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file ~/.azure/credentials.
+   auth_source            • cli             When set to cli, the credentials will be sources from the default Azure CLI profile.
+   string                 • credential_file Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+   added in 2.5           • env             When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment variable
+                          • msi             AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one subscription, otherwise the first
+                                            subscription is chosen.
+                                            The msi was added in Ansible 2.6.
+   cert_validation_mode   Choices:          Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when an HTTPS proxy
+   string                 • ignore          is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can also be set via credential file profile or the
+   added in 2.5           • validate        AZURE_CERT_VALIDATION environment variable.
+   client_id                                Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment    Default:            For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud, AzureUSGovernment), or
+   string               "AzureCloud"        a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or the AZURE_CLOUD_ENVIRONMENT environment
+   added in 2.4                             variable.
+   name                                     Only show results for a specific security group.
+   -
+   password                                 Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   profile                                  Security profile found in ~/.azure/credentials file.
+   string
+   resource_group                           Limit results by resource group. Required when filtering by name.
+   -
+   secret                                   Azure client secret. Use when authenticating with a Service Principal.
+   string
+   subscription_id                          Your Azure subscription Id.
+   string
+   tags                                     Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+   -
+   tenant                                   Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+
+NOTES                   *azure_rm_virtualnetwork_info-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_virtualnetwork_info-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_virtualnetwork_info-examples*
+
+ - name: Get facts for one virtual network
+   azure_rm_virtualnetwork_info:
+     resource_group: myResourceGroup
+     name: secgroup001
+
+ - name: Get facts for all virtual networks
+   azure_rm_virtualnetwork_info:
+     resource_group: myResourceGroup
+
+ - name: Get facts by tags
+   azure_rm_virtualnetwork_info:
+     tags:
+       - testing
+
+RETURN VALUES                   *azure_rm_virtualnetwork_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   azure_virtualnetworks      always   List of virtual network dicts.
+   list
+   virtualnetworks            always   List of virtual network dicts with same format as azure_rm_virtualnetwork module parameters.
+   complex
+     address_prefixes                  List of IPv4 address ranges where each is formatted using CIDR notation.
+     list                     always   Sample:
+                                       ['10.10.0.0/16']
+     dns_servers                       Custom list of DNS servers.
+     list                     always   Sample:
+                                       ['www.azure.com']
+     id                                Resource ID of the virtual network.
+     string                   always   Sample:
+                                       /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Network/virtualNetworks/vnet2001
+     location                          Valid Azure location.
+     string                   always   Sample:
+                                       eastus
+     name                              Name of the virtual network.
+     string                   always   Sample:
+                                       foo
+     provisioning_state                Provisioning state of the resource.
+     string                   always   Sample:
+                                       Succeeded
+     subnets                  always   Subnets associated with the virtual network.
+     list
+       address_prefix                  The address prefix for the subnet.
+       string                 always   Sample:
+                                       10.1.0.0/16
+       id                              Resource ID of the subnet.
+       string                 always   Sample:
+                                       /subscriptions/f64d4ee8-be94-457d-ba26-3fa6b6506cef/resourceGroups/v-xisuRG/providers/ Microsoft.Network/virtualNetworks/vnetb57dc95232/subnets/vnetb57dc95232
+       name                            Name of the subnet.
+       string                 always   Sample:
+                                       vnetb57dc95232
+       network_security_group always   Existing security group ID with which to associate the subnet.
+       string
+       provisioning_state              Provisioning state of the subnet.
+       string                 always   Sample:
+                                       Succeeded
+       route_table            always   The reference of the RouteTable resource.
+       string
+       service_endpoints               An array of service endpoints.
+       list                   always   Sample:
+                                       [{'locations': ['southeastasia', 'eastasia'], 'service': 'Microsoft.Storage'}]
+     tags                              Tags assigned to the resource. Dictionary of string:string pairs.
+     dictionary               always   Sample:
+                                       {'tag1': 'abc'}
+
+STATUS                   *azure_rm_virtualnetwork_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Houseknecht (@chouseknecht)
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_virtualnetwork_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_virtualnetwork_info_module.html

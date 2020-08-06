@@ -1,0 +1,189 @@
+SYNOPSIS                   *aws_ses_identity*
+
+     • This module allows the user to manage verified email and domain identity for SES.
+     • This covers verifying and removing identities as well as setting up complaint, bounce and delivery notification settings.
+
+REQUIREMENTS                   *aws_ses_identity-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *aws_ses_identity-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   bounce_notifications                          Setup the SNS topic used to report bounce notifications.
+   -                                             If omitted, bounce notifications will not be delivered to a SNS topic.
+                                                 If bounce notifications are not delivered to a SNS topic, feedback_forwarding must be enabled.
+           include_headers        Choices:       Whether or not to include headers when delivering to the SNS topic.
+           boolean                • no ←         If topic is not specified this will have no impact, but the SES setting is updated even if there is no topic.
+                                  • yes
+           topic                                 The ARN of the topic to send notifications to.
+           -                                     If omitted, notifications will not be delivered to a SNS topic.
+   complaint_notifications                       Setup the SNS topic used to report complaint notifications.
+   -                                             If omitted, complaint notifications will not be delivered to a SNS topic.
+                                                 If complaint notifications are not delivered to a SNS topic, feedback_forwarding must be enabled.
+           include_headers        Choices:       Whether or not to include headers when delivering to the SNS topic.
+           boolean                • no ←         If topic is not specified this will have no impact, but the SES setting is updated even if there is no topic.
+                                  • yes
+           topic                                 The ARN of the topic to send notifications to.
+           -                                     If omitted, notifications will not be delivered to a SNS topic.
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   delivery_notifications                        Setup the SNS topic used to report delivery notifications.
+   -                                             If omitted, delivery notifications will not be delivered to a SNS topic.
+           include_headers        Choices:       Whether or not to include headers when delivering to the SNS topic.
+           boolean                • no ←         If topic is not specified this will have no impact, but the SES setting is updated even if there is no topic.
+                                  • yes
+           topic                                 The ARN of the topic to send notifications to.
+           -                                     If omitted, notifications will not be delivered to a SNS topic.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   feedback_forwarding            Choices:       Whether or not to enable feedback forwarding.
+   boolean                        • no           This can only be false if both bounce_notifications and complaint_notifications specify SNS topics.
+                                  • yes ←
+   identity                                      This is the email address or domain to verify / delete.
+   - / required                                  If this contains an '@' then it will be considered an email. Otherwise it will be considered a domain.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Whether to create(or update) or delete the identity.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *aws_ses_identity-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_ses_identity-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - name: Ensure [email protected] email identity exists
+   aws_ses_identity:
+     identity: [email protected]
+     state: present
+
+ - name: Delete [email protected] email identity
+   aws_ses_identity:
+     email: [email protected]
+     state: absent
+
+ - name: Ensure example.com domain identity exists
+   aws_ses_identity:
+     identity: example.com
+     state: present
+
+ # Create an SNS topic and send bounce and complaint notifications to it
+ # instead of emailing the identity owner
+ - name: Ensure complaints-topic exists
+   sns_topic:
+     name: "complaints-topic"
+     state: present
+     purge_subscriptions: False
+   register: topic_info
+
+ - name: Deliver feedback to topic instead of owner email
+   aws_ses_identity:
+     identity: [email protected]
+     state: present
+     complaint_notifications:
+       topic: "{{ topic_info.sns_arn }}"
+       include_headers: True
+     bounce_notifications:
+       topic: "{{ topic_info.sns_arn }}"
+       include_headers: False
+     feedback_forwarding: False
+
+ # Create an SNS topic for delivery notifications and leave complaints
+ # Being forwarded to the identity owner email
+ - name: Ensure delivery-notifications-topic exists
+   sns_topic:
+     name: "delivery-notifications-topic"
+     state: present
+     purge_subscriptions: False
+   register: topic_info
+
+ - name: Delivery notifications to topic
+   aws_ses_identity:
+     identity: [email protected]
+     state: present
+     delivery_notifications:
+       topic: "{{ topic_info.sns_arn }}"
+
+RETURN VALUES                   *aws_ses_identity-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                       Key                      Returned                                                                 Description
+   identity                                              The identity being modified.
+   string                                       success  Sample:
+                                                         [email protected]
+   identity_arn                                          The arn of the identity being modified.
+   string                                       success  Sample:
+                                                         arn:aws:ses:us-east-1:12345678:identity/[email protected]
+                                                         The notification setup for the identity.
+   notification_attributes                               Sample:
+   complex                                      success  {'bounce_topic': 'arn:aws:sns:....', 'complaint_topic': 'arn:aws:sns:....', 'delivery_topic': 'arn:aws:sns:....', 'forwarding_enabled':
+                                                         False, 'headers_in_bounce_notifications_enabled': True, 'headers_in_complaint_notifications_enabled': True,
+                                                         'headers_in_delivery_notifications_enabled': True}
+     bounce_topic                                        The ARN of the topic bounce notifications are delivered to.
+     string                                              Omitted if bounce notifications are not delivered to a topic.
+     complaint_topic                                     The ARN of the topic complaint notifications are delivered to.
+     string                                              Omitted if complaint notifications are not delivered to a topic.
+     delivery_topic                                      The ARN of the topic delivery notifications are delivered to.
+     string                                              Omitted if delivery notifications are not delivered to a topic.
+     forwarding_enabled                                  Whether or not feedback forwarding is enabled.
+     boolean
+     headers_in_bounce_notifications_enabled             Whether or not headers are included in messages delivered to the bounce topic.
+     boolean
+     headers_in_complaint_notifications_enabled          Whether or not headers are included in messages delivered to the complaint topic.
+     boolean
+     headers_in_delivery_notifications_enabled           Whether or not headers are included in messages delivered to the delivery topic.
+     boolean
+   verification_attributes                               The verification information for the identity.
+   complex                                      success  Sample:
+                                                         {'verification_status': 'Pending', 'verification_token': '....'}
+     verification_status                                 The verification status of the identity.
+     string                                              Sample:
+                                                         Pending
+     verification_token                                  The verification token for a domain identity.
+     string
+
+STATUS                   *aws_ses_identity-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ed Costello (@orthanc)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_ses_identity-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_ses_identity_module.html

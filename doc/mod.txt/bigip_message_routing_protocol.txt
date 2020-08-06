@@ -1,0 +1,147 @@
+SYNOPSIS                   *bigip_message_routing_protocol*
+
+     • Manages generic message parser profile for use with the message routing framework.
+
+PARAMETERS                   *bigip_message_routing_protocol-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   description                        The user defined description of the generic parser profile.
+   string
+   disable_parser      Choices:       When yes, the generic message parser will be disabled ignoring all incoming packets and not directly send message data.
+   boolean             • no           This mode supports iRule script protocol implementations that will generate messages from the incoming transport stream and send outgoing messages on the
+                       • yes          outgoing transport stream.
+   max_egress_buffer                  Specifies the maximum size of the send buffer in bytes. If the number of bytes in the send buffer for a connection exceeds this value, the generic message
+   integer                            protocol will stop receiving outgoing messages from the router until the size of the size of the buffer drops below this setting.
+                                      The accepted range is between 0 and 4294967295 inclusive.
+   max_msg_size                       Specifies the maximum size of a received message. If a message exceeds this size, the connection will be reset.
+   integer                            The accepted range is between 0 and 4294967295 inclusive.
+   msg_terminator                     The string of characters used to terminate a message. If the message-terminator is not specified, the generic message parser will not separate the input stream
+   string                             into messages.
+   name                               Specifies the name of the generic parser profile.
+   string / required
+   no_response         Choices:
+   boolean             • no           When set, matching of responses to requests is disabled.
+                       • yes
+   parent                             The parent template of this parser profile. Once this value has been set, it cannot be changed.
+   string                             When creating a new profile, if this parameter is not specified, the default is the system-supplied genericmsg profile.
+   partition         Default:         Device partition to create route object on.
+   string            "Common"
+   provider
+   dictionary                         A dict object containing connection details.
+   added in 2.5
+     auth_provider                    Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                           This option is really used when working with BIG-IQ devices.
+     password                         The password for the user account used to connect to the BIG-IP.
+     string /                         You may omit this option by setting the environment variable F5_PASSWORD.
+     required                         aliases: pass, pwd
+     server                           The BIG-IP host.
+     string /                         You may omit this option by setting the environment variable F5_SERVER.
+     required
+     server_port     Default:         The BIG-IP server port.
+     integer         443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                      Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                             You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                          Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                          operation is completed, the module will error.
+     transport         Choices:
+     string            • cli          Configures the transport connection to use when connecting to the remote device.
+                       • rest ←
+     user                             The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string /                         You may omit this option by setting the environment variable F5_USER.
+     required
+     validate_certs    Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean           • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                       • yes ←
+   state               Choices:       When present, ensures that the route exists.
+   string              • present ←    When absent, ensures the route is removed.
+                       • absent
+
+NOTES                   *bigip_message_routing_protocol-notes*
+
+   Note
+
+     • Requires BIG-IP >= 14.0.0
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_message_routing_protocol-examples*
+
+ - name: Create a generic parser
+   bigip_message_routing_protocol:
+     name: foo
+     description: 'This is parser'
+     no_response: yes
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify a generic parser
+   bigip_message_routing_protocol:
+     name: foo
+     no_response: no
+     max_egress_buffer: 10000
+     max_msg_size: 2000
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove generic parser
+   bigip_message_routing_protocol:
+     name: foo
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_message_routing_protocol-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   description                The user defined description of the parser profile.
+   string            changed  Sample:
+                              My description
+   disable_parser             Disables generic message parser.
+   boolean           changed  Sample:
+                              True
+   max_egress_buffer          The maximum size of the send buffer in bytes.
+   integer           changed  Sample:
+                              10000
+   max_msg_size               The maximum size of a received message.
+   integer           changed  Sample:
+                              4000
+   msg_terminator             The string of characters used to terminate a message.
+   string            changed  Sample:
+                              %%%%
+   no_response                Disables matching of responses to requests.
+   boolean           changed  Sample:
+                              True
+   parent                     The parent template of this parser profile.
+   string            changed  Sample:
+                              /Common/genericmsg
+
+STATUS                   *bigip_message_routing_protocol-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_message_routing_protocol-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_message_routing_protocol_module.html

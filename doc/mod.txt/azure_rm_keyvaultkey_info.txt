@@ -1,0 +1,186 @@
+SYNOPSIS                   *azure_rm_keyvaultkey_info*
+
+     • Get facts of Azure Key Vault key.
+
+REQUIREMENTS                   *azure_rm_keyvaultkey_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_keyvaultkey_info-parameters*
+
+        Parameter        Choices/Defaults                                                                           Comments
+   ad_user                                  Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   adfs_authority_url
+   string                                   Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile          Default:            Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds; future values will allow
+   string               "latest"            use with Azure Stack.
+   added in 2.5
+                                            Controls the source of the credentials to use for authentication.
+                          Choices:          If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                          • auto            auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file ~/.azure/credentials.
+   auth_source            • cli             When set to cli, the credentials will be sources from the default Azure CLI profile.
+   string                 • credential_file Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+   added in 2.5           • env             When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment variable
+                          • msi             AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one subscription, otherwise the first
+                                            subscription is chosen.
+                                            The msi was added in Ansible 2.6.
+   cert_validation_mode   Choices:          Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when an HTTPS proxy
+   string                 • ignore          is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can also be set via credential file profile or the
+   added in 2.5           • validate        AZURE_CERT_VALIDATION environment variable.
+   client_id                                Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment    Default:            For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud, AzureUSGovernment), or
+   string               "AzureCloud"        a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or the AZURE_CLOUD_ENVIRONMENT environment
+   added in 2.4                             variable.
+   name                                     Key name. If not set, will list all keys in vault_uri.
+   string
+   password                                 Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   profile                                  Security profile found in ~/.azure/credentials file.
+   string
+   secret                                   Azure client secret. Use when authenticating with a Service Principal.
+   string
+   show_deleted_key       Choices:
+   boolean                • no ←            Set to true to show deleted keys. Set to False to show not deleted keys.
+                          • yes
+   subscription_id                          Your Azure subscription Id.
+   string
+   tags                                     Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+   list
+   tenant                                   Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+   vault_uri                                Vault uri where the key stored in.
+   string / required
+                                            Key version.
+   version              Default:            Set it to current to show latest version of a key.
+   string               "current"           Set it to all to list all versions of a key.
+                                            Set it to specific version to list specific version of a key. eg. fd2682392a504455b79c90dd04a1bf46
+
+NOTES                   *azure_rm_keyvaultkey_info-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_keyvaultkey_info-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_keyvaultkey_info-examples*
+
+ - name: Get latest version of specific key
+   azure_rm_keyvaultkey_info:
+     vault_uri: "https://myVault.vault.azure.net"
+     name: myKey
+
+ - name: List all versions of specific key
+   azure_rm_keyvaultkey_info:
+     vault_uri: "https://myVault.vault.azure.net"
+     name: myKey
+     version: all
+
+ - name: List specific version of specific key
+   azure_rm_keyvaultkey_info:
+     vault_uri: "https://myVault.vault.azure.net"
+     name: myKey
+     version: fd2682392a504455b79c90dd04a1bf46
+
+ - name: List all keys in specific key vault
+   azure_rm_keyvaultkey_info:
+       vault_uri: "https://myVault.vault.azure.net"
+
+ - name: List deleted keys in specific key vault
+   azure_rm_keyvaultkey_info:
+       vault_uri: "https://myVault.vault.azure.net"
+       show_deleted_key: True
+
+RETURN VALUES                   *azure_rm_keyvaultkey_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   keyvaults              always   List of keys in Azure Key Vault.
+   complex
+     attributes                    Key attributes.
+     -
+         created                   Creation datetime.
+         string           always   Sample:
+                                   2019-04-25T07:26:49+00:00
+         enabled                   Indicate whether the key is enabled.
+         string           always   Sample:
+                                   True
+         expires                   Expiration datetime.
+         string                    Sample:
+                                   2019-04-25T07:26:49+00:00
+         not_before                Not before datetime.
+         string                    Sample:
+                                   2019-04-25T07:26:49+00:00
+                                   Reflects the deletion recovery level currently in effect for keys in the current vault.
+         recovery_level            If it contains 'Purgeable' the key can be permanently deleted by a privileged user,
+         string           always   Otherwise, only the system can purge the key, at the end of the retention interval.
+                                   Sample:
+                                   Purgable
+         updated                   Update datetime.
+         string           always   Sample:
+                                   2019-04-25T07:26:49+00:00
+     key                           public part of a key.
+     -
+         crv                       Elliptic curve name.
+         string
+         e                         RSA public exponent.
+         string
+         n                         RSA modules.
+         string
+         x                         X component of an EC public key.
+         string
+         y                         Y component of an EC public key.
+         string
+     kid                           Key identifier.
+     string               always   Sample:
+                                   https://myVault.vault.azure.net/keys/key1/fd2682392a504455b79c90dd04a1bf46
+     managed                       True if the key's lifetime is managed by key vault.
+     boolean                       Sample:
+                                   True
+     permitted_operations          Permitted operations on the key
+     list                 always   Sample:
+                                   encrypt
+     tags                          Tags of the key.
+     list                 always   Sample:
+                                   foo
+     type                          Key type.
+     string               always   Sample:
+                                   RSA
+     version                       Key version.
+     string               always   Sample:
+                                   fd2682392a504455b79c90dd04a1bf46
+
+STATUS                   *azure_rm_keyvaultkey_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Yunge Zhu (@yungezz)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_keyvaultkey_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_keyvaultkey_info_module.html

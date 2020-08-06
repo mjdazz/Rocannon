@@ -1,0 +1,96 @@
+SYNOPSIS                   *infinity*
+
+     • Manage Infinity IPAM using REST API.
+
+PARAMETERS                   *infinity-parameters*
+
+       Parameter            Choices/Defaults                                                                             Comments
+                       Choices:
+                       • add_network
+                       • delete_network
+   action              • get_network
+   string / required   • get_network_id              Action to perform
+                       • release_ip
+                       • release_network
+                       • reserve_network
+                       • reserve_next_available_ip
+   ip_address        Default:                        IP Address for a reservation or a release.
+   string            ""
+   network_address   Default:                        Network address with CIDR format (e.g., 192.168.310.0).
+   string            ""
+                       Choices:
+   network_family      • 4 ←                         Network family defined by Infinity, e.g. IPv4, IPv6 and Dual stack
+   string              • 6
+                       • dual
+   network_id        Default:                        Network ID.
+   string            ""
+   network_location  Default:                        The parent network id for a given network.
+   integer           -1
+   network_name      Default:                        The name of a network.
+   string            ""
+   network_size      Default:                        Network bitmask (e.g. 255.255.255.220) or CIDR format (e.g., /26).
+   string            ""
+                       Choices:
+   network_type        • lan ←                       Network type defined by Infinity
+   string              • shared_lan
+                       • supernet
+   password                                          Infinity password.
+   string / required
+   server_ip                                         Infinity server_ip with IP address.
+   string / required
+   username                                          Username to access Infinity.
+   string / required                                 The user must have REST API privileges.
+
+EXAMPLES                   *infinity-examples*
+
+ ---
+ - hosts: localhost
+   connection: local
+   strategy: debug
+   tasks:
+     - name: Reserve network into Infinity IPAM
+       infinity:
+         server_ip: 80.75.107.12
+         username: username
+         password: password
+         action: reserve_network
+         network_name: reserve_new_ansible_network
+         network_family: 4
+         network_type: lan
+         network_id: 1201
+         network_size: /28
+       register: infinity
+
+RETURN VALUES                   *infinity-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   ip_info               when reserve next available ip address from a network, the ip address info ) is returned.
+   string       success  Sample:
+                         {"address": "192.168.10.3", "hostname": "", "FQDN": "", "domainname": "", "id": 3229}
+   network_id            id for a given network
+   string       success  Sample:
+                         1501
+                         when reserving a LAN network from a Infinity supernet by providing network_size, the information about the reserved network is returned.
+   network_info success  Sample:
+   string                {'network_address': '192.168.10.32/28', 'network_family': '4', 'network_id': 3102, 'network_size': None, 'description': None, 'network_location': '3085', 'ranges': {'id':
+                         0, 'name': None, 'first_ip': None, 'type': None, 'last_ip': None}, 'network_type': 'lan', 'network_name': "'reserve_new_ansible_network'"}
+
+STATUS                   *infinity-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Meirong Liu (@MeganLiu)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *infinity-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/infinity_module.html

@@ -1,0 +1,224 @@
+SYNOPSIS                   *bigip_apm_network_access*
+
+     • Manage APM Network Access resource.
+
+PARAMETERS                   *bigip_apm_network_access-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   allow_local_dns          Choices:
+   boolean                  • no           Enables local access to DNS servers configured on client prior to establishing network access connection.
+                            • yes
+   allow_local_subnet       Choices:       Enables local subnet access and local access to any host or subnet in routes specified in the client routing table.
+   boolean                  • no           When yes the system does not support integrated IP filtering.
+                            • yes
+   description                             User created network access description.
+   string
+   dns_address_space                       Specifies a list of domain names describing the target LAN DNS addresses.
+   list
+   dtls                     Choices:       When yes the network access connection uses Datagram Transport Level Security instead of TCP, to provide better throughput for high demand applications
+   boolean                  • no           like VoIP or streaming video.
+                            • yes
+   dtls_port                               Specifies the port number that the network access resource uses for secure UDP traffic with DTLS.
+   integer
+   excluded_dns_addresses                  Specifies the DNS address spaces for which traffic is not forced through the tunnel.
+   list
+   excluded_ipv4_adresses                  Specifies IPV4 address spaces for which traffic is not forced through the tunnel.
+   list
+       subnet                              The address of subnet in CIDR format, e.g. 192.168.1.0/24
+       string                              Host addresses can be specified without the CIDR mask notation.
+   excluded_ipv6_adresses                  Specifies IPV6 address spaces for which traffic is not forced through the tunnel.
+   list
+       subnet                              The address of subnet in CIDR format, e.g. 2001:db8:abcd:8000::/52
+       string                              Host addresses can be specified without the CIDR mask notation.
+   ip_version               Choices:
+   string                   • ipv4         Supported IP version on the network access resource.
+                            • ipv4-ipv6
+   ipv4_address_space                      Specifies a list of IPv4 hosts or networks describing the target LAN.
+   list                                    This option is mandatory when creating a new resource and split_tunnel is set to yes.
+       subnet                              The address of subnet in CIDR format, e.g. 192.168.1.0/24
+       string                              Host addresses can be specified without the CIDR mask notation.
+   ipv4_lease_pool                         Specifies IPV4 lease pool resource to use with network access.
+   string                                  Referencing lease pool can be done in the full path format for example, /Common/pool_name.
+                                           When lease pool is referenced in full path format, the partition parameter is ignored.
+   ipv6_address_space                      Specifies a list of IPv6 hosts or networks describing the target LAN.
+   list                                    This option is mandatory when creating a new resource and split_tunnel is set to yes.
+       subnet                              The address of subnet in CIDR format, e.g. 2001:db8:abcd:8000::/52
+       string                              Host addresses can be specified without the CIDR mask notation.
+   ipv6_lease_pool                         Specifies IPV6 lease pool resource to use with network access.
+   string                                  Referencing lease pool can be done in the full path format for example, /Common/pool_name.
+                                           When lease pool is referenced in full path format, the partition parameter is ignored.
+   name                                    Specifies the name of the APM network access to manage/create.
+   string / required
+   partition              Default:         Device partition to manage resources on.
+   string                 "Common"
+   provider
+   dictionary                              A dict object containing connection details.
+   added in 2.5
+       auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+       string                              This option is really used when working with BIG-IQ devices.
+       password                            The password for the user account used to connect to the BIG-IP.
+       string / required                   You may omit this option by setting the environment variable F5_PASSWORD.
+                                           aliases: pass, pwd
+       server                              The BIG-IP host.
+       string / required                   You may omit this option by setting the environment variable F5_SERVER.
+       server_port        Default:         The BIG-IP server port.
+       integer            443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+       ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+       path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+       timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+       integer                             the operation is completed, the module will error.
+       transport            Choices:
+       string               • cli          Configures the transport connection to use when connecting to the remote device.
+                            • rest ←
+       user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+       string / required                   You may omit this option by setting the environment variable F5_USER.
+       validate_certs       Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+       boolean              • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                            • yes ←
+   snat_pool                               Specifies the name of a SNAT pool used for implementing selective and intelligent SNATs.
+   string                                  When none the system uses no SNAT pool for this network resource.
+                                           When automap the system uses all of the self IP addresses as the translation addresses for the pool.
+   split_tunnel             Choices:
+   boolean                  • no           Specifies that only the traffic targeted to a specified address space is sent over the network access tunnel.
+                            • yes
+   state                    Choices:       When state is present, ensures that the ACL exists.
+   string                   • present ←    When state is absent, ensures that the ACL is removed.
+                            • absent
+
+NOTES                   *bigip_apm_network_access-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_apm_network_access-examples*
+
+ - name: Create a split tunnel IPV4 Network Access
+   bigip_apm_network_access:
+     name: foobar
+     ip_version: ipv4
+     split_tunnel: yes
+     snat_pool: "none"
+     ipv4_lease_pool: leasefoo
+     ipv4_address_space:
+       - subnet: 10.10.1.1
+       - subnet: 10.10.2.0/24
+     excluded_ipv4_adresses:
+       - subnet: 192.168.1.0/24
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify a split tunnel IPV4 Network Access
+   bigip_apm_network_access:
+     name: foobar
+     snat_pool: /Common/poolsnat
+     ipv4_address_space:
+       - subnet: 172.16.23.0/24
+     excluded_ipv4_adresses:
+       - subnet: 10.10.2.0/24
+     allow_local_subnet: yes
+     allow_local_dns: yes
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove Network Access
+   bigip_apm_network_access:
+     name: foobar
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_apm_network_access-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   allow_local_dns                 Enables local access to DNS servers configured on client.
+   boolean                changed  Sample:
+                                   True
+   allow_local_subnet              Enables local subnet access.
+   boolean                changed  Sample:
+                                   True
+   description                     The new description of Network Access.
+   string                 changed  Sample:
+                                   My Access
+   dns_address_space               Specifies a list of domain names describing the target LAN DNS addresses.
+   list                   changed  Sample:
+                                   ['internal.net', '".engnet.org']
+   dtls                   changed  Enables use of DTLS by network access.
+   boolean
+   dtls_port                       Specifies the port number that the network access resource uses for DTLS.
+   integer                changed  Sample:
+                                   4433
+   excluded_dns_addresses          Specifies the DNS address spaces for which traffic is not forced through the tunnel.
+   list                   changed  Sample:
+                                   ['foobar.com', 'bazbar.org']
+   excluded_ipv4_adresses          Specifies IPV4 address spaces for which traffic is not forced through the tunnel.
+   complex                changed  Sample:
+                                   hash/dictionary of values
+             subnet                The host or network address.
+             string       changed  Sample:
+                                   192.168.10.1
+   excluded_ipv6_adresses          Specifies IPV6 address spaces for which traffic is not forced through the tunnel.
+   complex                changed  Sample:
+                                   hash/dictionary of values
+             subnet                The host or network address.
+             string       changed  Sample:
+                                   2001:DB8:ABCD:0012::0
+   ip_version                      Supported IP version on the network access resource.
+   string                 changed  Sample:
+                                   ipv4-ipv6
+   ipv4_address_space              Specifies a list of IPv4 hosts or networks describing the target LAN.
+   complex                changed  Sample:
+                                   hash/dictionary of values
+             subnet                The host or network address.
+             string       changed  Sample:
+                                   192.168.10.1
+   ipv4_lease_pool                 Specifies IPV4 lease pool resource to use with network access.
+   string                 changed  Sample:
+                                   /Common/leasepoolv4
+   ipv6_address_space              Specifies a list of IPv6 hosts or networks describing the target LAN.
+   complex                changed  Sample:
+                                   hash/dictionary of values
+             subnet                The host or network address.
+             string       changed  Sample:
+                                   2001:DB8:ABCD:0012::0
+   ipv6_lease_pool                 Specifies IPV6 lease pool resource to use with network access.
+   string                 changed  Sample:
+                                   /Common/leasepoolv6
+   snat_pool                       The name of a SNAT pool used by network access resource.
+   string                 changed  Sample:
+                                   /Common/my-pool
+   split_tunnel                    Enables split tunnel on network access resource.
+   boolean                changed  Sample:
+                                   True
+
+STATUS                   *bigip_apm_network_access-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_apm_network_access-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_apm_network_access_module.html

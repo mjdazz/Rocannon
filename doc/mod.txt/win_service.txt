@@ -1,23 +1,242 @@
-SYNOPSIS                           *win_service*
+SYNOPSIS                   *win_service*
 
-New in version 1.7.
+     • Manage and query Windows services.
+     • For non-Windows targets, use the service module instead.
 
-Manages Windows services
+PARAMETERS                   *win_service-parameters*
 
-EXAMPLES                           *win_service-examples*
->
-    # Restart a service
-    win_service:
-      name: spooler
-      state: restarted
-   
-    # Set service startup mode to auto and ensure it is started
-    win_service:
-      name: spooler
-      start_mode: auto
-      state: started
-   
+          Parameter         Choices/Defaults                                                                         Comments
+   dependencies                              A list of service dependencies to set for this particular service.
+   list                                      This should be a list of service names and not the display name of the service.
+                                             This works by dependency_action to either add/remove or set the services in this list.
+                              Choices:       Used in conjunction with dependency to either add the dependencies to the existing service dependencies.
+   dependency_action          • add          Remove the dependencies to the existing dependencies.
+   string                     • remove       Set the dependencies to only the values in the list replacing the existing dependencies.
+                              • set ←
+   description                               The description to set for the service.
+   string
+   desktop_interact           Choices:       Whether to allow the service user to interact with the desktop.
+   boolean                    • no ←         This should only be set to yes when using the LocalSystem username.
+                              • yes
+   display_name                              The display name to set for the service.
+   string
+   force_dependent_services   Choices:       If yes, stopping or restarting a service with dependent services will force the dependent services to stop or restart also.
+   boolean                    • no ←         If no, stopping or restarting a service with dependent services may fail.
+                              • yes
+   name                                      Name of the service.
+   string / required                         If only the name parameter is specified, the module will report on whether the service exists or not without making any changes.
+   password                                  The password to set the service to start as.
+   string                                    This and the username argument must be supplied together.
+                                             If specifying LocalSystem, NetworkService or LocalService this field must be an empty string and not null.
+   path                                      The path to the executable to set for the service.
+   string
+                              Choices:
+   start_mode                 • auto         Set the startup type for the service.
+   string                     • delayed      A newly created service will default to auto.
+                              • disabled     delayed added in Ansible 2.3
+                              • manual
+                                             The desired state of the service.
+                              Choices:       started/stopped/absent/paused are idempotent actions that will not run commands unless necessary.
+                              • absent       restarted will always bounce the service.
+   state                      • paused       absent was added in Ansible 2.3
+   string                     • started      paused was added in Ansible 2.4
+                              • stopped      Only services that support the paused state can be paused, you can check the return value can_pause_and_continue.
+                              • restarted    You can only pause a service that is already started.
+                                             A newly created service will default to stopped.
+                                             The username to set the service to start as.
+                                             This and the password argument must be supplied together when using a local or domain account.
+   username                                  Set to LocalSystem to use the SYSTEM account.
+   string                                    A newly created service will default to LocalSystem.
+                                             If using a custom user account, it must have the SeServiceLogonRight granted to be able to start up. You can use the win_user_right module to grant this
+                                             user right for you.
+
+SEE ALSO                   *win_service-see also*
+
+   See also
+
+   service – Manage services
+   The official documentation on the service module.
+
+   win_nssm – Install a service using NSSM
+   The official documentation on the win_nssm module.
+
+   win_user_right – Manage Windows User Rights
+   The official documentation on the win_user_right module.
+
+EXAMPLES                   *win_service-examples*
+
+ - name: Restart a service
+   win_service:
+     name: spooler
+     state: restarted
+
+ - name: Set service startup mode to auto and ensure it is started
+   win_service:
+     name: spooler
+     start_mode: auto
+     state: started
+
+ - name: Pause a service
+   win_service:
+     name: Netlogon
+     state: paused
+
+ - name: Ensure that WinRM is started when the system has settled
+   win_service:
+     name: WinRM
+     start_mode: delayed
+
+ # A new service will also default to the following values:
+ # - username: LocalSystem
+ # - state: stopped
+ # - start_mode: auto
+ - name: Create a new service
+   win_service:
+     name: service name
+     path: C:\temp\test.exe
+
+ - name: Create a new service with extra details
+   win_service:
+     name: service name
+     path: C:\temp\test.exe
+     display_name: Service Name
+     description: A test service description
+
+ - name: Remove a service
+   win_service:
+     name: service name
+     state: absent
+
+ - name: Check if a service is installed
+   win_service:
+     name: service name
+   register: service_info
+
+ # This is required to be set for non-service accounts that need to run as a service
+ - name: Grant domain account the SeServiceLogonRight user right
+   win_user_right:
+     name: SeServiceLogonRight
+     users:
+     - DOMAIN\User
+     action: add
+
+ - name: Set the log on user to a domain account
+   win_service:
+     name: service name
+     state: restarted
+     username: DOMAIN\User
+     password: Password
+
+ - name: Set the log on user to a local account
+   win_service:
+     name: service name
+     state: restarted
+     username: .\Administrator
+     password: Password
+
+ - name: Set the log on user to Local System
+   win_service:
+     name: service name
+     state: restarted
+     username: LocalSystem
+     password: ''
+
+ - name: Set the log on user to Local System and allow it to interact with the desktop
+   win_service:
+     name: service name
+     state: restarted
+     username: LocalSystem
+     password: ""
+     desktop_interact: yes
+
+ - name: Set the log on user to Network Service
+   win_service:
+     name: service name
+     state: restarted
+     username: NT AUTHORITY\NetworkService
+     password: ''
+
+ - name: Set the log on user to Local Service
+   win_service:
+     name: service name
+     state: restarted
+     username: NT AUTHORITY\LocalService
+     password: ''
+
+ - name: Set dependencies to ones only in the list
+   win_service:
+     name: service name
+     dependencies: [ service1, service2 ]
+
+ - name: Add dependencies to existing dependencies
+   win_service:
+     name: service name
+     dependencies: [ service1, service2 ]
+     dependency_action: add
+
+ - name: Remove dependencies from existing dependencies
+   win_service:
+     name: service name
+     dependencies:
+     - service1
+     - service2
+     dependency_action: remove
+
+RETURN VALUES                   *win_service-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                    Returned                                                                            Description
+   can_pause_and_continue                            Whether the service can be paused and unpaused.
+   boolean                success and service exists Sample:
+                                                     True
+   depended_by            success and service exists A list of services that depend on this service.
+   list
+   dependencies           success and service exists A list of services that is depended by this service.
+   list
+   description                                       The description of the service.
+   string                 success and service exists Sample:
+                                                     Manages communication between system components.
+   desktop_interact       success and service exists Whether the current user is allowed to interact with the desktop.
+   boolean
+   display_name                                      The display name of the installed service.
+   string                 success and service exists Sample:
+                                                     CoreMessaging
+   exists                                            Whether the service exists or not.
+   boolean                success                    Sample:
+                                                     True
+   name                                              The service name or id of the service.
+   string                 success and service exists Sample:
+                                                     CoreMessagingRegistrar
+   path                                              The path to the service executable.
+   string                 success and service exists Sample:
+                                                     C:\Windows\system32\svchost.exe -k LocalServiceNoNetwork
+   start_mode                                        The startup type of the service.
+   string                 success and service exists Sample:
+                                                     manual
+   state                                             The current running status of the service.
+   string                 success and service exists Sample:
+                                                     stopped
+   username                                          The username that runs the service.
+   string                 success and service exists Sample:
+                                                     LocalSystem
+
+STATUS                   *win_service-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_service-red hat support*
+
+     • Chris Hoffman (@chrishoffman)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *win_service-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/win_service_module.html
+https://docs.ansible.com/ansible/latest/modules/win_service_module.html

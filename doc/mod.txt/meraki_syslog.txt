@@ -1,0 +1,145 @@
+SYNOPSIS                   *meraki_syslog*
+
+     • Allows for creation and management of Syslog servers within Meraki.
+
+PARAMETERS                   *meraki_syslog-parameters*
+
+           Parameter             Choices/Defaults                                                                         Comments
+   auth_key                                            Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   host                      Default:                  Hostname for Meraki dashboard.
+   string                    "api.meraki.com"          Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:                  Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   net_id                                              ID number of a network.
+   string
+   net_name                                            Name of a network.
+   string                                              aliases: name, network
+   org_id                                              ID of organization.
+   string
+   org_name                                            Name of organization.
+   string                                              aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←           Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug                 Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:                  Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   servers                                             List of syslog server settings
+   -
+              host                                     IP address or hostname of Syslog server.
+              -
+              port           Default:                  Port number Syslog server is listening on.
+              -              "514"
+                               Choices:
+                               • Wireless event log
+                               • Appliance event log
+              roles            • Switch event log
+              -                • Air Marshal events    List of applicable Syslog server roles.
+                               • Flows
+                               • URLs
+                               • IDS alerts
+                               • Security events
+   state                       Choices:                Query or edit syslog servers
+   string                      • present ←             To delete a syslog server, do not include server in list of servers
+                               • query
+   timeout                   Default:                  Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:                If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no                    Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no                    If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no                    Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_syslog-notes*
+
+   Note
+
+     • Changes to existing syslog servers replaces existing configuration. If you need to add to an existing configuration set state to query to gather the existing configuration and then modify or
+       add.
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_syslog-examples*
+
+ - name: Query syslog configurations on network named MyNet in the YourOrg organization
+   meraki_syslog:
+     auth_key: abc12345
+     status: query
+     org_name: YourOrg
+     net_name: MyNet
+   delegate_to: localhost
+
+ - name: Add single syslog server with Appliance event log role
+   meraki_syslog:
+     auth_key: abc12345
+     status: query
+     org_name: YourOrg
+     net_name: MyNet
+     servers:
+       - host: 192.0.1.2
+         port: 514
+         roles:
+           - Appliance event log
+   delegate_to: localhost
+
+ - name: Add multiple syslog servers
+   meraki_syslog:
+     auth_key: abc12345
+     status: query
+     org_name: YourOrg
+     net_name: MyNet
+     servers:
+       - host: 192.0.1.2
+         port: 514
+         roles:
+           - Appliance event log
+       - host: 192.0.1.3
+         port: 514
+         roles:
+           - Appliance event log
+           - Flows
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_syslog-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+   data     info     Information about the created or manipulated object.
+   complex
+     host            Hostname or IP address of syslog server.
+     string success  Sample:
+                     192.0.1.1
+     port            Port number for syslog communication.
+     string success  Sample:
+                     443
+     roles           List of roles assigned to syslog server.
+     list   success  Sample:
+                     Wireless event log, URLs
+
+STATUS                   *meraki_syslog-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_syslog-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_syslog_module.html

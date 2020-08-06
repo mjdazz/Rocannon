@@ -1,0 +1,288 @@
+SYNOPSIS                   *bigip_gtm_server*
+
+     • Manage BIG-IP server configuration. This module is able to manipulate the server definitions in a BIG-IP.
+
+PARAMETERS                   *bigip_gtm_server-parameters*
+
+           Parameter                Choices/Defaults                                                                        Comments
+   availability_requirements                                Specifies, if you activate more than one health monitor, the number of health monitors that must receive successful responses in order
+   dictionary                                               for the link to be considered available.
+   added in 2.8
+       at_least                                             Specifies the minimum number of active health monitors that must be successful before the link is considered up.
+       integer                                              This parameter is only relevant when a type of at_least is used.
+                                                            This parameter will be ignored if a type of either all or require is used.
+                                                            Specifies the number of probers that should be used when running probes.
+       number_of_probers                                    When creating a new virtual server, if this parameter is specified, then the number_of_probes parameter must also be specified.
+       integer                                              The value of this parameter should always be higher than, or equal to, the value of number_of_probers.
+                                                            This parameter is only relevant when a type of require is used.
+                                                            This parameter will be ignored if a type of either all or at_least is used.
+                                                            Specifies the minimum number of probes that must succeed for this server to be declared up.
+       number_of_probes                                     When creating a new virtual server, if this parameter is specified, then the number_of_probers parameter must also be specified.
+       integer                                              The value of this parameter should always be lower than, or equal to, the value of number_of_probers.
+                                                            This parameter is only relevant when a type of require is used.
+                                                            This parameter will be ignored if a type of either all or at_least is used.
+                               Choices:
+       type                    • all                        Monitor rule type when monitors is specified.
+       string                  • at_least                   When creating a new pool, if this value is not specified, the default of 'all' will be used.
+                               • require
+   datacenter                                               Data center the server belongs to. When creating a new GTM server, this value is required.
+   string
+                                                            Lists the self IP addresses and translations for each device. When creating a new GTM server, this value is required. This list is a
+                                                            complex list that specifies a number of keys.
+   devices                                                  The name key specifies a name for the device. The device name must be unique per server. This key is required.
+   list                                                     The address key contains an IP address, or list of IP addresses, for the destination server. This key is required.
+                                                            The translation key contains an IP address to translate the address value above to. This key is optional.
+                                                            Specifying duplicate name fields is a supported means of providing device addresses. In this scenario, the addresses will be assigned to
+                                                            the name's list of addresses.
+   iquery_options
+   dictionary                                               Specifies whether the Global Traffic Manager uses this BIG-IP system to conduct a variety of probes before delegating traffic to it.
+   added in 2.7
+       allow_path              Choices:
+       boolean                 • no                         Specifies that the system verifies the logical network route between a data center server and a local DNS server.
+                               • yes
+       allow_service_check     Choices:                     Specifies that the system verifies that an application on a server is running, by remotely running the application using an external
+       boolean                 • no                         service checker program.
+                               • yes
+       allow_snmp              Choices:
+       boolean                 • no                         Specifies that the system checks the performance of a server running an SNMP agent.
+                               • yes
+   limits                                                   Specifies resource thresholds or limit requirements at the pool member level.
+   dictionary                                               When you enable one or more limit settings, the system then uses that data to take members in and out of service.
+   added in 2.8                                             You can define limits for any or all of the limit settings. However, when a member does not meet the resource threshold limit
+                                                            requirement, the system marks the member as unavailable and directs load-balancing traffic to another resource.
+       bits_enabled            Choices:                     Whether the bits limit it enabled or not.
+       boolean                 • no                         This parameter allows you to switch on or off the effect of the limit.
+                               • yes
+       bits_limit                                           Specifies the maximum allowable data throughput rate, in bits per second, for the member.
+       integer                                              If the network traffic volume exceeds this limit, the system marks the member as unavailable.
+       connections_enabled     Choices:                     Whether the current connections limit it enabled or not.
+       boolean                 • no                         This parameter allows you to switch on or off the effect of the limit.
+                               • yes
+       connections_limit                                    Specifies the maximum number of concurrent connections, combined, for all of the member.
+       integer                                              If the connections exceed this limit, the system marks the server as unavailable.
+       cpu_enabled             Choices:                     Whether the CPU limit it enabled or not.
+       boolean                 • no                         This parameter allows you to switch on or off the effect of the limit.
+                               • yes
+       cpu_limit                                            Specifies the percent of CPU usage.
+       integer                                              If percent of CPU usage goes above the limit, the system marks the server as unavailable.
+       memory_enabled          Choices:                     Whether the memory limit it enabled or not.
+       boolean                 • no                         This parameter allows you to switch on or off the effect of the limit.
+                               • yes
+       memory_limit                                         Specifies the available memory required by the virtual servers on the server.
+       integer                                              If available memory falls below this limit, the system marks the server as unavailable.
+       packets_enabled         Choices:                     Whether the packets limit it enabled or not.
+       boolean                 • no                         This parameter allows you to switch on or off the effect of the limit.
+                               • yes
+       packets_limit                                        Specifies the maximum allowable data transfer rate, in packets per second, for the member.
+       integer                                              If the network traffic volume exceeds this limit, the system marks the member as unavailable.
+                               Choices:                     Specifies whether the system auto-discovers the links for this server. When creating a new GTM server, if this parameter is not
+   link_discovery              • enabled                    specified, the default value disabled is used.
+   string                      • disabled                   If you set this parameter to enabled or enabled-no-delete, you must also ensure that the virtual_server_discovery parameter is also set
+                               • enabled-no-delete          to enabled or enabled-no-delete.
+   monitors                                                 Specifies the health monitors that the system currently uses to monitor this resource.
+   list                                                     When availability_requirements.type is require, you may only have a single monitor in the monitors list.
+   added in 2.8
+   name                                                     The name of the server.
+   string / required
+   partition                 Default:
+   string                    "Common"                       Device partition to manage resources on.
+   added in 2.5
+                               Choices:
+                               • any                        Specifies the type of prober to use to monitor this server's resources when the preferred prober is not available.
+   prober_fallback             • inside-datacenter          This option is ignored in TMOS version 12.x.
+   string                      • outside-datacenter         From TMOS version 13.x and up, when prober_preference is set to pool a prober_pool parameter must be specified.
+   added in 2.8                • inherit                    The choices are mutually exclusive with prober_preference parameter, with the exception of any-available or none option.
+                               • pool
+                               • none
+   prober_pool                                              Specifies the name of the prober pool to use to monitor this server's resources.
+   string                                                   From TMOS version 13.x and up, this parameter is mandatory when prober_preference is set to pool.
+   added in 2.8                                             Format of the name can be either be prepended by partition (/Common/foo), or specified just as an object name (foo).
+                                                            In TMOS version 12.x prober_pool can be set to empty string to revert to default setting of inherit.
+                               Choices:
+   prober_preference           • inside-datacenter          Specifies the type of prober to use to monitor this server's resources.
+   string                      • outside-datacenter         This option is ignored in TMOS version 12.x.
+   added in 2.8                • inherit                    From TMOS version 13.x and up, when prober_preference is set to pool a prober_pool parameter must be specified.
+                               • pool
+   provider
+   dictionary                                               A dict object containing connection details.
+   added in 2.5
+       auth_provider                                        Configures the auth provider for to obtain authentication tokens from the remote device.
+       string                                               This option is really used when working with BIG-IQ devices.
+       password                                             The password for the user account used to connect to the BIG-IP.
+       string / required                                    You may omit this option by setting the environment variable F5_PASSWORD.
+                                                            aliases: pass, pwd
+       server                                               The BIG-IP host.
+       string / required                                    You may omit this option by setting the environment variable F5_SERVER.
+       server_port           Default:                       The BIG-IP server port.
+       integer               443                            You may omit this option by setting the environment variable F5_SERVER_PORT.
+       ssh_keyfile                                          Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+       path                                                 You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+       timeout                                              Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is
+       integer                                              exceeded before the operation is completed, the module will error.
+       transport               Choices:
+       string                  • cli                        Configures the transport connection to use when connecting to the remote device.
+                               • rest ←
+       user                                                 The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+       string / required                                    You may omit this option by setting the environment variable F5_USER.
+       validate_certs          Choices:                     If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+       boolean                 • no                         You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                               • yes ←
+                               Choices:
+                               • alteon-ace-director
+                               • cisco-css
+                               • cisco-server-load-balancer
+                               • generic-host
+                               • radware-wsd
+                               • windows-nt-4.0
+   server_type                 • bigip                      Specifies the server type. The server type determines the metrics that the system can collect from the server. When creating a new GTM
+   string                      • cisco-local-director-v2    server, the default value bigip is used.
+                               • extreme                    aliases: product
+                               • generic-load-balancer
+                               • sun-solaris
+                               • cacheflow
+                               • cisco-local-director-v3
+                               • foundry-server-iron
+                               • netapp
+                               • windows-2000-server
+                               Choices:
+   state                       • present ←                  The server state. If absent, an attempt to delete the server will be made. This will only succeed if this server is not in use by a
+   string                      • absent                     virtual server. present creates the server and enables it. If enabled, enable the server if it exists. If disabled, create the server if
+                               • enabled                    needed, and set state to disabled.
+                               • disabled
+                               Choices:
+   virtual_server_discovery    • enabled                    Specifies whether the system auto-discovers the virtual servers for this server. When creating a new GTM server, if this parameter is not
+   string                      • disabled                   specified, the default value disabled is used.
+                               • enabled-no-delete
+
+NOTES                   *bigip_gtm_server-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_gtm_server-examples*
+
+ - name: Create server "GTM_Server"
+   bigip_gtm_server:
+     name: GTM_Server
+     datacenter: /Common/New York
+     server_type: bigip
+     link_discovery: disabled
+     virtual_server_discovery: disabled
+     devices:
+       - name: server_1
+         address: 1.1.1.1
+       - name: server_2
+         address: 2.2.2.1
+         translation: 192.168.2.1
+       - name: server_2
+         address: 2.2.2.2
+       - name: server_3
+         addresses:
+           - address: 3.3.3.1
+           - address: 3.3.3.2
+       - name: server_4
+         addresses:
+           - address: 4.4.4.1
+             translation: 192.168.14.1
+           - address: 4.4.4.2
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Create server "GTM_Server" with expanded keys
+   bigip_gtm_server:
+     server: lb.mydomain.com
+     user: admin
+     password: secret
+     name: GTM_Server
+     datacenter: /Common/New York
+     server_type: bigip
+     link_discovery: disabled
+     virtual_server_discovery: disabled
+     devices:
+       - name: server_1
+         address: 1.1.1.1
+       - name: server_2
+         address: 2.2.2.1
+         translation: 192.168.2.1
+       - name: server_2
+         address: 2.2.2.2
+       - name: server_3
+         addresses:
+           - address: 3.3.3.1
+           - address: 3.3.3.2
+       - name: server_4
+         addresses:
+           - address: 4.4.4.1
+             translation: 192.168.14.1
+           - address: 4.4.4.2
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_gtm_server-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key            Returned                                                                           Description
+   bits_enabled                      Whether the bits limit is enabled.
+   boolean                  changed  Sample:
+                                     True
+   bits_limit                        The new bits_enabled limit.
+   integer                  changed  Sample:
+                                     100
+   connections_enabled               Whether the connections limit is enabled.
+   boolean                  changed  Sample:
+                                     True
+   connections_limit                 The new connections_limit limit.
+   integer                  changed  Sample:
+                                     100
+   datacenter                        The new datacenter which the server is part of.
+   string                   changed  Sample:
+                                     datacenter01
+   link_discovery                    The new link_discovery configured on the remote device.
+   string                   changed  Sample:
+                                     enabled
+   monitors                          The new list of monitors for the resource.
+   list                     changed  Sample:
+                                     ['/Common/monitor1', '/Common/monitor2']
+   packets_enabled                   Whether the packets limit is enabled.
+   boolean                  changed  Sample:
+                                     True
+   packets_limit                     The new packets_limit limit.
+   integer                  changed  Sample:
+                                     100
+   server_type                       The new type of the server.
+   string                   changed  Sample:
+                                     bigip
+   virtual_server_discovery          The new virtual_server_discovery name for the trap destination.
+   string                   changed  Sample:
+                                     disabled
+
+STATUS                   *bigip_gtm_server-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Robert Teller (@r-teller)
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_gtm_server-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_gtm_server_module.html

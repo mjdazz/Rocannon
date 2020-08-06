@@ -1,29 +1,114 @@
-SYNOPSIS                           *ini_file*
+SYNOPSIS                   *ini_file*
 
-Manage (add, remove, change) individual settings in an INI-style file without having to manage the file as a whole with, say, template or assemble. Adds missing sections if they don’t exist.
-Comments are discarded when the source file is read, and therefore will not show up in the destination file.
+     • Manage (add, remove, change) individual settings in an INI-style file without having to manage the file as a whole with, say, template or assemble.
+     • Adds missing sections if they don’t exist.
+     • Before Ansible 2.0, comments are discarded when the source file is read, and therefore will not show up in the destination file.
+     • Since Ansible 2.3, this module adds missing ending newlines to files to keep in line with the POSIX standard, even when no other modifications need to be applied.
 
-EXAMPLES                           *ini_file-examples*
->
-    # Ensure "fav=lemonade is in section "[drinks]" in specified file
-    - ini_file: dest=/etc/conf section=drinks option=fav value=lemonade mode=0600 backup=yes
-   
-    - ini_file: dest=/etc/anotherconf
-                section=drinks
-                option=temperature
-                value=cold
-                backup=yes
-   
-      Note
-   
-      While it is possible to add an option without specifying a value, this makes no sense.
-   
-      Note
-   
-      A section named default cannot be added by the module, but if it exists, individual options within the section can be updated. (This is a limitation of Python’s ConfigParser.) Either use
-      template to create a base INI file with a [default] section, or use lineinfile to add the missing line.
-   
+PARAMETERS                   *ini_file-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   allow_no_value    Choices:
+   boolean           • no ←         Allow option without value and without '=' symbol.
+   added in 2.6      • yes
+                                    The attributes the resulting file or directory should have.
+   attributes                       To get supported flags look at the man page for chattr on the target system.
+   string                           This string should contain the attributes in the same order as the one displayed by lsattr.
+                                    The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                    aliases: attr
+   backup            Choices:
+   boolean           • no ←         Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                     • yes
+   create            Choices:       If set to no, the module will fail if the file does not already exist.
+   boolean           • no           By default it will create the file if it is missing.
+                     • yes ←
+   group                            Name of the group that should own the file/directory, as would be fed to chown.
+   string
+                                    The permissions the resulting file or directory should have.
+                                    For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                             octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                           Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                    As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                    As of Ansible 2.6, the mode may also be the special string preserve.
+                                    When set to preserve the file will be given the same permissions as the source file.
+   no_extra_spaces   Choices:
+   boolean           • no ←         Do not insert spaces before and after '=' symbol.
+                     • yes
+   option                           If set (required for changing a value), this is the name of the option.
+   string                           May be omitted if adding/removing a whole section.
+   owner                            Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path                             Path to the INI-style file; this file is created if required.
+   path / required                  Before Ansible 2.3 this option was only usable as dest.
+                                    aliases: dest
+   section                          Section name in INI file. This is added if state=present automatically when a single value is being set.
+   string /                         If left empty or set to null, the option will be placed before the first section.
+   required                         Using null is also required if the config format does not support sections.
+   selevel         Default:         The level part of the SELinux file context.
+   string          "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                    When set to _default, it will use the level portion of the policy if available.
+   serole                           The role part of the SELinux file context.
+   string                           When set to _default, it will use the role portion of the policy if available.
+   setype                           The type part of the SELinux file context.
+   string                           When set to _default, it will use the type portion of the policy if available.
+   seuser                           The user part of the SELinux file context.
+   string                           By default it uses the system policy, where applicable.
+                                    When set to _default, it will use the user portion of the policy if available.
+   state             Choices:
+   string            • absent       If set to absent the option or section will be removed if present instead of created.
+                     • present ←
+                                    Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                    By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or
+   unsafe_writes     Choices:       just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written
+   boolean           • no ←         in an unsafe manner.
+                     • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                    writes).
+                                    IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   value                            The string value to be associated with an option.
+   string                           May be omitted when removing an option.
+
+NOTES                   *ini_file-notes*
+
+   Note
+
+     • While it is possible to add an option without specifying a value, this makes no sense.
+     • As of Ansible 2.3, the dest option has been changed to path as default, but dest still works as well.
+
+EXAMPLES                   *ini_file-examples*
+
+ # Before Ansible 2.3, option 'dest' was used instead of 'path'
+ - name: Ensure "fav=lemonade is in section "[drinks]" in specified file
+   ini_file:
+     path: /etc/conf
+     section: drinks
+     option: fav
+     value: lemonade
+     mode: '0600'
+     backup: yes
+
+ - name: Ensure "temperature=cold is in section "[drinks]" in specified file
+   ini_file:
+     path: /etc/anotherconf
+     section: drinks
+     option: temperature
+     value: cold
+     backup: yes
+
+STATUS                   *ini_file-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jan-Piet Mens (@jpmens)
+     • Ales Nosek (@noseka1)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ini_file-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ini_file_module.html
+https://docs.ansible.com/ansible/latest/modules/ini_file_module.html

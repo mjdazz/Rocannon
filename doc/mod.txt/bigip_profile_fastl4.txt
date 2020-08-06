@@ -1,0 +1,292 @@
+SYNOPSIS                   *bigip_profile_fastl4*
+
+     • Manages Fast L4 profiles.
+
+PARAMETERS                   *bigip_profile_fastl4-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+                                            Specifies a timeout for Late Binding.
+                                            This is the time limit for the client to provide the application data required to select a back-end server. That is, this is the maximum time that the
+   client_timeout                           BIG-IP system waits for information about the sender and the target.
+   string                                   This information typically arrives at the beginning of the FIX logon packet.
+                                            When 0, or immediate, allows for no time beyond the moment of the first packet transmission.
+                                            When indefinite, disables the limit. This allows the client unlimited time to send the sender and target information.
+   description                              Description of the profile.
+   string
+                             Choices:       Specifies whether a qualified late-binding connection requires an explicit iRule command to migrate down to ePVA hardware.
+   explicit_flow_migration   • no           When no, a late-binding connection migrates down to ePVA immediately after establishing the server-side connection.
+   boolean                   • yes          When yes, this parameter stops automatic migration to ePVA, and requires that the iRule explicitly trigger ePVA processing by invoking the release_flow
+                                            iRule command. This allows an iRule author to control when the connection uses the ePVA hardware.
+                                            Specifies the length of time that a connection is idle (has no traffic) before the connection is eligible for deletion.
+                                            When creating a new profile, if this parameter is not specified, the remote device will choose a default value appropriate for the profile, based on its
+   idle_timeout                             parent profile.
+   string                                   When a number is specified, indicates the number of seconds that the TCP connection can remain idle before the system deletes it.
+                                            When indefinite, specifies that the system does not delete TCP connections regardless of how long they remain idle.
+                                            When 0, or immediate, specifies that the system deletes connections immediately when they become idle.
+                             Choices:       Specifies the Don't Fragment (DF) bit setting in the IP Header of the outgoing TCP packet.
+   ip_df_mode                • pmtu         When pmtu, sets the outgoing IP Header DF bit based on IP pmtu setting.
+   string                    • preserve     When preserve, sets the outgoing Packet's IP Header DF bit to be same as incoming IP Header DF bit.
+                             • set          When set, sets the outgoing packet's IP Header DF bit.
+                             • clear        When clear, clears the outgoing packet's IP Header DF bit.
+                                            Specifies, for IP traffic passing through the system to clients, whether the system modifies the IP type-of-service (ToS) setting in an IP packet header.
+   ip_tos_to_client                         May be a number between 0 and 255 (inclusive). When a number, specifies the IP ToS setting that the system inserts in the IP packet header.
+   string                                   When pass-through, specifies that the IP ToS setting remains unchanged.
+                                            When mimic, specifies that the system sets the ToS level of outgoing packets to the same ToS level of the most-recently received incoming packet.
+                                            Specifies, for IP traffic passing through the system to back-end servers, whether the system modifies the IP type-of-service (ToS) setting in an IP
+   ip_tos_to_server                         packet header.
+   string                                   May be a number between 0 and 255 (inclusive). When a number, specifies the IP ToS setting that the system inserts in the IP packet header.
+                                            When pass-through, specifies that the IP ToS setting remains unchanged.
+                                            When mimic, specifies that the system sets the ToS level of outgoing packets to the same ToS level of the most-recently received incoming packet.
+                             Choices:       Specifies the outgoing TCP packet's IP Header TTL mode.
+   ip_ttl_mode               • proxy        When proxy, sets the outgoing IP Header TTL value to 255/64 for IPv4/IPv6 respectively.
+   string                    • preserve     When preserve, sets the outgoing IP Header TTL value to be same as the incoming IP Header TTL value.
+                             • decrement    When decrement, sets the outgoing IP Header TTL value to be one less than the incoming TTL value.
+                             • set          When set, sets the outgoing IP Header TTL value to a specific value(as specified by ip_ttl_v4 or ip_ttl_v6.
+   ip_ttl_v4                                Specifies the outgoing packet's IP Header TTL value for IPv4 traffic.
+   integer                                  Maximum TTL value that can be specified is 255.
+   ip_ttl_v6                                Specifies the outgoing packet's IP Header TTL value for IPv6 traffic.
+   integer                                  Maximum TTL value that can be specified is 255.
+   keep_alive_interval                      Specifies the keep-alive probe interval, in seconds.
+   integer
+   late_binding              Choices:
+   boolean                   • no           Enables intelligent selection of a back-end server or pool, using an iRule to make the selection.
+                             • yes
+                                            Specifies, for IP traffic passing through the system to clients, whether the system modifies the link quality-of-service (QoS) setting in an IP packet
+                                            header.
+   link_qos_to_client                       The link QoS value prioritizes the IP packet relative to other Layer 2 traffic.
+   string                                   You can specify a number between 0 (lowest priority) and 7 (highest priority).
+                                            When a number, specifies the link QoS setting that the system inserts in the IP packet header.
+                                            When pass-through, specifies that the link QoS setting remains unchanged.
+                                            Specifies, for IP traffic passing through the system to back-end servers, whether the system modifies the link quality-of-service (QoS) setting in an IP
+                                            packet header.
+   link_qos_to_server                       The link QoS value prioritizes the IP packet relative to other Layer 2 traffic.
+   string                                   You can specify a number between 0 (lowest priority) and 7 (highest priority).
+                                            When a number, specifies the link QoS setting that the system inserts in the IP packet header.
+                                            When pass-through, specifies that the link QoS setting remains unchanged.
+   loose_close               Choices:       When yes, specifies, that the system closes a loosely-initiated connection when the system receives the first FIN packet from either the client or the
+   boolean                   • no           server.
+                             • yes
+   loose_initialization      Choices:       When yes, specifies that the system initializes a connection when it receives any TCP packet, rather that requiring a SYN packet for connection
+   boolean                   • no           initiation.
+                             • yes
+   mss_override                             Specifies a maximum segment size (MSS) override for server-side connections.
+   integer                                  Valid range is 256 to 9162 or 0 to disable.
+   name                                     Specifies the name of the profile.
+   string / required
+   parent                                   Specifies the profile from which this profile inherits settings.
+   string                                   When creating a new profile, if this parameter is not specified, the default is the system-supplied fastL4 profile.
+   partition               Default:         Device partition to manage resources on.
+   string                  "Common"
+   provider
+   dictionary                               A dict object containing connection details.
+   added in 2.5
+       auth_provider                        Configures the auth provider for to obtain authentication tokens from the remote device.
+       string                               This option is really used when working with BIG-IQ devices.
+       password                             The password for the user account used to connect to the BIG-IP.
+       string / required                    You may omit this option by setting the environment variable F5_PASSWORD.
+                                            aliases: pass, pwd
+       server                               The BIG-IP host.
+       string / required                    You may omit this option by setting the environment variable F5_SERVER.
+       server_port         Default:         The BIG-IP server port.
+       integer             443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+       ssh_keyfile                          Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+       path                                 You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+       timeout                              Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+       integer                              the operation is completed, the module will error.
+       transport             Choices:
+       string                • cli          Configures the transport connection to use when connecting to the remote device.
+                             • rest ←
+       user                                 The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+       string / required                    You may omit this option by setting the environment variable F5_USER.
+       validate_certs        Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+       boolean               • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                             • yes ←
+   reassemble_fragments      Choices:
+   boolean                   • no           When yes, specifies that the system reassembles IP fragments.
+                             • yes
+   receive_window_size                      Specifies the amount of data the BIG-IP system can accept without acknowledging the server.
+   integer
+   reset_on_timeout          Choices:
+   boolean                   • no           When yes, specifies that the system sends a reset packet (RST) in addition to deleting the connection, when a connection exceeds the idle timeout value.
+                             • yes
+   rtt_from_client           Choices:
+   boolean                   • no           When yes, specifies that the system uses TCP timestamp options to measure the round-trip time to the client.
+                             • yes
+   rtt_from_server           Choices:
+   boolean                   • no           When yes, specifies that the system uses TCP timestamp options to measure the round-trip time to the server.
+                             • yes
+   server_sack               Choices:
+   boolean                   • no           Specifies whether the BIG-IP system processes Selective ACK (Sack) packets in cookie responses from the server.
+                             • yes
+   server_timestamp          Choices:
+   boolean                   • no           Specifies whether the BIG-IP system processes timestamp request packets in cookie responses from the server.
+                             • yes
+   state                     Choices:       When present, ensures that the profile exists.
+   string                    • present ←    When absent, ensures the profile is removed.
+                             • absent
+   syn_cookie_mss                           Specifies a value that overrides the SYN cookie maximum segment size (MSS) value in the SYN-ACK packet that is returned to the client.
+   integer                                  Valid values are 0, and values from 256 through 9162.
+   tcp_close_timeout                        Specifies the length of time a connection can remain idle before deletion.
+   string
+   tcp_generate_isn          Choices:
+   boolean                   • no           When yes, specifies that the system generates initial sequence numbers for SYN packets, according to RFC 1948.
+                             • yes
+                                            Specifies the acceptable duration for a TCP handshake, that is, the maximum idle time between a client synchronization (SYN) and a client acknowledgment
+   tcp_handshake_timeout                    (ACK). If the TCP handshake takes longer than the timeout, the system automatically closes the connection.
+   string                                   When a number, specifies how long the system can try to establish a TCP handshake before timing out.
+                                            When disabled, specifies that the system does not apply a timeout to a TCP handshake.
+                                            When indefinite, specifies that attempting a TCP handshake never times out.
+   tcp_strip_sack            Choices:
+   boolean                   • no           When yes, specifies that the system blocks a TCP selective ACK SackOK option from passing to the server on an initiating SYN.
+                             • yes
+   tcp_time_wait_timeout                    Specifies the number of milliseconds that a connection is in the TIME-WAIT state before closing.
+   integer
+                             Choices:
+   tcp_timestamp_mode        • preserve     Specifies the action that the system should take on TCP timestamps.
+   string                    • rewrite
+                             • strip
+                             Choices:
+   tcp_wscale_mode           • preserve     Specifies the action that the system should take on TCP windows.
+   string                    • rewrite
+                             • strip
+                                            Specifies how to handle client-timeout errors for Late Binding.
+   timeout_recovery          Choices:       Timeout errors may be caused by a DoS attack or a lossy connection.
+   string                    • disconnect   When disconnect, causes the BIG-IP system to drop the connection.
+                             • fallback     When fallback, reverts the connection to normal FastL4 load-balancing, based on the client's TCP header. This causes the BIG-IP system to choose a
+                                            back-end server based only on the source address and port.
+
+NOTES                   *bigip_profile_fastl4-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_profile_fastl4-examples*
+
+ - name: Create a fastL4 profile
+   bigip_profile_fastl4:
+     name: foo
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_profile_fastl4-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key           Returned                                                                            Description
+   client_timeout                   The new client timeout value of the resource.
+   string                  changed  Sample:
+                                    True
+   description                      The new description.
+   string                  changed  Sample:
+                                    My description
+   explicit_flow_migration          The new flow migration setting.
+   boolean                 changed  Sample:
+                                    True
+   idle_timeout                     The new idle timeout setting.
+   string                  changed  Sample:
+                                    123
+   ip_df_mode                       The new Don't Fragment Flag (DF) setting.
+   string                  changed  Sample:
+                                    clear
+   ip_tos_to_client                 The new IP ToS to Client setting.
+   string                  changed  Sample:
+                                    100
+   ip_tos_to_server                 The new IP ToS to Server setting.
+   string                  changed  Sample:
+                                    100
+   ip_ttl_mode                      The new Time To Live (TTL) setting.
+   string                  changed  Sample:
+                                    proxy
+   ip_ttl_v4                        The new Time To Live (TTL) v4 setting.
+   integer                 changed  Sample:
+                                    200
+   ip_ttl_v6                        The new Time To Live (TTL) v6 setting.
+   integer                 changed  Sample:
+                                    200
+   keep_alive_interval              The new TCP Keep Alive Interval setting.
+   integer                 changed  Sample:
+                                    100
+   late_binding                     The new Late Binding setting.
+   boolean                 changed  Sample:
+                                    True
+   link_qos_to_client               The new Link QoS to Client setting.
+   string                  changed  Sample:
+                                    pass-through
+   link_qos_to_server               The new Link QoS to Server setting.
+   string                  changed  Sample:
+                                    123
+   loose_close             changed  The new Loose Close setting.
+   boolean
+   loose_initialization    changed  The new Loose Initiation setting.
+   boolean
+   mss_override                     The new Maximum Segment Size Override setting.
+   integer                 changed  Sample:
+                                    300
+   reassemble_fragments             The new Reassemble IP Fragments setting.
+   boolean                 changed  Sample:
+                                    True
+   receive_window_size              The new Receive Window setting.
+   integer                 changed  Sample:
+                                    1024
+   reset_on_timeout        changed  The new Reset on Timeout setting.
+   boolean
+   rtt_from_client         changed  The new RTT from Client setting.
+   boolean
+   rtt_from_server         changed  The new RTT from Server setting.
+   boolean
+   server_sack                      The new Server Sack setting.
+   boolean                 changed  Sample:
+                                    True
+   server_timestamp                 The new Server Timestamp setting.
+   boolean                 changed  Sample:
+                                    True
+   syn_cookie_mss                   The new SYN Cookie MSS setting.
+   integer                 changed  Sample:
+                                    1024
+   tcp_close_timeout                The new TCP Close Timeout setting.
+   string                  changed  Sample:
+                                    100
+   tcp_generate_isn        changed  The new Generate Initial Sequence Number setting.
+   boolean
+   tcp_handshake_timeout            The new TCP Handshake Timeout setting.
+   integer                 changed  Sample:
+                                    5
+   tcp_strip_sack          changed  The new Strip Sack OK setting.
+   boolean
+   tcp_time_wait_timeout            The new TCP Time Wait Timeout setting.
+   integer                 changed  Sample:
+                                    100
+   tcp_timestamp_mode               The new TCP Timestamp Mode setting.
+   string                  changed  Sample:
+                                    rewrite
+   tcp_wscale_mode                  The new TCP Window Scale Mode setting.
+   string                  changed  Sample:
+                                    strip
+   timeout_recovery                 The new Timeout Recovery setting.
+   string                  changed  Sample:
+                                    fallback
+
+STATUS                   *bigip_profile_fastl4-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_profile_fastl4-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_profile_fastl4_module.html

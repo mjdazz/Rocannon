@@ -1,0 +1,146 @@
+SYNOPSIS                   *bigip_tunnel*
+
+     • Manages tunnels on a BIG-IP. Tunnels are usually based upon a tunnel profile which defines both default arguments and constraints for the tunnel.
+     • Due to this, this module exposes a number of settings that may or may not be related to the type of tunnel you are working with. It is important that you take this into consideration when
+       declaring your tunnel config.
+     • If a specific tunnel does not support the parameter you are considering, the documentation of the parameter will usually make mention of this. Otherwise, when configuring that parameter on
+       the device, the device will notify you.
+
+PARAMETERS                   *bigip_tunnel-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+                       Choices:        Allows you to configure auto last hop on a per-tunnel basis.
+   auto_last_hop       • default       When creating a new tunnel, if this parameter is supported by the tunnel profile but not specified, the default is default.
+   string              • enabled       When default, means that the system uses the global auto-lasthop setting to send back the request.
+                       • disabled      When enabled, allows the system to send return traffic to the MAC address that transmitted the request, even if the routing table points to a different
+                                       network or interface. As a result, the system can send return traffic to clients even when there is no matching route.
+   description                         Description of the tunnel.
+   string
+                                       When applied to a GRE tunnel, this value specifies an optional field in the GRE header, used to authenticate the source of the packet.
+   key                                 When applied to a VXLAN or Geneve tunnel, this value specifies the Virtual Network Identifier (VNI).
+   integer                             When applied to an NVGRE tunnel, this value specifies the Virtual Subnet Identifier (VSID).
+                                       When creating a new tunnel, if this parameter is supported by the tunnel profile but not specified, the default value is 0.
+   local_address                       Specifies the IP address of the local endpoint of the tunnel.
+   string
+                       Choices:        Specifies how the tunnel carries traffic.
+   mode                • bidirectional When creating a new tunnel, if this parameter is supported by the tunnel profile but not specified, the default is bidirectional.
+   string              • inbound       When bidirectional, specifies that the tunnel carries both inbound and outbound traffic.
+                       • outbound      When inbound, specifies that the tunnel carries only incoming traffic.
+                                       When outbound, specifies that the tunnel carries only outgoing traffic.
+   mtu                                 Specifies the maximum transmission unit (MTU) of the tunnel.
+   integer                             When creating a new tunnel, if this parameter is supported by the tunnel profile but not specified, the default value is 0.
+                                       The valid range is from 0 to 65515.
+   name                                Specifies the name of the tunnel.
+   string / required
+   partition         Default:          Device partition to manage resources on.
+   string            "Common"
+   profile                             Specifies the profile to associate with the tunnel for handling traffic.
+   string                              Depending on your selection, other settings become available or disappear.
+                                       This parameter may not be changed after it is set.
+   provider
+   dictionary                          A dict object containing connection details.
+   added in 2.5
+     auth_provider                     Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                            This option is really used when working with BIG-IQ devices.
+     password                          The password for the user account used to connect to the BIG-IP.
+     string /                          You may omit this option by setting the environment variable F5_PASSWORD.
+     required                          aliases: pass, pwd
+     server                            The BIG-IP host.
+     string /                          You may omit this option by setting the environment variable F5_SERVER.
+     required
+     server_port     Default:          The BIG-IP server port.
+     integer         443               You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                       Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                              You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                           Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                           operation is completed, the module will error.
+     transport         Choices:
+     string            • cli           Configures the transport connection to use when connecting to the remote device.
+                       • rest ←
+     user                              The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string /                          You may omit this option by setting the environment variable F5_USER.
+     required
+     validate_certs    Choices:        If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean           • no            You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                       • yes ←
+   remote_address                      Specifies the IP address of the remote endpoint of the tunnel.
+   string                              For dslite, fec (when configuring the FEC tunnel for receiving traffic only), v6rd (configured as a border relay), or map, the tunnel must have an unspecified
+                                       remote address (any).
+   secondary_address                   Specifies a non-floating IP address for the tunnel, to be used with host-initiated traffic.
+   string
+   state               Choices:        When present, ensures that the tunnel exists.
+   string              • present ←     When absent, ensures the tunnel is removed.
+                       • absent
+                                       Specifies the Type of Service (TOS) value to insert in the encapsulating header of transmitted packets.
+   tos                                 When creating a new tunnel, if this parameter is supported by the tunnel profile but not specified, the default value is preserve.
+   string                              When preserve, the system copies the TOS value from the inner header to the outer header.
+                                       You may also specify a numeric value. The possible values are from 0 to 255.
+   traffic_group                       Specifies the traffic group to associate with the tunnel.
+   string                              This value cannot be changed after it is set. This is a limitation of BIG-IP.
+                       Choices:        Specifies that the tunnel operates in transparent mode.
+   transparent         • no            When yes, you can inspect and manipulate the encapsulated traffic flowing through the BIG-IP system.
+   boolean             • yes           A transparent tunnel terminates a tunnel while presenting the illusion that the tunnel transits the device unmodified (that is, the BIG-IP system appears as
+                                       if it were an intermediate router that simply routes IP traffic through the device).
+                       Choices:        Enables or disables the tunnel to use the PMTU (Path MTU) information provided by ICMP NeedFrag error messages.
+   use_pmtu            • no            If yes and the tunnel mtu is set to 0, the tunnel will use the PMTU information.
+   boolean             • yes           If yes and the tunnel mtu is fixed to a non-zero value, the tunnel will use the minimum of PMTU and MTU.
+                                       If no, the tunnel will use fixed MTU or calculate its MTU using tunnel encapsulation configurations.
+
+NOTES                   *bigip_tunnel-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_tunnel-examples*
+
+ - name: Create a VXLAN tunnel
+   bigip_tunnel:
+     name: openshift-tunnel
+     local_address: 192.1681.240
+     key: 0
+     secondary_address: 192.168.1.100
+     mtu: 0
+     use_pmtu: yes
+     tos: preserve
+     auto_last_hop: default
+     traffic_group: traffic-group-1
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_tunnel-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   param1           The new param1 value of the resource.
+   boolean changed  Sample:
+                    True
+   param2           The new param2 value of the resource.
+   string  changed  Sample:
+                    Foo is bar
+
+STATUS                   *bigip_tunnel-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_tunnel-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_tunnel_module.html

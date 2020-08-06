@@ -1,0 +1,219 @@
+SYNOPSIS                   *zabbix_template*
+
+     • This module allows you to create, modify, delete and dump Zabbix templates.
+     • Multiple templates can be created or modified at once if passing JSON or XML to module.
+
+REQUIREMENTS                   *zabbix_template-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • zabbix-api >= 0.5.4
+
+PARAMETERS                   *zabbix_template-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   clear_templates                             List of template names to be unlinked and cleared from the template.
+   list / elements=string                      This option is ignored if template is being created for the first time.
+   dump_format                  Choices:
+   string                       • json ←       Format to use when dumping template with state=dump.
+   added in 2.9                 • xml
+   http_login_password                         Basic Auth password
+   string
+   http_login_user                             Basic Auth login
+   string / required
+   link_templates                              List of template names to be linked to the template.
+   list / elements=string                      Templates that are not specified and are linked to the existing template will be only unlinked and not cleared from the template.
+   login_password                              Zabbix user password.
+   string / required
+   login_user                                  Zabbix user name.
+   string / required
+   macros                                      List of user macros to create for the template.
+   list / elements=dictionary                  Macros that are not specified and are present on the existing template will be replaced.
+                                               See examples on how to pass macros.
+              name                             Name of the macro.
+              string                           Must be specified in {$NAME} format.
+              value                            Value of the macro.
+              string
+   server_url                                  URL of Zabbix server, with protocol (http or https). url is an alias for server_url.
+   string / required                           aliases: url
+                                Choices:       Required state of the template.
+   state                        • present ←    On state=present template will be created/imported or updated depending if it is already present.
+   string                       • absent       On state=dump template content will get dumped into required format specified in dump_format.
+                                • dump         On state=absent template will be deleted.
+   template_groups                             List of host groups to add template to when template is created.
+   list / elements=string                      Replaces the current host groups the template belongs to if the template is already present.
+                                               Required when creating a new template with state=present and template_name is used. Not required when updating an existing template.
+   template_json                               JSON dump of templates to import.
+   json                                        Multiple templates can be imported this way.
+                                               Mutually exclusive with template_name and template_xml.
+   template_name                               Name of Zabbix template.
+   string                                      Required when template_json or template_xml are not used.
+                                               Mutually exclusive with template_json and template_xml.
+                                               XML dump of templates to import.
+   template_xml                                Multiple templates can be imported this way.
+   string                                      You are advised to pass XML structure matching the structure used by your version of Zabbix server.
+   added in 2.9                                Custom XML structure can be imported as long as it is valid, but may not yield consistent idempotent results on subsequent runs.
+                                               Mutually exclusive with template_name and template_json.
+   timeout                    Default:         The timeout of API request (seconds).
+   integer                    10
+   validate_certs               Choices:
+   boolean                      • no           If set to False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+   added in 2.5                 • yes ←
+
+NOTES                   *zabbix_template-notes*
+
+   Note
+
+     • If you use login_password=zabbix, the word “zabbix” is replaced by “""""” in all module output, because login_password uses no_log. See this FAQ for more information.
+
+EXAMPLES                   *zabbix_template-examples*
+
+ ---
+ - name: Create a new Zabbix template linked to groups, macros and templates
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_name: ExampleHost
+     template_groups:
+       - Role
+       - Role2
+     link_templates:
+       - Example template1
+       - Example template2
+     macros:
+       - macro: '{$EXAMPLE_MACRO1}'
+         value: 30000
+       - macro: '{$EXAMPLE_MACRO2}'
+         value: 3
+       - macro: '{$EXAMPLE_MACRO3}'
+         value: 'Example'
+     state: present
+
+ - name: Unlink and clear templates from the existing Zabbix template
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_name: ExampleHost
+     clear_templates:
+       - Example template3
+       - Example template4
+     state: present
+
+ - name: Import Zabbix templates from JSON
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_json: "{{ lookup('file', 'zabbix_apache2.json') }}"
+     state: present
+
+ - name: Import Zabbix templates from XML
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_xml: "{{ lookup('file', 'zabbix_apache2.json') }}"
+     state: present
+
+ - name: Import Zabbix template from Ansible dict variable
+   zabbix_template:
+     login_user: username
+     login_password: password
+     server_url: http://127.0.0.1
+     template_json:
+       zabbix_export:
+         version: '3.2'
+         templates:
+           - name: Template for Testing
+             description: 'Testing template import'
+             template: Test Template
+             groups:
+               - name: Templates
+             applications:
+               - name: Test Application
+     state: present
+
+ - name: Configure macros on the existing Zabbix template
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_name: Template
+     macros:
+       - macro: '{$TEST_MACRO}'
+         value: 'Example'
+     state: present
+
+ - name: Delete Zabbix template
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_name: Template
+     state: absent
+
+ - name: Dump Zabbix template as JSON
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_name: Template
+     state: dump
+   register: template_dump
+
+ - name: Dump Zabbix template as XML
+   local_action:
+     module: zabbix_template
+     server_url: http://127.0.0.1
+     login_user: username
+     login_password: password
+     template_name: Template
+     dump_format: xml
+     state: dump
+   register: template_dump
+
+RETURN VALUES                   *zabbix_template-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                 Description
+                             The JSON dump of the template
+   template_json when state  Sample:
+   string        is dump     {'zabbix_export': {'date': '2017-11-29T16:37:24Z', 'templates': [{'templates': [], 'description': '', 'httptests': [], 'screens': [], 'applications': [],
+                             'discovery_rules': [], 'groups': [{'name': 'Templates'}], 'name': 'Test Template', 'items': [], 'macros': [], 'template': 'test'}], 'version': '3.2', 'groups':
+                             [{'name': 'Templates'}]}}
+                 when state  dump of the template in XML representation
+   template_xml  is dump and Sample:
+   string        dump_format <?xml version="1.0" ?> <zabbix_export> <version>4.2</version> <date>2019-07-12T13:37:26Z</date> <groups> <group> <name>Templates</name> </group> </groups> <templates>
+                 is xml      <template> <template>test</template> <name>Test Template</name> <description/> <groups> <group> <name>Templates</name> </group> </groups> <applications/> <items/>
+                             <discovery_rules/> <httptests/> <macros/> <templates/> <screens/> <tags/> </template> </templates> </zabbix_export>
+
+STATUS                   *zabbix_template-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • sookido (@sookido)
+     • Logan Vig (@logan2211)
+     • Dusan Matejka (@D3DeFi)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *zabbix_template-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/zabbix_template_module.html

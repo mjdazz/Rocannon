@@ -1,22 +1,205 @@
-SYNOPSIS                           *win_get_url*
+SYNOPSIS                   *win_get_url*
 
-New in version 1.7.
+     • Downloads files from HTTP, HTTPS, or FTP to the remote server.
+     • The remote server must have direct access to the remote resource.
+     • For non-Windows targets, use the get_url module instead.
 
-Fetches a file from a URL and saves to locally
+PARAMETERS                   *win_get_url-parameters*
 
-EXAMPLES                           *win_get_url-examples*
->
-    # Downloading a JPEG and saving it to a file with the ansible command.
-    # Note the "dest" is quoted rather instead of escaping the backslashes
-    $ ansible -i hosts -c winrm -m win_get_url -a "url=http://www.example.com/earthrise.jpg dest='C:\Users\Administrator\earthrise.jpg'" all
-   
-    # Playbook example
-    - name: Download earthrise.jpg to 'C:\Users\RandomUser\earthrise.jpg'
-      win_get_url:
-        url: 'http://www.example.com/earthrise.jpg'
-        dest: 'C:\Users\RandomUser\earthrise.jpg'
-   
+            Parameter           Choices/Defaults                                                                       Comments
+   checksum                                       If a checksum is passed to this parameter, the digest of the destination file will be calculated after it is downloaded to ensure its integrity and
+   string                                         verify that the transfer completed successfully.
+   added in 2.8                                   This option cannot be set with checksum_url.
+                                  Choices:
+   checksum_algorithm             • md5
+   string                         • sha1 ←        Specifies the hashing algorithm used when calculating the checksum of the remote and destination file.
+   added in 2.8                   • sha256
+                                  • sha384
+                                  • sha512
+   checksum_url                                   Specifies a URL that contains the checksum values for the resource at url.
+   string                                         Like checksum, this is used to verify the integrity of the remote transfer.
+   added in 2.8                                   This option cannot be set with checksum.
+   client_cert                                    The path to the client certificate (.pfx) that is used for X509 authentication. This path can either be the path to the pfx on the filesystem or
+   string                                         the PowerShell certificate path Cert:\CurrentUser\My\<thumbprint>.
+   added in 2.9                                   The WinRM connection must be authenticated with CredSSP or become is used on the task if the certificate file is not password protected.
+                                                  Other authentication types can set client_cert_password when the cert is password protected.
+   client_cert_password
+   string                                         The password for client_cert if the cert is password protected.
+   added in 2.9
+   dest                                           The location to save the file at the URL.
+   path / required                                Be sure to include a filename and extension as appropriate.
+   follow_redirects               Choices:        Whether or the module should follow redirects.
+   string                         • all           all will follow all redirect.
+   added in 2.9                   • none          none will not follow any redirect.
+                                  • safe ←        safe will follow only "safe" redirects, where "safe" means that the client is only doing a GET or HEAD on the URI to which it is being redirected.
+                                  Choices:        If yes, will download the file every time and replace the file if the contents change. If no, will only download the file if it does not exist or
+   force                          • no            the remote file has been modified more recently than the local file.
+   boolean                        • yes ←         This works by sending an http HEAD request to retrieve last modified time of the requested resource, so for this to work, the remote web server
+                                                  must support HEAD requests.
+   force_basic_auth               Choices:        By default the authentication header is only sent when a webservice responses to an initial request with a 401 status. Since some basic auth
+   boolean                        • no ←          services do not properly send a 401, logins will fail.
+   added in 2.5                   • yes           This option forces the sending of the Basic authentication header upon the original request.
+   headers                                        Extra headers to set on the request.
+   dictionary                                     This should be a dictionary where the key is the header name and the value is the value for that header.
+   added in 2.4
+   http_agent                   Default:          Header to identify as, generally appears in web server logs.
+   string                       "ansible-httpget" This is set to the User-Agent header on a HTTP request.
+   added in 2.9
+   maximum_redirection          Default:          Specify how many times the module will redirect a connection to an alternative URI before the connection fails.
+   integer                      50                If set to 0 or follow_redirects is set to none, or safe when not doing a GET or HEAD it prevents all redirection.
+   added in 2.9
+   method
+   string                                         This option is not for use with win_get_url and should be ignored.
+   added in 2.9
+   proxy_password                                 The password for proxy_username.
+   string
+   proxy_url                                      An explicit proxy to use for the request.
+   string                                         By default, the request will use the IE defined proxy unless use_proxy is set to no.
+                                                  Uses the current user's credentials when authenticating with a proxy host protected with NTLM, Kerberos, or Negotiate authentication.
+   proxy_use_default_credential   Choices:        Proxies that use Basic auth will still require explicit credentials through the proxy_username and proxy_password options.
+   boolean                        • no ←          The module will only have access to the user's credentials if using become with a password, you are connecting with SSH using a password, or
+   added in 2.9                   • yes           connecting with WinRM using CredSSP or Kerberos with delegation.
+                                                  If not using become or a different auth method to the ones stated above, there will be no default credentials available and no proxy authentication
+                                                  will occur.
+   proxy_username                                 The username to use for proxy authentication.
+   string
+   timeout                      Default:          Specifies how long the request can be pending before it times out (in seconds).
+   integer                      30                Set to 0 to specify an infinite timeout.
+   added in 2.4
+   url                                            The full URL of a file to download.
+   string / required
+   url_password                                   The password for url_username.
+   string                                         aliases: password
+   url_username                                   The username to use for authentication.
+   string                                         aliases: user, username
+                                                  Uses the current user's credentials when authenticating with a server protected with NTLM, Kerberos, or Negotiate authentication.
+   use_default_credential         Choices:        Sites that use Basic auth will still require explicit credentials through the url_username and url_password options.
+   boolean                        • no ←          The module will only have access to the user's credentials if using become with a password, you are connecting with SSH using a password, or
+   added in 2.9                   • yes           connecting with WinRM using CredSSP or Kerberos with delegation.
+                                                  If not using become or a different auth method to the ones stated above, there will be no default credentials available and no authentication will
+                                                  occur.
+   use_proxy                      Choices:
+   boolean                        • no            If no, it will not use the proxy defined in IE for the current user.
+   added in 2.4                   • yes ←
+   validate_certs                 Choices:        If no, SSL certificates will not be validated.
+   boolean                        • no            This should only be used on personally controlled sites using self-signed certificates.
+   added in 2.4                   • yes ←
+
+NOTES                   *win_get_url-notes*
+
+   Note
+
+     • If your URL includes an escaped slash character (%2F) this module will convert it to a real slash. This is a result of the behaviour of the System.Uri class as described in the
+       documentation.
+     • Since Ansible 2.8, the module will skip reporting a change if the remote checksum is the same as the local local even when force=yes. This is to better align with get_url.
+
+SEE ALSO                   *win_get_url-see also*
+
+   See also
+
+   get_url – Downloads files from HTTP, HTTPS, or FTP to node
+   The official documentation on the get_url module.
+
+   uri – Interacts with webservices
+   The official documentation on the uri module.
+
+   win_uri – Interacts with webservices
+   The official documentation on the win_uri module.
+
+   win_inet_proxy – Manages proxy settings for WinINet and Internet Explorer
+   The official documentation on the win_inet_proxy module.
+
+EXAMPLES                   *win_get_url-examples*
+
+ - name: Download earthrise.jpg to specified path
+   win_get_url:
+     url: http://www.example.com/earthrise.jpg
+     dest: C:\Users\RandomUser\earthrise.jpg
+
+ - name: Download earthrise.jpg to specified path only if modified
+   win_get_url:
+     url: http://www.example.com/earthrise.jpg
+     dest: C:\Users\RandomUser\earthrise.jpg
+     force: no
+
+ - name: Download earthrise.jpg to specified path through a proxy server.
+   win_get_url:
+     url: http://www.example.com/earthrise.jpg
+     dest: C:\Users\RandomUser\earthrise.jpg
+     proxy_url: http://10.0.0.1:8080
+     proxy_username: username
+     proxy_password: password
+
+ - name: Download file from FTP with authentication
+   win_get_url:
+     url: ftp://server/file.txt
+     dest: '%TEMP%\ftp-file.txt'
+     url_username: ftp-user
+     url_password: ftp-password
+
+ - name: Download src with sha256 checksum url
+   win_get_url:
+     url: http://www.example.com/earthrise.jpg
+     dest: C:\temp\earthrise.jpg
+     checksum_url: http://www.example.com/sha256sum.txt
+     checksum_algorithm: sha256
+     force: True
+
+ - name: Download src with sha256 checksum url
+   win_get_url:
+     url: http://www.example.com/earthrise.jpg
+     dest: C:\temp\earthrise.jpg
+     checksum: a97e6837f60cec6da4491bab387296bbcd72bdba
+     checksum_algorithm: sha1
+     force: True
+
+RETURN VALUES                   *win_get_url-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key                    Returned                                                                                 Description
+   checksum_dest                                      <algorithm> checksum of the file after the download
+   string        success and dest has been downloaded Sample:
+                                                      6e642bb8dd5c2e027bf21dd923337cbb4214f827
+   checksum_src                                       <algorithm> checksum of the remote resource
+   string        force=yes or dest did not exist      Sample:
+                                                      6e642bb8dd5c2e027bf21dd923337cbb4214f827
+   dest                                               destination file/path
+   string        always                               Sample:
+                                                      C:\Users\RandomUser\earthrise.jpg
+   elapsed                                            The elapsed seconds between the start of poll and the end of the module.
+   float         always                               Sample:
+                                                      2.1406487
+   msg                                                Error message, or HTTP status message from web-server
+   string        always                               Sample:
+                                                      OK
+   size                                               size of the dest file
+   integer       success                              Sample:
+                                                      1220
+   status_code                                        HTTP status code
+   integer       always                               Sample:
+                                                      200
+   url                                                requested url
+   string        always                               Sample:
+                                                      http://www.example.com/earthrise.jpg
+
+STATUS                   *win_get_url-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_get_url-red hat support*
+
+     • Paul Durivage (@angstwad)
+     • Takeshi Kuramochi (@tksarah)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *win_get_url-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/win_get_url_module.html
+https://docs.ansible.com/ansible/latest/modules/win_get_url_module.html

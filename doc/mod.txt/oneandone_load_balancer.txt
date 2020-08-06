@@ -1,0 +1,197 @@
+SYNOPSIS                   *oneandone_load_balancer*
+
+     • Create, remove, update load balancers. This module has a dependency on 1and1 >= 1.0
+
+REQUIREMENTS                   *oneandone_load_balancer-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • 1and1
+     • python >= 2.6
+
+PARAMETERS                   *oneandone_load_balancer-parameters*
+
+         Parameter         Choices/Defaults                                                                           Comments
+   add_rules                                   A list of rules that will be added to an existing load balancer. It is syntax is the same as the one used for rules parameter. Used in combination
+   -                                           with update state.
+   add_server_ips                              A list of server identifiers (id or name) to be assigned to a load balancer. Used in combination with update state.
+   -
+   api_url                                     Custom API URL. Overrides the ONEANDONE_API_URL environement variable.
+   -
+   auth_token                                  Authenticating API token provided by 1&1.
+   - / required
+                           Choices:
+   datacenter              • US ←
+   -                       • ES                ID or country code of the datacenter where the load balancer will be created.
+                           • DE
+                           • GB
+   description                                 Description of the load balancer. maxLength=256
+   -
+   health_check_interval                       Health check period in seconds. minimum=5, maximum=300, multipleOf=1
+   - / required
+   health_check_parse                          Regular expression to check. Required for HTTP health check. maxLength=64
+   -
+   health_check_path                           Url to call for checking. Required for HTTP health check. maxLength=1000
+   -
+                           Choices:
+   health_check_test       • NONE
+   - / required            • TCP               Type of the health check. At the moment, HTTP is not allowed.
+                           • HTTP
+                           • ICMP
+   load_balancer                               The identifier (id or name) of the load balancer used with update state.
+   - / required
+   method                  Choices:
+   - / required            • ROUND_ROBIN       Balancing procedure.
+                           • LEAST_CONNECTIONS
+   name                                        Load balancer name used with present state. Used as identifier (id or name) when used with absent state. maxLength=128
+   - / required
+   persistence             Choices:
+   boolean / required      • no                Persistence.
+                           • yes
+   persistence_time                            Persistence time in seconds. Required if persistence is enabled. minimum=30, maximum=1200, multipleOf=1
+   - / required
+   remove_rules                                A list of rule ids that will be removed from an existing load balancer. Used in combination with update state.
+   -
+   remove_server_ips                           A list of server IP ids to be unassigned from a load balancer. Used in combination with update state.
+   -
+   rules                                       A list of rule objects that will be set for the load balancer. Each rule must contain protocol, port_balancer, and port_server parameters, in addition
+   - / required                                to source parameter, which is optional.
+                           Choices:
+   state                   • present ←         Define a load balancer state to create, remove, or update.
+   -                       • absent
+                           • update
+   wait                    Choices:
+   boolean                 • no                wait for the instance to be in state 'running' before returning
+                           • yes ←
+   wait_interval         Default:              Defines the number of seconds to wait when using the _wait_for methods
+   -                     5
+   wait_timeout          Default:              how long before wait gives up, in seconds
+   -                     600
+
+EXAMPLES                   *oneandone_load_balancer-examples*
+
+ # Provisioning example. Create and destroy a load balancer.
+
+ - oneandone_load_balancer:
+     auth_token: oneandone_private_api_key
+     name: ansible load balancer
+     description: Testing creation of load balancer with ansible
+     health_check_test: TCP
+     health_check_interval: 40
+     persistence: true
+     persistence_time: 1200
+     method: ROUND_ROBIN
+     datacenter: US
+     rules:
+      -
+        protocol: TCP
+        port_balancer: 80
+        port_server: 80
+        source: 0.0.0.0
+     wait: true
+     wait_timeout: 500
+
+ - oneandone_load_balancer:
+     auth_token: oneandone_private_api_key
+     name: ansible load balancer
+     wait: true
+     wait_timeout: 500
+     state: absent
+
+ # Update a load balancer.
+
+ - oneandone_load_balancer:
+     auth_token: oneandone_private_api_key
+     load_balancer: ansible load balancer
+     name: ansible load balancer updated
+     description: Testing the update of a load balancer with ansible
+     wait: true
+     wait_timeout: 500
+     state: update
+
+ # Add server to a load balancer.
+
+ - oneandone_load_balancer:
+     auth_token: oneandone_private_api_key
+     load_balancer: ansible load balancer updated
+     description: Adding server to a load balancer with ansible
+     add_server_ips:
+      - server identifier (id or name)
+     wait: true
+     wait_timeout: 500
+     state: update
+
+ # Remove server from a load balancer.
+
+ - oneandone_load_balancer:
+     auth_token: oneandone_private_api_key
+     load_balancer: ansible load balancer updated
+     description: Removing server from a load balancer with ansible
+     remove_server_ips:
+      - B2504878540DBC5F7634EB00A07C1EBD (server's ip id)
+     wait: true
+     wait_timeout: 500
+     state: update
+
+ # Add rules to a load balancer.
+
+ - oneandone_load_balancer:
+     auth_token: oneandone_private_api_key
+     load_balancer: ansible load balancer updated
+     description: Adding rules to a load balancer with ansible
+     add_rules:
+      -
+        protocol: TCP
+        port_balancer: 70
+        port_server: 70
+        source: 0.0.0.0
+      -
+        protocol: TCP
+        port_balancer: 60
+        port_server: 60
+        source: 0.0.0.0
+     wait: true
+     wait_timeout: 500
+     state: update
+
+ # Remove rules from a load balancer.
+
+ - oneandone_load_balancer:
+     auth_token: oneandone_private_api_key
+     load_balancer: ansible load balancer updated
+     description: Adding rules to a load balancer with ansible
+     remove_rules:
+      - rule_id #1
+      - rule_id #2
+      - ...
+     wait: true
+     wait_timeout: 500
+     state: update
+
+RETURN VALUES                   *oneandone_load_balancer-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   load_balancer          Information about the load balancer that was processed
+   dictionary    always   Sample:
+                          {"id": "92B74394A397ECC3359825C1656D67A6", "name": "Default Balancer"}
+
+STATUS                   *oneandone_load_balancer-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Amel Ajdinovic (@aajdinov)
+     • Ethan Devenport (@edevenport)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *oneandone_load_balancer-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/oneandone_load_balancer_module.html

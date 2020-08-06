@@ -1,0 +1,163 @@
+SYNOPSIS                   *cs_vpn_customer_gateway*
+
+     • Create, update and remove VPN customer gateways.
+
+REQUIREMENTS                   *cs_vpn_customer_gateway-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_vpn_customer_gateway-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   account                            Account the VPN customer gateway is related to.
+   string
+                       Choices:       HTTP method used to query the API endpoint.
+   api_http_method     • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string              • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is get if not specified.
+   api_key                            API key of the CloudStack API.
+   string                             If not given, the CLOUDSTACK_KEY env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   api_region        Default:         Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                         Secret key of the CloudStack API.
+   string                             If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+                                      HTTP timeout in seconds.
+   api_timeout                        If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                            As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is 10 seconds if not specified.
+   api_url                            URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                             If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   cidrs                              List of guest CIDRs behind the gateway.
+   list                               Required if state=present.
+                                      aliases: cidr
+   domain                             Domain the VPN customer gateway is related to.
+   string
+   dpd                 Choices:       Enable Dead Peer Detection.
+   boolean             • no           Disabled per default by the API on creation if not set.
+                       • yes
+   esp_lifetime                       Lifetime in seconds of phase 2 VPN connection.
+   integer                            Defaulted to 3600 by the API on creation if not set.
+   esp_policy                         ESP policy in the format e.g. aes256-sha1;modp1536.
+   string                             Required if state=present.
+   force_encap         Choices:       Force encapsulation for NAT traversal.
+   boolean             • no           Disabled per default by the API on creation if not set.
+                       • yes
+   gateway                            Public IP address of the gateway.
+   string                             Required if state=present.
+   ike_lifetime                       Lifetime in seconds of phase 1 VPN connection.
+   integer                            Defaulted to 86400 by the API on creation if not set.
+   ike_policy                         IKE policy in the format e.g. aes256-sha1;modp1536.
+   string                             Required if state=present.
+   ipsec_psk                          IPsec Preshared-Key.
+   string                             Cannot contain newline or double quotes.
+                                      Required if state=present.
+   name                               Name of the gateway.
+   string / required
+   poll_async          Choices:
+   boolean             • no           Poll async jobs until job has finished.
+                       • yes ←
+   project                            Name of the project the VPN gateway is related to.
+   string
+   state               Choices:
+   string              • present ←    State of the VPN customer gateway.
+                       • absent
+
+NOTES                   *cs_vpn_customer_gateway-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_vpn_customer_gateway-examples*
+
+ - name: Create a vpn customer gateway
+   cs_vpn_customer_gateway:
+     name: my vpn customer gateway
+     cidrs:
+     - 192.168.123.0/24
+     - 192.168.124.0/24
+     esp_policy: aes256-sha1;modp1536
+     gateway: 10.10.1.1
+     ike_policy: aes256-sha1;modp1536
+     ipsec_psk: "S3cr3Tk3Y"
+   delegate_to: localhost
+
+ - name: Remove a vpn customer gateway
+   cs_vpn_customer_gateway:
+     name: my vpn customer gateway
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_vpn_customer_gateway-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   account               Account the VPN customer gateway is related to.
+   string       success  Sample:
+                         example account
+   cidrs                 List of CIDRs of this customer gateway.
+   list         success  Sample:
+                         ['10.10.10.0/24']
+   domain                Domain the VPN customer gateway is related to.
+   string       success  Sample:
+                         example domain
+   dpd                   Whether dead pear detection is enabled or not.
+   boolean      success  Sample:
+                         True
+   esp_lifetime          Lifetime in seconds of phase 2 VPN connection.
+   integer      success  Sample:
+                         86400
+   esp_policy            IKE policy of the VPN customer gateway.
+   string       success  Sample:
+                         aes256-sha1;modp1536
+   force_encap           Whether encapsulation for NAT traversal is enforced or not.
+   boolean      success  Sample:
+                         True
+   gateway               IP address of the VPN customer gateway.
+   string       success  Sample:
+                         10.100.212.10
+   id                    UUID of the VPN customer gateway.
+   string       success  Sample:
+                         04589590-ac63-4ffc-93f5-b698b8ac38b6
+   ike_lifetime          Lifetime in seconds of phase 1 VPN connection.
+   integer      success  Sample:
+                         86400
+   ike_policy            ESP policy of the VPN customer gateway.
+   string       success  Sample:
+                         aes256-sha1;modp1536
+   name                  Name of this customer gateway.
+   string       success  Sample:
+                         my vpn customer gateway
+   project               Name of project the VPN customer gateway is related to.
+   string       success  Sample:
+                         Production
+
+STATUS                   *cs_vpn_customer_gateway-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_vpn_customer_gateway-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_vpn_customer_gateway_module.html

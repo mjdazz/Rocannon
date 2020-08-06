@@ -1,0 +1,168 @@
+SYNOPSIS                   *nios_zone*
+
+     • Adds and/or removes instances of DNS zone objects from Infoblox NIOS servers. This module manages NIOS zone_auth objects using the Infoblox WAPI interface over REST.
+
+REQUIREMENTS                   *nios_zone-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • infoblox-client
+
+PARAMETERS                   *nios_zone-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   comment                                Configures a text string comment to be associated with the instance of this object. The provided text string will be configured on the object instance.
+   -
+   extattrs                               Allows for the configuration of Extensible Attributes on the instance of the object. This argument accepts a set of key / value pairs for configuration.
+   -
+   fqdn                                   Specifies the qualified domain name to either add or remove from the NIOS instance based on the configured state value.
+   - / required                           aliases: name
+   grid_primary                           Configures the grid primary servers for this zone.
+   -
+    name                                  The name of the grid primary server
+    -
+   grid_secondaries                       Configures the grid secondary servers for this zone.
+   -
+    name                                  The name of the grid secondary server
+    -
+   ns_group
+   -                                      Configures the name server group for this zone. Name server group is mutually exclusive with grid primary and grid secondaries.
+   added in 2.6
+   provider                               A dict object containing connection details.
+   dictionary
+    host                                  Specifies the DNS host name or address for connecting to the remote instance of NIOS WAPI over REST
+    string / required                     Value can also be specified using INFOBLOX_HOST environment variable.
+    http_request_timeout Default:         The amount of time before to wait before receiving a response
+    integer              10               Value can also be specified using INFOBLOX_HTTP_REQUEST_TIMEOUT environment variable.
+    max_results          Default:         Specifies the maximum number of objects to be returned, if set to a negative number the appliance will return an error when the number of returned objects
+    integer              1000             would exceed the setting.
+                                          Value can also be specified using INFOBLOX_MAX_RESULTS environment variable.
+    max_retries          Default:         Configures the number of attempted retries before the connection is declared usable
+    integer              3                Value can also be specified using INFOBLOX_MAX_RETRIES environment variable.
+    password                              Specifies the password to use to authenticate the connection to the remote instance of NIOS.
+    string                                Value can also be specified using INFOBLOX_PASSWORD environment variable.
+    username                              Configures the username to use to authenticate the connection to the remote instance of NIOS.
+    string                                Value can also be specified using INFOBLOX_USERNAME environment variable.
+    validate_certs         Choices:       Boolean value to enable or disable verifying SSL certificates
+    boolean                • no ←         Value can also be specified using INFOBLOX_SSL_VERIFY environment variable.
+                           • yes          aliases: ssl_verify
+    wapi_version         Default:         Specifies the version of WAPI to use
+    string               "2.1"            Value can also be specified using INFOBLOX_WAP_VERSION environment variable.
+                                          Until ansible 2.8 the default WAPI was 1.4
+   restart_if_needed       Choices:
+   boolean                 • no           If set to true, causes the NIOS DNS service to restart and load the new zone configuration
+   added in 2.6            • yes
+   state                   Choices:       Configures the intended state of the instance of the object on the NIOS server. When this value is set to present, the object is configured on the device
+   -                       • present ←    and when this value is set to absent the value is removed (if necessary) from the device.
+                           • absent
+   view                  Default:         Configures the DNS view name for the configured resource. The specified DNS zone must already exist on the running NIOS instance prior to configuring
+   - / required          "default"        zones.
+                                          aliases: dns_view
+   zone_format           Default:         Create an authorative Reverse-Mapping Zone which is an area of network space for which one or more name servers-primary and secondary-have the
+   -                     "FORWARD"        responsibility to respond to address-to-name queries. It supports reverse-mapping zones for both IPv4 and IPv6 addresses.
+   added in 2.7
+
+NOTES                   *nios_zone-notes*
+
+   Note
+
+     • This module must be run locally, which can be achieved by specifying connection: local.
+     • Please read the Infoblox Guide for more detailed information on how to use Infoblox with Ansible.
+
+EXAMPLES                   *nios_zone-examples*
+
+ - name: configure a zone on the system using grid primary and secondaries
+   nios_zone:
+     name: ansible.com
+     grid_primary:
+       - name: gridprimary.grid.com
+     grid_secondaries:
+       - name: gridsecondary1.grid.com
+       - name: gridsecondary2.grid.com
+     restart_if_needed: true
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: configure a zone on the system using a name server group
+   nios_zone:
+     name: ansible.com
+     ns_group: examplensg
+     restart_if_needed: true
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: configure a reverse mapping zone on the system using IPV4 zone format
+   nios_zone:
+     name: 10.10.10.0/24
+     zone_format: IPV4
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: configure a reverse mapping zone on the system using IPV6 zone format
+   nios_zone:
+     name: 100::1/128
+     zone_format: IPV6
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: update the comment and ext attributes for an existing zone
+   nios_zone:
+     name: ansible.com
+     comment: this is an example comment
+     extattrs:
+       Site: west-dc
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: remove the dns zone
+   nios_zone:
+     name: ansible.com
+     state: absent
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: remove the reverse mapping dns zone from the system with IPV4 zone format
+   nios_zone:
+     name: 10.10.10.0/24
+     zone_format: IPV4
+     state: absent
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+
+STATUS                   *nios_zone-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Peter Sprygada (@privateip)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nios_zone-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nios_zone_module.html

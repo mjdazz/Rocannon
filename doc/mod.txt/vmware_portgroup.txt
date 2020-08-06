@@ -1,0 +1,214 @@
+SYNOPSIS                   *vmware_portgroup*
+
+     • Create a VMware Port Group on a VMware Standard Switch (vSS) for given ESXi host(s) or hosts of given cluster.
+
+REQUIREMENTS                   *vmware_portgroup-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_portgroup-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   cluster_name                     Name of cluster name for host membership.
+   string                           Portgroup will be created on all hosts of the given cluster.
+   added in 2.5                     This option is required if hosts is not specified.
+                                    aliases: cluster
+   hostname                         The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                           If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                    Environment variable support added in Ansible 2.6.
+   hosts                            List of name of host or hosts on which portgroup needs to be added.
+   list                             This option is required if cluster_name is not specified.
+   added in 2.5                     aliases: esxi_hostname
+                                    The password of the vSphere vCenter or ESXi server.
+   password                         If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                           Environment variable support added in Ansible 2.6.
+                                    aliases: pass, pwd
+   port            Default:         The port number of the vSphere vCenter or ESXi server.
+   integer         443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                     Environment variable support added in Ansible 2.6.
+   portgroup                        Portgroup name to add.
+   string /                         aliases: portgroup_name
+   required
+   proxy_host                       Address of a proxy that will receive all HTTPS requests and relay them.
+   string                           The format is a hostname or a IP.
+   added in 2.9                     If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                    This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                       Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                          If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+                                    Network policy specifies layer 2 security settings for a portgroup such as promiscuous mode, where guest adapter listens to all the packets, MAC address changes
+                                    and forged transmits.
+                                    Dict which configures the different security values for portgroup.
+   security                         Valid attributes are:
+   dictionary                       - promiscuous_mode (bool): indicates whether promiscuous mode is allowed. (default: None)
+                                    - forged_transmits (bool): indicates whether forged transmits are allowed. (default: None)
+                                    - mac_changes (bool): indicates whether mac changes are allowed. (default: None)
+                                    aliases: security_policy, network_policy
+   state             Choices:
+   string            • present ←    Determines if the portgroup should be present or not.
+   added in 2.5      • absent
+   switch                           vSwitch to modify.
+   string /                         aliases: switch_name, vswitch
+   required
+                                    Dictionary which configures the different teaming values for portgroup.
+                                    Valid attributes are:
+                                    - load_balancing (string): Network adapter teaming policy. load_balance_policy is also alias to this option. (default: loadbalance_srcid)
+                                    - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, failover_explicit ]
+                                    - network_failure_detection (string): Network failure detection. (default: link_status_only)
+   teaming                          - choices: [ link_status_only, beacon_probing ]
+   dictionary                       - notify_switches (bool): Indicate whether or not to notify the physical switch if a link fails. (default: None)
+   added in 2.6                     - failback (bool): Indicate whether or not to use a failback when restoring links. (default: None)
+                                    - active_adapters (list): List of active adapters used for load balancing.
+                                    - standby_adapters (list): List of standby adapters used for failover.
+                                    - All vmnics are used as active adapters if active_adapters and standby_adapters are not defined.
+                                    - inbound_policy (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. Deprecated. (default: False)
+                                    - rolling_order (bool): Indicate whether or not to use a rolling policy when restoring links. Deprecated. (default: False)
+                                    aliases: teaming_policy
+                                    Dictionary which configures traffic shaping for the switch.
+   traffic_shaping                  Valid attributes are:
+   dictionary                       - enabled (bool): Status of Traffic Shaping Policy. (default: None)
+   added in 2.9                     - average_bandwidth (int): Average bandwidth (kbit/s). (default: None)
+                                    - peak_bandwidth (int): Peak bandwidth (kbit/s). (default: None)
+                                    - burst_size (int): Burst size (KB). (default: None)
+                                    The username of the vSphere vCenter or ESXi server.
+   username                         If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                           Environment variable support added in Ansible 2.6.
+                                    aliases: admin, user
+                     Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs    • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean           • yes ←        Environment variable support added in Ansible 2.6.
+                                    If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+   vlan_id         Default:         VLAN ID to assign to portgroup.
+   integer         0                Set to 0 (no VLAN tagging) by default.
+                                    aliases: vlan
+
+NOTES                   *vmware_portgroup-notes*
+
+   Note
+
+     • Tested on vSphere 5.5 and 6.5
+     • Complete configuration only tested on vSphere 6.5
+     • inbound_policy and rolling_order are deprecated and will be removed in 2.11
+     • Those two options are only used during portgroup creation. Updating isn’t supported with those options.
+
+EXAMPLES                   *vmware_portgroup-examples*
+
+ - name: Add Management Network VM Portgroup
+   vmware_portgroup:
+     hostname: "{{ esxi_hostname }}"
+     username: "{{ esxi_username }}"
+     password: "{{ esxi_password }}"
+     switch: "{{ vswitch_name }}"
+     portgroup: "{{ portgroup_name }}"
+     vlan_id: "{{ vlan_id }}"
+   delegate_to: localhost
+
+ - name: Add Portgroup with Promiscuous Mode Enabled
+   vmware_portgroup:
+     hostname: "{{ esxi_hostname }}"
+     username: "{{ esxi_username }}"
+     password: "{{ esxi_password }}"
+     switch: "{{ vswitch_name }}"
+     portgroup: "{{ portgroup_name }}"
+     security:
+         promiscuous_mode: True
+   delegate_to: localhost
+
+ - name: Add Management Network VM Portgroup to specific hosts
+   vmware_portgroup:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     hosts: [esxi_hostname_one]
+     switch: "{{ vswitch_name }}"
+     portgroup: "{{ portgroup_name }}"
+     vlan_id: "{{ vlan_id }}"
+   delegate_to: localhost
+
+ - name: Add Management Network VM Portgroup to all hosts in a cluster
+   vmware_portgroup:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     cluster_name: "{{ cluster_name }}"
+     switch: "{{ vswitch_name }}"
+     portgroup: "{{ portgroup_name }}"
+     vlan_id: "{{ vlan_id }}"
+   delegate_to: localhost
+
+ - name: Remove Management Network VM Portgroup to all hosts in a cluster
+   vmware_portgroup:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     cluster_name: "{{ cluster_name }}"
+     switch: "{{ vswitch_name }}"
+     portgroup: "{{ portgroup_name }}"
+     vlan_id: "{{ vlan_id }}"
+     state: absent
+   delegate_to: localhost
+
+ - name: Add Portgroup with all settings defined
+   vmware_portgroup:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     esxi_hostname: "{{ inventory_hostname }}"
+     switch: "{{ vswitch_name }}"
+     portgroup: "{{ portgroup_name }}"
+     vlan_id: 10
+     security:
+         promiscuous_mode: False
+         mac_changes: False
+         forged_transmits: False
+     traffic_shaping:
+         enabled: True
+         average_bandwidth: 100000
+         peak_bandwidth: 100000
+         burst_size: 102400
+     teaming:
+         load_balancing: failover_explicit
+         network_failure_detection: link_status_only
+         notify_switches: true
+         failback: true
+         active_adapters:
+             - vmnic0
+         standby_adapters:
+             - vmnic1
+   delegate_to: localhost
+   register: teaming_result
+
+RETURN VALUES                   *vmware_portgroup-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+                       metadata about the portgroup
+   result              Sample:
+   dictionary always   {'esxi01.example.com': {'changed': True, 'failback': 'No override', 'failover_active': 'No override', 'failover_standby': 'No override', 'failure_detection': 'No override',
+                       'load_balancing': 'No override', 'msg': 'Port Group added', 'notify_switches': 'No override', 'portgroup': 'vMotion', 'sec_forged_transmits': False, 'sec_mac_changes': False,
+                       'sec_promiscuous_mode': False, 'traffic_shaping': 'No override', 'vlan_id': 33, 'vswitch': 'vSwitch1'}}
+
+STATUS                   *vmware_portgroup-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joseph Callen (@jcpowermac)
+     • Russell Teague (@mtnbikenc)
+     • Abhijeet Kasurde (@Akasurde)
+     • Christian Kotte (@ckotte)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_portgroup-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_portgroup_module.html

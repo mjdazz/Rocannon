@@ -1,0 +1,111 @@
+SYNOPSIS                   *serverless*
+
+     • Provides support for managing Serverless Framework (https://serverless.com/) project deployments and stacks.
+
+REQUIREMENTS                   *serverless-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • serverless
+     • yaml
+
+PARAMETERS                   *serverless-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   deploy                Choices:       Whether or not to deploy artifacts after building them.
+   boolean               • no           When this option is false all the functions will be built, but no stack update will be run to send them out.
+                         • yes ←        This is mostly useful for generating artifacts to be stored/deployed elsewhere.
+   force                 Choices:
+   boolean               • no ←         Whether or not to force full deployment, equivalent to serverless --force option.
+   added in 2.7          • yes
+   functions           Default:         A list of specific functions to deploy.
+   list                []               If this is not provided, all functions in the service will be deployed.
+   region                               AWS region to deploy the service to.
+   string                               This parameter defaults to us-east-1.
+   serverless_bin_path
+   path                                 The path of a serverless framework binary relative to the 'service_path' eg. node_module/.bin/serverless
+   added in 2.4
+   service_path                         The path to the root of the Serverless Service to be operated on.
+   path / required
+   stage                                The name of the serverless framework project stage to deploy to.
+   string                               This uses the serverless framework default "dev".
+   state                 Choices:
+   string                • absent       Goal state of given stage/project.
+                         • present ←
+   verbose               Choices:
+   boolean               • no ←         Shows all stack events during deployment, and display any Stack Output.
+   added in 2.7          • yes
+
+NOTES                   *serverless-notes*
+
+   Note
+
+     • Currently, the serverless command must be in the path of the node executing the task. In the future this may be a flag.
+
+EXAMPLES                   *serverless-examples*
+
+ - name: Basic deploy of a service
+   serverless:
+     service_path: '{{ project_dir }}'
+     state: present
+
+ - name: Deploy specific functions
+   serverless:
+     service_path: '{{ project_dir }}'
+     functions:
+       - my_func_one
+       - my_func_two
+
+ - name: Deploy a project, then pull its resource list back into Ansible
+   serverless:
+     stage: dev
+     region: us-east-1
+     service_path: '{{ project_dir }}'
+   register: sls
+
+ # The cloudformation stack is always named the same as the full service, so the
+ # cloudformation_info module can get a full list of the stack resources, as
+ # well as stack events and outputs
+ - cloudformation_info:
+     region: us-east-1
+     stack_name: '{{ sls.service_name }}'
+     stack_resources: true
+
+ - name: Deploy a project using a locally installed serverless binary
+   serverless:
+     stage: dev
+     region: us-east-1
+     service_path: '{{ project_dir }}'
+     serverless_bin_path: node_modules/.bin/serverless
+
+RETURN VALUES                   *serverless-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   command               Full `serverless` command run by this module, in case you want to re-run the command outside the module.
+   string       always   Sample:
+                         serverless deploy --stage production
+   service_name          The service name specified in the serverless.yml that was just deployed.
+   string       always   Sample:
+                         my-fancy-service-dev
+   state        always   Whether the stack for the serverless project is present/absent.
+   string
+
+STATUS                   *serverless-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ryan Scott Brown (@ryansb)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *serverless-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/serverless_module.html

@@ -1,0 +1,184 @@
+SYNOPSIS                   *vmware_vm_shell*
+
+     • Module allows user to run common system administration commands in the guest operating system.
+
+REQUIREMENTS                   *vmware_vm_shell-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_vm_shell-parameters*
+
+       Parameter       Choices/Defaults                                                                            Comments
+   cluster                                The cluster hosting the virtual machine.
+   string                                 If set, it will help to speed up virtual machine search.
+   datacenter                             The datacenter hosting the virtual machine.
+   string                                 If set, it will help to speed up virtual machine search.
+                                          Destination folder, absolute or relative path to find an existing guest or create the new guest.
+                                          The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+                                          Examples:
+                                          folder: /ha-datacenter/vm
+   folder                                 folder: ha-datacenter/vm
+   string                                 folder: /datacenter1/vm
+   added in 2.4                           folder: datacenter1/vm
+                                          folder: /datacenter1/vm/folder1
+                                          folder: datacenter1/vm/folder1
+                                          folder: /folder1/datacenter1/vm
+                                          folder: folder1/datacenter1/vm
+                                          folder: /folder1/datacenter1/vm/folder2
+   hostname                               The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                 If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                          Environment variable support added in Ansible 2.6.
+                                          The password of the vSphere vCenter or ESXi server.
+   password                               If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                 Environment variable support added in Ansible 2.6.
+                                          aliases: pass, pwd
+   port              Default:             The port number of the vSphere vCenter or ESXi server.
+   integer           443                  If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                           Environment variable support added in Ansible 2.6.
+   proxy_host                             Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                 The format is a hostname or a IP.
+   added in 2.9                           If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                          This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                             Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   timeout           Default:             Timeout in seconds.
+   integer           3600                 If set to positive integers, then wait_for_process will honor this parameter and will exit after this timeout.
+   added in 2.7
+                                          The username of the vSphere vCenter or ESXi server.
+   username                               If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                 Environment variable support added in Ansible 2.6.
+                                          aliases: admin, user
+                       Choices:           Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs      • no               If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean             • yes ←            Environment variable support added in Ansible 2.6.
+                                          If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+   vm_id                                  Name of the virtual machine to work with.
+   string / required
+                       Choices:
+                       • uuid
+   vm_id_type          • instance_uuid    The VMware identification method by which the virtual machine will be identified.
+   string              • dns_name
+                       • inventory_path
+                       • vm_name ←
+   vm_password                            The password used to login-in to the virtual machine.
+   string / required
+   vm_shell                               The absolute path to the program to start.
+   string / required                      On Linux, shell is executed via bash.
+   vm_shell_args     Default:             The argument to the program.
+   string            " "                  The characters which must be escaped to the shell also be escaped on the command line provided.
+   vm_shell_cwd                           The current working directory of the application from which it will be run.
+   string
+   vm_shell_env                           Comma separated list of environment variable, specified in the guest OS notation.
+   list
+   vm_username                            The user to login-in to the virtual machine.
+   string / required
+   wait_for_process    Choices:
+   boolean             • no ←             If set to True, module will wait for process to complete in the given virtual machine.
+   added in 2.7        • yes
+
+NOTES                   *vmware_vm_shell-notes*
+
+   Note
+
+     • Tested on vSphere 5.5, 6.0 and 6.5.
+     • Only the first match against vm_id is used, even if there are multiple matches.
+
+EXAMPLES                   *vmware_vm_shell-examples*
+
+ - name: Run command inside a virtual machine
+   vmware_vm_shell:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter }}"
+     folder: "/{{datacenter}}/vm"
+     vm_id: "{{ vm_name }}"
+     vm_username: root
+     vm_password: superSecret
+     vm_shell: /bin/echo
+     vm_shell_args: " $var >> myFile "
+     vm_shell_env:
+       - "PATH=/bin"
+       - "VAR=test"
+     vm_shell_cwd: "/tmp"
+   delegate_to: localhost
+   register: shell_command_output
+
+ - name: Run command inside a virtual machine with wait and timeout
+   vmware_vm_shell:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter }}"
+     folder: "/{{datacenter}}/vm"
+     vm_id: NameOfVM
+     vm_username: root
+     vm_password: superSecret
+     vm_shell: /bin/sleep
+     vm_shell_args: 100
+     wait_for_process: True
+     timeout: 2000
+   delegate_to: localhost
+   register: shell_command_with_wait_timeout
+
+ - name: Change user password in the guest machine
+   vmware_vm_shell:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter }}"
+     folder: "/{{datacenter}}/vm"
+     vm_id: "{{ vm_name }}"
+     vm_username: sample
+     vm_password: old_password
+     vm_shell: "/bin/echo"
+     vm_shell_args: "-e 'old_password\nnew_password\nnew_password' | passwd sample > /tmp/$$.txt 2>&1"
+   delegate_to: localhost
+
+ - name: Change hostname of guest machine
+   vmware_vm_shell:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     validate_certs: no
+     datacenter: "{{ datacenter }}"
+     folder: "/{{datacenter}}/vm"
+     vm_id: "{{ vm_name }}"
+     vm_username: testUser
+     vm_password: SuperSecretPassword
+     vm_shell: "/usr/bin/hostnamectl"
+     vm_shell_args: "set-hostname new_hostname > /tmp/$$.txt 2>&1"
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_vm_shell-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+                       metadata about the new process after completion with wait_for_process
+   results    on       Sample:
+   dictionary success  {'cmd_line': '"/bin/sleep" 1', 'end_time': '2018-04-26T05:03:21+00:00', 'exit_code': 0, 'name': 'sleep', 'owner': 'dev1', 'start_time': '2018-04-26T05:03:19+00:00', 'uuid':
+                       '564db1e2-a3ff-3b0e-8b77-49c25570bb66'}
+
+STATUS                   *vmware_vm_shell-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ritesh Khadgaray (@ritzk)
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_vm_shell-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_vm_shell_module.html

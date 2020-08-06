@@ -1,0 +1,102 @@
+SYNOPSIS                   *netapp_e_iscsi_target*
+
+     • Configure the settings of an E-Series iSCSI target
+
+PARAMETERS                   *netapp_e_iscsi_target-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_password                       The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   api_url                            The url to the SANtricity Web Services Proxy or Embedded Web Services API. Example https://prod-1.wahoo.acme.com/devmgr/v2
+   string / required
+   api_username                       The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+                                      Enable Challenge-Handshake Authentication Protocol (CHAP), utilizing this value as the password.
+                                      When this value is specified, we will always trigger an update (changed=True). We have no way of verifying whether or not the password has changed.
+   chap_secret                        The chap secret may only use ascii characters with values between 32 and 126 decimal.
+   -                                  The chap secret must be no less than 12 characters, but no greater than 57 characters in length.
+                                      The chap secret is cleared when not specified or an empty string.
+                                      aliases: chap, password
+   log_path                           A local path (on the Ansible controller), to a file to be used for debug logging.
+   -
+   name                               The name/alias to assign to the iSCSI target.
+   -                                  This alias is often used by the initiator software in order to make an iSCSI target easier to identify.
+                                      aliases: alias
+   ping                Choices:
+   boolean             • no           Enable ICMP ping responses from the configured iSCSI ports.
+                       • yes ←
+   ssid              Default:         The ID of the array to manage. This value must be unique for each array.
+   string            1
+   unnamed_discovery   Choices:       When an initiator initiates a discovery session to an initiator port, it is considered an unnamed discovery session if the iSCSI target iqn is not specified in
+   boolean             • no           the request.
+                       • yes ←        This option may be disabled to increase security if desired.
+   validate_certs      Choices:
+   boolean             • no           Should https certificates be validated?
+                       • yes ←
+
+NOTES                   *netapp_e_iscsi_target-notes*
+
+   Note
+
+     • Check mode is supported.
+     • Some of the settings are dependent on the settings applied to the iSCSI interfaces. These can be configured using netapp_e_iscsi_interface.
+     • This module requires a Web Services API version of >= 1.3.
+     • The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage the storage-system, or an E-Series storage-system that supports the
+       Embedded Web Services API.
+     • Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+     • netapp_e_storage_system may be utilized for configuring the systems managed by a WSP instance.
+
+EXAMPLES                   *netapp_e_iscsi_target-examples*
+
+ - name: Enable ping responses and unnamed discovery sessions for all iSCSI ports
+   netapp_e_iscsi_target:
+     api_url: "https://localhost:8443/devmgr/v2"
+     api_username: admin
+     api_password: myPassword
+     ssid: "1"
+     validate_certs: no
+     name: myTarget
+     ping: yes
+     unnamed_discovery: yes
+
+ - name: Set the target alias and the CHAP secret
+   netapp_e_iscsi_target:
+     ssid: "{{ ssid }}"
+     api_url: "{{ netapp_api_url }}"
+     api_username: "{{ netapp_api_username }}"
+     api_password: "{{ netapp_api_password }}"
+     name: myTarget
+     chap: password1234
+
+RETURN VALUES                   *netapp_e_iscsi_target-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key    Returned                                                                                    Description
+   alias             The alias assigned to the iSCSI target.
+   string on success Sample:
+                     myArray
+   iqn               The iqn (iSCSI Qualified Name), assigned to the iSCSI target.
+   string on success Sample:
+                     iqn.1992-08.com.netapp:2800.000a132000b006d2000000005a0e8f45
+   msg               Success message
+   string on success Sample:
+                     The iSCSI target settings have been updated.
+
+STATUS                   *netapp_e_iscsi_target-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Price (@lmprice)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netapp_e_iscsi_target-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netapp_e_iscsi_target_module.html

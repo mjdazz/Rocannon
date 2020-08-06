@@ -1,0 +1,140 @@
+SYNOPSIS                   *ce_interface*
+
+     • Manages physical attributes of interfaces on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_interface-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   admin_state      Choices:       Specifies the interface management status. The value is an enumerated type. up, An interface is in the administrative Up state. down, An interface is in the
+   -                • up           administrative Down state.
+                    • down
+   description                     Specifies an interface description. The value is a string of 1 to 242 case-sensitive characters, spaces supported but question marks (?) not supported.
+   -
+   interface                       Full name of interface, i.e. 40GE1/0/10, Tunnel1.
+   -
+                    Choices:
+                    • ge
+                    • 10ge
+                    • 25ge
+                    • 4x10ge
+                    • 40ge
+                    • 100ge
+                    • vlanif
+   interface_type   • loopback     Interface type to be configured from the device.
+   -                • meth
+                    • eth-trunk
+                    • nve
+                    • tunnel
+                    • ethernet
+                    • fcoe-port
+                    • fabric-port
+                    • stack-port
+                    • null
+   l2sub            Choices:
+   boolean          • no ←         Specifies whether the interface is a Layer 2 sub-interface.
+                    • yes
+   mode             Choices:
+   -                • layer2       Manage Layer 2 or Layer 3 state of the interface.
+                    • layer3
+                    Choices:
+   state            • present ←    Specify desired state of the resource.
+   -                • absent
+                    • default
+
+NOTES                   *ce_interface-notes*
+
+   Note
+
+     • This module is also used to create logical interfaces such as vlanif and loopbacks.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_interface-examples*
+
+ - name: interface module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+   - name: Ensure an interface is a Layer 3 port and that it has the proper description
+     ce_interface:
+       interface: 10GE1/0/22
+       description: 'Configured by Ansible'
+       mode: layer3
+       provider: '{{ cli }}'
+
+   - name: Admin down an interface
+     ce_interface:
+       interface: 10GE1/0/22
+       admin_state: down
+       provider: '{{ cli }}'
+
+   - name: Remove all tunnel interfaces
+     ce_interface:
+       interface_type: tunnel
+       state: absent
+       provider: '{{ cli }}'
+
+   - name: Remove all logical interfaces
+     ce_interface:
+       interface_type: '{{ item }}'
+       state: absent
+       provider: '{{ cli }}'
+     with_items:
+       - loopback
+       - eth-trunk
+       - nve
+
+   - name: Admin up all 10GE interfaces
+     ce_interface:
+       interface_type: 10GE
+       admin_state: up
+       provider: '{{ cli }}'
+
+RETURN VALUES                   *ce_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of switchport after module execution
+   dictionary always   Sample:
+                       {'admin_state': 'down', 'description': 'None', 'interface': '10GE1/0/10', 'mode': 'layer2'}
+   existing            k/v pairs of existing switchport
+   dictionary always   Sample:
+                       {'admin_state': 'up', 'description': 'None', 'interface': '10GE1/0/10', 'mode': 'layer2'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'interface': '10GE1/0/10', 'admin_state': 'down'}
+   updates             command list sent to the device
+   list       always   Sample:
+                       ['interface 10GE1/0/10', 'shutdown']
+
+STATUS                   *ce_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_interface_module.html

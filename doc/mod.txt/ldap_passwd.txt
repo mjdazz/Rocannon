@@ -1,0 +1,80 @@
+SYNOPSIS                   *ldap_passwd*
+
+     • Set a password for an LDAP entry. This module only asserts that a given password is valid for a given entry. To assert the existence of an entry, see ldap_entry.
+
+REQUIREMENTS                   *ldap_passwd-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-ldap
+
+PARAMETERS                   *ldap_passwd-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   bind_dn                            A DN to bind with. If this is omitted, we'll try a SASL bind with the EXTERNAL mechanism.
+   string                             If this is blank, we'll use an anonymous bind.
+   bind_pw                            The password to use with bind_dn.
+   string
+   dn                                 The DN of the entry to add or remove.
+   string / required
+   passwd                             The (plaintext) password to be set for dn.
+   - / required
+   server_uri        Default:         A URI to the LDAP server.
+   string            "ldapi:///"      The default value lets the underlying LDAP client library look for a UNIX domain socket in its default location.
+   start_tls           Choices:
+   boolean             • no ←         If true, we'll use the START_TLS LDAP extension.
+                       • yes
+   validate_certs      Choices:       If set to no, SSL certificates will not be validated.
+   boolean             • no           This should only be used on sites using self-signed certificates.
+   added in 2.4        • yes ←
+
+NOTES                   *ldap_passwd-notes*
+
+   Note
+
+     • The default authentication settings will attempt to use a SASL EXTERNAL bind over a UNIX domain socket. This works well with the default Ubuntu install for example, which includes a
+       cn=peercred,cn=external,cn=auth ACL rule allowing root to modify the server configuration. If you need to use a simple bind to access your server, pass the credentials in bind_dn and
+       bind_pw.
+
+EXAMPLES                   *ldap_passwd-examples*
+
+ - name: Set a password for the admin user
+   ldap_passwd:
+     dn: cn=admin,dc=example,dc=com
+     passwd: "{{ vault_secret }}"
+
+ - name: Setting passwords in bulk
+   ldap_passwd:
+     dn: "{{ item.key }}"
+     passwd: "{{ item.value }}"
+   with_dict:
+     alice: alice123123
+     bob:   "|30b!"
+     admin: "{{ vault_secret }}"
+
+RETURN VALUES                   *ldap_passwd-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   modlist          list of modified parameters
+   list    success  Sample:
+                    [[2, "olcRootDN", ["cn=root,dc=example,dc=com"]]]
+
+STATUS                   *ldap_passwd-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Keller Fuchs (@KellerFuchs)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ldap_passwd-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ldap_passwd_module.html

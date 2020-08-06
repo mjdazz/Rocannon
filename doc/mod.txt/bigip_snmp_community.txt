@@ -1,0 +1,197 @@
+SYNOPSIS                   *bigip_snmp_community*
+
+     • Assists in managing SNMP communities on a BIG-IP. Different SNMP versions are supported by this module. Take note of the different parameters offered by this module, as different parameters
+       work for different versions of SNMP. Typically this becomes an interest if you are mixing versions v2c and 3.
+
+PARAMETERS                   *bigip_snmp_community-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+                           Choices:       Specifies the user's access level to the MIB.
+   access                  • ro           When creating a new community, if this parameter is not specified, the default is ro.
+   string                  • rw           When ro, specifies that the user can view the MIB, but cannot modify the MIB.
+                           • read-only    When rw, specifies that the user can view and modify the MIB.
+                           • read-write
+   community                              Specifies the community string (password) for access to the MIB.
+   string                                 This parameter is only relevant when version is v1, or v2c. If version is something else, this parameter is ignored.
+   ip_version              Choices:       Specifies whether the record applies to IPv4 or IPv6 addresses.
+   string                  • 4            When creating a new community, if this value is not specified, the default of 4 will be used.
+                           • 6            This parameter is only relevant when version is v1, or v2c. If version is something else, this parameter is ignored.
+                                          Name that identifies the SNMP community.
+   name                                   When version is v1 or v2c, this parameter is required.
+   string                                 The name public is a reserved name on the BIG-IP. This module handles that name differently than others. Functionally, you should not see a difference
+                                          however.
+   oid                                    Specifies the object identifier (OID) for the record.
+   string                                 When version is v3, this parameter is required.
+                                          When version is either v1 or v2c, if this value is specified, then source must not be set to all.
+   partition             Default:         Device partition to manage resources on.
+   string                "Common"
+   port                                   Specifies the port for the trap destination.
+   integer                                This parameter is only relevant when version is v1, or v2c. If version is something else, this parameter is ignored.
+   provider
+   dictionary                             A dict object containing connection details.
+   added in 2.5
+      auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+      string                              This option is really used when working with BIG-IQ devices.
+      password                            The password for the user account used to connect to the BIG-IP.
+      string / required                   You may omit this option by setting the environment variable F5_PASSWORD.
+                                          aliases: pass, pwd
+      server                              The BIG-IP host.
+      string / required                   You may omit this option by setting the environment variable F5_SERVER.
+      server_port        Default:         The BIG-IP server port.
+      integer            443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+      ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+      path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+      timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+      integer                             operation is completed, the module will error.
+      transport            Choices:
+      string               • cli          Configures the transport connection to use when connecting to the remote device.
+                           • rest ←
+      user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+      string / required                   You may omit this option by setting the environment variable F5_USER.
+      validate_certs       Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+      boolean              • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                           • yes ←
+   snmp_auth_password                     Specifies the password for the user.
+   string                                 When creating a new SNMP v3 community, this parameter is required.
+                                          This value must be at least 8 characters long.
+                           Choices:       Specifies the authentication method for the user.
+   snmp_auth_protocol      • md5          When md5, specifies that the system uses the MD5 algorithm to authenticate the user.
+   string                  • sha          When sha, specifies that the secure hash algorithm (SHA) to authenticate the user.
+                           • none         When none, specifies that user does not require authentication.
+                                          When creating a new SNMP v3 community, if this parameter is not specified, the default of sha will be used.
+   snmp_privacy_password                  Specifies the password for the user.
+   string                                 When creating a new SNMP v3 community, this parameter is required.
+                                          This value must be at least 8 characters long.
+                           Choices:       Specifies the encryption protocol.
+   snmp_privacy_protocol   • aes          When aes, specifies that the system encrypts the user information using AES (Advanced Encryption Standard).
+   string                  • des          When des, specifies that the system encrypts the user information using DES (Data Encryption Standard).
+                           • none         When none, specifies that the system does not encrypt the user information.
+                                          When creating a new SNMP v3 community, if this parameter is not specified, the default of aes will be used.
+                                          Specifies the name of the user for whom you want to grant access to the SNMP v3 MIB.
+   snmp_username                          This parameter is only relevant when version is v3. If version is something else, this parameter is ignored.
+   string                                 When creating a new SNMP v3 community, this parameter is required.
+                                          This parameter cannot be changed once it has been set.
+                                          Specifies the source address for access to the MIB.
+                                          This parameter can accept a value of all.
+   source                                 If this parameter is not specified, the value all is used.
+   string                                 This parameter is only relevant when version is v1, or v2c. If version is something else, this parameter is ignored.
+                                          If source is set to all, then it is not possible to specify an oid. This will raise an error.
+                                          This parameter should be provided when state is absent, so that the correct community is removed. To remove the public SNMP community that comes with a
+                                          BIG-IP, this parameter should be set to default.
+   state                   Choices:       When present, ensures that the address list and entries exists.
+   string                  • present ←    When absent, ensures the address list is removed.
+                           • absent
+   update_password         Choices:
+   string                  • always ←     always will allow to update passwords if the user chooses to do so. on_create will only set the password for newly created resources.
+                           • on_create
+                           Choices:
+   version                 • v1           Specifies to which Simple Network Management Protocol (SNMP) version the trap destination applies.
+   string                  • v2c ←
+                           • v3
+
+NOTES                   *bigip_snmp_community-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_snmp_community-examples*
+
+ - name: Create an SMNP v2c read-only community
+   bigip_snmp_community:
+     name: foo
+     version: v2c
+     source: all
+     oid: .1
+     access: ro
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create an SMNP v3 read-write community
+   bigip_snmp_community:
+     name: foo
+     version: v3
+     snmp_username: foo
+     snmp_auth_protocol: sha
+     snmp_auth_password: secret
+     snmp_privacy_protocol: aes
+     snmp_privacy_password: secret
+     oid: .1
+     access: rw
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove the default 'public' SNMP community
+   bigip_snmp_community:
+     name: public
+     source: default
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_snmp_community-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key          Returned                                                                             Description
+   access                         The new access level for the MIB.
+   string                changed  Sample:
+                                  ro
+   community                      The new community value.
+   string                changed  Sample:
+                                  community1
+   ip_version                     The new IP version value.
+   string                changed  Sample:
+                                  0.1
+   oid                            The new OID value.
+   string                changed  Sample:
+                                  0.1
+   snmp_auth_password             The new password of the given snmp_username.
+   string                changed  Sample:
+                                  secret1
+   snmp_auth_protocol             The new SNMP auth protocol.
+   string                changed  Sample:
+                                  sha
+   snmp_privacy_password          The new password of the given snmp_username.
+   string                changed  Sample:
+                                  secret2
+   snmp_privacy_protocol          The new SNMP privacy protocol.
+   string                changed  Sample:
+                                  aes
+   snmp_username                  The new SNMP username.
+   string                changed  Sample:
+                                  user1
+   source                         The new source address to access the MIB.
+   string                changed  Sample:
+                                  1.1.1.1
+
+STATUS                   *bigip_snmp_community-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_snmp_community-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_snmp_community_module.html

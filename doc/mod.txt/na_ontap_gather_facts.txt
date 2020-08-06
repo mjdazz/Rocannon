@@ -1,0 +1,129 @@
+DEPRECATED                   *na_ontap_gather_facts*
+
+                    Removed in Ansible:
+                  version: 2.13
+        Why:      Deprecated in favour of _info module.
+    Alternative:  Use na_ontap_info instead.
+
+SYNOPSIS                   *na_ontap_gather_facts-synopsis*
+
+     • This module allows you to gather various information about ONTAP configuration
+
+REQUIREMENTS                   *na_ontap_gather_facts-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+     • netapp_lib
+
+PARAMETERS                   *na_ontap_gather_facts-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+                                   When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include "aggregate_info", "cluster_node_info",
+                                   "igroup_info", "lun_info", "net_dns_info", "net_ifgrp_info", "net_interface_info", "net_port_info", "nvme_info", "nvme_interface_info", "nvme_namespace_info",
+   gather_subset  Default:         "nvme_subsystem_info", "ontap_version", "qos_adaptive_policy_info", "qos_policy_info", "security_key_manager_key_info", "security_login_account_info",
+   -              "all"            "storage_failover_info", "volume_info", "vserver_info", "vserver_login_banner_info", "vserver_motd_info", "vserver_nfs_info" Can specify a list of values to
+   added in 2.8                    include a larger subset. Values can also be used with an initial ! to specify that a specific subset should not be collected.
+                                   nvme is supported with ONTAP 9.4 onwards.
+                                   use "help" to get a list of supported facts for your system.
+   hostname
+   string /                        The hostname or IP address of the ONTAP instance.
+   required
+   http_port                       Override the default port (80 or 443) with this port
+   integer
+   https            Choices:
+   boolean          • no ←         Enable and disable https
+                    • yes
+   ontapi                          The ontap api version to use
+   integer
+   password                        Password for the specified user.
+   string /                        aliases: pass
+   required
+   state            Choices:       Returns "info"
+   -                • info ←
+                    Choices:       REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest         • Never        Always -- will always use the REST API
+   string           • Always       Never -- will always use the ZAPI
+                    • Auto ←       Auto -- will try to use the REST Api
+   username                        This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read the
+   string /                        documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+   required                        aliases: user
+   validate_certs   Choices:       If set to no, the SSL certificates will not be validated.
+   boolean          • no           This should only set to False used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+NOTES                   *na_ontap_gather_facts-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_gather_facts-examples*
+
+ - name: Get NetApp info (Password Authentication)
+   na_ontap_gather_facts:
+     state: info
+     hostname: "na-vsim"
+     username: "admin"
+     password: "admins_password"
+ - debug:
+     var: ontap_facts
+ - name: Limit Fact Gathering to Aggregate Information
+   na_ontap_gather_facts:
+     state: info
+     hostname: "na-vsim"
+     username: "admin"
+     password: "admins_password"
+     gather_subset: "aggregate_info"
+ - name: Limit Fact Gathering to Volume and Lun Information
+   na_ontap_gather_facts:
+     state: info
+     hostname: "na-vsim"
+     username: "admin"
+     password: "admins_password"
+     gather_subset:
+       - volume_info
+       - lun_info
+ - name: Gather all facts except for volume and lun information
+   na_ontap_gather_facts:
+     state: info
+     hostname: "na-vsim"
+     username: "admin"
+     password: "admins_password"
+     gather_subset:
+       - "!volume_info"
+       - "!lun_info"
+
+RETURN VALUES                   *na_ontap_gather_facts-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+                        Returns various information about NetApp cluster configuration
+                        Sample:
+   ontap_facts always   { "ontap_facts": { "aggregate_info": {...}, "cluster_node_info": {...}, "net_dns_info": {...}, "net_ifgrp_info": {...}, "net_interface_info": {...}, "net_port_info": {...},
+   dictionary           "security_key_manager_key_info": {...}, "security_login_account_info": {...}, "volume_info": {...}, "lun_info": {...}, "storage_failover_info": {...},
+                        "vserver_login_banner_info": {...}, "vserver_motd_info": {...}, "vserver_info": {...}, "vserver_nfs_info": {...}, "ontap_version": {...}, "igroup_info": {...},
+                        "qos_policy_info": {...}, "qos_adaptive_policy_info": {...} }
+
+STATUS                   *na_ontap_gather_facts-status*
+
+     • This module will be removed in version 2.13. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Piotr Olczak (@dprts) <polczak@redhat.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_gather_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_gather_facts_module.html

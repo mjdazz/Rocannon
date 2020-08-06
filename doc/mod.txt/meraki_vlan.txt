@@ -1,0 +1,225 @@
+SYNOPSIS                   *meraki_vlan*
+
+     • Create, edit, query, or delete VLANs in a Meraki environment.
+
+PARAMETERS                   *meraki_vlan-parameters*
+
+           Parameter         Choices/Defaults                                                                         Comments
+   appliance_ip                                IP address of appliance.
+   string                                      Address must be within subnet specified in subnet parameter.
+   auth_key                                    Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   dns_nameservers                             Semi-colon delimited list of DNS IP addresses.
+   string                                      Specify one of the following options for preprogrammed DNS entries opendns, google_dns, upstream_dns
+   fixed_ip_assignments                        Static IP address assignments to be distributed via DHCP by MAC address.
+   list
+   host                      Default:          Hostname for Meraki dashboard.
+   string                    "api.meraki.com"  Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:          Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   name                                        Name of VLAN.
+   string                                      aliases: vlan_name
+   net_id                                      ID of network which VLAN is in or should be in.
+   string
+   net_name                                    Name of network which VLAN is in or should be in.
+   string                                      aliases: network
+   org_id                                      ID of organization.
+   string
+   org_name                                    Name of organization.
+   string                                      aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←   Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug         Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:          Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   reserved_ip_range                           IP address ranges which should be reserve and not distributed via DHCP.
+   list
+                               Choices:
+   state                       • absent        Specifies whether object should be queried, created/modified, or removed.
+   string                      • present
+                               • query ←
+   subnet                                      CIDR notation of network subnet.
+   string
+   timeout                   Default:          Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:        If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no            Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no            Whether to validate HTTP certificates.
+                               • yes ←
+   vlan_id                                     ID number of VLAN.
+   integer                                     ID should be between 1-4096.
+   vpn_nat_subnet                              The translated VPN subnet if VPN and VPN subnet translation are enabled on the VLAN.
+   string
+
+NOTES                   *meraki_vlan-notes*
+
+   Note
+
+     • Meraki’s API will return an error if VLANs aren’t enabled on a network. VLANs are returned properly if VLANs are enabled on a network.
+     • Some of the options are likely only used for developers within Meraki.
+     • Meraki’s API defaults to networks having VLAN support disabled and there is no way to enable VLANs support in the API. VLAN support must be enabled manually.
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_vlan-examples*
+
+ - name: Query all VLANs in a network.
+   meraki_vlan:
+     auth_key: abc12345
+     org_name: YourOrg
+     net_name: YourNet
+     state: query
+   delegate_to: localhost
+
+ - name: Query information about a single VLAN by ID.
+   meraki_vlan:
+     auth_key: abc12345
+     org_name: YourOrg
+     net_name: YourNet
+     vlan_id: 2
+     state: query
+   delegate_to: localhost
+
+ - name: Create a VLAN.
+   meraki_vlan:
+     auth_key: abc12345
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     vlan_id: 2
+     name: TestVLAN
+     subnet: 192.0.1.0/24
+     appliance_ip: 192.0.1.1
+   delegate_to: localhost
+
+ - name: Update a VLAN.
+   meraki_vlan:
+     auth_key: abc12345
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     vlan_id: 2
+     name: TestVLAN
+     subnet: 192.0.1.0/24
+     appliance_ip: 192.168.250.2
+     fixed_ip_assignments:
+       - mac: "13:37:de:ad:be:ef"
+         ip: 192.168.250.10
+         name: fixed_ip
+     reserved_ip_range:
+       - start: 192.168.250.10
+         end: 192.168.250.20
+         comment: reserved_range
+     dns_nameservers: opendns
+   delegate_to: localhost
+
+ - name: Delete a VLAN.
+   meraki_vlan:
+     auth_key: abc12345
+     org_name: YourOrg
+     net_name: YourNet
+     state: absent
+     vlan_id: 2
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_vlan-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key             Returned                                                                          Description
+   response                    success  Information about the organization which was created or modified
+   complex
+     appliance_ip                       IP address of Meraki appliance in the VLAN
+     string                    success  Sample:
+                                        192.0.1.1
+     dhcp_boot_filename                 Filename for boot file.
+     string                    success  Sample:
+                                        boot.txt
+     dhcp_boot_next_server              DHCP boot option to direct boot clients to the server to load the boot file from.
+     string                    success  Sample:
+                                        192.0.1.2
+     dhcp_boot_options_enabled success  Whether DHCP boot options are enabled.
+     boolean
+     dhcp_handling                      Status of DHCP server on VLAN.
+     string                    success  Sample:
+                                        Run a DHCP server
+     dhcp_lease_time                    DHCP lease time when server is active.
+     string                    success  Sample:
+                                        1 day
+     dhcp_options              success  DHCP options.
+     complex
+                                        Code for DHCP option.
+            code               success  Integer between 2 and 254.
+            integer                     Sample:
+                                        43
+                                        Type for DHCP option.
+            type               success  Choices are text, ip, hex, integer.
+            string                      Sample:
+                                        text
+            value                       Value for the DHCP option.
+            string             success  Sample:
+                                        192.0.1.2
+     dnsnamservers                      IP address or Meraki defined DNS servers which VLAN should use by default
+     string                    success  Sample:
+                                        upstream_dns
+     fixed_ip_assignments      success  List of MAC addresses which have IP addresses assigned.
+     complex
+            macaddress         success  MAC address which has IP address assigned to it. Key value is the actual MAC address.
+            complex
+                   ip                   IP address which is assigned to the MAC address.
+                   string      success  Sample:
+                                        192.0.1.4
+                   name                 Descriptive name for binding.
+                   string      success  Sample:
+                                        fixed_ip
+     id                                 VLAN ID number.
+     integer                   success  Sample:
+                                        2
+     name                               Descriptive name of VLAN.
+     string                    success  Sample:
+                                        TestVLAN
+     networkId                          ID number of Meraki network which VLAN is associated to.
+     string                    success  Sample:
+                                        N_12345
+     reserved_ip_ranges        success  List of IP address ranges which are reserved for static assignment.
+     complex
+            comment                     Description for IP address reservation.
+            string             success  Sample:
+                                        reserved_range
+            end                         Last IP address in reservation range.
+            string             success  Sample:
+                                        192.0.1.10
+            start                       First IP address in reservation range.
+            string             success  Sample:
+                                        192.0.1.5
+     subnet                             CIDR notation IP subnet of VLAN.
+     string                    success  Sample:
+                                        192.0.1.0/24
+
+STATUS                   *meraki_vlan-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_vlan-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_vlan_module.html

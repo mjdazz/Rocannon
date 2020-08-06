@@ -1,21 +1,126 @@
-SYNOPSIS                           *mysql_replication*
+SYNOPSIS                   *mysql_replication*
 
-New in version 1.3.
+     • Manages MySQL server replication, slave, master status get and change master host.
 
-Manages MySQL server replication, slave, master status get and change master host.
+REQUIREMENTS                   *mysql_replication-requirements*
 
-EXAMPLES                           *mysql_replication-examples*
->
-    # Stop mysql slave thread
-    - mysql_replication: mode=stopslave
-   
-    # Get master binlog file name and binlog position
-    - mysql_replication: mode=getmaster
-   
-    # Change master to master server 192.168.1.1 and use binary log 'mysql-bin.000009' with position 4578
-    - mysql_replication: mode=changemaster master_host=192.168.1.1 master_log_file=mysql-bin.000009 master_log_pos=4578
-   
+   The below requirements are needed on the host that executes this module.
+
+     • PyMySQL (Python 2.7 and Python 3.X), or
+     • MySQLdb (Python 2.x)
+
+PARAMETERS                   *mysql_replication-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   ca_cert                                The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate as used by the server.
+   path                                   aliases: ssl_ca
+   client_cert                            The path to a client public key certificate.
+   path                                   aliases: ssl_cert
+   client_key                             The path to the client private key.
+   path                                   aliases: ssl_key
+   config_file          Default:          Specify a config file from which user and password are to be read.
+   path                 "~/.my.cnf"
+   connect_timeout      Default:          The connection timeout when connecting to the MySQL server.
+   integer              30
+   login_host           Default:          Host running the database.
+   string               "localhost"
+   login_password                         The password used to authenticate with.
+   string
+   login_port           Default:          Port of the MySQL server. Requires login_host be defined as other than localhost if login_port is used.
+   integer              3306
+   login_unix_socket                      The path to a Unix domain socket for local connections.
+   string
+   login_user                             The username used to authenticate with.
+   string
+   master_auto_position   Choices:
+   boolean                • no            Whether the host uses GTID based replication or not.
+                          • yes
+   master_connect_retry                   Same as mysql variable.
+   integer
+   master_host                            Same as mysql variable.
+   string
+   master_log_file                        Same as mysql variable.
+   string
+   master_log_pos                         Same as mysql variable.
+   integer
+   master_password                        Same as mysql variable.
+   string
+   master_port                            Same as mysql variable.
+   integer
+   master_ssl             Choices:
+   boolean                • no            Same as mysql variable.
+                          • yes
+   master_ssl_ca                          Same as mysql variable.
+   string
+   master_ssl_capath                      Same as mysql variable.
+   string
+   master_ssl_cert                        Same as mysql variable.
+   string
+   master_ssl_cipher                      Same as mysql variable.
+   string
+   master_ssl_key                         Same as mysql variable.
+   string
+   master_user                            Same as mysql variable.
+   string
+                          Choices:
+                          • getslave ←
+                          • getmaster
+   mode                   • changemaster  module operating mode. Could be getslave (SHOW SLAVE STATUS), getmaster (SHOW MASTER STATUS), changemaster (CHANGE MASTER TO), startslave (START SLAVE),
+   string                 • stopslave     stopslave (STOP SLAVE), resetslave (RESET SLAVE), resetslaveall (RESET SLAVE ALL)
+                          • startslave
+                          • resetslave
+                          • resetslaveall
+   relay_log_file                         Same as mysql variable.
+   string
+   relay_log_pos                          Same as mysql variable.
+   integer
+
+NOTES                   *mysql_replication-notes*
+
+   Note
+
+     • Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) package on the remote host. The Python package may be installed with apt-get install python-pymysql (Ubuntu; see
+       apt) or yum install python2-PyMySQL (RHEL/CentOS/Fedora; see yum). You can also use dnf install python2-PyMySQL for newer versions of Fedora; see dnf.
+     • Both login_password and login_user are required when you are passing credentials. If none are present, the module will attempt to read the credentials from ~/.my.cnf, and finally fall back
+       to using the MySQL default login of ‘root’ with no password.
+
+EXAMPLES                   *mysql_replication-examples*
+
+ # Stop mysql slave thread
+ - mysql_replication:
+     mode: stopslave
+
+ # Get master binlog file name and binlog position
+ - mysql_replication:
+     mode: getmaster
+
+ # Change master to master server 192.0.2.1 and use binary log 'mysql-bin.000009' with position 4578
+ - mysql_replication:
+     mode: changemaster
+     master_host: 192.0.2.1
+     master_log_file: mysql-bin.000009
+     master_log_pos: 4578
+
+ # Check slave status using port 3308
+ - mysql_replication:
+     mode: getslave
+     login_host: ansible.example.com
+     login_port: 3308
+
+STATUS                   *mysql_replication-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Balazs Pocze (@banyek)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *mysql_replication-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/mysql_replication_module.html
+https://docs.ansible.com/ansible/latest/modules/mysql_replication_module.html

@@ -1,0 +1,156 @@
+SYNOPSIS                   *blockinfile*
+
+     • This module will insert/update/remove a block of multi-line text surrounded by customizable marker lines.
+
+PARAMETERS                   *blockinfile-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+                                  The attributes the resulting file or directory should have.
+   attributes                     To get supported flags look at the man page for chattr on the target system.
+   string                         This string should contain the attributes in the same order as the one displayed by lsattr.
+                                  The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                  aliases: attr
+   backup          Choices:
+   boolean         • no ←         Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                   • yes
+   block         Default:         The text to insert inside the marker lines.
+   string        ""               If it is missing or an empty string, the block will be removed as if state were specified to absent.
+                                  aliases: content
+   create          Choices:
+   boolean         • no ←         Create a new file if it does not exist.
+                   • yes
+   group                          Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   insertafter     Choices:       If specified, the block will be inserted after the last match of specified regular expression.
+   string          • EOF ←        A special value is available; EOF for inserting the block at the end of the file.
+                   • "regex"      If specified regular expression has no matches, EOF will be used instead.
+   insertbefore    Choices:       If specified, the block will be inserted before the last match of specified regular expression.
+   string          • BOF          A special value is available; BOF for inserting the block at the beginning of the file.
+                   • "regex"      If specified regular expression has no matches, the block will be inserted at the end of the file.
+                 Default:         The marker line template.
+   marker        "# {mark}        {mark} will be replaced with the values in marker_begin (default="BEGIN") and marker_end (default="END").
+   string        ANSIBLE MANAGED  Using a custom marker without the {mark} variable may result in the block being repeatedly inserted on subsequent playbook runs.
+                 BLOCK"
+   marker_begin  Default:
+   string        "BEGIN"          This will be inserted at {mark} in the opening ansible block marker.
+   added in 2.5
+   marker_end    Default:
+   string        "END"            This will be inserted at {mark} in the closing ansible block marker.
+   added in 2.5
+                                  The permissions the resulting file or directory should have.
+                                  For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                           octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                         Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                  As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                  As of Ansible 2.6, the mode may also be the special string preserve.
+                                  When set to preserve the file will be given the same permissions as the source file.
+   owner                          Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path                           The file to modify.
+   path /                         Before Ansible 2.3 this option was only usable as dest, destfile and name.
+   required                       aliases: dest, destfile, name
+   selevel       Default:         The level part of the SELinux file context.
+   string        "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                  When set to _default, it will use the level portion of the policy if available.
+   serole                         The role part of the SELinux file context.
+   string                         When set to _default, it will use the role portion of the policy if available.
+   setype                         The type part of the SELinux file context.
+   string                         When set to _default, it will use the type portion of the policy if available.
+   seuser                         The user part of the SELinux file context.
+   string                         By default it uses the system policy, where applicable.
+                                  When set to _default, it will use the user portion of the policy if available.
+   state           Choices:
+   string          • absent       Whether the block should be there or not.
+                   • present ←
+                                  Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                  By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or just
+   unsafe_writes   Choices:       broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written in an
+   boolean         • no ←         unsafe manner.
+                   • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                  writes).
+                                  IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   validate                       The validation command to run before copying into place.
+   string                         The path to the file to validate is passed in via '%s' which must be present as in the examples below.
+                                  The command is passed securely so shell features like expansion and pipes will not work.
+
+NOTES                   *blockinfile-notes*
+
+   Note
+
+     • This module supports check mode.
+     • When using ‘with_"’ loops be aware that if you do not set a unique mark the block will be overwritten on each iteration.
+     • As of Ansible 2.3, the dest option has been changed to path as default, but dest still works as well.
+     • Option follow has been removed in Ansible 2.5, because this module modifies the contents of the file so follow=no doesn’t make sense.
+     • When more then one block should be handled in one file you must change the marker per task.
+
+EXAMPLES                   *blockinfile-examples*
+
+ # Before Ansible 2.3, option 'dest' or 'name' was used instead of 'path'
+ - name: Insert/Update "Match User" configuration block in /etc/ssh/sshd_config
+   blockinfile:
+     path: /etc/ssh/sshd_config
+     block: |
+       Match User ansible-agent
+       PasswordAuthentication no
+
+ - name: Insert/Update eth0 configuration stanza in /etc/network/interfaces
+         (it might be better to copy files into /etc/network/interfaces.d/)
+   blockinfile:
+     path: /etc/network/interfaces
+     block: |
+       iface eth0 inet static
+           address 192.0.2.23
+           netmask 255.255.255.0
+
+ - name: Insert/Update configuration using a local file and validate it
+   blockinfile:
+     block: "{{ lookup('file', './local/sshd_config') }}"
+     dest: /etc/ssh/sshd_config
+     backup: yes
+     validate: /usr/sbin/sshd -T -f %s
+
+ - name: Insert/Update HTML surrounded by custom markers after <body> line
+   blockinfile:
+     path: /var/www/html/index.html
+     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+     insertafter: "<body>"
+     block: |
+       <h1>Welcome to {{ ansible_hostname }}</h1>
+       <p>Last updated on {{ ansible_date_time.iso8601 }}</p>
+
+ - name: Remove HTML as well as surrounding markers
+   blockinfile:
+     path: /var/www/html/index.html
+     marker: "<!-- {mark} ANSIBLE MANAGED BLOCK -->"
+     block: ""
+
+ - name: Add mappings to /etc/hosts
+   blockinfile:
+     path: /etc/hosts
+     block: |
+       {{ item.ip }} {{ item.name }}
+     marker: "# {mark} ANSIBLE MANAGED BLOCK {{ item.name }}"
+   loop:
+     - { name: host1, ip: 10.10.1.10 }
+     - { name: host2, ip: 10.10.1.11 }
+     - { name: host3, ip: 10.10.1.12 }
+
+STATUS                   *blockinfile-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *blockinfile-red hat support*
+
+     • Yaegashi Takeshi (@yaegashi)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *blockinfile-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/blockinfile_module.html

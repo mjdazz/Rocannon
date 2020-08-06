@@ -1,0 +1,116 @@
+SYNOPSIS                   *win_domain_membership*
+
+     • Manages domain membership or workgroup membership for a Windows host. Also supports hostname changes.
+     • This module may require subsequent use of the win_reboot action if changes are made.
+
+PARAMETERS                   *win_domain_membership-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   dns_domain_name                        When state is domain, the DNS name of the domain to which the targeted Windows host should be joined.
+   string
+   domain_admin_password                  Password for the specified domain_admin_user.
+   string
+   domain_admin_user                      Username of a domain admin for the target domain (required to join or leave the domain).
+   string / required
+   domain_ou_path                         The desired OU path for adding the computer object.
+   string                                 This is only used when adding the target host to a domain, if it is already a member then it is ignored.
+   added in 2.4
+   hostname                               The desired hostname for the Windows host.
+   string
+   state                   Choices:
+   string                  • domain       Whether the target host should be a member of a domain or workgroup.
+                           • workgroup
+   workgroup_name                         When state is workgroup, the name of the workgroup that the Windows host should be in.
+   string
+
+SEE ALSO                   *win_domain_membership-see also*
+
+   See also
+
+   win_domain – Ensures the existence of a Windows domain
+   The official documentation on the win_domain module.
+
+   win_domain_controller – Manage domain controller/member server state for a Windows host
+   The official documentation on the win_domain_controller module.
+
+   win_domain_computer – Manage computers in Active Directory
+   The official documentation on the win_domain_computer module.
+
+   win_domain_group – Creates, modifies or removes domain groups
+   The official documentation on the win_domain_group module.
+
+   win_domain_user – Manages Windows Active Directory user accounts
+   The official documentation on the win_domain_user module.
+
+   win_group – Add and remove local groups
+   The official documentation on the win_group module.
+
+   win_group_membership – Manage Windows local group membership
+   The official documentation on the win_group_membership module.
+
+   win_user – Manages local Windows user accounts
+   The official documentation on the win_user module.
+
+EXAMPLES                   *win_domain_membership-examples*
+
+ # host should be a member of domain ansible.vagrant; module will ensure the hostname is mydomainclient
+ # and will use the passed credentials to join domain if necessary.
+ # Ansible connection should use local credentials if possible.
+ # If a reboot is required, the second task will trigger one and wait until the host is available.
+ - hosts: winclient
+   gather_facts: no
+   tasks:
+   - win_domain_membership:
+       dns_domain_name: ansible.vagrant
+       hostname: mydomainclient
+       domain_admin_user: [email protected]
+       domain_admin_password: password123!
+       domain_ou_path: "OU=Windows,OU=Servers,DC=ansible,DC=vagrant"
+       state: domain
+     register: domain_state
+
+   - win_reboot:
+     when: domain_state.reboot_required
+
+
+
+ # Host should be in workgroup mywg- module will use the passed credentials to clean-unjoin domain if possible.
+ # Ansible connection should use local credentials if possible.
+ # The domain admin credentials can be sourced from a vault-encrypted variable
+ - hosts: winclient
+   gather_facts: no
+   tasks:
+   - win_domain_membership:
+       workgroup_name: mywg
+       domain_admin_user: '{{ win_domain_admin_user }}'
+       domain_admin_password: '{{ win_domain_admin_password }}'
+       state: workgroup
+
+RETURN VALUES                   *win_domain_membership-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   reboot_required          True if changes were made that require a reboot.
+   boolean         always   Sample:
+                            True
+
+STATUS                   *win_domain_membership-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_domain_membership-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_domain_membership-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_domain_membership_module.html

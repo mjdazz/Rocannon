@@ -1,0 +1,120 @@
+SYNOPSIS                   *vmware_content_library_manager*
+
+     • Module to manage VMware content Library
+     • Content Library feature is introduced in vSphere 6.0 version, so this module is not supported in the earlier versions of vSphere.
+     • All variables and VMware object names are case sensitive.
+
+REQUIREMENTS                   *vmware_content_library_manager-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+     • vSphere Automation SDK
+
+PARAMETERS                   *vmware_content_library_manager-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+                                        Name of the datastore on which backing content library is created.
+   datastore_name                       This is required only if state is set to present.
+   string                               This parameter is ignored, when state is set to absent.
+                                        Currently only datastore backing creation is supported.
+                                        aliases: datastore
+   hostname                             The hostname or IP address of the vSphere vCenter server.
+   string                               If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                        The content library description.
+   library_description Default:         This is required only if state is set to present.
+   string              ""               This parameter is ignored, when state is set to absent.
+                                        Process of updating content library only allows description change.
+   library_name                         The name of VMware content library to manage.
+   string / required
+   library_type          Choices:       The content library type.
+   string                • local ←      This is required only if state is set to present.
+                         • subscribed   This parameter is ignored, when state is set to absent.
+   password                             The password of the vSphere vCenter server.
+   string                               If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+                                        aliases: pass, pwd
+   protocol              Choices:
+   string                • http         The connection to protocol.
+                         • https ←
+                                        The state of content library.
+   state                 Choices:       If set to present and library does not exists, then content library is created.
+   string                • present ←    If set to present and library exists, then content library is updated.
+                         • absent       If set to absent and library exists, then content library is deleted.
+                                        If set to absent and library does not exists, no action is taken.
+   username                             The username of the vSphere vCenter server.
+   string                               If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+                                        aliases: admin, user
+   validate_certs        Choices:       Allows connection when SSL certificates are not valid.
+   boolean               • no           Set to no when certificates are not trusted.
+                         • yes ←        If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+
+NOTES                   *vmware_content_library_manager-notes*
+
+   Note
+
+     • Tested on vSphere 6.5, 6.7
+
+EXAMPLES                   *vmware_content_library_manager-examples*
+
+ - name: Create Content Library
+   vmware_content_library_manager:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     library_name: test-content-lib
+     library_description: 'Library with Datastore Backing'
+     library_type: local
+     datastore_name: datastore
+     validate_certs: False
+     state: present
+   delegate_to: localhost
+
+ - name: Update Content Library
+   vmware_content_library_manager:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     library_name: test-content-lib
+     library_description: 'Library with Datastore Backing'
+     validate_certs: no
+     state: present
+   delegate_to: localhost
+
+ - name: Delete Content Library
+   vmware_content_library_manager:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     library_name: test-content-lib
+     validate_certs: no
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_content_library_manager-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+                                 library creation success and library_id
+   content_library_info on       Sample:
+   dictionary           success  {'library_id': 'd0b92fa9-7039-4f29-8e9c-0debfcb22b72', 'library_description': 'Test description', 'library_type': 'LOCAL', 'msg': "Content Library
+                                 'demo-local-lib-4' created."}
+
+STATUS                   *vmware_content_library_manager-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pavan Bidkar (@pgbidkar)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_content_library_manager-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_content_library_manager_module.html

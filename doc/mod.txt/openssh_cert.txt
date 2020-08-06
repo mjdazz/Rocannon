@@ -1,0 +1,182 @@
+SYNOPSIS                   *openssh_cert*
+
+     • Generate and regenerate OpenSSH host or user certificates.
+
+REQUIREMENTS                   *openssh_cert-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ssh-keygen
+
+PARAMETERS                   *openssh_cert-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+                                    The attributes the resulting file or directory should have.
+   attributes                       To get supported flags look at the man page for chattr on the target system.
+   string                           This string should contain the attributes in the same order as the one displayed by lsattr.
+                                    The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                    aliases: attr
+   force             Choices:
+   boolean           • no ←         Should the certificate be regenerated even if it already exists and is valid.
+                     • yes
+   group                            Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   identifier                       Specify the key identity when signing a public key. The identifier that is logged by the server when the certificate is used for authentication.
+   string
+                                    The permissions the resulting file or directory should have.
+                                    For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                             octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                           Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                    As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                    As of Ansible 2.6, the mode may also be the special string preserve.
+                                    When set to preserve the file will be given the same permissions as the source file.
+                                    Specify certificate options when signing a key. The option that are valid for user certificates are:
+                                    clear: Clear all enabled permissions. This is useful for clearing the default set of permissions so permissions may be added individually.
+                                    force-command=command: Forces the execution of command instead of any shell or command specified by the user when the certificate is used for authentication.
+                                    no-agent-forwarding: Disable ssh-agent forwarding (permitted by default).
+                                    no-port-forwarding: Disable port forwarding (permitted by default).
+                                    no-pty Disable: PTY allocation (permitted by default).
+   options                          no-user-rc: Disable execution of ~/.ssh/rc by sshd (permitted by default).
+   list /                           no-x11-forwarding: Disable X11 forwarding (permitted by default)
+   elements=string                  permit-agent-forwarding: Allows ssh-agent forwarding.
+                                    permit-port-forwarding: Allows port forwarding.
+                                    permit-pty: Allows PTY allocation.
+                                    permit-user-rc: Allows execution of ~/.ssh/rc by sshd.
+                                    permit-x11-forwarding: Allows X11 forwarding.
+                                    source-address=address_list: Restrict the source addresses from which the certificate is considered valid. The address_list is a comma-separated list of one or
+                                    more address/netmask pairs in CIDR format.
+                                    At present, no options are valid for host keys.
+   owner                            Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path                             Path of the file containing the certificate.
+   path / required
+   principals
+   list /                           Certificates may be limited to be valid for a set of principal (user/host) names. By default, generated certificates are valid for all users or hosts.
+   elements=string
+   public_key                       The path to the public key that will be signed with the signing key in order to generate the certificate.
+   path                             Required if state is present.
+   selevel         Default:         The level part of the SELinux file context.
+   string          "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                    When set to _default, it will use the level portion of the policy if available.
+   serial_number                    Specify the certificate serial number. The serial number is logged by the server when the certificate is used for authentication. The certificate serial number
+   integer                          may be used in a KeyRevocationList. The serial number may be omitted for checks, but must be specified again for a new certificate. Note: The default value set
+                                    by ssh-keygen is 0.
+   serole                           The role part of the SELinux file context.
+   string                           When set to _default, it will use the role portion of the policy if available.
+   setype                           The type part of the SELinux file context.
+   string                           When set to _default, it will use the type portion of the policy if available.
+   seuser                           The user part of the SELinux file context.
+   string                           By default it uses the system policy, where applicable.
+                                    When set to _default, it will use the user portion of the policy if available.
+   signing_key                      The path to the private openssh key that is used for signing the public key in order to generate the certificate.
+   path                             Required if state is present.
+   state             Choices:
+   string            • present ←    Whether the host or user certificate should exist or not, taking action if the state is different from what is stated.
+                     • absent
+   type              Choices:       Whether the module should generate a host or a user certificate.
+   string            • host         Required if state is present.
+                     • user
+                                    Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                    By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or
+   unsafe_writes     Choices:       just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written
+   boolean           • no ←         in an unsafe manner.
+                     • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                    writes).
+                                    IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   valid_at                         Check if the certificate is valid at a certain point in time. If it is not the certificate will be regenerated. Time will always be interpreted as UTC. Mainly to
+   string                           be used with relative timespec for valid_from and / or valid_to. Note that if using relative time this module is NOT idempotent.
+                                    The point in time the certificate is valid from. Time can be specified either as relative time or as absolute timestamp. Time will always be interpreted as UTC.
+   valid_from                       Valid formats are: [+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | always where timespec can be an integer + [w | d | h | m | s] (e.g.
+   string                           +32w1d2h. Note that if using relative time this module is NOT idempotent.
+                                    Required if state is present.
+                                    The point in time the certificate is valid to. Time can be specified either as relative time or as absolute timestamp. Time will always be interpreted as UTC.
+   valid_to                         Valid formats are: [+-]timespec | YYYY-MM-DD | YYYY-MM-DDTHH:MM:SS | YYYY-MM-DD HH:MM:SS | forever where timespec can be an integer + [w | d | h | m | s] (e.g.
+   string                           +32w1d2h. Note that if using relative time this module is NOT idempotent.
+                                    Required if state is present.
+
+EXAMPLES                   *openssh_cert-examples*
+
+ # Generate an OpenSSH user certificate that is valid forever and for all users
+ - openssh_cert:
+     type: user
+     signing_key: /path/to/private_key
+     public_key: /path/to/public_key.pub
+     path: /path/to/certificate
+     valid_from: always
+     valid_to: forever
+
+ # Generate an OpenSSH host certificate that is valid for 32 weeks from now and will be regenerated
+ # if it is valid for less than 2 weeks from the time the module is being run
+ - openssh_cert:
+     type: host
+     signing_key: /path/to/private_key
+     public_key: /path/to/public_key.pub
+     path: /path/to/certificate
+     valid_from: +0s
+     valid_to: +32w
+     valid_at: +2w
+
+ # Generate an OpenSSH host certificate that is valid forever and only for example.com and examplehost
+ - openssh_cert:
+     type: host
+     signing_key: /path/to/private_key
+     public_key: /path/to/public_key.pub
+     path: /path/to/certificate
+     valid_from: always
+     valid_to: forever
+     principals:
+         - example.com
+         - examplehost
+
+ # Generate an OpenSSH host Certificate that is valid from 21.1.2001 to 21.1.2019
+ - openssh_cert:
+     type: host
+     signing_key: /path/to/private_key
+     public_key: /path/to/public_key.pub
+     path: /path/to/certificate
+     valid_from: "2001-01-21"
+     valid_to: "2019-01-21"
+
+ # Generate an OpenSSH user Certificate with clear and force-command option:
+ - openssh_cert:
+     type: user
+     signing_key: /path/to/private_key
+     public_key: /path/to/public_key.pub
+     path: /path/to/certificate
+     valid_from: always
+     valid_to: forever
+     options:
+         - "clear"
+         - "force-command=/tmp/bla/foo"
+
+RETURN VALUES                   *openssh_cert-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                Returned                                                                            Description
+   filename                                  path to the certificate
+   string                 changed or success Sample:
+                                             /tmp/certificate-cert.pub
+   info                   change or success  Information about the certificate. Output of ssh-keygen -L -f.
+   list / elements=string
+   type                                      type of the certificate (host or user)
+   string                 changed or success Sample:
+                                             host
+
+STATUS                   *openssh_cert-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Kainz (@lolcube)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *openssh_cert-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/openssh_cert_module.html

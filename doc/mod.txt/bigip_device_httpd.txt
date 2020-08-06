@@ -1,0 +1,228 @@
+SYNOPSIS                   *bigip_device_httpd*
+
+     • Manages HTTPD related settings on the BIG-IP. These settings are interesting to change when you want to set GUI timeouts and other TMUI related settings.
+
+REQUIREMENTS                   *bigip_device_httpd-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • requests
+
+PARAMETERS                   *bigip_device_httpd-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+                                               Specifies, if you have enabled HTTPD access, the IP address or address range for other systems that can communicate with this system.
+   allow                                       To specify all addresses, use the value all.
+   list                                        IP address can be specified, such as 172.27.1.10.
+                                               IP ranges can be specified, such as 172.27."." or 172.27.0.0/255.255.0.0.
+   auth_name                                   Sets the BIG-IP authentication realm name.
+   string
+   auth_pam_dashboard_timeout   Choices:
+   boolean                      • no           Sets whether or not the BIG-IP dashboard will timeout.
+                                • yes
+   auth_pam_idle_timeout                       Sets the GUI timeout for automatic logout, in seconds.
+   integer
+   auth_pam_validate_ip         Choices:
+   boolean                      • no           Sets the authPamValidateIp setting.
+                                • yes
+   fast_cgi_timeout                            Sets the timeout of FastCGI.
+   integer
+   hostname_lookup              Choices:
+   boolean                      • no           Sets whether or not to display the hostname, if possible.
+                                • yes
+                                Choices:
+                                • alert
+                                • crit
+   log_level                    • debug
+   string                       • emerg        Sets the minimum httpd log level.
+                                • error
+                                • info
+                                • notice
+                                • warn
+   max_clients                                 Sets the maximum number of clients that can connect to the GUI at once.
+   integer
+   provider
+   dictionary                                  A dict object containing connection details.
+   added in 2.5
+        auth_provider                          Configures the auth provider for to obtain authentication tokens from the remote device.
+        string                                 This option is really used when working with BIG-IQ devices.
+        password                               The password for the user account used to connect to the BIG-IP.
+        string / required                      You may omit this option by setting the environment variable F5_PASSWORD.
+                                               aliases: pass, pwd
+        server                                 The BIG-IP host.
+        string / required                      You may omit this option by setting the environment variable F5_SERVER.
+        server_port           Default:         The BIG-IP server port.
+        integer               443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+        ssh_keyfile                            Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+        path                                   You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+        timeout                                Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+        integer                                before the operation is completed, the module will error.
+        transport               Choices:
+        string                  • cli          Configures the transport connection to use when connecting to the remote device.
+                                • rest ←
+        user                                   The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+        string / required                      You may omit this option by setting the environment variable F5_USER.
+        validate_certs          Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+        boolean                 • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                                • yes ←
+   redirect_http_to_https       Choices:
+   boolean                      • no           Whether or not to redirect http requests to the GUI to https.
+                                • yes
+                                               Specifies the ciphers that the system uses.
+                                               The values in the suite are separated by colons (:).
+   ssl_cipher_suite                            Can be specified in either a string or list form. The list form is the recommended way to provide the cipher suite. See examples for usage.
+   raw                                         Use the value default to set the cipher suite to the system default. This value is equivalent to specifying a list of ECDHE-RSA-AES128-GCM-SHA256,
+   added in 2.6                                ECDHE-RSA-AES256-GCM-SHA384,ECDHE-RSA-AES128-SHA,ECDHE-RSA-AES256-SHA, ECDHE-RSA-AES128-SHA256,ECDHE-RSA-AES256-SHA384,ECDHE-ECDSA-AES128-GCM-SHA256,
+                                               ECDHE-ECDSA-AES256-GCM-SHA384,ECDHE-ECDSA-AES128-SHA,ECDHE-ECDSA-AES256-SHA, ECDHE-ECDSA-AES128-SHA256,ECDHE-ECDSA-AES256-SHA384,AES128-GCM-SHA256,
+                                               AES256-GCM-SHA384,AES128-SHA,AES256-SHA,AES128-SHA256,AES256-SHA256, ECDHE-RSA-DES-CBC3-SHA,ECDHE-ECDSA-DES-CBC3-SHA,DES-CBC3-SHA.
+   ssl_port                                    The HTTPS port to listen on.
+   integer
+   ssl_protocols                               The list of SSL protocols to accept on the management console.
+   raw                                         A space-separated list of tokens in the format accepted by the Apache mod_ssl SSLProtocol directive.
+   added in 2.6                                Can be specified in either a string or list form. The list form is the recommended way to provide the cipher suite. See examples for usage.
+                                               Use the value default to set the SSL protocols to the system default. This value is equivalent to specifying a list of all,-SSLv2,-SSLv3.
+
+NOTES                   *bigip_device_httpd-notes*
+
+   Note
+
+     • Requires the requests Python package on the host. This is as easy as pip install requests.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_device_httpd-examples*
+
+ - name: Set the BIG-IP authentication realm name
+   bigip_device_httpd:
+     auth_name: BIG-IP
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set the auth pam timeout to 3600 seconds
+   bigip_device_httpd:
+     auth_pam_idle_timeout: 1200
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set the validate IP settings
+   bigip_device_httpd:
+     auth_pam_validate_ip: on
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set SSL cipher suite by list
+   bigip_device_httpd:
+     ssl_cipher_suite:
+       - ECDHE-RSA-AES128-GCM-SHA256
+       - ECDHE-RSA-AES256-GCM-SHA384
+       - ECDHE-RSA-AES128-SHA
+       - AES256-SHA256
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set SSL cipher suite by string
+   bigip_device_httpd:
+     ssl_cipher_suite: ECDHE-RSA-AES128-GCM-SHA256:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA:AES256-SHA256
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set SSL protocols by list
+   bigip_device_httpd:
+     ssl_protocols:
+       - all
+       - -SSLv2
+       - -SSLv3
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Set SSL protocols by string
+   bigip_device_httpd:
+     ssl_protocols: all -SSLv2 -SSLv3
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_device_httpd-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   auth_name                           The new authentication realm name.
+   string                     changed  Sample:
+                                       foo
+   auth_pam_dashboard_timeout changed  Whether or not the BIG-IP dashboard will timeout.
+   boolean
+   auth_pam_idle_timeout               The new number of seconds for GUI timeout.
+   string                     changed  Sample:
+                                       1200
+   auth_pam_validate_ip                The new authPamValidateIp setting.
+   boolean                    changed  Sample:
+                                       True
+   fast_cgi_timeout                    The new timeout of FastCGI.
+   integer                    changed  Sample:
+                                       500
+   hostname_lookup                     Whether or not to display the hostname, if possible.
+   boolean                    changed  Sample:
+                                       True
+   log_level                           The new minimum httpd log level.
+   string                     changed  Sample:
+                                       crit
+   max_clients                         The new maximum number of clients that can connect to the GUI at once.
+   integer                    changed  Sample:
+                                       20
+   redirect_http_to_https              Whether or not to redirect http requests to the GUI to https.
+   boolean                    changed  Sample:
+                                       True
+   ssl_cipher_suite                    The new ciphers that the system uses.
+   string                     changed  Sample:
+                                       ECDHE-RSA-AES256-GCM-SHA384:ECDHE-RSA-AES128-SHA
+   ssl_cipher_suite_list               List of the new ciphers that the system uses.
+   string                     changed  Sample:
+                                       ['ECDHE-RSA-AES256-GCM-SHA384', 'ECDHE-RSA-AES128-SHA']
+   ssl_port                            The new HTTPS port to listen on.
+   integer                    changed  Sample:
+                                       10443
+   ssl_protocols                       The new list of SSL protocols to accept on the management console.
+   string                     changed  Sample:
+                                       all -SSLv2 -SSLv3
+
+STATUS                   *bigip_device_httpd-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Joe Reifel (@JoeReifel)
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_device_httpd-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_device_httpd_module.html

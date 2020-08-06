@@ -1,0 +1,207 @@
+SYNOPSIS                   *postgresql_idx*
+
+     • Create or drop indexes from a PostgreSQL database.
+
+REQUIREMENTS                   *postgresql_idx-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_idx-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   ca_cert                            Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                             If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                      aliases: ssl_rootcert
+   cascade             Choices:       Automatically drop objects that depend on the index, and in turn all objects that depend on those objects.
+   boolean             • no ←         It used only with state=absent.
+                       • yes          Mutually exclusive with concurrent=yes
+   columns                            List of index columns that need to be covered by index.
+   list /                             Mutually exclusive with state=absent.
+   elements=string                    aliases: column
+                                      Enable or disable concurrent mode (CREATE / DROP INDEX CONCURRENTLY).
+   concurrent          Choices:       Pay attention, if concurrent=no, the table will be locked (ACCESS EXCLUSIVE) during the building process. For more information about the lock levels see
+   boolean             • no           https://www.postgresql.org/docs/current/explicit-locking.html.
+                       • yes ←        If the building process was interrupted for any reason when cuncurrent=yes, the index becomes invalid. In this case it should be dropped and created again.
+                                      Mutually exclusive with cascade=yes.
+   cond                               Index conditions.
+   string                             Mutually exclusive with state=absent.
+   db                                 Name of database to connect to and where the index will be created/dropped.
+   string                             aliases: login_db
+   idxname                            Name of the index to create or drop.
+   string / required                  aliases: name
+   idxtype                            Index type (like btree, gist, gin, etc.).
+   string                             Mutually exclusive with state=absent.
+                                      aliases: type
+   login_host                         Host running the database.
+   string
+   login_password                     The password used to authenticate with.
+   string
+   login_unix_socket                  Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:         The username used to authenticate with.
+   string            "postgres"
+   port              Default:         Database port to connect to.
+   integer           5432             aliases: login_port
+   schema                             Name of a database schema where the index will be created.
+   string
+   session_role                       Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                             Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                       Choices:
+                       • allow
+   ssl_mode            • disable      Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←     See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                       • require      Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+   state               Choices:       Index state.
+   string              • absent       state=present implies the index will be created if it does not exist.
+                       • present ←    state=absent implies the index will be dropped if it exists.
+   storage_params                     Storage parameters like fillfactor, vacuum_cleanup_index_scale_factor, etc.
+   list /                             Mutually exclusive with state=absent.
+   elements=string
+   table                              Table to create index on it.
+   string / required                  Mutually exclusive with state=absent.
+   tablespace                         Set a tablespace for the index.
+   string                             Mutually exclusive with state=absent.
+
+NOTES                   *postgresql_idx-notes*
+
+   Note
+
+     • The index building process can affect database performance.
+     • To avoid table locks on production databases, use concurrent=yes (default behavior).
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_idx-see also*
+
+   See also
+
+   postgresql_table – Create, drop, or modify a PostgreSQL table
+   The official documentation on the postgresql_table module.
+
+   postgresql_tablespace – Add or remove PostgreSQL tablespaces from remote hosts
+   The official documentation on the postgresql_tablespace module.
+
+   PostgreSQL indexes reference
+   General information about PostgreSQL indexes.
+
+   CREATE INDEX reference
+   Complete reference of the CREATE INDEX command documentation.
+
+   ALTER INDEX reference
+   Complete reference of the ALTER INDEX command documentation.
+
+   DROP INDEX reference
+   Complete reference of the DROP INDEX command documentation.
+
+EXAMPLES                   *postgresql_idx-examples*
+
+ - name: Create btree index if not exists test_idx concurrently covering columns id and name of table products
+   postgresql_idx:
+     db: acme
+     table: products
+     columns: id,name
+     name: test_idx
+
+ - name: Create btree index test_idx concurrently with tablespace called ssd and storage parameter
+   postgresql_idx:
+     db: acme
+     table: products
+     columns:
+     - id
+     - name
+     idxname: test_idx
+     tablespace: ssd
+     storage_params:
+     - fillfactor=90
+
+ - name: Create gist index test_gist_idx concurrently on column geo_data of table map
+   postgresql_idx:
+     db: somedb
+     table: map
+     idxtype: gist
+     columns: geo_data
+     idxname: test_gist_idx
+
+ # Note: for the example below pg_trgm extension must be installed for gin_trgm_ops
+ - name: Create gin index gin0_idx not concurrently on column comment of table test
+   postgresql_idx:
+     idxname: gin0_idx
+     table: test
+     columns: comment gin_trgm_ops
+     concurrent: no
+     idxtype: gin
+
+ - name: Drop btree test_idx concurrently
+   postgresql_idx:
+     db: mydb
+     idxname: test_idx
+     state: absent
+
+ - name: Drop test_idx cascade
+   postgresql_idx:
+     db: mydb
+     idxname: test_idx
+     state: absent
+     cascade: yes
+     concurrent: no
+
+ - name: Create btree index test_idx concurrently on columns id,comment where column id > 1
+   postgresql_idx:
+     db: mydb
+     table: test
+     columns: id,comment
+     idxname: test_idx
+     cond: id > 1
+
+RETURN VALUES                   *postgresql_idx-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   name                    Index name.
+   string         always   Sample:
+                           foo_idx
+   query                   Query that was tried to be executed.
+   string         always   Sample:
+                           CREATE INDEX CONCURRENTLY foo_idx ON test_table USING BTREE (id)
+   schema                  Schema where index exists.
+   string         always   Sample:
+                           public
+   state                   Index state.
+   string         always   Sample:
+                           present
+   storage_params          Index storage parameters.
+   list           always   Sample:
+                           ['fillfactor=90']
+   tablespace              Tablespace where index exists.
+   string         always   Sample:
+                           ssd
+   valid                   Index validity.
+   boolean        always   Sample:
+                           True
+
+STATUS                   *postgresql_idx-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_idx-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_idx_module.html

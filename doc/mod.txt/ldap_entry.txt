@@ -1,0 +1,104 @@
+SYNOPSIS                   *ldap_entry*
+
+     • Add or remove LDAP entries. This module only asserts the existence or non-existence of an LDAP entry, not its attributes. To assert the attribute values of an entry, see ldap_attr.
+
+REQUIREMENTS                   *ldap_entry-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-ldap
+
+PARAMETERS                   *ldap_entry-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   attributes                      If state=present, attributes necessary to create an entry. Existing entries are never modified. To assert specific attribute values on an existing entry, use
+   -                               ldap_attr module instead.
+   bind_dn                         A DN to bind with. If this is omitted, we'll try a SASL bind with the EXTERNAL mechanism.
+   string                          If this is blank, we'll use an anonymous bind.
+   bind_pw                         The password to use with bind_dn.
+   string
+   dn
+   string /                        The DN of the entry to add or remove.
+   required
+   objectClass                     If state=present, value or list of values to use when creating the entry. It can either be a string or an actual list of strings.
+   -
+   server_uri     Default:         A URI to the LDAP server.
+   string         "ldapi:///"      The default value lets the underlying LDAP client library look for a UNIX domain socket in its default location.
+   start_tls        Choices:
+   boolean          • no ←         If true, we'll use the START_TLS LDAP extension.
+                    • yes
+   state            Choices:
+   -                • present ←    The target state of the entry.
+                    • absent
+   validate_certs   Choices:       If set to no, SSL certificates will not be validated.
+   boolean          • no           This should only be used on sites using self-signed certificates.
+   added in 2.4     • yes ←
+
+NOTES                   *ldap_entry-notes*
+
+   Note
+
+     • The default authentication settings will attempt to use a SASL EXTERNAL bind over a UNIX domain socket. This works well with the default Ubuntu install for example, which includes a
+       cn=peercred,cn=external,cn=auth ACL rule allowing root to modify the server configuration. If you need to use a simple bind to access your server, pass the credentials in bind_dn and
+       bind_pw.
+     • The params parameter is deprecated in Ansible-2.7 due to circumventing Ansible’s parameter handling. The params parameter started disallowing setting the bind_pw parameter in Ansible-2.7 as
+       it was insecure to set the parameter that way.
+
+EXAMPLES                   *ldap_entry-examples*
+
+ - name: Make sure we have a parent entry for users
+   ldap_entry:
+     dn: ou=users,dc=example,dc=com
+     objectClass: organizationalUnit
+
+ - name: Make sure we have an admin user
+   ldap_entry:
+     dn: cn=admin,dc=example,dc=com
+     objectClass:
+       - simpleSecurityObject
+       - organizationalRole
+     attributes:
+       description: An LDAP administrator
+       userPassword: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
+
+ - name: Get rid of an old entry
+   ldap_entry:
+     dn: ou=stuff,dc=example,dc=com
+     state: absent
+     server_uri: ldap://localhost/
+     bind_dn: cn=admin,dc=example,dc=com
+     bind_pw: password
+
+ #
+ # The same as in the previous example but with the authentication details
+ # stored in the ldap_auth variable:
+ #
+ # ldap_auth:
+ #   server_uri: ldap://localhost/
+ #   bind_dn: cn=admin,dc=example,dc=com
+ #   bind_pw: password
+ #
+ # In the example below, 'args' is a task keyword, passed at the same level as the module
+ - name: Get rid of an old entry
+   ldap_entry:
+     dn: ou=stuff,dc=example,dc=com
+     state: absent
+   args: "{{ ldap_auth }}"
+
+STATUS                   *ldap_entry-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jiri Tyr (@jtyr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ldap_entry-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ldap_entry_module.html

@@ -1,0 +1,89 @@
+SYNOPSIS                   *docker_stack*
+
+     • Manage docker stacks using the ‘docker stack’ command on the target node (see examples).
+
+REQUIREMENTS                   *docker_stack-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • jsondiff
+     • pyyaml
+
+PARAMETERS                   *docker_stack-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+   absent_retries          Default:         If >0 and state is absent the module will retry up to absent_retries times to delete the stack until all the resources have been effectively deleted. If
+   integer                 0                the last try still reports the stack as not completely removed the module will fail.
+   absent_retries_interval Default:         Interval in seconds between consecutive absent_retries.
+   integer                 1
+   compose                 Default:         List of compose definitions. Any element may be a string referring to the path of the compose file on the target host or the YAML contents of a compose
+   list                    []               file nested as dictionary.
+   name                                     Stack name
+   string / required
+   prune                     Choices:       If true will add the --prune option to the docker stack deploy command. This will have docker remove the services not present in the current stack
+   boolean                   • no ←         definition.
+                             • yes
+                             Choices:
+   resolve_image             • always       If set will add the --resolve-image option to the docker stack deploy command. This will have docker query the registry to resolve image digest and
+   string                    • changed      supported platforms. If not set, docker use "always" by default.
+                             • never
+   state                     Choices:
+   string                    • present ←    Service state.
+                             • absent
+   with_registry_auth        Choices:       If true will add the --with-registry-auth option to the docker stack deploy command. This will have docker send registry authentication details to Swarm
+   boolean                   • no ←         agents.
+                             • yes
+
+EXAMPLES                   *docker_stack-examples*
+
+ - name: Deploy stack from a compose file
+   docker_stack:
+     state: present
+     name: mystack
+     compose:
+       - /opt/docker-compose.yml
+
+ - name: Deploy stack from base compose file and override the web service
+   docker_stack:
+     state: present
+     name: mystack
+     compose:
+       - /opt/docker-compose.yml
+       - version: '3'
+         services:
+           web:
+             image: nginx:latest
+             environment:
+               ENVVAR: envvar
+
+ - name: Remove stack
+   docker_stack:
+     name: mystack
+     state: absent
+
+RETURN VALUES                   *docker_stack-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   stack_spec_diff           dictionary containing the differences between the 'Spec' field of the stack services before and after applying the new stack definition.
+   dictionary      on change Sample:
+                             "stack_spec_diff": {'test_stack_test_service': {u'TaskTemplate': {u'ContainerSpec': {delete: [u'Env']}}}}
+
+STATUS                   *docker_stack-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dario Zanzico (@dariko)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_stack-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_stack_module.html

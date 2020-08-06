@@ -1,0 +1,283 @@
+SYNOPSIS                   *meraki_nat*
+
+     • Allows for creation, management, and visibility of NAT rules (1:1, 1:many, port forwarding) within Meraki.
+
+PARAMETERS                   *meraki_nat-parameters*
+
+           Parameter           Choices/Defaults                                                                         Comments
+   auth_key                                        Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   host                      Default:              Hostname for Meraki dashboard.
+   string                    "api.meraki.com"      Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:              Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   net_id                                          ID number of a network.
+   string
+   net_name                                        Name of a network.
+   string                                          aliases: name, network
+   one_to_many                                     List of 1:many NAT rules.
+   list
+      port_rules                                   List of associated port rules.
+      list
+         allowed_ips                               Remote IP addresses or ranges that are permitted to access the internal resource via this port forwarding rule, or 'any'.
+         list
+         local_ip                                  Local IP address to which traffic will be forwarded.
+         string
+         local_port                                Destination port of the forwarded traffic that will be sent from the MX to the specified host on the LAN.
+         string                                    If you simply wish to forward the traffic without translating the port, this should be the same as the Public port.
+         name                                      A description of the rule.
+         string
+         protocol              Choices:
+         string                • tcp               Protocol to apply NAT rule to.
+                               • udp
+         public_port                               Destination port of the traffic that is arriving on the WAN.
+         string
+      public_ip                                    The IP address that will be used to access the internal resource from the WAN.
+      string
+                               Choices:
+      uplink                   • both              The physical WAN interface on which the traffic will arrive.
+      string                   • internet1
+                               • internet2
+   one_to_one                                      List of 1:1 NAT rules.
+   list
+      allowed_inbound                              The ports this mapping will provide access on, and the remote IPs that will be allowed access to the resource.
+      list
+         allowed_ips                               ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges, or 'any'.
+         list
+         destination_ports                         List of ports or port ranges that will be forwarded to the host on the LAN.
+         list
+                               Choices:
+         protocol              • any ←
+         string                • icmp-ping         Protocol to apply NAT rule to.
+                               • tcp
+                               • udp
+      lan_ip                                       The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN.
+      string
+      name                                         A descriptive name for the rule.
+      string
+      public_ip                                    The IP address that will be used to access the internal resource from the WAN.
+      string
+                               Choices:
+      uplink                   • both              The physical WAN interface on which the traffic will arrive.
+      -                        • internet1
+                               • internet2
+   org_id                                          ID of organization associated to a network.
+   string
+   org_name                                        Name of organization.
+   string                                          aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←       Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug             Set amount of debug output during module execution.
+                               • normal ←
+   port_forwarding                                 List of port forwarding rules.
+   list
+      allowed_ips                                  List of ranges of WAN IP addresses that are allowed to make inbound connections on the specified ports or port ranges (or any).
+      -
+      lan_ip                                       The IP address of the server or device that hosts the internal resource that you wish to make available on the WAN.
+      string
+      local_port                                   A port or port ranges that will receive the forwarded traffic from the WAN.
+      string
+      name                                         A descriptive name for the rule.
+      string
+      protocol                 Choices:
+      string                   • tcp               Protocol to forward traffic for.
+                               • udp
+      public_port                                  A port or port ranges that will be forwarded to the host on the LAN.
+      string
+                               Choices:
+      uplink                   • both              The physical WAN interface on which the traffic will arrive.
+      string                   • internet1
+                               • internet2
+   rate_limit_retry_time     Default:              Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   state                       Choices:
+   string                      • present ←         Create or modify an organization.
+                               • query
+                               Choices:
+   subset                      • 1:1
+   list                        • 1:many            Specifies which NAT components to query.
+                               • all ←
+                               • port_forwarding
+   timeout                   Default:              Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:            If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no                Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no                If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no                Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_nat-notes*
+
+   Note
+
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_nat-examples*
+
+ - name: Query all NAT rules
+   meraki_nat:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: query
+     subset: all
+   delegate_to: localhost
+
+ - name: Query 1:1 NAT rules
+   meraki_nat:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: query
+     subset: '1:1'
+   delegate_to: localhost
+
+ - name: Create 1:1 rule
+   meraki_nat:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     one_to_one:
+       - name: Service behind NAT
+         public_ip: 1.2.1.2
+         lan_ip: 192.168.128.1
+         uplink: internet1
+         allowed_inbound:
+           - protocol: tcp
+             destination_ports:
+               - 80
+             allowed_ips:
+               - 10.10.10.10
+   delegate_to: localhost
+
+ - name: Create 1:many rule
+   meraki_nat:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     one_to_many:
+       - public_ip: 1.1.1.1
+         uplink: internet1
+         port_rules:
+           - name: Test rule
+             protocol: tcp
+             public_port: 10
+             local_ip: 192.168.128.1
+             local_port: 11
+             allowed_ips:
+               - any
+   delegate_to: localhost
+
+ - name: Create port forwarding rule
+   meraki_nat:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     port_forwarding:
+       - name: Test map
+         lan_ip: 192.168.128.1
+         uplink: both
+         protocol: tcp
+         allowed_ips:
+           - 1.1.1.1
+         public_port: 10
+         local_port: 11
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_nat-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key                             Returned                                                                           Description
+   data                     success                                    Information about the created or manipulated object.
+   complex
+     one_to_many            success, when 1:many NAT object is in task Information about 1:many NAT object.
+     complex
+       rules                success, when 1:many NAT object is in task List of 1:many NAT rules.
+       complex
+         portRules          success, when 1:many NAT object is in task List of NAT port rules.
+         complex
+           allowedIps       success, when 1:1 NAT object is in task    List of IP addresses to be forwarded.
+           list
+           localIp          success, when 1:1 NAT object is in task    Local IP address traffic will be forwarded.
+           string
+           localPort        success, when 1:1 NAT object is in task    Destination port to be forwarded to.
+           integer
+           name             success, when 1:many NAT object is in task Name of NAT object.
+           string
+           protocol         success, when 1:1 NAT object is in task    Protocol to apply NAT rule to.
+           string
+           publicPort       success, when 1:1 NAT object is in task    Destination port of the traffic that is arriving on WAN.
+           integer
+         publicIp           success, when 1:many NAT object is in task Public IP address to be mapped.
+         string
+         uplink             success, when 1:many NAT object is in task Internet port where rule is applied.
+         string
+     one_to_one             success, when 1:1 NAT object is in task    Information about 1:1 NAT object.
+     complex
+       rules                success, when 1:1 NAT object is in task    List of 1:1 NAT rules.
+       complex
+         allowedInbound     success, when 1:1 NAT object is in task    List of inbound forwarding rules.
+         complex
+           allowedIps       success, when 1:1 NAT object is in task    List of IP addresses to be forwarded.
+           list
+           destinationPorts success, when 1:1 NAT object is in task    Ports to apply NAT rule to.
+           string
+           protocol         success, when 1:1 NAT object is in task    Protocol to apply NAT rule to.
+           string
+         lanIp              success, when 1:1 NAT object is in task    Local IP address to be mapped.
+         string
+         name               success, when 1:1 NAT object is in task    Name of NAT object.
+         string
+         publicIp           success, when 1:1 NAT object is in task    Public IP address to be mapped.
+         string
+         uplink             success, when 1:1 NAT object is in task    Internet port where rule is applied.
+         string
+     port_forwarding        success, when port forwarding is in task   Information about port forwarding rules.
+     complex
+       rules                success, when port forwarding is in task   List of port forwarding rules.
+       complex
+         allowedIps         success, when port forwarding is in task   List of IP addresses to be forwarded.
+         list
+         lanIp              success, when port forwarding is in task   Local IP address to be mapped.
+         string
+         localPort          success, when port forwarding is in task   Destination port to be forwarded to.
+         integer
+         name               success, when port forwarding is in task   Name of NAT object.
+         string
+         protocol           success, when port forwarding is in task   Protocol to apply NAT rule to.
+         string
+         publicPort         success, when port forwarding is in task   Destination port of the traffic that is arriving on WAN.
+         integer
+         uplink             success, when port forwarding is in task   Internet port where rule is applied.
+         string
+
+STATUS                   *meraki_nat-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_nat-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_nat_module.html

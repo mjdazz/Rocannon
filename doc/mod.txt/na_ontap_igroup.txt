@@ -1,0 +1,148 @@
+SYNOPSIS                   *na_ontap_igroup*
+
+     • Create/Delete/Rename Igroups and Modify initiators belonging to an igroup
+
+REQUIREMENTS                   *na_ontap_igroup-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_igroup-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   bind_portset                            Name of a current portset to bind to the newly created igroup.
+   -
+   force_remove_initiator   Choices:
+   boolean                  • no           Forcibly remove the initiator even if there are existing LUNs mapped to this initiator group.
+                            • yes
+   from_name
+   -                                       Name of igroup to rename to name.
+   added in 2.7
+   hostname                                The hostname or IP address of the ONTAP instance.
+   string / required
+   http_port                               Override the default port (80 or 443) with this port
+   integer
+   https                    Choices:
+   boolean                  • no ←         Enable and disable https
+                            • yes
+                            Choices:
+   initiator_group_type     • fcp          Type of the initiator group.
+   -                        • iscsi        Required when state=present.
+                            • mixed
+                                           List of initiators to be mapped to the igroup.
+   initiators                              WWPN, WWPN Alias, or iSCSI name of Initiator to add or remove.
+   -                                       For a modify operation, this list replaces the existing initiators
+                                           This module does not add or remove specific initiator(s) in an igroup
+                                           aliases: initiator
+   name                                    The name of the igroup to manage.
+   - / required
+   ontapi                                  The ontap api version to use
+   integer
+   ostype                                  OS type of the initiators within the group.
+   -
+   password                                Password for the specified user.
+   string / required                       aliases: pass
+   state                    Choices:
+   -                        • present ←    Whether the specified Igroup should exist or not.
+                            • absent
+                            Choices:       REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest                 • Never        Always -- will always use the REST API
+   string                   • Always       Never -- will always use the ZAPI
+                            • Auto ←       Auto -- will try to use the REST Api
+   username                                This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read
+   string / required                       the documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+                                           aliases: user
+   validate_certs           Choices:       If set to no, the SSL certificates will not be validated.
+   boolean                  • no           This should only set to False used on personally controlled sites using self-signed certificates.
+                            • yes ←
+   vserver                                 The name of the vserver to use.
+   - / required
+
+NOTES                   *na_ontap_igroup-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_igroup-examples*
+
+ - name: Create iSCSI Igroup
+   na_ontap_igroup:
+     state: present
+     name: ansibleIgroup3
+     initiator_group_type: iscsi
+     ostype: linux
+     initiators: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com,abc.com:redhat.com
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Create FC Igroup
+   na_ontap_igroup:
+     state: present
+     name: ansibleIgroup4
+     initiator_group_type: fcp
+     ostype: linux
+     initiators: 20:00:00:50:56:9f:19:82
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: rename Igroup
+   na_ontap_igroup:
+     state: present
+     from_name: ansibleIgroup3
+     name: testexamplenewname
+     initiator_group_type: iscsi
+     ostype: linux
+     initiators: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Modify Igroup Initiators (replaces existing initiators)
+   na_ontap_igroup:
+     state: present
+     name: ansibleIgroup3
+     initiator_group_type: iscsi
+     ostype: linux
+     initiator: iqn.1994-05.com.redhat:scspa0395855001.rtp.openenglab.netapp.com
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Delete Igroup
+   na_ontap_igroup:
+     state: absent
+     name: ansibleIgroup3
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+STATUS                   *na_ontap_igroup-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_igroup-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_igroup_module.html

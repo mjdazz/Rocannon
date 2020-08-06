@@ -1,0 +1,171 @@
+SYNOPSIS                   *ovirt_nic*
+
+     • Module to manage network interfaces of Virtual Machines in oVirt/RHV.
+
+REQUIREMENTS                   *ovirt_nic-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • ovirt-engine-sdk-python >= 4.3.0
+
+PARAMETERS                   *ovirt_nic-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   auth                                    Dictionary with values needed to create HTTP/HTTPS connection to oVirt:
+   dictionary / required
+                                           A PEM file containing the trusted CA certificates.
+       ca_file                             The certificate presented by the server will be verified using these CA certificates.
+       string                              If ca_file parameter is not set, system wide CA certificate store is used.
+                                           Default value is set by OVIRT_CAFILE environment variable.
+       headers                             Dictionary of HTTP headers to be added to each API call.
+       dictionary
+       hostname                            A string containing the hostname of the server, usually something like `server.example.com`.
+       string                              Default value is set by OVIRT_HOSTNAME environment variable.
+                                           Either url or hostname is required.
+       insecure             Choices:
+       boolean              • no           A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                            • yes
+       kerberos             Choices:
+       boolean              • no           A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                            • yes
+       password                            The password of the user.
+       string / required                   Default value is set by OVIRT_PASSWORD environment variable.
+       token                               Token to be used instead of login with username/password.
+       string                              Default value is set by OVIRT_TOKEN environment variable.
+       url                                 A string containing the API URL of the server, usually something like `https://server.example.com/ovirt-engine/api`.
+       string                              Default value is set by OVIRT_URL environment variable.
+                                           Either url or hostname is required.
+       username                            The name of the user, something like [email protected].
+       string / required                   Default value is set by OVIRT_USERNAME environment variable.
+   fetch_nested             Choices:       If True the module will fetch additional data from the API.
+   boolean                  • no           It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other attributes of the nested entities by specifying nested_attributes.
+                            • yes
+   id
+   -                                       ID of the nic to manage.
+   added in 2.8
+   interface                               Type of the network interface. For example e1000, pci_passthrough, rtl8139, rtl8139_virtio, spapr_vlan or virtio.
+   -                                       It's required parameter when creating the new NIC.
+   linked                   Choices:
+   boolean                  • no           Defines if the NIC is linked to the virtual machine.
+   added in 2.9             • yes
+   mac_address                             Custom MAC address of the network interface, by default it's obtained from MAC pool.
+   -
+   name                                    Name of the network interface to manage.
+   - / required
+   nested_attributes                       Specifies list of the attributes which should be fetched from the API.
+   list                                    This parameter apply only when fetch_nested is true.
+   network                                 Logical network to which the VM network interface should use, by default Empty network is used if network is not specified.
+   -
+   poll_interval          Default:         Number of the seconds the module waits until another poll request on entity status is sent.
+   integer                3
+   profile                                 Virtual network interface profile to be attached to VM network interface.
+   -                                       When not specified and network has only single profile it will be auto-selected, otherwise you must specify profile.
+                            Choices:
+   state                    • absent
+   -                        • plugged      Should the Virtual Machine NIC be present/absent/plugged/unplugged.
+                            • present ←
+                            • unplugged
+   template                                Name of the template to manage.
+   -                                       You must provide either vm parameter or template parameter.
+   added in 2.4
+   timeout                Default:         The amount of time in seconds the module should wait for the instance to get into desired state.
+   integer                180
+   vm                                      Name of the Virtual Machine to manage.
+   -                                       You must provide either vm parameter or template parameter.
+   wait                     Choices:
+   boolean                  • no           yes if the module should wait for the entity to get into desired state.
+                            • yes ←
+
+NOTES                   *ovirt_nic-notes*
+
+   Note
+
+     • In order to use this module you have to install oVirt Python SDK. To ensure it’s installed with correct version you can create the following task: pip: name=ovirt-engine-sdk-python
+       version=4.3.0
+
+EXAMPLES                   *ovirt_nic-examples*
+
+ # Examples don't contain auth parameter for simplicity,
+ # look at ovirt_auth module to see how to reuse authentication:
+
+ - name: Add NIC to VM
+   ovirt_nic:
+     state: present
+     vm: myvm
+     name: mynic
+     interface: e1000
+     mac_address: 00:1a:4a:16:01:56
+     profile: ovirtmgmt
+     network: ovirtmgmt
+
+ - name: Plug NIC to VM
+   ovirt_nic:
+     state: plugged
+     vm: myvm
+     name: mynic
+
+ - name: Unplug NIC from VM
+   ovirt_nic:
+     state: unplugged
+     linked: false
+     vm: myvm
+     name: mynic
+
+ - name: Add NIC to template
+   ovirt_nic:
+     auth: "{{ ovirt_auth }}"
+     state: present
+     template: my_template
+     name: nic1
+     interface: virtio
+     profile: ovirtmgmt
+     network: ovirtmgmt
+
+ - name: Remove NIC from VM
+   ovirt_nic:
+     state: absent
+     vm: myvm
+     name: mynic
+
+ # Change NIC Name
+ - ovirt_nic:
+     id: 00000000-0000-0000-0000-000000000000
+     name: "new_nic_name"
+     vm: myvm
+
+RETURN VALUES                   *ovirt_nic-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                   Description
+              On
+              success   ID of the network interface which is managed
+   id         if        Sample:
+   string     network   7de90f31-222c-436c-a1ca-7e655bd5b60c
+              interface
+              is found.
+              On
+              success
+   nic        if        Dictionary of all the network interface attributes. Network interface attributes can be found on your oVirt/RHV instance at following url:
+   dictionary network   http://ovirt.github.io/ovirt-engine-api-model/master/#types/nic.
+              interface
+              is found.
+
+STATUS                   *ovirt_nic-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ondra Machacek (@machacekondra)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovirt_nic-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovirt_nic_module.html

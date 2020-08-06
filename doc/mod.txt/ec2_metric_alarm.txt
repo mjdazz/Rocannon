@@ -1,42 +1,162 @@
-SYNOPSIS                           *ec2_metric_alarm*
+SYNOPSIS                   *ec2_metric_alarm*
 
-New in version 1.6.
+     • Can create or delete AWS metric alarms.
+     • Metrics you wish to alarm on must already exist.
 
-Can create or delete AWS metric alarms Metrics you wish to alarm on must already exist
+REQUIREMENTS                   *ec2_metric_alarm-requirements*
 
-EXAMPLES                           *ec2_metric_alarm-examples*
->
-    - name: create alarm
-      ec2_metric_alarm:
-        state: present
-        region: ap-southeast-2
-        name: "cpu-low"
-        metric: "CPUUtilization"
-        namespace: "AWS/EC2"
-        statistic: Average
-        comparison: "<="
-        threshold: 5.0
-        period: 300
-        evaluation_periods: 3
-        unit: "Percent"
-        description: "This will alarm when a bamboo slave's cpu usage average is lower than 5% for 15 minutes "
-        dimensions: {'InstanceId':'i-XXX'}
-        alarm_actions: ["action1","action2"]
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *ec2_metric_alarm-parameters*
+
+            Parameter             Choices/Defaults                                                                       Comments
+   alarm_actions                                     A list of the names action(s) taken when the alarm is in the 'alarm' status, denoted as Amazon Resource Name(s)
+   -
+   aws_access_key                                    AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                            aliases: ec2_access_key, access_key
+   aws_secret_key                                    AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                            aliases: ec2_secret_key, secret_key
+                                  Choices:
+   comparison                     • <=
+   -                              • <                Determines how the threshold value is compared
+                                  • >
+                                  • >=
+   debug_botocore_endpoint_logs   Choices:           Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←             resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes              ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   description                                       A longer description of the alarm
+   -
+   dimensions                                        Describes to what the alarm is applied
+   -
+   ec2_url                                           Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                            required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any,
+                                                     is used.
+   evaluation_periods                                The number of times in which the metric is evaluated before final calculation
+   -
+   insufficient_data_actions                         A list of the names of action(s) to take when the alarm is in the 'insufficient_data' status
+   -
+   metric                                            Name of the monitored metric (e.g. CPUUtilization)
+   -                                                 Metric must already exist
+   name                                              Unique name for the alarm
+   - / required
+   namespace                                         Name of the appropriate namespace ('AWS/EC2', 'System/Linux', etc.), which determines the category it will appear under in cloudwatch
+   -
+   ok_actions                                        A list of the names of action(s) to take when the alarm is in the 'ok' status, denoted as Amazon Resource Name(s)
+   -
+   period                                            The time (in seconds) between metric evaluations
+   -
+   profile                                           Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                            The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                            http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                     aliases: aws_region, ec2_region
+   security_token                                    AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                            aliases: access_token
+   state                          Choices:
+   - / required                   • present          register or deregister the alarm
+                                  • absent
+                                  Choices:
+                                  • SampleCount
+   statistic                      • Average          Operation applied to the metric
+   -                              • Sum              Works in conjunction with period and evaluation_periods to determine the comparison value
+                                  • Minimum
+                                  • Maximum
+   threshold                                         Sets the min/max bound for triggering the alarm
+   -
+                                  Choices:
+                                  • Seconds
+                                  • Microseconds
+                                  • Milliseconds
+                                  • Bytes
+                                  • Kilobytes
+                                  • Megabytes
+                                  • Gigabytes
+                                  • Terabytes
+                                  • Bits
+                                  • Kilobits
+                                  • Megabits
+                                  • Gigabits
+   unit                           • Terabits         The threshold's unit of measurement
+   -                              • Percent
+                                  • Count
+                                  • Bytes/Second
+                                  • Kilobytes/Second
+                                  • Megabytes/Second
+                                  • Gigabytes/Second
+                                  • Terabytes/Second
+                                  • Bits/Second
+                                  • Kilobits/Second
+                                  • Megabits/Second
+                                  • Gigabits/Second
+                                  • Terabits/Second
+                                  • Count/Second
+                                  • None
+   validate_certs                 Choices:
+   boolean                        • no               When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_metric_alarm-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_metric_alarm-examples*
+
+ - name: create alarm
+   ec2_metric_alarm:
+     state: present
+     region: ap-southeast-2
+     name: "cpu-low"
+     metric: "CPUUtilization"
+     namespace: "AWS/EC2"
+     statistic: Average
+     comparison: "<="
+     threshold: 5.0
+     period: 300
+     evaluation_periods: 3
+     unit: "Percent"
+     description: "This will alarm when a bamboo slave's cpu usage average is lower than 5% for 15 minutes "
+     dimensions: {'InstanceId':'i-XXX'}
+     alarm_actions: ["action1","action2"]
+
+ - name: Create an alarm to recover a failed instance
+   ec2_metric_alarm:
+     state: present
+     region: us-west-1
+     name: "recover-instance"
+     metric: "StatusCheckFailed_System"
+     namespace: "AWS/EC2"
+     statistic: "Minimum"
+     comparison: ">="
+     threshold: 1.0
+     period: 60
+     evaluation_periods: 2
+     unit: "Count"
+     description: "This will recover an instance when it fails"
+     dimensions: {"InstanceId":'i-XXX'}
+     alarm_actions: ["arn:aws:automate:us-west-1:ec2:recover"]
+
+STATUS                   *ec2_metric_alarm-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Zacharie Eakin (@Zeekin)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_metric_alarm-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_metric_alarm_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_metric_alarm_module.html

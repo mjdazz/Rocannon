@@ -1,0 +1,198 @@
+SYNOPSIS                   *cloudscale_server*
+
+     • Create, update, start, stop and delete servers on the cloudscale.ch IaaS service.
+
+PARAMETERS                   *cloudscale_server-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   anti_affinity_with                   UUID of another server to create an anti-affinity group with.
+   string                               Mutually exclusive with server_groups.
+                                        Deprecated, removed in version 2.11.
+   api_timeout         Default:
+   -                   30               Timeout in seconds for calls to the cloudscale.ch API.
+   added in 2.5
+   api_token                            cloudscale.ch API token.
+   -                                    This can also be passed in the CLOUDSCALE_API_TOKEN environment variable.
+   bulk_volume_size_gb                  Size of the bulk storage volume in GB.
+   integer                              No bulk storage volume if not set.
+   flavor                               Flavor of the server.
+   string
+   force                 Choices:
+   boolean               • no ←         Allow to stop the running server for updating if necessary.
+   added in 2.8          • yes
+   image                                Image used to create the server.
+   -
+   name                                 Name of the Server.
+   string                               Either name or uuid are required.
+   password
+   string                               Password for the server.
+   added in 2.8
+   server_groups                        List of UUID or names of server groups.
+   list                                 Mutually exclusive with anti_affinity_with.
+   added in 2.8
+   ssh_keys                             List of SSH public keys.
+   list                                 Use the full content of your .pub file here.
+                         Choices:
+   state                 • running ←    State of the server.
+   string                • stopped
+                         • absent
+   tags
+   dictionary                           Tags assosiated with the servers. Set this to {} to clear any tags.
+   added in 2.9
+   use_ipv6              Choices:
+   boolean               • no           Enable IPv6 on the public network interface.
+                         • yes ←
+   use_private_network   Choices:
+   boolean               • no ←         Attach a private network interface to the server.
+                         • yes
+   use_public_network    Choices:
+   boolean               • no           Attach a public network interface to the server.
+                         • yes ←
+   user_data                            Cloud-init configuration (cloud-config) data to use for the server.
+   string
+   uuid                                 UUID of the server.
+   string                               Either name or uuid are required.
+   volume_size_gb      Default:         Size of the root volume in GB.
+   integer             10
+
+NOTES                   *cloudscale_server-notes*
+
+   Note
+
+     • Since version 2.8, uuid and name or not mutually exclusive anymore.
+     • If uuid option is provided, it takes precedence over name for server selection. This allows to update the server’s name.
+     • If no uuid option is provided, name is used for server selection. If more than one server with this name exists, execution is aborted.
+     • Only the name and flavor are evaluated for the update.
+     • The option force=true must be given to allow the reboot of existing running servers for applying the changes.
+     • Instead of the api_token parameter the CLOUDSCALE_API_TOKEN environment variable can be used.
+     • All operations are performed using the cloudscale.ch public API v1.
+     • For details consult the full API documentation: https://www.cloudscale.ch/en/api/v1.
+     • A valid API token is required for all operations. You can create as many tokens as you like using the cloudscale.ch control panel at https://control.cloudscale.ch.
+
+EXAMPLES                   *cloudscale_server-examples*
+
+ # Create and start a server with an existing server group (shiny-group)
+ - name: Start cloudscale.ch server
+   cloudscale_server:
+     name: my-shiny-cloudscale-server
+     image: debian-8
+     flavor: flex-4
+     ssh_keys: ssh-rsa XXXXXXXXXX...XXXX [email protected]
+     server_groups: shiny-group
+     use_private_network: True
+     bulk_volume_size_gb: 100
+     api_token: xxxxxx
+
+ # Start another server in anti-affinity (server group shiny-group)
+ - name: Start second cloudscale.ch server
+   cloudscale_server:
+     name: my-other-shiny-server
+     image: ubuntu-16.04
+     flavor: flex-8
+     ssh_keys: ssh-rsa XXXXXXXXXXX [email protected]
+     server_groups: shiny-group
+     api_token: xxxxxx
+
+
+ # Force to update the flavor of a running server
+ - name: Start cloudscale.ch server
+   cloudscale_server:
+     name: my-shiny-cloudscale-server
+     image: debian-8
+     flavor: flex-8
+     force: yes
+     ssh_keys: ssh-rsa XXXXXXXXXX...XXXX [email protected]
+     use_private_network: True
+     bulk_volume_size_gb: 100
+     api_token: xxxxxx
+   register: server1
+
+ # Stop the first server
+ - name: Stop my first server
+   cloudscale_server:
+     uuid: '{{ server1.uuid }}'
+     state: stopped
+     api_token: xxxxxx
+
+ # Delete my second server
+ - name: Delete my second server
+   cloudscale_server:
+     name: my-other-shiny-server
+     state: absent
+     api_token: xxxxxx
+
+ # Start a server and wait for the SSH host keys to be generated
+ - name: Start server and wait for SSH host keys
+   cloudscale_server:
+     name: my-cloudscale-server-with-ssh-key
+     image: debian-8
+     flavor: flex-4
+     ssh_keys: ssh-rsa XXXXXXXXXXX [email protected]
+     api_token: xxxxxx
+   register: server
+   until: server.ssh_fingerprints is defined and server.ssh_fingerprints
+   retries: 60
+   delay: 2
+
+RETURN VALUES                   *cloudscale_server-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                     Returned                                                                              Description
+   anti_affinity_with success when not state == absent List of servers in the same anti-affinity group
+   list                                                Deprecated, removed in version 2.11.
+   flavor                                              The flavor that has been used for this server
+   string             success when not state == absent Sample:
+                                                       flex-8
+   href                                                API URL to get details about this server
+   string             success when not state == absent Sample:
+                                                       https://api.cloudscale.ch/v1/servers/cfde831a-4e87-4a75-960f-89b0148aa2cc
+   image                                               The image used for booting this server
+   string             success when not state == absent Sample:
+                                                       debian-8
+   interfaces                                          List of network ports attached to the server
+   list               success when not state == absent Sample:
+                                                       [{'type': 'public', 'addresses': ['...']}]
+   name                                                The display name of the server
+   string             success                          Sample:
+                                                       its-a-me-mario.cloudscale.ch
+   server_groups                                       List of server groups
+   list               success when not state == absent Sample:
+   added in 2.8                                        [{'href': 'https://api.cloudscale.ch/v1/server-groups/...', 'uuid': '...', 'name': 'db-group'}]
+   ssh_fingerprints                                    A list of SSH host key fingerprints. Will be null until the host keys could be retrieved from the server.
+   list               success when not state == absent Sample:
+                                                       ['ecdsa-sha2-nistp256 SHA256:XXXX', '...']
+   ssh_host_keys                                       A list of SSH host keys. Will be null until the host keys could be retrieved from the server.
+   list               success when not state == absent Sample:
+                                                       ['ecdsa-sha2-nistp256 XXXXX', '...']
+   state                                               The current status of the server
+   string             success                          Sample:
+                                                       running
+   tags                                                Tags assosiated with the volume.
+   dictionary         success                          Sample:
+   added in 2.9                                        {'project': 'my project'}
+   uuid                                                The unique identifier for this server
+   string             success                          Sample:
+                                                       cfde831a-4e87-4a75-960f-89b0148aa2cc
+   volumes                                             List of volumes attached to the server
+   list               success when not state == absent Sample:
+                                                       [{'type': 'ssd', 'device': '/dev/vda', 'size_gb': '50'}]
+
+STATUS                   *cloudscale_server-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Gaudenz Steinlin (@gaudenz)
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cloudscale_server-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cloudscale_server_module.html

@@ -1,0 +1,166 @@
+SYNOPSIS                   *k8s_scale*
+
+     • Similar to the kubectl scale command. Use to set the number of replicas for a Deployment, ReplicaSet, or Replication Controller, or the parallelism attribute of a Job. Supports check mode.
+
+   Aliases: openshift_scale
+
+REQUIREMENTS                   *k8s_scale-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • openshift >= 0.6
+     • PyYAML >= 3.11
+
+PARAMETERS                   *k8s_scale-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   api_key                              Token used to authenticate with the API. Can also be specified via K8S_AUTH_API_KEY environment variable.
+   string
+   api_version         Default:         Use to specify the API version. Use to create, delete, or discover an object without providing a full resource definition. Use in conjunction with kind,
+   string              "v1"             name, and namespace to identify a specific object. If resource definition is provided, the apiVersion from the resource_definition will override this option.
+                                        aliases: api, version
+   ca_cert                              Path to a CA certificate used to authenticate with the API. The full certificate chain must be provided to avoid certificate validation errors. Can also be
+   path                                 specified via K8S_AUTH_SSL_CA_CERT environment variable.
+                                        aliases: ssl_ca_cert
+   client_cert                          Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE environment variable.
+   path                                 aliases: cert_file
+   client_key                           Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE environment variable.
+   path                                 aliases: key_file
+   context                              The name of a context found in the config file. Can also be specified via K8S_AUTH_CONTEXT environment variable.
+   string
+   current_replicas                     For Deployment, ReplicaSet, Replication Controller, only scale, if the number of existing replicas matches. In the case of a Job, update parallelism only if
+   integer                              the current parallelism value matches.
+   host                                 Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
+   string
+   kind                                 Use to specify an object model. Use to create, delete, or discover an object without providing a full resource definition. Use in conjunction with
+   string                               api_version, name, and namespace to identify a specific object. If resource definition is provided, the kind from the resource_definition will override this
+                                        option.
+   kubeconfig                           Path to an existing Kubernetes config file. If not provided, and no other connection options are provided, the openshift client will attempt to load the
+   path                                 default configuration file from ~/.kube/config.json. Can also be specified via K8S_AUTH_KUBECONFIG environment variable.
+   name                                 Use to specify an object name. Use to create, delete, or discover an object without providing a full resource definition. Use in conjunction with
+   string                               api_version, kind and namespace to identify a specific object. If resource definition is provided, the metadata.name value from the resource_definition will
+                                        override this option.
+   namespace                            Use to specify an object namespace. Useful when creating, deleting, or discovering an object without providing a full resource definition. Use in conjunction
+   string                               with api_version, kind, and name to identify a specfic object. If resource definition is provided, the metadata.namespace value from the resource_definition
+                                        will override this option.
+   password                             Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD environment variable.
+   string                               Please read the description of the username option for a discussion of when this option is applicable.
+   proxy                                The URL of an HTTP proxy to use for the connection. Can also be specified via K8S_AUTH_PROXY environment variable.
+   -                                    Please note that this module does not pick up typical proxy settings from the environment (e.g. HTTP_PROXY).
+   added in 2.9
+   replicas                             The desired number of replicas.
+   integer
+   resource_definition                  Provide a valid YAML definition (either as a string, list, or dict) for an object when creating or updating. NOTE: kind, api_version, name, and namespace
+   -                                    will be overwritten by corresponding values found in the provided resource_definition.
+                                        aliases: definition, inline
+   resource_version                     Only attempt to scale, if the current object version matches.
+   string
+                                        Provide a path to a file containing a valid YAML definition of an object or objects to be created or updated. Mutually exclusive with resource_definition.
+   src                                  NOTE: kind, api_version, name, and namespace will be overwritten by corresponding values found in the configuration read in from the src file.
+   path                                 Reads from the local file system. To read from the Ansible controller's file system, including vaulted files, use the file lookup plugin or template lookup
+                                        plugin, combined with the from_yaml filter, and pass the result to resource_definition. See Examples below.
+   username                             Provide a username for authenticating with the API. Can also be specified via K8S_AUTH_USERNAME environment variable.
+   string                               Please note that this only works with clusters configured to use HTTP Basic Auth. If your cluster has a different form of authentication (e.g. OAuth2 in
+                                        OpenShift), this option will not work as expected and you should look into the k8s_auth module, as that might do what you need.
+   validate_certs        Choices:       Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL environment variable.
+   boolean               • no           aliases: verify_ssl
+                         • yes
+   wait                  Choices:       For Deployment, ReplicaSet, Replication Controller, wait for the status value of ready_replicas to change to the number of replicas. In the case of a Job,
+   boolean               • no           this option is ignored.
+                         • yes ←
+   wait_timeout        Default:         When wait is True, the number of seconds to wait for the ready_replicas status to equal replicas. If the status is not reached within the allotted time, an
+   integer             20               error will result. In the case of a Job, this option is ignored.
+
+NOTES                   *k8s_scale-notes*
+
+   Note
+
+     • The OpenShift Python client wraps the K8s Python client, providing full access to all of the APIS and models available on both platforms. For API version details and additional information
+       visit https://github.com/openshift/openshift-restclient-python
+     • To avoid SSL certificate validation errors when validate_certs is True, the full certificate chain for the API server must be provided via ca_cert or in the kubeconfig file.
+
+EXAMPLES                   *k8s_scale-examples*
+
+ - name: Scale deployment up, and extend timeout
+   k8s_scale:
+     api_version: v1
+     kind: Deployment
+     name: elastic
+     namespace: myproject
+     replicas: 3
+     wait_timeout: 60
+
+ - name: Scale deployment down when current replicas match
+   k8s_scale:
+     api_version: v1
+     kind: Deployment
+     name: elastic
+     namespace: myproject
+     current_replicas: 3
+     replicas: 2
+
+ - name: Increase job parallelism
+   k8s_scale:
+     api_version: batch/v1
+     kind: job
+     name: pi-with-timeout
+     namespace: testing
+     replicas: 2
+
+ # Match object using local file or inline definition
+
+ - name: Scale deployment based on a file from the local filesystem
+   k8s_scale:
+     src: /myproject/elastic_deployment.yml
+     replicas: 3
+     wait: no
+
+ - name: Scale deployment based on a template output
+   k8s_scale:
+     resource_definition: "{{ lookup('template', '/myproject/elastic_deployment.yml') | from_yaml }}"
+     replicas: 3
+     wait: no
+
+ - name: Scale deployment based on a file from the Ansible controller filesystem
+   k8s_scale:
+     resource_definition: "{{ lookup('file', '/myproject/elastic_deployment.yml') | from_yaml }}"
+     replicas: 3
+     wait: no
+
+RETURN VALUES                   *k8s_scale-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   result        success  If a change was made, will return the patched object, otherwise returns the existing object.
+   complex
+     api_version success  The versioned schema of this representation of an object.
+     string
+     kind        success  Represents the REST resource this object represents.
+     string
+     metadata    success  Standard object metadata. Includes name, namespace, annotations, labels, etc.
+     complex
+     spec        success  Specific attributes of the object. Will vary based on the api_version and kind.
+     complex
+     status      success  Current status details for the object.
+     complex
+
+STATUS                   *k8s_scale-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Houseknecht (@chouseknecht)
+     • Fabian von Feilitzsch (@fabianvf)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *k8s_scale-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/k8s_scale_module.html

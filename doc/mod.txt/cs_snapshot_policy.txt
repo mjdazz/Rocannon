@@ -1,0 +1,175 @@
+SYNOPSIS                   *cs_snapshot_policy*
+
+     • Create, update and delete volume snapshot policies.
+
+REQUIREMENTS                   *cs_snapshot_policy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_snapshot_policy-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   account                          Account the volume is related to.
+   string
+                     Choices:       HTTP method used to query the API endpoint.
+   api_http_method   • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string            • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                    Fallback value is get if not specified.
+   api_key                          API key of the CloudStack API.
+   string                           If not given, the CLOUDSTACK_KEY env variable is considered.
+                                    As the last option, the value is taken from the ini config file, also see the notes.
+   api_region      Default:         Name of the ini section in the cloustack.ini file.
+   string          "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                       Secret key of the CloudStack API.
+   string                           If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                    As the last option, the value is taken from the ini config file, also see the notes.
+                                    HTTP timeout in seconds.
+   api_timeout                      If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                          As the last option, the value is taken from the ini config file, also see the notes.
+                                    Fallback value is 10 seconds if not specified.
+   api_url                          URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                           If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                    As the last option, the value is taken from the ini config file, also see the notes.
+   device_id                        ID of the device on a VM the volume is attached to.
+   integer                          This will only be considered if VM has multiple DATADISK volumes.
+   domain                           Domain the volume is related to.
+   string
+                     Choices:
+   interval_type     • hourly       Interval of the snapshot.
+   string            • daily ←      aliases: interval
+                     • weekly
+                     • monthly
+   max_snaps       Default:         Max number of snapshots.
+   integer         8                aliases: max
+   project                          Name of the project the volume is related to.
+   string
+                                    Time the snapshot is scheduled. Required if state=present.
+   schedule                         Format for interval_type=HOURLY: MM
+   string                           Format for interval_type=DAILY: MM:HH
+                                    Format for interval_type=WEEKLY: MM:HH:DD (1-7)
+                                    Format for interval_type=MONTHLY: MM:HH:DD (1-28)
+   state             Choices:
+   string            • present ←    State of the snapshot policy.
+                     • absent
+   time_zone       Default:         Specifies a timezone for this command.
+   string          "UTC"            aliases: timezone
+                                    Name of the instance to select the volume from.
+   vm                               Use volume_type if VM has a DATADISK and ROOT volume.
+   string                           In case of volume_type=DATADISK, additionally use device_id if VM has more than one DATADISK volume.
+                                    Either volume or vm is required.
+   volume                           Name of the volume.
+   string                           Either volume or vm is required.
+   volume_type       Choices:
+   string            • DATADISK     Type of the volume.
+                     • ROOT
+   vpc                              Name of the vpc the instance is deployed in.
+   string
+
+NOTES                   *cs_snapshot_policy-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_snapshot_policy-examples*
+
+ - name: ensure a snapshot policy daily at 1h00 UTC
+   cs_snapshot_policy:
+     volume: ROOT-478
+     schedule: '00:1'
+     max_snaps: 3
+   delegate_to: localhost
+
+ - name: ensure a snapshot policy daily at 1h00 UTC on the second DATADISK of VM web-01
+   cs_snapshot_policy:
+     vm: web-01
+     volume_type: DATADISK
+     device_id: 2
+     schedule: '00:1'
+     max_snaps: 3
+   delegate_to: localhost
+
+ - name: ensure a snapshot policy hourly at minute 5 UTC
+   cs_snapshot_policy:
+     volume: ROOT-478
+     schedule: '5'
+     interval_type: hourly
+     max_snaps: 1
+   delegate_to: localhost
+
+ - name: ensure a snapshot policy weekly on Sunday at 05h00, TZ Europe/Zurich
+   cs_snapshot_policy:
+     volume: ROOT-478
+     schedule: '00:5:1'
+     interval_type: weekly
+     max_snaps: 1
+     time_zone: 'Europe/Zurich'
+   delegate_to: localhost
+
+ - name: ensure a snapshot policy is absent
+   cs_snapshot_policy:
+     volume: ROOT-478
+     interval_type: hourly
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_snapshot_policy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   account                Account the volume is related to.
+   string        success  Sample:
+                          example account
+   domain                 Domain the volume is related to.
+   string        success  Sample:
+                          example domain
+   id                     UUID of the snapshot policy.
+   string        success  Sample:
+                          a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   interval_type          interval type of the snapshot policy.
+   string        success  Sample:
+                          daily
+   max_snaps              maximum number of snapshots retained.
+   integer       success  Sample:
+                          10
+   project                Name of project the volume is related to.
+   string        success  Sample:
+                          Production
+   schedule      success  schedule of the snapshot policy.
+   string
+   time_zone              the time zone of the snapshot policy.
+   string        success  Sample:
+                          Etc/UTC
+   volume                 the volume of the snapshot policy.
+   string        success  Sample:
+                          Etc/UTC
+   zone                   Name of zone the volume is related to.
+   string        success  Sample:
+                          ch-gva-2
+
+STATUS                   *cs_snapshot_policy-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_snapshot_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_snapshot_policy_module.html

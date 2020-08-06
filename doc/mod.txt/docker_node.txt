@@ -1,0 +1,159 @@
+SYNOPSIS                   *docker_node*
+
+     • Manages the Docker nodes via Swarm Manager.
+     • This module allows to change the node’s role, its availability, and to modify, add or remove node labels.
+
+REQUIREMENTS                   *docker_node-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.25
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 2.4.0
+
+PARAMETERS                   *docker_node-parameters*
+
+      Parameter           Choices/Defaults                                                                             Comments
+                                                 The version of the Docker API running on the Docker Host.
+   api_version      Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string           "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment variable is
+                                                 not set, the default value will be used.
+                                                 aliases: docker_api_version
+                      Choices:
+   availability       • active                   Node availability to assign. If not provided then node availability remains unchanged.
+   string             • pause
+                      • drain
+                                                 Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                       If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified in the
+   path                                          environment variable DOCKER_CERT_PATH will be used.
+                                                 aliases: tls_ca_cert, cacert_path
+                                                 Path to the client's TLS certificate file.
+   client_cert                                   If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory specified in
+   path                                          the environment variable DOCKER_CERT_PATH will be used.
+                                                 aliases: tls_client_cert, cert_path
+                                                 Path to the client's TLS key file.
+   client_key                                    If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory specified in the
+   path                                          environment variable DOCKER_CERT_PATH will be used.
+                                                 aliases: tls_client_key, key_path
+   debug              Choices:
+   boolean            • no ←                     Debug mode
+                      • yes
+                                                 The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host      Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string           "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable is not
+                                                 set, the default value will be used.
+                                                 aliases: docker_url
+   hostname                                      The hostname or ID of node as registered in Swarm.
+   string /                                      If more than one node is registered using the same hostname the ID must be used, otherwise module will fail.
+   required
+                                                 User-defined key/value metadata that will be assigned as node attribute.
+   labels                                        Label operations in this module apply to the docker swarm node specified by hostname. Use docker_swarm module to add/modify/remove swarm cluster
+   dictionary                                    labels.
+                                                 The actual state of labels assigned to the node when module completes its work depends on labels_state and labels_to_remove parameters values. See
+                                                 description below.
+                                                 It defines the operation on the labels assigned to node and labels specified in labels option.
+   labels_state       Choices:                   Set to merge to combine labels provided in labels with those already assigned to the node. If no labels are assigned then it will add listed labels.
+   string             • merge ←                  For labels that are already assigned to the node, it will update their values. The labels not specified in labels will remain unchanged. If labels
+                      • replace                  is empty then no changes will be made.
+                                                 Set to replace to replace all assigned labels with provided ones. If labels is empty then all labels assigned to the node will be removed.
+   labels_to_remove                              List of labels that will be removed from the node configuration. The list has to contain only label names, not their values.
+   list /                                        If the label provided on the list is not assigned to the node, the entry is ignored.
+   elements=string                               If the label is both on the labels_to_remove and labels, then value provided in labels remains assigned to the node.
+                                                 If labels_state is replace and labels is not provided or empty then all labels assigned to node are removed and labels_to_remove is ignored.
+   role               Choices:
+   string             • manager                  Node role to assign. If not provided then node role remains unchanged.
+                      • worker
+   ssl_version                                   Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                        If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+   timeout          Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer          60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment variable is not
+                                                 set, the default value will be used.
+                      Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is set to
+   tls                • no ←                     yes as well, it will take precedence.
+   boolean            • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is not
+                                                 set, the default value will be used.
+   tls_hostname     Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string           "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment variable
+                                                 is not set, the default value will be used.
+                      Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs     • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment variable is
+   boolean            • yes                      not set, the default value will be used.
+                                                 aliases: tls_verify
+
+NOTES                   *docker_node-notes*
+
+   Note
+
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_node-examples*
+
+ - name: Set node role
+   docker_node:
+     hostname: mynode
+     role: manager
+
+ - name: Set node availability
+   docker_node:
+     hostname: mynode
+     availability: drain
+
+ - name: Replace node labels with new labels
+   docker_node:
+     hostname: mynode
+     labels:
+       key: value
+     labels_state: replace
+
+ - name: Merge node labels and new labels
+   docker_node:
+     hostname: mynode
+     labels:
+       key: value
+
+ - name: Remove all labels assigned to node
+   docker_node:
+     hostname: mynode
+     labels_state: replace
+
+ - name: Remove selected labels from the node
+   docker_node:
+     hostname: mynode
+     labels_to_remove:
+       - key1
+       - key2
+
+RETURN VALUES                   *docker_node-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   node       success  Information about node after 'update' operation
+   dictionary
+
+STATUS                   *docker_node-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Piotr Wojciechowski (@WojciechowskiPiotr)
+     • Thierry Bouvet (@tbouvet)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_node-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_node_module.html

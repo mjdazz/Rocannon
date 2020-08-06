@@ -1,0 +1,160 @@
+SYNOPSIS                   *oneandone_server*
+
+     • Create, destroy, update, start, stop, and reboot a 1&1 Host server. When the server is created it can optionally wait for it to be ‘running’ before returning.
+
+REQUIREMENTS                   *oneandone_server-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • 1and1
+     • python >= 2.6
+
+PARAMETERS                   *oneandone_server-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   api_url                              Custom API URL. Overrides the ONEANDONE_API_URL environement variable.
+   -
+   appliance                            The operating system name or ID for the server. It is required only for 'present' state.
+   -
+   auth_token                           Authenticating API token provided by 1&1. Overrides the ONEANDONE_AUTH_TOKEN environement variable.
+   - / required
+   auto_increment        Choices:       When creating multiple servers at once, whether to differentiate hostnames by appending a count after them or substituting the count where there is a %02d or
+   boolean               • no           %03d in the hostname string.
+                         • yes ←
+   cores_per_processor                  The number of cores per processor. It must be provided with vcore, ram, and hdds parameters.
+   -
+   count               Default:         The number of servers to create.
+   -                   1
+                         Choices:
+   datacenter            • US ←
+   -                     • ES           The datacenter location.
+                         • DE
+                         • GB
+   description                          The description of the server.
+   -
+   firewall_policy                      The firewall policy name or ID.
+   -
+                         Choices:
+                         • S
+                         • M
+   fixed_instance_size   • L            The instance size name or ID of the server. It is required only for 'present' state, and it is mutually exclusive with vcore, cores_per_processor, ram, and
+   - / required          • XL           hdds parameters.
+                         • XXL
+                         • 3XL
+                         • 4XL
+                         • 5XL
+   hdds                                 A list of hard disks with nested "size" and "is_main" properties. It must be provided with vcore, cores_per_processor, and ram parameters.
+   -
+   hostname                             The hostname or ID of the server. Only used when state is 'present'.
+   -
+   load_balancer                        The load balancer name or ID.
+   -
+   monitoring_policy                    The monitoring policy name or ID.
+   -
+   private_network                      The private network name or ID.
+   -
+   ram                                  The amount of RAM memory. It must be provided with with vcore, cores_per_processor, and hdds parameters.
+   -
+   server                               Server identifier (ID or hostname). It is required for all states except 'running' and 'present'.
+   -
+                         Choices:
+   server_type           • cloud ←      The type of server to be built.
+   -                     • baremetal
+                         • k8s_node
+   ssh_key                              User's public SSH key (contents, not path).
+   -
+                         Choices:
+   state                 • present ←
+   -                     • absent       Define a server's state to create, remove, start or stop it.
+                         • running
+                         • stopped
+   vcore                                The total number of processors. It must be provided with cores_per_processor, ram, and hdds parameters.
+   -
+   wait                  Choices:       Wait for the server to be in state 'running' before returning. Also used for delete operation (set to 'false' if you don't want to wait for each individual
+   boolean               • no           server to be deleted before moving on with other tasks.)
+                         • yes ←
+   wait_interval       Default:         Defines the number of seconds to wait when using the wait_for methods
+   -                   5
+   wait_timeout        Default:         how long before wait gives up, in seconds
+   -                   600
+
+EXAMPLES                   *oneandone_server-examples*
+
+ # Provisioning example. Creates three servers and enumerate their names.
+
+ - oneandone_server:
+     auth_token: oneandone_private_api_key
+     hostname: node%02d
+     fixed_instance_size: XL
+     datacenter: US
+     appliance: C5A349786169F140BCBC335675014C08
+     auto_increment: true
+     count: 3
+
+ # Create three servers, passing in an ssh_key.
+
+ - oneandone_server:
+     auth_token: oneandone_private_api_key
+     hostname: node%02d
+     vcore: 2
+     cores_per_processor: 4
+     ram: 8.0
+     hdds:
+       - size: 50
+         is_main: false
+     datacenter: ES
+     appliance: C5A349786169F140BCBC335675014C08
+     count: 3
+     wait: yes
+     wait_timeout: 600
+     wait_interval: 10
+     ssh_key: SSH_PUBLIC_KEY
+
+ # Removing server
+
+ - oneandone_server:
+     auth_token: oneandone_private_api_key
+     state: absent
+     server: 'node01'
+
+ # Starting server.
+
+ - oneandone_server:
+     auth_token: oneandone_private_api_key
+     state: running
+     server: 'node01'
+
+ # Stopping server
+
+ - oneandone_server:
+     auth_token: oneandone_private_api_key
+     state: stopped
+     server: 'node01'
+
+RETURN VALUES                   *oneandone_server-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   servers          Information about each server that was processed
+   list    always   Sample:
+                    [{"hostname": "my-server", "id": "server-id"}]
+
+STATUS                   *oneandone_server-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Amel Ajdinovic (@aajdinov)
+     • Ethan Devenport (@edevenport)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *oneandone_server-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/oneandone_server_module.html

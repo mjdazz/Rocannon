@@ -1,0 +1,177 @@
+SYNOPSIS                   *ec2_vpc_subnet*
+
+     • Manage subnets in AWS virtual private clouds
+
+REQUIREMENTS                   *ec2_vpc_subnet-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_subnet-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   assign_instances_ipv6          Choices:
+   boolean                        • no ←         Specify yes to indicate that instances launched into the subnet should be automatically assigned an IPv6 address.
+   added in 2.5                   • yes
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   az                                            The availability zone for the subnet.
+   -
+   cidr                                          The CIDR block for the subnet. E.g. 192.0.2.0/24.
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   ipv6_cidr                                     The IPv6 CIDR block for the subnet. The VPC must have a /56 block assigned and this value must be a valid IPv6 /64 that falls in the VPC range.
+   -                                             Required if assign_instances_ipv6=true
+   added in 2.5
+   map_public                     Choices:
+   boolean                        • no ←         Specify yes to indicate that instances launched into the subnet should be assigned public IP address by default.
+   added in 2.4                   • yes
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_tags                     Choices:
+   boolean                        • no           Whether or not to remove tags that do not appear in the tags list.
+   added in 2.5                   • yes ←
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Create or remove the subnet
+                                  • absent
+   tags                                          A dict of tags to apply to the subnet. Any tags currently applied to the subnet and not present here will be removed.
+   -                                             aliases: resource_tags
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   vpc_id                                        VPC ID of the VPC in which to create or delete the subnet.
+   - / required
+   wait                           Choices:
+   boolean                        • no           When specified,state=present module will wait for subnet to be in available state before continuing.
+   added in 2.5                   • yes ←
+   wait_timeout                 Default:
+   -                            300              Number of seconds to wait for subnet to become available wait=True.
+   added in 2.5
+
+NOTES                   *ec2_vpc_subnet-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_subnet-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - name: Create subnet for database servers
+   ec2_vpc_subnet:
+     state: present
+     vpc_id: vpc-123456
+     cidr: 10.0.1.16/28
+     tags:
+       Name: Database Subnet
+   register: database_subnet
+
+ - name: Remove subnet for database servers
+   ec2_vpc_subnet:
+     state: absent
+     vpc_id: vpc-123456
+     cidr: 10.0.1.16/28
+
+ - name: Create subnet with IPv6 block assigned
+   ec2_vpc_subnet:
+     state: present
+     vpc_id: vpc-123456
+     cidr: 10.1.100.0/24
+     ipv6_cidr: 2001:db8:0:102::/64
+
+ - name: Remove IPv6 block assigned to subnet
+   ec2_vpc_subnet:
+     state: present
+     vpc_id: vpc-123456
+     cidr: 10.1.100.0/24
+     ipv6_cidr: ''
+
+RETURN VALUES                   *ec2_vpc_subnet-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                  Key                  Returned                                                                       Description
+   subnet                            state=present Dictionary of subnet values
+   complex
+     assign_ipv6_address_on_creation state=present whether IPv6 address is auto-assigned to new instances
+     boolean
+     availability_zone                             Availability zone of the Subnet
+     string                          state=present Sample:
+                                                   us-east-1a
+     available_ip_address_count                    number of available IPv4 addresses
+     string                          state=present Sample:
+                                                   251
+     cidr_block                                    The IPv4 CIDR of the Subnet
+     string                          state=present Sample:
+                                                   10.0.0.0/16
+     default_for_az                  state=present indicates whether this is the default Subnet for this Availability Zone
+     boolean
+     id                                            Subnet resource id
+     string                          state=present Sample:
+                                                   subnet-b883b2c4
+     ipv6_association_id                           The IPv6 association ID for the currently associated CIDR
+     string                          state=present Sample:
+                                                   subnet-cidr-assoc-b85c74d2
+     ipv6_cidr_block                               The IPv6 CIDR block actively associated with the Subnet
+     string                          state=present Sample:
+                                                   2001:db8:0:102::/64
+     ipv6_cidr_block_association_set state=present An array of IPv6 cidr block association set information.
+     complex
+          association_id             always        The association ID
+          string
+          ipv6_cidr_block            always        The IPv6 CIDR block that is associated with the subnet.
+          string
+          ipv6_cidr_block_state      always        A hash/dict that contains a single item. The state of the cidr block association.
+          dictionary
+                      state          always        The CIDR block association state.
+                      string
+     map_public_ip_on_launch         state=present whether public IP is auto-assigned to new instances
+     boolean
+     state                                         state of the Subnet
+     string                          state=present Sample:
+                                                   available
+     tags                                          tags attached to the Subnet, includes name
+     dictionary                      state=present Sample:
+                                                   {'Name': 'My Subnet', 'env': 'staging'}
+     vpc_id                                        the id of the VPC where this Subnet exists
+     string                          state=present Sample:
+                                                   vpc-67236184
+
+STATUS                   *ec2_vpc_subnet-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *ec2_vpc_subnet-red hat support*
+
+     • Robert Estelle (@erydo)
+     • Brad Davidson (@brandond)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_subnet-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_subnet_module.html

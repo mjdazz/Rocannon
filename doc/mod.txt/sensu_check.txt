@@ -1,0 +1,115 @@
+SYNOPSIS                   *sensu_check*
+
+     • Manage the checks that should be run on a machine by Sensu.
+     • Most options do not have a default and will not be added to the check definition unless specified.
+     • All defaults except path, state, backup and metric are not managed by this module,
+     • they are simply specified for your convenience.
+
+PARAMETERS                   *sensu_check-parameters*
+
+        Parameter             Choices/Defaults                                                                            Comments
+   aggregate             Choices:                      Classifies the check as an aggregate check,
+   boolean               • no ←                        making it available via the aggregate API
+                         • yes
+   backup                Choices:                      Create a backup file (if yes), including the timestamp information so
+   boolean               • no ←                        you can get the original file back if you somehow clobbered it incorrectly.
+                         • yes
+   command                                             Path to the sensu check to run (not required when state=absent)
+   - / required
+   custom              Default:                        A hash/dictionary of custom parameters for mixing to the configuration.
+   -                   {}                              You can't rewrite others module parameters using this
+   dependencies        Default:                        Other checks this check depends on, if dependencies fail,
+   -                   []                              handling of this check will be disabled
+   handle                Choices:
+   boolean               • no                          Whether the check should be handled or not
+                         • yes ←
+   handlers            Default:                        List of handlers to notify when the check fails
+   -                   []
+   high_flap_threshold                                 The high threshold for flap detection
+   -
+   interval                                            Check interval in seconds
+   -
+   low_flap_threshold                                  The low threshold for flap detection
+   -
+   metric                Choices:
+   boolean               • no ←                        Whether the check is a metric
+                         • yes
+   name                                                The name of the check
+   - / required                                        This is the key that is used to determine whether a check exists
+   occurrences         Default:                        Number of event occurrences before the handler should take action
+   -                   1
+   path                Default:                        Path to the json file of the check to be added/removed.
+   -                   "/etc/sensu/conf.d/checks.json" Will be created if it does not exist (unless state=absent).
+                                                       The parent folders need to exist when state=present, otherwise an error will be thrown
+   publish               Choices:                      Whether the check should be scheduled at all.
+   boolean               • no                          You can still issue it via the sensu api
+                         • yes ←
+   refresh                                             Number of seconds handlers should wait before taking second action
+   -
+   source                                              The check source, used to create a JIT Sensu client for an external resource (e.g. a network switch).
+   -
+   standalone            Choices:                      Whether the check should be scheduled by the sensu client or server
+   boolean               • no ←                        This option obviates the need for specifying the subscribers option
+                         • yes
+   state                 Choices:
+   -                     • present ←                   Whether the check should be present or not
+                         • absent
+   subdue_begin                                        When to disable handling of check failures
+   -
+   subdue_end                                          When to enable handling of check failures
+   -
+   subscribers         Default:                        List of subscribers/channels this check should run for
+   -                   []                              See sensu_subscribers to subscribe a machine to a channel
+   timeout             Default:                        Timeout for the check
+   -                   10
+   ttl
+   -                                                   Time to live in seconds until the check is considered stale
+   added in 2.4
+
+EXAMPLES                   *sensu_check-examples*
+
+ # Fetch metrics about the CPU load every 60 seconds,
+ # the sensu server has a handler called 'relay' which forwards stats to graphite
+ - name: get cpu metrics
+   sensu_check:
+     name: cpu_load
+     command: /etc/sensu/plugins/system/cpu-mpstat-metrics.rb
+     metric: yes
+     handlers: relay
+     subscribers: common
+     interval: 60
+
+ # Check whether nginx is running
+ - name: check nginx process
+   sensu_check:
+     name: nginx_running
+     command: /etc/sensu/plugins/processes/check-procs.rb -f /var/run/nginx.pid
+     handlers: default
+     subscribers: nginx
+     interval: 60
+
+ # Stop monitoring the disk capacity.
+ # Note that the check will still show up in the sensu dashboard,
+ # to remove it completely you need to issue a DELETE request to the sensu api.
+ - name: check disk
+   sensu_check:
+     name: check_disk_capacity
+     state: absent
+
+STATUS                   *sensu_check-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Anders Ingemann (@andsens)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sensu_check-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sensu_check_module.html

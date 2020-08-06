@@ -1,0 +1,107 @@
+SYNOPSIS                   *ce_vxlan_vap*
+
+     • Manages VXLAN Virtual access point on HUAWEI CloudEngine Devices.
+
+PARAMETERS                   *ce_vxlan_vap-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   bind_vlan_id                      Specifies the VLAN binding to a BD(Bridge Domain). The value is an integer ranging ranging from 1 to 4094.
+   -
+   bridge_domain_id                  Specifies a bridge domain ID. The value is an integer ranging from 1 to 16777215.
+   -
+   ce_vid                            When encapsulation is 'dot1q', specifies a VLAN ID in the outer VLAN tag. When encapsulation is 'qinq', specifies an outer VLAN ID for double-tagged packets to
+   -                                 be received by a Layer 2 sub-interface. The value is an integer ranging from 1 to 4094.
+                      Choices:
+                      • dot1q
+   encapsulation      • default      Specifies an encapsulation type of packets allowed to pass through a Layer 2 sub-interface.
+   -                  • untag
+                      • qinq
+                      • none
+   l2_sub_interface                  Specifies an Sub-Interface full name, i.e. "10GE1/0/41.1". The value is a string of 1 to 63 case-insensitive characters, spaces supported.
+   -
+   pe_vid                            When encapsulation is 'qinq', specifies an inner VLAN ID for double-tagged packets to be received by a Layer 2 sub-interface. The value is an integer ranging
+   -                                 from 1 to 4094.
+   state              Choices:
+   -                  • present ←    Determines whether the config should be present or not on the device.
+                      • absent
+
+NOTES                   *ce_vxlan_vap-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_vxlan_vap-examples*
+
+ - name: vxlan vap module test
+   hosts: ce128
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: Create a mapping between a VLAN and a BD
+     ce_vxlan_vap:
+       bridge_domain_id: 100
+       bind_vlan_id: 99
+       provider: "{{ cli }}"
+
+   - name: Bind a Layer 2 sub-interface to a BD
+     ce_vxlan_vap:
+       bridge_domain_id: 100
+       l2_sub_interface: 10GE2/0/20.1
+       provider: "{{ cli }}"
+
+   - name: Configure an encapsulation type on a Layer 2 sub-interface
+     ce_vxlan_vap:
+       l2_sub_interface: 10GE2/0/20.1
+       encapsulation: dot1q
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_vxlan_vap-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                  Description
+   changed                 check to see if a change was made on the device
+   boolean    always       Sample:
+                           True
+   end_state               k/v pairs of configuration after module execution
+   dictionary verbose mode Sample:
+                           {'bridge_domain_id': '100', 'bind_intf_list': ['110GE2/0/20.1', '10GE2/0/20.2'], 'bind_vlan_list': ['99']}
+   existing                k/v pairs of existing configuration
+   dictionary verbose mode Sample:
+                           {'bridge_domain_id': '100', 'bind_intf_list': ['10GE2/0/20.1', '10GE2/0/20.2'], 'bind_vlan_list': []}
+   proposed                k/v pairs of parameters passed into module
+   dictionary verbose mode Sample:
+                           {'bridge_domain_id': '100', 'bind_vlan_id': '99', 'state="present"': None}
+   updates                 commands sent to the device
+   list       always       Sample:
+                           ['bridge-domain 100', 'l2 binding vlan 99']
+
+STATUS                   *ce_vxlan_vap-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_vxlan_vap-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_vxlan_vap_module.html

@@ -1,0 +1,170 @@
+SYNOPSIS                   *bigip_ssl_ocsp*
+
+     • Manage OCSP configurations on BIG-IP.
+
+PARAMETERS                   *bigip_ssl_ocsp-parameters*
+
+           Parameter         Choices/Defaults                                                                        Comments
+   cache_error_timeout                        Specifies the lifetime of an error response in the cache, in seconds.
+   integer
+   cache_timeout                              Specifies the lifetime of the OCSP response in the cache, in seconds.
+   string
+   certificate                                Specifies a certificate used to sign an OCSP request.
+   string
+   clock_skew                                 Specifies the tolerable absolute difference in the clocks of the responder and the BIG-IP system, in seconds.
+   integer
+   connection_timeout                         Specifies the time interval that the BIG-IP system waits for before ending the connection to the OCSP responder, in seconds.
+   integer
+   connections_limit                          Specifies the maximum number of connections per second allowed for the OCSP certificate validator.
+   integer
+                                              Specifies the internal DNS resolver the BIG-IP system uses to fetch the OCSP response.
+   dns_resolver                               This involves specifying one or more DNS servers in the DNS resolver configuration.
+   string                                     Use this option when either there is a DNS server that can do the name-resolution of the OCSP responders or the OCSP responder can be reached on one of
+                                              BIG-IP system's interfaces.
+   hash_algorithm              Choices:
+   string                      • sha256       Specifies a hash algorithm used to sign an OCSP request.
+                               • sha1
+   key                                        Specifies a key used to sign an OCSP request.
+   string
+   name                                       Specifies the name of the OCSP certificate validator.
+   string / required
+   partition                 Default:
+   string                    "Common"         Device partition to manage resources on.
+   added in 2.5
+   passphrase                                 Specifies a passphrase used to sign an OCSP request.
+   string
+   provider
+   dictionary                                 A dict object containing connection details.
+   added in 2.5
+        auth_provider                         Configures the auth provider for to obtain authentication tokens from the remote device.
+        string                                This option is really used when working with BIG-IQ devices.
+        password                              The password for the user account used to connect to the BIG-IP.
+        string / required                     You may omit this option by setting the environment variable F5_PASSWORD.
+                                              aliases: pass, pwd
+        server                                The BIG-IP host.
+        string / required                     You may omit this option by setting the environment variable F5_SERVER.
+        server_port          Default:         The BIG-IP server port.
+        integer              443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+        ssh_keyfile                           Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+        path                                  You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+        timeout                               Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+        integer                               the operation is completed, the module will error.
+        transport              Choices:
+        string                 • cli          Configures the transport connection to use when connecting to the remote device.
+                               • rest ←
+        user                                  The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+        string / required                     You may omit this option by setting the environment variable F5_USER.
+        validate_certs         Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+        boolean                • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                               • yes ←
+                                              Specifies the proxy server pool the BIG-IP system uses to fetch the OCSP response.
+   proxy_server_pool                          This involves creating a pool with proxy-servers.
+   string                                     Use this option when either the OCSP responder cannot be reached on any of BIG-IP system's interfaces or one or more servers can proxy an HTTP request
+                                              to an external server and fetch the response.
+   responder_url                              Specifies the absolute URL that overrides the OCSP responder URL obtained from the certificate's AIA extensions. This should be an HTTP-based URL.
+   string
+   route_domain                               Specifies the route domain for fetching an OCSP response using HTTP forward proxy.
+   string
+   state                       Choices:       When present, ensures that the resource exists.
+   string                      • present ←    When absent, ensures that the resource does not exist.
+                               • absent
+   status_age                                 Specifies the maximum allowed lag time that the BIG-IP system accepts for the 'thisUpdate' time in the OCSP response.
+   integer
+   strict_responder_checking   Choices:
+   boolean                     • no           Specifies whether the responder's certificate is checked for an OCSP signing extension.
+                               • yes
+   trusted_responders                         Specifies the certificates used for validating the OCSP response when the responder's certificate has been omitted from the response.
+   string
+   update_password             Choices:
+   string                      • always ←     always will allow to update passwords if the user chooses to do so. on_create will only set the password for newly created OCSP validators.
+                               • on_create
+
+NOTES                   *bigip_ssl_ocsp-notes*
+
+   Note
+
+     • Requires BIG-IP >= 13.x.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_ssl_ocsp-examples*
+
+ - name: Create a OCSP validator
+   bigip_ssl_ocsp:
+     name: foo
+     proxy_server_pool: validators-pool
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_ssl_ocsp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key            Returned                                                                           Description
+   cache_error_timeout                The new Response Caching Error Timeout value.
+   integer                   changed  Sample:
+                                      3600
+   cache_timeout                      The new Response Caching Timeout value.
+   string                    changed  Sample:
+                                      indefinite
+   certificate                        The new Request Signing Certificate value.
+   string                    changed  Sample:
+                                      /Common/cert1
+   clock_skew                         The new Response Validation Clock Skew value.
+   integer                   changed  Sample:
+                                      300
+   connection_timeout                 The new Connection Timeout value.
+   integer                   changed  Sample:
+                                      8
+   connections_limit                  The new Concurrent Connections Limit value.
+   integer                   changed  Sample:
+                                      50
+   dns_resolver                       The new DNS Resolver value.
+   string                    changed  Sample:
+                                      /Common/resolver1
+   hash_algorithm                     The new Request Signing Hash Algorithm value.
+   string                    changed  Sample:
+                                      sha256
+   key                                The new Request Signing Key value.
+   string                    changed  Sample:
+                                      /Common/key1
+   proxy_server_pool                  The new Proxy Server Pool value.
+   string                    changed  Sample:
+                                      /Common/pool1
+   responder_url                      The new Connection Responder URL value.
+   string                    changed  Sample:
+                                      http://responder.site.com
+   route_domain                       The new Route Domain value.
+   string                    changed  Sample:
+                                      /Common/0
+   status_age                changed  The new Response Validation Status Age value.
+   integer
+   strict_responder_checking          The new Response Validation Strict Responder Certificate Checking value.
+   boolean                   changed  Sample:
+                                      True
+   trusted_responders                 The new Response Validation Trusted Responders value.
+   integer                   changed  Sample:
+                                      /Common/default
+
+STATUS                   *bigip_ssl_ocsp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_ssl_ocsp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_ssl_ocsp_module.html

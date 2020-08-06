@@ -1,0 +1,252 @@
+SYNOPSIS                   *cloudflare_dns*
+
+     • Manages dns records via the Cloudflare API, see the docs: https://api.cloudflare.com/
+
+REQUIREMENTS                   *cloudflare_dns-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+
+PARAMETERS                   *cloudflare_dns-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   account_api_token                  Account API token.
+   string / required                  You can obtain your API key from the bottom of the Cloudflare 'My Account' page, found here: https://dash.cloudflare.com/
+   account_email                      Account email.
+   string / required
+   algorithm                          Algorithm number.
+   integer                            Required for type=DS and type=SSHFP when state=present.
+   added in 2.7
+                       Choices:
+   cert_usage          • 0            Certificate usage number.
+   integer             • 1            Required for type=TLSA when state=present.
+   added in 2.7        • 2
+                       • 3
+   hash_type           Choices:       Hash type number.
+   integer             • 1            Required for type=DS, type=SSHFP and type=TLSA when state=present.
+   added in 2.7        • 2
+   key_tag                            DNSSEC key tag.
+   integer                            Needed for type=DS when state=present.
+   added in 2.7
+   port                               Service port.
+   integer                            Required for type=SRV and type=TLSA.
+   priority          Default:         Record priority.
+   -                 1                Required for type=MX and type=SRV
+   proto                              Service protocol. Required for type=SRV and type=TLSA.
+   string                             Common values are TCP and UDP.
+                                      Before Ansible 2.6 only TCP and UDP were available.
+   proxied             Choices:
+   boolean             • no ←         Proxy through Cloudflare network or just use DNS.
+                       • yes
+                                      Record to add.
+   record            Default:         Required if state=present.
+   string            "@"              Default is @ (e.g. the zone name).
+                                      aliases: name
+   selector            Choices:       Selector number.
+   integer             • 0            Required for type=TLSA when state=present.
+   added in 2.7        • 1
+   service                            Record service.
+   -                                  Required for type=SRV
+   solo                Choices:       Whether the record should be the only one for that record type and record name.
+   boolean             • no           Only use with state=present.
+                       • yes          This will delete all other records with the same record name and type.
+   state               Choices:
+   string              • absent       Whether the record(s) should exist or not.
+                       • present ←
+   timeout           Default:         Timeout for Cloudflare API calls.
+   integer           30
+   ttl               Default:         The TTL to give the new record.
+   integer           1                Must be between 120 and 2,147,483,647 seconds, or 1 for automatic.
+                       Choices:
+                       • A
+                       • AAAA
+                       • CNAME
+                       • DS
+   type                • MX           The type of DNS record to create. Required if state=present.
+   string              • NS           type=DS, type=SSHFP and type=TLSA added in Ansible 2.7.
+                       • SPF
+                       • SRV
+                       • SSHFP
+                       • TLSA
+                       • TXT
+   value                              The record value.
+   string                             Required for state=present.
+                                      aliases: content
+   weight            Default:         Service weight.
+   integer           1                Required for type=SRV.
+   zone                               The name of the Zone to work with (e.g. "example.com").
+   string / required                  The Zone must already exist.
+                                      aliases: domain
+
+EXAMPLES                   *cloudflare_dns-examples*
+
+ - name: Create a test.my.com A record to point to 127.0.0.1
+   cloudflare_dns:
+     zone: my.com
+     record: test
+     type: A
+     value: 127.0.0.1
+     account_email: [email protected]
+     account_api_token: dummyapitoken
+   register: record
+
+ - name: Create a my.com CNAME record to example.com
+   cloudflare_dns:
+     zone: my.com
+     type: CNAME
+     value: example.com
+     account_email: [email protected]
+     account_api_token: dummyapitoken
+     state: present
+
+ - name: Change its TTL
+   cloudflare_dns:
+     zone: my.com
+     type: CNAME
+     value: example.com
+     ttl: 600
+     account_email: [email protected]
+     account_api_token: dummyapitoken
+     state: present
+
+ - name: Delete the record
+   cloudflare_dns:
+     zone: my.com
+     type: CNAME
+     value: example.com
+     account_email: [email protected]
+     account_api_token: dummyapitoken
+     state: absent
+
+ - name: create a my.com CNAME record to example.com and proxy through Cloudflare's network
+   cloudflare_dns:
+     zone: my.com
+     type: CNAME
+     value: example.com
+     proxied: yes
+     account_email: [email protected]
+     account_api_token: dummyapitoken
+     state: present
+
+ # This deletes all other TXT records named "test.my.com"
+ - name: Create TXT record "test.my.com" with value "unique value"
+   cloudflare_dns:
+     domain: my.com
+     record: test
+     type: TXT
+     value: unique value
+     solo: true
+     account_email: [email protected]
+     account_api_token: dummyapitoken
+     state: present
+
+ - name: Create an SRV record _foo._tcp.my.com
+   cloudflare_dns:
+     domain: my.com
+     service: foo
+     proto: tcp
+     port: 3500
+     priority: 10
+     weight: 20
+     type: SRV
+     value: fooserver.my.com
+
+ - name: Create a SSHFP record login.example.com
+   cloudflare_dns:
+     zone: example.com
+     record: login
+     type: SSHFP
+     algorithm: 4
+     hash_type: 2
+     value: 9dc1d6742696d2f51ca1f1a78b3d16a840f7d111eb9454239e70db31363f33e1
+
+ - name: Create a TLSA record _25._tcp.mail.example.com
+   cloudflare_dns:
+     zone: example.com
+     record: mail
+     port: 25
+     proto: tcp
+     type: TLSA
+     cert_usage: 3
+     selector: 1
+     hash_type: 1
+     value: 6b76d034492b493e15a7376fccd08e63befdad0edab8e442562f532338364bf3
+
+ - name: Create a DS record for subdomain.example.com
+   cloudflare_dns:
+     zone: example.com
+     record: subdomain
+     type: DS
+     key_tag: 5464
+     algorithm: 8
+     hash_type: 2
+     value: B4EB5AC4467D2DFB3BAF9FB9961DC1B6FED54A58CDFAA3E465081EC86F89BFAB
+
+RETURN VALUES                   *cloudflare_dns-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key                       Returned                                                                                 Description
+   record        success, except on record deletion         A dictionary containing the record data.
+   complex
+     content                                                The record content (details depend on record type).
+     string      success                                    Sample:
+                                                            192.0.2.91
+     created_on                                             The record creation date.
+     string      success                                    Sample:
+                                                            2016-03-25T19:09:42.516553Z
+     data                                                   Additional record data.
+     dictionary  success, if type is SRV, DS, SSHFP or TLSA Sample:
+                                                            {'name': 'jabber', 'port': 8080, 'priority': 10, 'proto': '_tcp', 'service': '_xmpp', 'target': 'jabberhost.sample.com', 'weight': 5}
+     id                                                     The record ID.
+     string      success                                    Sample:
+                                                            f9efb0549e96abcb750de63b38c9576e
+     locked      success                                    No documentation available.
+     boolean
+     meta                                                   No documentation available.
+     dictionary  success                                    Sample:
+                                                            {'auto_added': False}
+     modified_on                                            Record modification date.
+     string      success                                    Sample:
+                                                            2016-03-25T19:09:42.516553Z
+     name                                                   The record name as FQDN (including _service and _proto for SRV).
+     string      success                                    Sample:
+                                                            www.sample.com
+     priority                                               Priority of the MX record.
+     integer     success, if type is MX                     Sample:
+                                                            10
+     proxiable   success                                    Whether this record can be proxied through Cloudflare.
+     boolean
+     proxied     success                                    Whether the record is proxied through Cloudflare.
+     boolean
+     ttl                                                    The time-to-live for the record.
+     integer     success                                    Sample:
+                                                            300
+     type                                                   The record type.
+     string      success                                    Sample:
+                                                            A
+     zone_id                                                The ID of the zone containing the record.
+     string      success                                    Sample:
+                                                            abcede0bf9f0066f94029d2e6b73856a
+     zone_name                                              The name of the zone containing the record.
+     string      success                                    Sample:
+                                                            sample.com
+
+STATUS                   *cloudflare_dns-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Gruener (@mgruener)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cloudflare_dns-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cloudflare_dns_module.html

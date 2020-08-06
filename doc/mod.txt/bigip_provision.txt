@@ -1,0 +1,139 @@
+SYNOPSIS                   *bigip_provision*
+
+     • Manage BIG-IP module provisioning. This module will only provision at the standard levels of Dedicated, Nominal, and Minimum.
+
+PARAMETERS                   *bigip_provision-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+                     Choices:       Sets the provisioning level for the requested modules. Changing the level for one module may require modifying the level of another module. For example, changing
+   level             • dedicated    one module to dedicated requires setting all others to none. Setting the level of a module to none means that the module is not activated.
+   string            • nominal ←    Use state absent to set c(level) to none and de-provision module.
+                     • minimum      This parameter is not relevant to cgnat - pre tmos 15.0 or mgmt and will not be applied to the cgnat - pre tmos 15.0 or mgmt module.
+                                    Sets additional memory for management module. This is in addition to minimum allocated RAM of 1264MB.
+                                    The accepted value range is 0 - 8192. Maximum value is restricted by systems available RAM.
+   memory                           Specifying large reserves an additional 500MB for mgmt module.
+   string                           Specifying medium reserves an additional 200MB for mgmt module.
+   added in 2.9                     Specifying small reserves no additional RAM for mgmt module.
+                                    Use large for configurations containing more than 2000 objects, or more specifically, for any configuration that exceeds 1000 objects per 2 GB of installed
+                                    memory. Changing the Management mgmt size after initial provisioning causes a reprovision operation
+                     Choices:
+                     • am
+                     • afm
+                     • apm
+                     • asm
+                     • avr
+                     • cgnat
+                     • fps
+   module            • gtm          The module to provision in BIG-IP.
+   string /          • ilx          aliases: name
+   required          • lc
+                     • ltm
+                     • mgmt
+                     • pem
+                     • sam
+                     • sslo
+                     • swg
+                     • urldb
+                     • vcmp
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+                     Choices:       The state of the provisioned module on the system. When present, guarantees that the specified module is provisioned at the requested level provided that there
+   state             • present ←    are sufficient resources on the device (such as physical RAM) to support the provisioned module.
+   string            • absent       When absent, de-provision the module.
+                                    absent, is not a relevant option to mgmt module as module can not be de-provisioned.
+
+NOTES                   *bigip_provision-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_provision-examples*
+
+ - name: Provision PEM at "nominal" level
+   bigip_provision:
+     module: pem
+     level: nominal
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+ - name: Provision a dedicated SWG. This will unprovision every other module
+   bigip_provision:
+     module: swg
+     level: dedicated
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+ - name: Provision mgmt with medium amount of memory.
+   bigip_provision:
+     module: mgmt
+     memory: medium
+     provider:
+       server: lb.mydomain.com
+       password: secret
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_provision-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   level           The new provisioning level of the module.
+   string changed  Sample:
+                   minimum
+   memory          The new provisioned amount of memory for mgmt module.
+   string changed  Sample:
+                   large
+
+STATUS                   *bigip_provision-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Greg Crosby (@crosbygw)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_provision-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_provision_module.html

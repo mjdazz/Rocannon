@@ -1,0 +1,118 @@
+SYNOPSIS                   *purefb_ds*
+
+     • Create or erase directory services configurations. There is no facility to SSL certificates at this time. Use the FlashBlade GUI for this additional configuration work.
+     • To modify an existing directory service configuration you must first delete an existing configuration and then recreate with new settings.
+
+REQUIREMENTS                   *purefb_ds-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • purity_fb >= 1.1
+
+PARAMETERS                   *purefb_ds-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   api_token                      FlashBlade API token for admin privileged user.
+   string
+   base_dn                        Sets the base of the Distinguished Name (DN) of the directory service groups. The base should consist of only Domain Components (DCs). The base_dn will populate
+   string /                       with a default value when a URI is entered by parsing domain components from the URI. The base DN should specify DC= for each domain component and multiple DCs
+   required                       should be separated by commas.
+   bind_password                  Sets the password of the bind_user user name account.
+   string
+   bind_user                      Sets the user name that can be used to bind to and query the directory.
+   string                         For Active Directory, enter the username - often referred to as sAMAccountName or User Logon Name - of the account that is used to perform directory lookups.
+                                  For OpenLDAP, enter the full DN of the user.
+                   Choices:
+   dstype          • management   The type of directory service to work on
+   string          • nfs
+                   • smb
+   enable          Choices:
+   boolean         • no ←         Whether to enable or disable directory service support.
+                   • yes
+   fb_url                         FlashBlade management IP address or Hostname.
+   string
+   join_ou
+   string                         The optional organizational unit (OU) where the machine account for the directory service will be created.
+   added in 2.9
+   nis_domain                     The NIS domain to search
+   string                         This cannot be used in conjunction with LDAP configurations.
+   added in 2.9
+   nis_servers                    A list of up to 30 IP addresses or FQDNs for NIS servers.
+   list                           This cannot be used in conjunction with LDAP configurations.
+   added in 2.9
+   state           Choices:
+   string          • absent       Create or delete directory service configuration
+                   • present ←
+   uri                            A list of up to 30 URIs of the directory servers. Each URI must include the scheme ldap:// or ldaps:// (for LDAP over SSL), a hostname, and a domain name or IP
+   list                           address. For example, ldap://ad.company.com configures the directory service with the hostname "ad" in the domain "company.com" while specifying the unencrypted
+                                  LDAP protocol.
+
+NOTES                   *purefb_ds-notes*
+
+   Note
+
+     • This module requires the purity_fb Python library
+     • You must set PUREFB_URL and PUREFB_API environment variables if fb_url and api_token arguments are not passed to the module directly
+
+EXAMPLES                   *purefb_ds-examples*
+
+ - name: Delete existing management directory service
+   purefb_ds:
+     dstype: management
+     state: absent
+     fb_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+ - name: Create NFS directory service (disabled)
+   purefb_ds:
+     dstype: nfs
+     uri: "ldaps://lab.purestorage.com"
+     base_dn: "DC=lab,DC=purestorage,DC=com"
+     bind_user: Administrator
+     bind_password: password
+     fb_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+ - name: Enable existing SMB directory service
+   purefb_ds:
+     dstypr: smb
+     enable: true
+     fb_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+ - name: Disable existing management directory service
+   purefb_ds:
+     dstype: management
+     enable: false
+     fb_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+ - name: Create NFS directory service (enabled)
+   purefb_ds:
+     dstype: nfs
+     enable: true
+     uri: "ldaps://lab.purestorage.com"
+     base_dn: "DC=lab,DC=purestorage,DC=com"
+     bind_user: Administrator
+     bind_password: password
+     fb_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+
+STATUS                   *purefb_ds-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *purefb_ds-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/purefb_ds_module.html

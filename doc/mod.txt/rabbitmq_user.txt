@@ -1,21 +1,81 @@
-SYNOPSIS                           *rabbitmq_user*
+SYNOPSIS                   *rabbitmq_user*
 
-New in version 1.1.
+     • Add or remove users to RabbitMQ and assign permissions
 
-Add or remove users to RabbitMQ and assign permissions
+PARAMETERS                   *rabbitmq_user-parameters*
 
-EXAMPLES                           *rabbitmq_user-examples*
->
-    # Add user to server and assign full access control
-    - rabbitmq_user: user=joe
-                     password=changeme
-                     vhost=/
-                     configure_priv=.*
-                     read_priv=.*
-                     write_priv=.*
-                     state=present
-   
+      Parameter    Choices/Defaults                                                                              Comments
+   configure_priv  Default:          Regular expression to restrict configure actions on a resource for the specified vhost.
+   -               "^$"              By default all actions are restricted.
+                                     This option will be ignored when permissions option is used.
+   force             Choices:
+   boolean           • no ←          Deletes and recreates the user.
+                     • yes
+   node            Default:          erlang node name of the rabbit we wish to configure
+   -               "rabbit"
+   password                          Password of user to add.
+   -                                 To change the password of an existing user, you must also specify update_password=always.
+   permissions     Default:          a list of dicts, each dict contains vhost, configure_priv, write_priv, and read_priv, and represents a permission rule for that vhost.
+   -               []                This option should be preferable when you care about all permissions of the user.
+                                     You should use vhost, configure_priv, write_priv, and read_priv options instead if you care about permissions for just some vhosts.
+   read_priv       Default:          Regular expression to restrict configure actions on a resource for the specified vhost.
+   -               "^$"              By default all actions are restricted.
+                                     This option will be ignored when permissions option is used.
+   state             Choices:
+   -                 • present ←     Specify if user is to be added or removed
+                     • absent
+   tags                              User tags specified as comma delimited
+   -
+   update_password   Choices:
+   -                 • on_create ←   on_create will only set the password for newly created users. always will update passwords if they differ.
+   added in 2.6      • always
+   user                              Name of user to add
+   - / required                      aliases: username, name
+   vhost           Default:          vhost to apply access privileges.
+   -               "/"               This option will be ignored when permissions option is used.
+   write_priv      Default:          Regular expression to restrict configure actions on a resource for the specified vhost.
+   -               "^$"              By default all actions are restricted.
+                                     This option will be ignored when permissions option is used.
+
+EXAMPLES                   *rabbitmq_user-examples*
+
+ # Add user to server and assign full access control on / vhost.
+ # The user might have permission rules for other vhost but you don't care.
+ - rabbitmq_user:
+     user: joe
+     password: changeme
+     vhost: /
+     configure_priv: ."
+     read_priv: ."
+     write_priv: ."
+     state: present
+
+ # Add user to server and assign full access control on / vhost.
+ # The user doesn't have permission rules for other vhosts
+ - rabbitmq_user:
+     user: joe
+     password: changeme
+     permissions:
+       - vhost: /
+         configure_priv: ."
+         read_priv: ."
+         write_priv: ."
+     state: present
+
+STATUS                   *rabbitmq_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Hoffman (@chrishoffman)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *rabbitmq_user-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/rabbitmq_user_module.html
+https://docs.ansible.com/ansible/latest/modules/rabbitmq_user_module.html

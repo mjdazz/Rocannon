@@ -1,0 +1,331 @@
+SYNOPSIS                   *junos_l2_interfaces*
+
+     • This module provides declarative management of a Layer-2 interface on Juniper JUNOS devices.
+
+REQUIREMENTS                   *junos_l2_interfaces-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.6.4)
+
+PARAMETERS                   *junos_l2_interfaces-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   config
+   list /                               A dictionary of Layer-2 interface options
+   elements=dictionary
+     access                             Configure the interface as a Layer 2 access mode.
+     dictionary
+       vlan                             Configure the access VLAN ID.
+       string
+     enhanced_layer      Choices:       True if your device has Enhanced Layer 2 Software (ELS). If the l2 configuration is under interface-mode the value is True else if the l2 configuration is
+     boolean             • no           under port-mode value is False
+                         • yes
+     name                               Full name of interface, e.g. ge-0/0/1.
+     string / required
+     trunk                              Configure the interface as a Layer 2 trunk mode.
+     dictionary
+       allowed_vlans                    List of VLANs to be configured in trunk port. It's used as the VLAN range to ADD or REMOVE from the trunk.
+       list
+       native_vlan                      Native VLAN to be configured in trunk port. It is used as the trunk native VLAN ID.
+       string
+     unit                               Logical interface number. Value of unit should be of type integer.
+     integer
+                         Choices:
+   state                 • merged ←
+   string                • replaced     The state of the configuration after module completion
+                         • overridden
+                         • deleted
+
+NOTES                   *junos_l2_interfaces-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 18.4R1.
+     • This module works with connection netconf. See the Junos OS Platform Options.
+
+EXAMPLES                   *junos_l2_interfaces-examples*
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "L2 interface";
+ #    speed 1g;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode access;
+ #            vlan {
+ #                members vlan30;
+ #            }
+ #        }
+ #    }
+ #}
+ #ge-0/0/2 {
+ #    description "non L2 interface";
+ #    unit 0 {
+ #        family inet {
+ #            address 192.168.56.14/24;
+ #        }
+ #    }
+
+ - name: "Delete L2 attributes of given interfaces (Note: This won't delete the interface itself)."
+   junos_l2_interfaces:
+     config:
+       - name: ge-0/0/1
+       - name: ge-0/0/2
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # [email protected]# show interfaces
+ # ge-0/0/1 {
+ #    description "L2 interface";
+ #    speed 1g;
+ # }
+ #ge-0/0/2 {
+ #    description "non L2 interface";
+ #    unit 0 {
+ #        family inet {
+ #            address 192.168.56.14/24;
+ #        }
+ #    }
+
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/3 {
+ #    description "test interface";
+ #    speed 1g;
+ #}
+ # ge-0/0/4 {
+ #    description interface-trunk;
+ #    native-vlan-id 100;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode trunk;
+ #            vlan {
+ #                members [ vlan40 ];
+ #            }
+ #        }
+ #    }
+ # }
+
+ - name: "Merge provided configuration with device configuration (default operation is merge)"
+   junos_l2_interfaces:
+     config:
+       - name: ge-0/0/3
+         access:
+           vlan: v101
+       - name: ge-0/0/4
+         trunk:
+           allowed_vlans:
+             - vlan30
+           native_vlan: 50
+     state: merged
+
+ # After state:
+ # ------------
+ # [email protected]# show interfaces
+ # ge-0/0/3 {
+ #    description "test interface";
+ #    speed 1g;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode access;
+ #            vlan {
+ #                members v101;
+ #            }
+ #        }
+ #    }
+ # }
+ # ge-0/0/4 {
+ #    description interface-trunk;
+ #    native-vlan-id 50;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode trunk;
+ #            vlan {
+ #                members [ vlan40 vlan30 ];
+ #            }
+ #        }
+ #    }
+ # }
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/3 {
+ #    description "test interface";
+ #    speed 1g;
+ #}
+ # ge-0/0/4 {
+ #    description interface-trunk;
+ #    native-vlan-id 100;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode trunk;
+ #            vlan {
+ #                members [ vlan40 ];
+ #            }
+ #        }
+ #    }
+ # }
+ # ge-0/0/5 {
+ #    description "Configured by Ansible-11";
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode access;
+ #            vlan {
+ #                members v101;
+ #            }
+ #        }
+ #    }
+ # }
+
+ - name: "Override provided configuration with device configuration"
+   junos_l2_interfaces:
+     config:
+       - name: ge-0/0/3
+         access:
+           vlan: v101
+       - name: ge-0/0/4
+         trunk:
+           allowed_vlans:
+             - vlan30
+           native_vlan: 50
+     state: overridden
+
+ # After state:
+ # ------------
+ # [email protected]# show interfaces
+ # ge-0/0/3 {
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode access;
+ #            vlan {
+ #                members v101;
+ #            }
+ #        }
+ #    }
+ # }
+ # ge-0/0/4 {
+ #    description interface-trunk;
+ #    native-vlan-id 50;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode trunk;
+ #            vlan {
+ #                members [ vlan30 ];
+ #            }
+ #        }
+ #    }
+ # }
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ # [email protected]# show interfaces
+ # ge-0/0/3 {
+ #    description "test interface";
+ #    speed 1g;
+ #}
+ # ge-0/0/4 {
+ #    description interface-trunk;
+ #    native-vlan-id 100;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode trunk;
+ #            vlan {
+ #                members [ vlan40 ];
+ #            }
+ #        }
+ #    }
+ # }
+
+ - name: "Replace provided configuration with device configuration"
+   junos_l2_interfaces:
+     config:
+       - name: ge-0/0/3
+         access:
+           vlan: v101
+       - name: ge-0/0/4
+         trunk:
+           allowed_vlans:
+             - vlan30
+           native_vlan: 50
+     state: replaced
+
+ # After state:
+ # ------------
+ # [email protected]# show interfaces
+ # ge-0/0/3 {
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode access;
+ #            vlan {
+ #                members v101;
+ #            }
+ #        }
+ #    }
+ # }
+ # ge-0/0/4 {
+ #    description interface-trunk;
+ #    native-vlan-id 50;
+ #    unit 0 {
+ #        family ethernet-switching {
+ #            interface-mode trunk;
+ #            vlan {
+ #                members [ vlan30 ];
+ #            }
+ #        }
+ #    }
+ # }
+
+RETURN VALUES                   *junos_l2_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['command 1', 'command 2', 'command 3']
+
+STATUS                   *junos_l2_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_l2_interfaces-red hat support*
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_l2_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_l2_interfaces_module.html

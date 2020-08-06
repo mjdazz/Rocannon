@@ -1,0 +1,147 @@
+SYNOPSIS                   *dynamodb_table*
+
+     • Create or delete AWS Dynamo DB tables.
+     • Can update the provisioned throughput on existing tables.
+     • Returns the status of the specified table.
+
+REQUIREMENTS                   *dynamodb_table-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto >= 2.37.0
+     • boto3 >= 1.4.4 (for tagging)
+     • python >= 2.6
+
+PARAMETERS                   *dynamodb_table-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   hash_key_name                                 Name of the hash key.
+   -                                             Required when state=present.
+                                  Choices:
+   hash_key_type                  • STRING ←     Type of the hash key.
+   -                              • NUMBER
+                                  • BINARY
+                                                 list of dictionaries describing indexes to add to the table. global indexes can be updated. local indexes don't support updates or have throughput.
+   indexes                      Default:         required options: ['name', 'type', 'hash_key_name']
+   -                            []               valid types: ['all', 'global_all', 'global_include', 'global_keys_only', 'include', 'keys_only']
+                                                 other options: ['hash_key_type', 'range_key_name', 'range_key_type', 'includes', 'read_capacity', 'write_capacity']
+   name                                          Name of the table.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   range_key_name                                Name of the range key.
+   -
+                                  Choices:
+   range_key_type                 • STRING ←     Type of the range key.
+   -                              • NUMBER
+                                  • BINARY
+   read_capacity                Default:         Read throughput capacity (units) to provision.
+   -                            1
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Create or delete the table
+                                  • absent
+   tags
+   -                                             a hash/dictionary of tags to add to the new instance or for starting/stopping instance by tag; '{"key":"value"}' and '{"key":"value","key":"value"}'
+   added in 2.4
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   wait_for_active_timeout      Default:
+   -                            60               how long before wait gives up, in seconds. only used when tags is set
+   added in 2.4
+   write_capacity               Default:         Write throughput capacity (units) to provision.
+   -                            1
+
+NOTES                   *dynamodb_table-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *dynamodb_table-examples*
+
+ # Create dynamo table with hash and range primary key
+ - dynamodb_table:
+     name: my-table
+     region: us-east-1
+     hash_key_name: id
+     hash_key_type: STRING
+     range_key_name: create_time
+     range_key_type: NUMBER
+     read_capacity: 2
+     write_capacity: 2
+     tags:
+       tag_name: tag_value
+
+ # Update capacity on existing dynamo table
+ - dynamodb_table:
+     name: my-table
+     region: us-east-1
+     read_capacity: 10
+     write_capacity: 10
+
+ # set index on existing dynamo table
+ - dynamodb_table:
+     name: my-table
+     region: us-east-1
+     indexes:
+       - name: NamedIndex
+         type: global_include
+         hash_key_name: id
+         range_key_name: create_time
+         includes:
+           - other_field
+           - other_field2
+         read_capacity: 10
+         write_capacity: 10
+
+ # Delete dynamo table
+ - dynamodb_table:
+     name: my-table
+     region: us-east-1
+     state: absent
+
+RETURN VALUES                   *dynamodb_table-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   table_status          The current status of the table.
+   string       success  Sample:
+                         ACTIVE
+
+STATUS                   *dynamodb_table-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Alan Loi (@loia)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *dynamodb_table-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/dynamodb_table_module.html

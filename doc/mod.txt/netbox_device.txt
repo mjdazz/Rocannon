@@ -1,0 +1,149 @@
+SYNOPSIS                   *netbox_device*
+
+     • Creates, updates or removes devices from Netbox
+
+REQUIREMENTS                   *netbox_device-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • pynetbox
+
+PARAMETERS                   *netbox_device-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   data                            Defines the device configuration
+   - / required
+    asset_tag                      Asset tag that is associated to the device
+    -
+    cluster                        Cluster that the device will be assigned to
+    -
+    comments                       Comments that may include additional information in regards to the device
+    -
+    custom_fields                  must exist in Netbox
+    -
+    device_role                    Required if state=present and the device does not exist yet
+    -
+    device_type                    Required if state=present and the device does not exist yet
+    -
+    face                           Required if rack is defined
+    -
+    name                           The name of the device
+    - / required
+    platform                       The platform of the device
+    -
+    position                       The position of the device in the rack defined above
+    -
+    rack                           The name of the rack to assign the device to
+    -
+    serial                         Serial number of the device
+    -
+    site                           Required if state=present and the device does not exist yet
+    -
+                    Choices:
+                    • Active
+    status          • Offline
+    -               • Planned      The status of the device
+                    • Staged
+                    • Failed
+                    • Inventory
+    tags                           Any tags that the device may need to be associated with
+    -
+    tenant                         The tenant that the device will be assigned to
+    -
+   netbox_token                    The token created within Netbox to authorize API access
+   - / required
+   netbox_url                      URL of the Netbox instance resolvable by Ansible control host
+   - / required
+   state            Choices:
+   -                • absent       Use present or absent for adding or removing.
+                    • present ←
+   validate_certs   Choices:
+   boolean          • no           If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+NOTES                   *netbox_device-notes*
+
+   Note
+
+     • Tags should be defined as a YAML list
+     • This should be ran with connection local and hosts localhost
+
+EXAMPLES                   *netbox_device-examples*
+
+ - name: "Test Netbox modules"
+   connection: local
+   hosts: localhost
+   gather_facts: False
+
+   tasks:
+     - name: Create device within Netbox with only required information
+       netbox_device:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           name: Test Device
+           device_type: C9410R
+           device_role: Core Switch
+           site: Main
+         state: present
+
+     - name: Delete device within netbox
+       netbox_device:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           name: Test Device
+         state: absent
+
+     - name: Create device with tags
+       netbox_device:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           name: Another Test Device
+           device_type: C9410R
+           device_role: Core Switch
+           site: Main
+           tags:
+             - Schnozzberry
+         state: present
+
+     - name: Update the rack and position of an existing device
+       netbox_device:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           name: Test Device
+           rack: Test Rack
+           position: 10
+           face: Front
+         state: present
+
+RETURN VALUES                   *netbox_device-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key               Returned                                                                                  Description
+   device     success (when state=present) Serialized object as created or already existent within Netbox
+   dictionary
+   msg        always                       Message indicating failure or info about what has been achieved
+   string
+
+STATUS                   *netbox_device-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mikhail Yohman (@FragmentedPacket)
+     • David Gomez (@amb1s1)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netbox_device-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netbox_device_module.html

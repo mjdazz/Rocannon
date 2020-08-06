@@ -1,0 +1,133 @@
+SYNOPSIS                   *purefa_volume*
+
+     • Create, delete or extend the capacity of a volume on Pure Storage FlashArray.
+
+REQUIREMENTS                   *purefa_volume-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • purestorage
+
+PARAMETERS                   *purefa_volume-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_token                          FlashArray API token for admin privileged user.
+   string / required
+   eradicate           Choices:
+   boolean             • no ←         Define whether to eradicate the volume on delete or leave in trash.
+                       • yes
+   fa_url                             FlashArray management IPv4 address or Hostname.
+   string / required
+   name                               The name of the volume.
+   string / required
+   overwrite           Choices:
+   boolean             • no ←         Define whether to overwrite a target volume if it already exists.
+                       • yes
+   qos
+   string                             Bandwidth limit for volume in M or G units. M will set MB/s G will set GB/s To clear an existing Qos setting using 0 (zero)
+   added in 2.8
+   size                               Volume size in M, G, T or P units.
+   string
+   state               Choices:
+   string              • absent       Define whether the volume should exist or not.
+                       • present ←
+   target                             The name of the target volume, if copying.
+   string
+
+NOTES                   *purefa_volume-notes*
+
+   Note
+
+     • This module requires the purestorage Python library
+     • You must set PUREFA_URL and PUREFA_API environment variables if fa_url and api_token arguments are not passed to the module directly
+
+EXAMPLES                   *purefa_volume-examples*
+
+ - name: Create new volume named foo with a QoS limit
+   purefa_volume:
+     name: foo
+     size: 1T
+     qos: 58M
+     fa_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+     state: present
+
+ - name: Extend the size of an existing volume named foo
+   purefa_volume:
+     name: foo
+     size: 2T
+     fa_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+     state: present
+
+ - name: Delete and eradicate volume named foo
+   purefa_volume:
+     name: foo
+     eradicate: yes
+     fa_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+     state: absent
+
+ - name: Create clone of volume bar named foo
+   purefa_volume:
+     name: foo
+     target: bar
+     fa_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+     state: present
+
+ - name: Overwrite volume bar with volume foo
+   purefa_volume:
+     name: foo
+     target: bar
+     overwrite: yes
+     fa_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+     state: present
+
+ - name: Clear volume QoS from volume foo
+   purefa_volume:
+     name: foo
+     qos: 0
+     fa_url: 10.10.10.2
+     api_token: e31060a7-21fc-e277-6240-25983c6c4592
+     state: present
+
+RETURN VALUES                   *purefa_volume-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   volume     success  A dictionary describing the changed volume. Only some attributes below will be returned with various actions.
+   dictionary
+      created          Volume creation time
+      string           Sample:
+                       2019-03-13T22:49:24Z
+      name             Volume name
+      string
+      serial           Volume serial number
+      string           Sample:
+                       361019ECACE43D83000120A4
+      size             Volume size in bytes
+      integer
+      source           Volume name of source volume used for volume copy
+      string
+
+STATUS                   *purefa_volume-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *purefa_volume-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/purefa_volume_module.html

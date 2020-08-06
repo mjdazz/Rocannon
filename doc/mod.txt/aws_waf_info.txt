@@ -1,0 +1,116 @@
+SYNOPSIS                   *aws_waf_info*
+
+     • Retrieve information for WAF ACLs, Rule , Conditions and Filters.
+     • This module was called aws_waf_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: aws_waf_facts
+
+REQUIREMENTS                   *aws_waf_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *aws_waf_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   name                                          The name of a Web Application Firewall
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   waf_regional                   Choices:
+   boolean                        • no ←         Whether to use waf_regional module. Defaults to true
+   added in 2.9                   • yes
+
+NOTES                   *aws_waf_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_waf_info-examples*
+
+ - name: obtain all WAF information
+   aws_waf_info:
+
+ - name: obtain all information for a single WAF
+   aws_waf_info:
+     name: test_waf
+
+ - name: obtain all information for a single WAF Regional
+   aws_waf_info:
+     name: test_waf
+     waf_regional: true
+
+RETURN VALUES                   *aws_waf_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   wafs             success  The WAFs that match the passed arguments
+   complex
+     default_action          The action to perform if none of the Rules contained in the WebACL match.
+     integer        always   Sample:
+                             BLOCK
+     metric_name             A friendly name or description for the metrics for this WebACL
+     string         always   Sample:
+                             test_waf_metric
+     name                    A friendly name or description of the WebACL
+     string         always   Sample:
+                             test_waf
+     rules          always   An array that contains the action for each Rule in a WebACL , the priority of the Rule
+     complex
+        action               The action to perform if the Rule matches
+        string      always   Sample:
+                             BLOCK
+        metric_name          A friendly name or description for the metrics for this Rule
+        string      always   Sample:
+                             ipblockrule
+        name                 A friendly name or description of the Rule
+        string      always   Sample:
+                             ip_block_rule
+                             The Predicates list contains a Predicate for each ByteMatchSet, IPSet, SizeConstraintSet, SqlInjectionMatchSet or XssMatchSet object in a Rule
+        predicates  always   Sample:
+        list                 [{'byte_match_set_id': '47b822b5-abcd-1234-faaf-1234567890', 'byte_match_tuples': [{'field_to_match': {'type': 'QUERY_STRING'}, 'positional_constraint': 'STARTS_WITH',
+                             'target_string': 'bobbins', 'text_transformation': 'NONE'}], 'name': 'bobbins', 'negated': False, 'type': 'ByteMatch'}]
+
+STATUS                   *aws_waf_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mike Mochan (@mmochan)
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_waf_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_waf_info_module.html

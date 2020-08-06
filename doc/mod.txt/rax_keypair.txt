@@ -1,71 +1,108 @@
-SYNOPSIS                           *rax_keypair*
+SYNOPSIS                   *rax_keypair*
 
-New in version 1.5.
+     • Create a keypair for use with Rackspace Cloud Servers
 
-Create a keypair for use with Rackspace Cloud Servers
+REQUIREMENTS                   *rax_keypair-requirements*
 
-EXAMPLES                           *rax_keypair-examples*
->
-    - name: Create a keypair
-      hosts: localhost
-      gather_facts: False
-      tasks:
-        - name: keypair request
-          local_action:
-            module: rax_keypair
-            credentials: ~/.raxpub
-            name: my_keypair
-            region: DFW
-          register: keypair
-        - name: Create local public key
-          local_action:
-            module: copy
-            content: "{{ keypair.keypair.public_key }}"
-            dest: "{{ inventory_dir }}/{{ keypair.keypair.name }}.pub"
-        - name: Create local private key
-          local_action:
-            module: copy
-            content: "{{ keypair.keypair.private_key }}"
-            dest: "{{ inventory_dir }}/{{ keypair.keypair.name }}"
-   
-    - name: Create a keypair
-      hosts: localhost
-      gather_facts: False
-      tasks:
-        - name: keypair request
-          local_action:
-            module: rax_keypair
-            credentials: ~/.raxpub
-            name: my_keypair
-            public_key: "{{ lookup('file', 'authorized_keys/id_rsa.pub') }}"
-            region: DFW
-          register: keypair
-   
-      Note
-   
-      Keypairs cannot be manipulated, only created and deleted. To “update” a keypair you must first delete and then recreate.
-   
-      Note
-   
-      The ability to specify a file path for the public key was added in 1.7
-   
-      Note
-   
-      The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
-   
-      Note
-   
-      RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
-   
-      Note
-   
-      RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
-   
-      Note
-   
-      RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • pyrax
+
+PARAMETERS                   *rax_keypair-parameters*
+
+     Parameter                   Choices/Defaults                                                                              Comments
+   api_key                                                        Rackspace API key, overrides credentials.
+   -                                                              aliases: password
+   auth_endpoint  Default:                                        The URI of the authentication service.
+   -              "https://identity.api.rackspacecloud.com/v2.0/"
+   credentials                                                    File to find the Rackspace credentials in. Ignored if api_key and username are provided.
+   -                                                              aliases: creds_file
+   env                                                            Environment as configured in ~/.pyrax.cfg, see
+   -                                                              https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration.
+   identity_type  Default:                                        Authentication mechanism to use, such as rackspace or keystone.
+   -              "rackspace"
+   name                                                           Name of keypair
+   - / required
+   public_key                                                     Public Key string to upload. Can be a file path or string
+   -
+   region         Default:                                        Region to create an instance in.
+   -              "DFW"
+   state            Choices:
+   -                • present ←                                   Indicate desired state of the resource
+                    • absent
+   tenant_id                                                      The tenant ID used for authentication.
+   -
+   tenant_name                                                    The tenant name used for authentication.
+   -
+   username                                                       Rackspace username, overrides credentials.
+   -
+   validate_certs   Choices:                                      Whether or not to require SSL validation of API endpoints.
+   boolean          • no                                          aliases: verify_ssl
+                    • yes
+
+NOTES                   *rax_keypair-notes*
+
+   Note
+
+     • Keypairs cannot be manipulated, only created and deleted. To “update” a keypair you must first delete and then recreate.
+     • The ability to specify a file path for the public key was added in 1.7
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+
+EXAMPLES                   *rax_keypair-examples*
+
+ - name: Create a keypair
+   hosts: localhost
+   gather_facts: False
+   tasks:
+     - name: keypair request
+       local_action:
+         module: rax_keypair
+         credentials: ~/.raxpub
+         name: my_keypair
+         region: DFW
+       register: keypair
+     - name: Create local public key
+       local_action:
+         module: copy
+         content: "{{ keypair.keypair.public_key }}"
+         dest: "{{ inventory_dir }}/{{ keypair.keypair.name }}.pub"
+     - name: Create local private key
+       local_action:
+         module: copy
+         content: "{{ keypair.keypair.private_key }}"
+         dest: "{{ inventory_dir }}/{{ keypair.keypair.name }}"
+
+ - name: Create a keypair
+   hosts: localhost
+   gather_facts: False
+   tasks:
+     - name: keypair request
+       local_action:
+         module: rax_keypair
+         credentials: ~/.raxpub
+         name: my_keypair
+         public_key: "{{ lookup('file', 'authorized_keys/id_rsa.pub') }}"
+         region: DFW
+       register: keypair
+
+STATUS                   *rax_keypair-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Matt Martz (@sivel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *rax_keypair-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/rax_keypair_module.html
+https://docs.ansible.com/ansible/latest/modules/rax_keypair_module.html

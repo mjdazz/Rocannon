@@ -1,0 +1,213 @@
+SYNOPSIS                   *azure_rm_virtualmachine_info*
+
+     • Get facts for one or all virtual machines in a resource group.
+
+   Aliases: azure_rm_virtualmachine_facts
+
+REQUIREMENTS                   *azure_rm_virtualmachine_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_virtualmachine_info-parameters*
+
+        Parameter        Choices/Defaults                                                                           Comments
+   ad_user                                  Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   adfs_authority_url
+   string                                   Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile          Default:            Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds; future values will allow
+   string               "latest"            use with Azure Stack.
+   added in 2.5
+                                            Controls the source of the credentials to use for authentication.
+                          Choices:          If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                          • auto            auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file ~/.azure/credentials.
+   auth_source            • cli             When set to cli, the credentials will be sources from the default Azure CLI profile.
+   string                 • credential_file Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+   added in 2.5           • env             When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment variable
+                          • msi             AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one subscription, otherwise the first
+                                            subscription is chosen.
+                                            The msi was added in Ansible 2.6.
+   cert_validation_mode   Choices:          Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when an HTTPS proxy
+   string                 • ignore          is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can also be set via credential file profile or the
+   added in 2.5           • validate        AZURE_CERT_VALIDATION environment variable.
+   client_id                                Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment    Default:            For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud, AzureUSGovernment), or
+   string               "AzureCloud"        a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or the AZURE_CLOUD_ENVIRONMENT environment
+   added in 2.4                             variable.
+   name                                     Name of the virtual machine.
+   -
+   password                                 Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   profile                                  Security profile found in ~/.azure/credentials file.
+   string
+   resource_group                           Name of the resource group containing the virtual machines (required when filtering by vm name).
+   -
+   secret                                   Azure client secret. Use when authenticating with a Service Principal.
+   string
+   subscription_id                          Your Azure subscription Id.
+   string
+   tags                                     Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+   -
+   tenant                                   Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+
+NOTES                   *azure_rm_virtualmachine_info-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_virtualmachine_info-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_virtualmachine_info-examples*
+
+ - name: Get facts for all virtual machines of a resource group
+   azure_rm_virtualmachine_info:
+     resource_group: myResourceGroup
+
+ - name: Get facts by name
+   azure_rm_virtualmachine_info:
+     resource_group: myResourceGroup
+     name: myVm
+
+ - name: Get facts by tags
+   azure_rm_virtualmachine_info:
+     resource_group: myResourceGroup
+     tags:
+       - testing
+       - foo:bar
+
+RETURN VALUES                   *azure_rm_virtualmachine_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key              Returned                                                                           Description
+   vms                        always      List of virtual machines.
+   complex
+     admin_username                       Administrator user name.
+     string                   always      Sample:
+                                          admin
+     boot_diagnostics         always      Information about the boot diagnostics settings.
+     complex
+                                          Contains a URI to grab a console screenshot.
+       console_screenshot_uri             Only present if enabled.
+       string                 always      Sample:
+                                          https://mystorageaccountname.blob.core.windows.net/bootdiagnostics-myvm01-a4db09a6-ab7f-4d80-9da8-fbceaef9288a/
+                                          myVm.a4db09a6-ab7f-4d80-9da8-fbceaef9288a.screenshot.bmp
+       enabled                            Indicates if boot diagnostics are enabled.
+       boolean                always      Sample:
+                                          True
+                                          Contains a URI to grab the serial console log.
+       serial_console_log_uri             Only present if enabled.
+       string                 always      Sample:
+                                          https://mystorageaccountname.blob.core.windows.net/bootdiagnostics-myvm01-a4db09a6-ab7f-4d80-9da8-fbceaef9288a/
+                                          myVm.a4db09a6-ab7f-4d80-9da8-fbceaef9288a.serialconsole.log
+       storage_uri                        Indicates the storage account used by boot diagnostics.
+       string                 always      Sample:
+                                          https://mystorageaccountname.blob.core.windows.net/
+     data_disks               always      List of attached data disks.
+     complex
+       caching                            Type of data disk caching.
+       string                 always      Sample:
+                                          ReadOnly
+       disk_size_gb                       The initial disk size in GB for blank data disks.
+       integer                always      Sample:
+                                          64
+       lun                    always      The logical unit number for data disk.
+       integer
+       managed_disk_type                  Managed data disk type.
+       string                 always      Sample:
+                                          Standard_LRS
+     id                                   Resource ID.
+     string                   always      Sample:
+                                          /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/virtualMachines/myVm
+     image                    always      Image specification.
+     complex
+                              when        Custom image resource ID.
+       id                     created     Sample:
+       string                 from custom /subscriptions/xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx/resourceGroups/myResourceGroup/providers/Microsoft.Compute/images/myImage
+                              image
+                              when
+       offer                  created     The offer of the platform image or marketplace image used to create the virtual machine.
+       string                 from        Sample:
+                              marketplace RHEL
+                              image
+                              when
+       publisher              created     Publisher name.
+       string                 from        Sample:
+                              marketplace RedHat
+                              image
+                              when
+       sku                    created     SKU name.
+       string                 from        Sample:
+                              marketplace 7-RAW
+                              image
+                              when
+       version                created     Image version.
+       string                 from        Sample:
+                              marketplace 7.5.2018050901
+                              image
+     location                             Resource location.
+     string                   always      Sample:
+                                          japaneast
+     name                                 Resource name.
+     string                   always      Sample:
+                                          myVm
+     network_interface_names              List of attached network interfaces.
+     list                     always      Sample:
+                                          ['myNetworkInterface']
+     os_disk_caching                      Type of OS disk caching.
+     string                   always      Sample:
+                                          ReadOnly
+     os_type                              Base type of operating system.
+     string                   always      Sample:
+                                          Linux
+     power_state                          Power state of the virtual machine.
+     string                   always      Sample:
+                                          running
+     resource_group                       Resource group.
+     string                   always      Sample:
+                                          myResourceGroup
+     state                                State of the resource.
+     string                   always      Sample:
+                                          present
+     tags                                 Resource tags.
+     dictionary               always      Sample:
+                                          {'key1': 'value1'}
+     vm_size                              Virtual machine size.
+     string                   always      Sample:
+                                          Standard_D4
+
+STATUS                   *azure_rm_virtualmachine_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Gustavo Muniz do Carmo (@gustavomcarmo)
+     • Zim Kalinowski (@zikalino)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_virtualmachine_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_virtualmachine_info_module.html

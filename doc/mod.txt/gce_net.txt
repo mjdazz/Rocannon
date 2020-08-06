@@ -1,28 +1,162 @@
-SYNOPSIS                           *gce_net*
+SYNOPSIS                   *gce_net*
 
-New in version 1.5.
+     • This module can create and destroy Google Compute Engine networks and firewall rules https://cloud.google.com/compute/docs/networking. The name parameter is reserved for referencing a
+       network while the fwname parameter is used to reference firewall rules. IPv4 Address ranges must be specified using the CIDR http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing
+       format. Full install/configuration instructions for the gce" modules can be found in the comments of ansible/test/gce_tests.py.
 
-This module can create and destroy Google Compue Engine networks and firewall rules https://developers.google.com/compute/docs/networking. The name parameter is reserved for referencing a
-network while the fwname parameter is used to reference firewall rules. IPv4 Address ranges must be specified using the CIDR http://en.wikipedia.org/wiki/Classless_Inter-Domain_Routing format.
-Full install/configuration instructions for the gce* modules can be found in the comments of ansible/test/gce_tests.py.
+REQUIREMENTS                   *gce_net-requirements*
 
-EXAMPLES                           *gce_net-examples*
->
-    # Simple example of creating a new network
-    - local_action:
-        module: gce_net
-        name: privatenet
-        ipv4_range: '10.240.16.0/24'
-   
-    # Simple example of creating a new firewall rule
-    - local_action:
-        module: gce_net
-        name: privatenet
-        fwname: all-web-webproxy
-        allowed: tcp:80,8080
-        src_tags: ["web", "proxy"]
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • apache-libcloud >= 0.13.3, >= 0.17.0 if using JSON credentials
+
+PARAMETERS                   *gce_net-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   allowed                                the protocol:ports to allow (tcp:80 or tcp:80,443 or tcp:80-800;udp:1-25) this parameter is mandatory when creating or updating a firewall rule
+   -
+   credentials_file                       path to the JSON file associated with the service account email
+   -
+   fwname                                 name of the firewall rule
+   -                                      aliases: fwrule
+   ipv4_range                             the IPv4 address range in CIDR notation for the network this parameter is not mandatory when you specified existing network in name parameter, but when you
+   -                                      create new network, this parameter is mandatory
+                                          aliases: cidr
+                           Choices:
+   mode                    • legacy ←     network mode for Google Cloud legacy indicates a network with an IP address range; auto automatically generates subnetworks in different regions; custom
+   -                       • auto         uses networks to group subnets of user specified IP address ranges https://cloud.google.com/compute/docs/networking#network_types
+                           • custom
+   name                                   name of the network
+   -
+   pem_file                               path to the pem file associated with the service account email This option is deprecated. Use credentials_file.
+   -
+   project_id                             your GCE project ID
+   -
+   service_account_email                  service account email
+   -
+   src_range             Default:         the source IPv4 address range in CIDR notation
+   -                     []               aliases: src_cidr
+   src_tags              Default:         the source instance tags for creating a firewall rule
+   -                     []
+                           Choices:
+   state                   • active
+   -                       • present ←    desired state of the network or firewall
+                           • absent
+                           • deleted
+   subnet_desc                            description of subnet to create
+   -
+   subnet_name                            name of subnet to create
+   -
+   subnet_region                          region of subnet to create
+   -
+   target_tags           Default:         the target instance tags for creating a firewall rule
+   -                     []
+
+EXAMPLES                   *gce_net-examples*
+
+ # Create a 'legacy' Network
+ - name: Create Legacy Network
+   gce_net:
+     name: legacynet
+     ipv4_range: '10.24.17.0/24'
+     mode: legacy
+     state: present
+
+ # Create an 'auto' Network
+ - name: Create Auto Network
+   gce_net:
+     name: autonet
+     mode: auto
+     state: present
+
+ # Create a 'custom' Network
+ - name: Create Custom Network
+   gce_net:
+     name: customnet
+     mode: custom
+     subnet_name: "customsubnet"
+     subnet_region: us-east1
+     ipv4_range: '10.240.16.0/24'
+     state: "present"
+
+ # Create Firewall Rule with Source Tags
+ - name: Create Firewall Rule w/Source Tags
+   gce_net:
+     name: default
+     fwname: "my-firewall-rule"
+     allowed: tcp:80
+     state: "present"
+     src_tags: "foo,bar"
+
+ # Create Firewall Rule with Source Range
+ - name: Create Firewall Rule w/Source Range
+   gce_net:
+     name: default
+     fwname: "my-firewall-rule"
+     allowed: tcp:80
+     state: "present"
+     src_range: ['10.1.1.1/32']
+
+ # Create Custom Subnetwork
+ - name: Create Custom Subnetwork
+   gce_net:
+     name: privatenet
+     mode: custom
+     subnet_name: subnet_example
+     subnet_region: us-central1
+     ipv4_range: '10.0.0.0/16'
+
+RETURN VALUES                   *gce_net-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key                         Returned                                                                                 Description
+   allowed                                                      Rules (ports and protocols) specified by this firewall rule.
+   string        When specified                                 Sample:
+                                                                tcp:80;icmp
+   fwname                                                       Name of the firewall rule.
+   string        When specified                                 Sample:
+                                                                my-fwname
+   ipv4_range                                                   IPv4 range of the specified network or subnetwork.
+   string        when specified or when a subnetwork is created Sample:
+                                                                10.0.0.0/16
+   name                                                         Name of the network.
+   string        always                                         Sample:
+                                                                my-network
+   src_range                                                    IP address blocks a firewall rule applies to.
+   list          when specified                                 Sample:
+                                                                ['10.1.1.12/8']
+   src_tags                                                     Instance Tags firewall rule applies to.
+   list          when specified while creating a firewall rule  Sample:
+                                                                ['foo', 'bar']
+   state                                                        State of the item operated on.
+   string        always                                         Sample:
+                                                                present
+   subnet_name                                                  Name of the subnetwork.
+   string        when specified or when a subnetwork is created Sample:
+                                                                my-subnetwork
+   subnet_region                                                Region of the specified subnet.
+   string        when specified or when a subnetwork is created Sample:
+                                                                us-east1
+   target_tags                                                  Instance Tags with these tags receive traffic allowed by firewall rule.
+   list          when specified while creating a firewall rule  Sample:
+                                                                ['foo', 'bar']
+
+STATUS                   *gce_net-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Eric Johnson (@erjohnso) <erjohnso@google.com>, Tom Melendez (@supertom) <supertom@google.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *gce_net-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/gce_net_module.html
+https://docs.ansible.com/ansible/latest/modules/gce_net_module.html

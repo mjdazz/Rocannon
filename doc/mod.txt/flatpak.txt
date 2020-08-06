@@ -1,0 +1,100 @@
+SYNOPSIS                   *flatpak*
+
+     • Allows users to add or remove flatpaks.
+     • See the flatpak_remote module for managing flatpak remotes.
+
+REQUIREMENTS                   *flatpak-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • flatpak
+
+PARAMETERS                   *flatpak-parameters*
+
+   Parameter  Choices/Defaults                                                                                Comments
+   executable Default:         The path to the flatpak executable to use.
+   -          "flatpak"        By default, this module looks for the flatpak executable on the path.
+   method       Choices:       The installation method to use.
+   -            • system ←     Defines if the flatpak is supposed to be installed globally for the whole system or only for the current user.
+                • user
+                               The name of the flatpak to manage.
+                               When used with state=present, name can be specified as an http(s) URL to a flatpakref file or the unique reverse DNS name that identifies a flatpak.
+   name                        When supplying a reverse DNS name, you can use the remote option to specify on what remote to look for the flatpak. An example for a reverse DNS name is
+   - /                         org.gnome.gedit.
+   required                    When used with state=absent, it is recommended to specify the name in the reverse DNS format.
+                               When supplying an http(s) URL with state=absent, the module will try to match the installed flatpak based on the name of the flatpakref to remove it. However, there
+                               is no guarantee that the names of the flatpakref file and the reverse DNS name of the installed flatpak do match.
+   remote     Default:         The flatpak remote (repository) to install the flatpak from.
+   -          "flathub"        By default, flathub is assumed, but you do need to add the flathub flatpak_remote before you can use this.
+                               See the flatpak_remote module for managing flatpak remotes.
+   state        Choices:
+   -            • absent       Indicates the desired package state.
+                • present ←
+
+EXAMPLES                   *flatpak-examples*
+
+ - name: Install the spotify flatpak
+   flatpak:
+     name:  https://s3.amazonaws.com/alexlarsson/spotify-repo/spotify.flatpakref
+     state: present
+
+ - name: Install the gedit flatpak package
+   flatpak:
+     name: https://git.gnome.org/browse/gnome-apps-nightly/plain/gedit.flatpakref
+     state: present
+
+ - name: Install the gedit package from flathub for current user
+   flatpak:
+     name: org.gnome.gedit
+     state: present
+     method: user
+
+ - name: Install the Gnome Calendar flatpak from the gnome remote system-wide
+   flatpak:
+     name: org.gnome.Calendar
+     state: present
+     remote: gnome
+
+ - name: Remove the gedit flatpak
+   flatpak:
+     name: org.gnome.gedit
+     state: absent
+
+RETURN VALUES                   *flatpak-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key                   Returned                                                                                    Description
+   command                                          The exact flatpak command that was executed
+   string  When a flatpak command has been executed Sample:
+                                                    /usr/bin/flatpak install --user -y flathub org.gnome.Calculator
+   msg                                              Module error message
+   string  failure                                  Sample:
+                                                    Executable '/usr/local/bin/flatpak' was not found on the system.
+   rc      When a flatpak command has been executed Return code from flatpak binary
+   integer
+   stderr                                           Error output from flatpak binary
+   string  When a flatpak command has been executed Sample:
+                                                    error: Error searching remote flathub: Can't find ref org.gnome.KDE
+   stdout                                           Output from flatpak binary
+   string  When a flatpak command has been executed Sample:
+                                                    org.gnome.Calendar/x86_64/stable current org.gnome.gitg/x86_64/stable current
+
+STATUS                   *flatpak-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • John Kwiatkoski (@JayKayy)
+     • Alexander Bethke (@oolongbrothers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *flatpak-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/flatpak_module.html

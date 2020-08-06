@@ -1,34 +1,90 @@
-SYNOPSIS                           *zabbix_group*
+SYNOPSIS                   *zabbix_group*
 
-New in version 1.8.
+     • Create host groups if they do not exist.
+     • Delete existing host groups if they exist.
 
-This module uses the Zabbix API to add and remove host groups.
+REQUIREMENTS                   *zabbix_group-requirements*
 
-EXAMPLES                           *zabbix_group-examples*
->
-    ---
-    # Add a new host group to Zabbix
-    - zabbix_group: host_group='Linux servers'
-                   server_url=https://monitoring.example.com/zabbix
-                   login_user=ansible
-                   login_password=secure
-   
-    # Add a new host group, login data is provided by environment variables:
-    # ZABBIX_LOGIN_USER, ZABBIX_LOGIN_PASSWORD, ZABBIX_SERVER_URL:
-    - zabbix_group: host_group=Webservers
-   
-    # Remove a host group from Zabbix
-    - zabbix_group: host_group='Linux servers'
-                   state=absent
-                   server_url=https://monitoring.example.com/zabbix
-                   login_user=ansible
-                   login_password=secure
-   
-      Note
-   
-      The module has been tested with Zabbix Server 2.2.
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • zabbix-api >= 0.5.4
+
+PARAMETERS                   *zabbix_group-parameters*
+
+              Parameter             Choices/Defaults                                                                     Comments
+   host_groups                                       List of host groups to create or delete.
+   list / elements=string /                          aliases: host_group
+   required
+   http_login_password                               Basic Auth password
+   string
+   http_login_user                                   Basic Auth login
+   string / required
+   login_password                                    Zabbix user password.
+   string / required
+   login_user                                        Zabbix user name.
+   string / required
+   server_url                                        URL of Zabbix server, with protocol (http or https). url is an alias for server_url.
+   string / required                                 aliases: url
+   state                              Choices:
+   string                             • present ←    Create or delete host group.
+                                      • absent
+   timeout                          Default:         The timeout of API request (seconds).
+   integer                          10
+   validate_certs                     Choices:
+   boolean                            • no           If set to False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+   added in 2.5                       • yes ←
+
+NOTES                   *zabbix_group-notes*
+
+   Note
+
+     • Too many concurrent updates to the same group may cause Zabbix to return errors, see examples for a workaround if needed.
+     • If you use login_password=zabbix, the word “zabbix” is replaced by “""""” in all module output, because login_password uses no_log. See this FAQ for more information.
+
+EXAMPLES                   *zabbix_group-examples*
+
+ # Base create host groups example
+ - name: Create host groups
+   local_action:
+     module: zabbix_group
+     server_url: http://monitor.example.com
+     login_user: username
+     login_password: password
+     state: present
+     host_groups:
+       - Example group1
+       - Example group2
+
+ # Limit the Zabbix group creations to one host since Zabbix can return an error when doing concurrent updates
+ - name: Create host groups
+   local_action:
+     module: zabbix_group
+     server_url: http://monitor.example.com
+     login_user: username
+     login_password: password
+     state: present
+     host_groups:
+       - Example group1
+       - Example group2
+   when: inventory_hostname==groups['group_name'][0]
+
+STATUS                   *zabbix_group-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Cove (@cove)
+     • Tony Minfei Ding (!UNKNOWN)
+     • Harrison Gu (@harrisongu)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *zabbix_group-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/zabbix_group_module.html
+https://docs.ansible.com/ansible/latest/modules/zabbix_group_module.html

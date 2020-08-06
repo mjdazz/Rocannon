@@ -1,0 +1,110 @@
+SYNOPSIS                   *ce_mlag_interface*
+
+     • Manages MLAG interface attributes on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_mlag_interface-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   dfs_group_id     Default:         ID of a DFS group.The value is 1.
+   -                "present"
+   eth_trunk_id                      Name of the local M-LAG interface. The value is ranging from 0 to 511.
+   -
+   interface                         Name of the interface that enters the Error-Down state when the peer-link fails. The value is a string of 1 to 63 characters.
+   -
+   mlag_error_down    Choices:
+   -                  • enable       Configure the interface on the slave device to enter the Error-Down state.
+                      • disable
+   mlag_id                           ID of the M-LAG. The value is an integer that ranges from 1 to 2048.
+   -
+   mlag_priority_id                  M-LAG global LACP system priority. The value is an integer ranging from 0 to 65535. The default value is 32768.
+   -
+   mlag_system_id                    M-LAG global LACP system MAC address. The value is a string of 0 to 255 characters. The default value is the MAC address of the Ethernet port of MPU.
+   -
+   state              Choices:
+   -                  • present ←    Specify desired state of the resource.
+                      • absent
+
+NOTES                   *ce_mlag_interface-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_mlag_interface-examples*
+
+ - name: mlag interface module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: Set interface mlag error down
+     ce_mlag_interface:
+       interface: 10GE2/0/1
+       mlag_error_down: enable
+       provider: "{{ cli }}"
+   - name: Create mlag
+     ce_mlag_interface:
+       eth_trunk_id: 1
+       dfs_group_id: 1
+       mlag_id: 4
+       provider: "{{ cli }}"
+   - name: Set mlag global attribute
+     ce_mlag_interface:
+       mlag_system_id: 0020-1409-0407
+       mlag_priority_id: 5
+       provider: "{{ cli }}"
+   - name: Set mlag interface attribute
+     ce_mlag_interface:
+       eth_trunk_id: 1
+       mlag_system_id: 0020-1409-0400
+       mlag_priority_id: 3
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_mlag_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state  always   k/v pairs of aaa params after module execution
+   dictionary
+   existing            k/v pairs of existing aaa server
+   dictionary always   Sample:
+                       {'mlagErrorDownInfos': [{'dfsgroupId': '1', 'portName': 'Eth-Trunk1'}]}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'interface': 'eth-trunk1', 'mlag_error_down': 'disable', 'state': 'present'}
+   updates             command sent to the device
+   list       always   Sample:
+                       {'interface eth-trunk1': None, 'undo m-lag unpaired-port suspend': None}
+
+STATUS                   *ce_mlag_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Li Yanfeng (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_mlag_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_mlag_interface_module.html

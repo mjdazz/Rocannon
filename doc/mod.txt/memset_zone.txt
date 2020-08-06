@@ -1,0 +1,95 @@
+SYNOPSIS                   *memset_zone*
+
+     • Manage DNS zones in a Memset account.
+
+PARAMETERS                   *memset_zone-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   api_key                       The API key obtained from the Memset control panel.
+   - / required
+   force          Choices:
+   boolean        • no ←         Forces deletion of a zone and all zone domains/zone records it contains.
+                  • yes
+   name                          The zone nickname; usually the same as the main domain. Ensure this value has at most 250 characters.
+   - / required                  aliases: nickname
+   state          Choices:
+   - / required   • absent       Indicates desired state of resource.
+                  • present
+                  Choices:
+                  • 0
+                  • 300
+                  • 600
+                  • 900
+   ttl            • 1800         The default TTL for all records created in the zone. This must be a valid int from https://www.memset.com/apidocs/methods_dns.html#dns.zone_create.
+   -              • 3600
+                  • 7200
+                  • 10800
+                  • 21600
+                  • 43200
+                  • 86400
+
+NOTES                   *memset_zone-notes*
+
+   Note
+
+     • Zones can be thought of as a logical group of domains, all of which share the same DNS records (i.e. they point to the same IP). An API key generated via the Memset customer control panel is
+       needed with the following minimum scope - dns.zone_create, dns.zone_delete, dns.zone_list.
+
+EXAMPLES                   *memset_zone-examples*
+
+ # Create the zone 'test'
+ - name: create zone
+   memset_zone:
+     name: test
+     state: present
+     api_key: 5eb86c9196ab03919abcf03857163741
+     ttl: 300
+   delegate_to: localhost
+
+ # Force zone deletion
+ - name: force delete zone
+   memset_zone:
+     name: test
+     state: absent
+     api_key: 5eb86c9196ab03919abcf03857163741
+     force: true
+   delegate_to: localhost
+
+RETURN VALUES                   *memset_zone-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key           Returned                                                                                   Description
+   memset_api when state == present Zone info from the Memset API
+   complex
+     domains  always                List of domains in this zone
+     list
+     id                             Zone id
+     string   always                Sample:
+                                    b0bb1ce851aeea6feeb2dc32fe83bf9c
+     nickname                       Zone name
+     string   always                Sample:
+                                    example.com
+     records  always                List of DNS records for domains in this zone
+     list
+     ttl                            Default TTL for domains in this zone
+     integer  always                Sample:
+                                    300
+
+STATUS                   *memset_zone-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Simon Weald (@glitchcrab)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *memset_zone-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/memset_zone_module.html

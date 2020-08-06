@@ -1,0 +1,135 @@
+SYNOPSIS                   *enos_config*
+
+     • Lenovo ENOS configurations use a simple block indent file syntax for segmenting configuration into sections. This module provides an implementation for working with ENOS configuration
+       sections in a deterministic way.
+
+PARAMETERS                   *enos_config-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   admin            Choices:
+   boolean          • no ←         Enters into administration configuration mode for making config changes to the device.
+                    • yes
+   after                           The ordered set of commands to append to the end of the command stack if a change needs to be made. Just like with before this allows the playbook designer to
+   -                               append a set of commands to be executed after the command set.
+   auth_pass                       Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value is
+   -                               not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+   authorize        Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all commands
+   boolean          • no ←         in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                    • yes
+   backup           Choices:       This argument will cause the module to create a full backup of the current running-config from the remote device before any changes are made. If the
+   boolean          • no ←         backup_options value is not given, the backup file is written to the backup folder in the playbook root directory. If the directory does not exist, it is created.
+                    • yes
+   backup_options                  This is a dict object containing configurable options related to backup file path. The value of this option is read only when backup is set to yes, if backup is
+   dictionary                      set to no this option will be silently ignored.
+   added in 2.8
+     dir_path                      This option provides the path ending with directory name in which the backup configuration file will be stored. If the directory does not exist it will be first
+     path                          created and the filename is either the value of filename or default filename as described in filename options description. If the path value is not given in that
+                                   case a backup directory will be created in the current working directory and backup configuration will be copied in filename within backup directory.
+     filename                      The filename to be used to store the backup configuration. If the the filename is not given it will be generated based on the hostname, current time and date in
+     -                             format defined by <hostname>_config.<current-date>@<current-time>
+   before                          The ordered set of commands to push on to the command stack if a change needs to be made. This allows the playbook designer the opportunity to perform
+   -                               configuration commands prior to pushing any changes without affecting how the set of commands are matched against the system.
+   comment        Default:         Allows a commit description to be specified to be included when the configuration is committed. If the configuration is not changed or committed, this argument is
+   -              "configured by   ignored.
+                  enos_config"
+   config                          The module, by default, will connect to the remote device and retrieve the current running-config to use as a base for comparing against the contents of source.
+   -                               There are times when it is not desirable to have the task get the current running-config for every task in a playbook. The config argument allows the implementer
+                                   to pass in the configuration to use as the base config for comparison.
+   lines                           The ordered set of commands that should be configured in the section. The commands must be the exact same commands as found in the device running-config. Be sure
+   -                               to note the configuration command syntax as some commands are automatically modified by the device config parser.
+                                   aliases: commands
+                    Choices:
+   match            • line ←       Instructs the module on the way to perform the matching of the set of commands against the current device config. If match is set to line, commands are matched
+   -                • strict       line by line. If match is set to strict, command lines are matched with respect to position. If match is set to exact, command lines must be an equal match.
+                    • exact        Finally, if match is set to none, the module will not attempt to compare the source configuration with the running configuration on the remote device.
+                    • none
+   parents                         The ordered set of parents that uniquely identify the section the commands should be checked against. If the parents argument is omitted, the commands are checked
+   -                               against the set of top level or global commands.
+   provider                        A dict object containing connection details.
+   dictionary
+     auth_pass                     Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value is
+     string                        not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+     authorize      Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all commands
+     boolean        • no ←         in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                    • yes
+     host                          Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+     string /                      the transport.
+     required
+     password                      Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                        specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port         Default:         Specifies the port to use when building the connection to the remote device.
+     integer      22
+     ssh_keyfile                   Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+     path                          value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     timeout      Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer      10               operation is completed, the module will error.
+     username                      Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                        specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+                    Choices:       Instructs the module on the way to perform the configuration on the device. If the replace argument is set to line then the modified lines are pushed to the
+   replace          • line ←       device in configuration mode. If the replace argument is set to block then the entire command block is pushed to the device in configuration mode if any line is
+   -                • block        not correct.
+                    • config
+   src                             Specifies the source path to the file that contains the configuration or configuration template to load. The path to the source file can either be the full path
+   -                               on the Ansible control host or a relative path from the playbook or role root directory. This argument is mutually exclusive with lines, parents.
+
+NOTES                   *enos_config-notes*
+
+   Note
+
+     • Tested against ENOS 8.4.1
+
+EXAMPLES                   *enos_config-examples*
+
+ - name: configure top level configuration
+   enos_config:
+     "lines: hostname {{ inventory_hostname }}"
+
+ - name: configure interface settings
+   enos_config:
+     lines:
+       - enable
+       - ip ospf enable
+     parents: interface ip 13
+
+ - name: load a config from disk and replace the current config
+   enos_config:
+     src: config.cfg
+     backup: yes
+
+ - name: configurable backup path
+   enos_config:
+     src: config.cfg
+     backup: yes
+     backup_options:
+       filename: backup.cfg
+       dir_path: /home/user
+
+RETURN VALUES                   *enos_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key               Returned                                                                                  Description
+   backup_path                               The full path to the backup file
+   string      when backup is yes            Sample:
+                                             /playbooks/ansible/backup/[email protected]:28:34
+   updates                                   The set of commands that will be pushed to the remote device
+   list        Only when lines is specified. Sample:
+                                             ['...', '...']
+
+STATUS                   *enos_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Anil Kumar Muraleedharan (@amuraleedhar)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *enos_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/enos_config_module.html

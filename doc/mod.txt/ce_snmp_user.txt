@@ -1,0 +1,134 @@
+SYNOPSIS                   *ce_snmp_user*
+
+     • Manages SNMP user configurations on CloudEngine switches.
+
+PARAMETERS                   *ce_snmp_user-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   aaa_local_user                    Unique name to identify the local user.
+   -
+   acl_number                        Access control list number.
+   -
+   auth_key                          The authentication password. Password length, 8-255 characters.
+   -
+                      Choices:
+   auth_protocol      • noAuth       Authentication protocol.
+   -                  • md5
+                      • sha
+   priv_key                          The encryption password. Password length 8-255 characters.
+   -
+                      Choices:
+                      • noPriv
+   priv_protocol      • des56
+   -                  • 3des168      Encryption protocol.
+                      • aes128
+                      • aes192
+                      • aes256
+   remote_engine_id                  Remote engine id of the USM user.
+   -
+   user_group                        Name of the group where user belongs to.
+   -
+   usm_user_name                     Unique name to identify the USM user.
+   -
+
+NOTES                   *ce_snmp_user-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_snmp_user-examples*
+
+ - name: CloudEngine snmp user test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Config SNMP usm user"
+     ce_snmp_user:
+       state: present
+       usm_user_name: wdz_snmp
+       remote_engine_id: 800007DB03389222111200
+       acl_number: 2000
+       user_group: wdz_group
+       provider: "{{ cli }}"
+
+   - name: "Undo SNMP usm user"
+     ce_snmp_user:
+       state: absent
+       usm_user_name: wdz_snmp
+       remote_engine_id: 800007DB03389222111200
+       acl_number: 2000
+       user_group: wdz_group
+       provider: "{{ cli }}"
+
+   - name: "Config SNMP local user"
+     ce_snmp_user:
+       state: present
+       aaa_local_user: wdz_user
+       auth_protocol: md5
+       auth_key: huawei123
+       priv_protocol: des56
+       priv_key: huawei123
+       provider: "{{ cli }}"
+
+   - name: "Config SNMP local user"
+     ce_snmp_user:
+       state: absent
+       aaa_local_user: wdz_user
+       auth_protocol: md5
+       auth_key: huawei123
+       priv_protocol: des56
+       priv_key: huawei123
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_snmp_user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+                       k/v pairs of aaa params after module execution
+   end_state  always   Sample:
+   dictionary          {'snmp local user': {'local_user_info': []}, 'snmp usm user': {'usm_user_info': [{'aclNumber': '2000', 'engineID': '800007DB03389222111200', 'groupName': 'wdz_group',
+                       'userName': 'wdz_snmp'}]}}
+   existing            k/v pairs of existing aaa server
+   dictionary always   Sample:
+                       {'snmp local user': {'local_user_info': []}, 'snmp usm user': {'usm_user_info': []}}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'acl_number': '2000', 'remote_engine_id': '800007DB03389222111200', 'state': 'present', 'user_group': 'wdz_group', 'usm_user_name': 'wdz_snmp'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['snmp-agent remote-engineid 800007DB03389222111200 usm-user v3 wdz_snmp wdz_group acl 2000']
+
+STATUS                   *ce_snmp_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • wangdezhuang (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_snmp_user-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_snmp_user_module.html

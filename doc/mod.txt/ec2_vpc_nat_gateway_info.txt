@@ -1,0 +1,111 @@
+SYNOPSIS                   *ec2_vpc_nat_gateway_info*
+
+     • Gets various details related to AWS VPC Managed Nat Gateways
+     • This module was called ec2_vpc_nat_gateway_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: ec2_vpc_nat_gateway_facts
+
+REQUIREMENTS                   *ec2_vpc_nat_gateway_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_nat_gateway_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   filters                                       A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+   -                                             https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNatGateways.html for possible filters.
+   nat_gateway_ids                               Get details of specific nat gateway IDs
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_vpc_nat_gateway_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_nat_gateway_info-examples*
+
+ # Simple example of listing all nat gateways
+ - name: List all managed nat gateways in ap-southeast-2
+   ec2_vpc_nat_gateway_info:
+     region: ap-southeast-2
+   register: all_ngws
+
+ - name: Debugging the result
+   debug:
+     msg: "{{ all_ngws.result }}"
+
+ - name: Get details on specific nat gateways
+   ec2_vpc_nat_gateway_info:
+     nat_gateway_ids:
+       - nat-1234567891234567
+       - nat-7654321987654321
+     region: ap-southeast-2
+   register: specific_ngws
+
+ - name: Get all nat gateways with specific filters
+   ec2_vpc_nat_gateway_info:
+     region: ap-southeast-2
+     filters:
+       state: ['pending']
+   register: pending_ngws
+
+ - name: Get nat gateways with specific filter
+   ec2_vpc_nat_gateway_info:
+     region: ap-southeast-2
+     filters:
+       subnet-id: subnet-12345678
+       state: ['available']
+   register: existing_nat_gateways
+
+RETURN VALUES                   *ec2_vpc_nat_gateway_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   result success  The result of the describe, converted to ansible snake case style. See http://boto3.readthedocs.io/en/latest/reference/services/ec2.html#EC2.Client.describe_nat_gateways for the
+   list            response.
+
+STATUS                   *ec2_vpc_nat_gateway_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Karen Cheng (@Etherdaemon)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_nat_gateway_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_nat_gateway_info_module.html

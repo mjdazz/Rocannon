@@ -1,0 +1,112 @@
+SYNOPSIS                   *rabbitmq_publish*
+
+     • Publish a message on a RabbitMQ queue using a blocking connection.
+
+REQUIREMENTS                   *rabbitmq_publish-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • pika
+
+PARAMETERS                   *rabbitmq_publish-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   auto_delete    Choices:
+   boolean        • no ←         Set the queue to auto delete.
+                  • yes
+   body                          The body of the message.
+   -                             A body cannot be provided if a src is specified.
+   content_type Default:         The content type of the body.
+   -            "text/plain"
+   durable        Choices:
+   boolean        • no ←         Set the queue to be durable.
+                  • yes
+   exchange                      The exchange to publish a message to.
+   -
+   exclusive      Choices:
+   boolean        • no ←         Set the queue to be exclusive.
+                  • yes
+   headers      Default:         A dictionary of headers to post with the message.
+   dictionary   {}
+   host                          The RabbitMQ server hostname or IP.
+   -
+   password                      The RabbitMQ password.
+   -
+   port                          The RabbitMQ server port.
+   -
+   proto          Choices:
+   -              • amqps        The protocol to use.
+                  • amqp
+   queue                         The queue to publish a message to. If no queue is specified, RabbitMQ will return a random queue name.
+   -
+   routing_key                   The routing key.
+   -
+                                 A file to upload to the queue. Automatic mime type detection is attempted if content_type is not defined (left as default).
+   src                           A src cannot be provided if a body is specified.
+   -                             The filename is added to the headers of the posted message to RabbitMQ. Key being the filename, value is the filename.
+                                 aliases: file
+   url                           An URL connection string to connect to the RabbitMQ server.
+   -                             url and host/port/user/pass/vhost are mutually exclusive, use either or but not both.
+   username                      The RabbitMQ username.
+   -
+   vhost                         The virtual host to target.
+   -                             If default vhost is required, use '%2F'.
+
+NOTES                   *rabbitmq_publish-notes*
+
+   Note
+
+     • This module requires the pika python library https://pika.readthedocs.io/.
+     • Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries to stay fairly independent of the underlying network support library.
+     • This plugin is tested against RabbitMQ. Other AMQP 0.9.1 protocol based servers may work but not tested/guaranteed.
+
+EXAMPLES                   *rabbitmq_publish-examples*
+
+ - name: Publish a message to a queue with headers
+   rabbitmq_publish:
+     url: "amqp://guest:[email protected]:5672/%2F"
+     queue: 'test'
+     body: "Hello world from ansible module rabbitmq_publish"
+     content_type: "text/plain"
+     headers:
+       myHeader: myHeaderValue
+
+
+ - name: Publish a file to a queue
+   rabbitmq_publish:
+     url: "amqp://guest:[email protected]:5672/%2F"
+     queue: 'images'
+     file: 'path/to/logo.gif'
+
+ - name: RabbitMQ auto generated queue
+   rabbitmq_publish:
+     url: "amqp://guest:[email protected]:5672/%2F"
+     body: "Hello world random queue from ansible module rabbitmq_publish"
+     content_type: "text/plain"
+
+RETURN VALUES                   *rabbitmq_publish-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   result              Contains the status msg, content type content_type and the queue name queue.
+   dictionary success  Sample:
+                       'result': { 'content_type': 'text/plain', 'msg': 'Successfully published to queue test', 'queue': 'test' }
+
+STATUS                   *rabbitmq_publish-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • John Imison (@Im0)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *rabbitmq_publish-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/rabbitmq_publish_module.html

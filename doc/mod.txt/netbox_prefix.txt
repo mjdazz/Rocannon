@@ -1,0 +1,186 @@
+SYNOPSIS                   *netbox_prefix*
+
+     • Creates or removes prefixes from Netbox
+
+REQUIREMENTS                   *netbox_prefix-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • pynetbox
+
+PARAMETERS                   *netbox_prefix-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   data                             Defines the prefix configuration
+   - / required
+     custom_fields                  Must exist in Netbox and in key/value format
+     dictionary
+     description                    The description of the prefix
+     string
+     family          Choices:
+     integer         • 4            Specifies which address family the prefix prefix belongs to
+                     • 6
+     is_pool         Choices:
+     boolean         • no           All IP Addresses within this prefix are considered usable
+                     • yes
+     parent                         Required if state is present and first_available is yes. Will get a new available prefix in this parent prefix.
+     string
+     prefix                         Required if state is present and first_available is False. Will allocate or free this prefix.
+     string
+     prefix_length                  Required ONLY if state is present and first_available is yes. Will get a new available prefix of the given prefix_length in this parent prefix.
+     string
+     role                           The role of the prefix
+     string
+     site                           Site that prefix is associated with
+     string
+                     Choices:
+     status          • Active
+     string          • Container    The status of the prefix
+                     • Deprecated
+                     • Reserved
+     tags                           Any tags that the prefix may need to be associated with
+     list
+     tenant                         The tenant that the prefix will be assigned to
+     string
+     vlan                           The VLAN the prefix will be assigned to
+     dictionary
+     vrf                            VRF that prefix is associated with
+     string
+   first_available   Choices:       If yes and state present, if an parent is given, it will get the first available prefix of the given prefix_length inside the given parent (and vrf, if given).
+   boolean           • no ←         Unused with state absent.
+                     • yes
+   netbox_token
+   string /                         The token created within Netbox to authorize API access
+   required
+   netbox_url
+   string /                         URL of the Netbox instance resolvable by Ansible control host
+   required
+   state             Choices:
+   -                 • absent       Use present or absent for adding or removing.
+                     • present ←
+   validate_certs    Choices:
+   boolean           • no           If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+                     • yes ←
+
+NOTES                   *netbox_prefix-notes*
+
+   Note
+
+     • Tags should be defined as a YAML list
+     • This should be ran with connection local and hosts localhost
+
+EXAMPLES                   *netbox_prefix-examples*
+
+ - name: "Test Netbox prefix module"
+   connection: local
+   hosts: localhost
+   gather_facts: False
+
+   tasks:
+     - name: Create prefix within Netbox with only required information
+       netbox_prefix:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           prefix: 10.156.0.0/19
+         state: present
+
+     - name: Delete prefix within netbox
+       netbox_prefix:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           prefix: 10.156.0.0/19
+         state: absent
+
+     - name: Create prefix with several specified options
+       netbox_prefix:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           family: 4
+           prefix: 10.156.32.0/19
+           site: Test Site
+           vrf: Test VRF
+           tenant: Test Tenant
+           vlan:
+             name: Test VLAN
+             site: Test Site
+             tenant: Test Tenant
+             vlan_group: Test Vlan Group
+           status: Reserved
+           role: Network of care
+           description: Test description
+           is_pool: true
+           tags:
+             - Schnozzberry
+         state: present
+
+     - name: Get a new /24 inside 10.156.0.0/19 within Netbox - Parent doesn't exist
+       netbox_prefix:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           parent: 10.156.0.0/19
+           prefix_length: 24
+         state: present
+         first_available: yes
+
+     - name: Create prefix within Netbox with only required information
+       netbox_prefix:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           prefix: 10.156.0.0/19
+         state: present
+
+     - name: Get a new /24 inside 10.156.0.0/19 within Netbox
+       netbox_prefix:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           parent: 10.156.0.0/19
+           prefix_length: 24
+         state: present
+         first_available: yes
+
+     - name: Get a new /24 inside 10.157.0.0/19 within Netbox with additional values
+       netbox_prefix:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           parent: 10.157.0.0/19
+           prefix_length: 24
+           vrf: Test VRF
+           site: Test Site
+         state: present
+         first_available: yes
+
+RETURN VALUES                   *netbox_prefix-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key      Returned                                                                                   Description
+   msg        always      Message indicating failure or info about what has been achieved
+   string
+   prefix     on creation Serialized object as created or already existent within Netbox
+   dictionary
+
+STATUS                   *netbox_prefix-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mikhail Yohman (@FragmentedPacket)
+     • Anthony Ruhier (@Anthony25)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netbox_prefix-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netbox_prefix_module.html

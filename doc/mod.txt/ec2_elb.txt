@@ -1,46 +1,99 @@
-SYNOPSIS                           *ec2_elb*
+SYNOPSIS                   *ec2_elb*
 
-New in version 1.2.
+     • This module de-registers or registers an AWS EC2 instance from the ELBs that it belongs to.
+     • Returns fact “ec2_elbs” which is a list of elbs attached to the instance if state=absent is passed as an argument.
+     • Will be marked changed when called only if there are ELBs found to operate on.
 
-This module de-registers or registers an AWS EC2 instance from the ELBs that it belongs to. Returns fact “ec2_elbs” which is a list of elbs attached to the instance if state=absent is passed as
-an argument. Will be marked changed when called only if there are ELBs found to operate on.
+REQUIREMENTS                   *ec2_elb-requirements*
 
-EXAMPLES                           *ec2_elb-examples*
->
-    # basic pre_task and post_task example
-    pre_tasks:
-      - name: Gathering ec2 facts
-        action: ec2_facts
-      - name: Instance De-register
-        local_action:
-          module: ec2_elb
-          instance_id: "{{ ansible_ec2_instance_id }}"
-          state: 'absent'
-    roles:
-      - myrole
-    post_tasks:
-      - name: Instance Register
-        local_action:
-          module: ec2_elb
-          instance_id: "{{ ansible_ec2_instance_id }}"
-          ec2_elbs: "{{ item }}"
-          state: 'present'
-        with_items: ec2_elbs
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *ec2_elb-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_elbs                                      List of ELB names, required for registration. The ec2_elbs fact should be used if there was a previous de-register.
+   -
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   enable_availability_zone       Choices:       Whether to enable the availability zone of the instance on the target ELB if the availability zone has not already been enabled. If set to no, the
+   boolean                        • no           task will fail if the availability zone is not enabled on the ELB.
+                                  • yes ←
+   instance_id                                   EC2 Instance ID
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   - / required                   • present      register or deregister the instance
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   wait                           Choices:
+   boolean                        • no           Wait for instance registration or deregistration to complete successfully before returning.
+                                  • yes ←
+   wait_timeout                 Default:         Number of seconds to wait for an instance to change state. If 0 then this module may return an error if a transient error occurs. If non-zero then
+   -                            0                any transient errors are ignored until the timeout is reached. Ignored when wait=no.
+
+NOTES                   *ec2_elb-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_elb-examples*
+
+ # basic pre_task and post_task example
+ pre_tasks:
+   - name: Gathering ec2 facts
+     action: ec2_facts
+   - name: Instance De-register
+     local_action:
+       module: ec2_elb
+       instance_id: "{{ ansible_ec2_instance_id }}"
+       state: absent
+ roles:
+   - myrole
+ post_tasks:
+   - name: Instance Register
+     local_action:
+       module: ec2_elb
+       instance_id: "{{ ansible_ec2_instance_id }}"
+       ec2_elbs: "{{ item }}"
+       state: present
+     loop: "{{ ec2_elbs }}"
+
+STATUS                   *ec2_elb-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • John Jarvis (@jarv)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_elb-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_elb_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_elb_module.html

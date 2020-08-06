@@ -1,0 +1,158 @@
+SYNOPSIS                   *vmware_cluster_ha*
+
+     • Manages HA configuration on VMware vSphere clusters.
+     • All values and VMware object names are case sensitive.
+
+REQUIREMENTS                   *vmware_cluster_ha-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Tested on ESXi 5.5 and 6.5.
+     • PyVmomi installed.
+
+PARAMETERS                   *vmware_cluster_ha-parameters*
+
+                Parameter                   Choices/Defaults                                                                   Comments
+   cluster_name                                                   The name of the cluster to be managed.
+   string / required
+   datacenter                                                     The name of the datacenter.
+   string / required                                              aliases: datacenter_name
+   enable_ha                             Choices:
+   boolean                               • no ←                   Whether to enable HA.
+                                         • yes
+   failover_host_admission_control                                Configure dedicated failover hosts.
+   dictionary                                                     slot_based_admission_control, reservation_based_admission_control and failover_host_admission_control are mutually exclusive.
+     failover_hosts                                               List of dedicated failover hosts.
+     list / required
+                                         Choices:                 Whether HA restarts virtual machines after a host fails.
+   ha_host_monitoring                    • enabled ←              If set to enabled, HA restarts virtual machines after a host fails.
+   string                                • disabled               If set to disabled, HA does not restart virtual machines after a host fails.
+                                                                  If enable_ha is set to no, then this value is ignored.
+                                                                  Priority HA gives to a virtual machine if sufficient capacity is not available to power on all failed virtual machines.
+                                                                  Valid only if ha_vm_monitoring is set to either vmAndAppMonitoring or vmMonitoringOnly.
+                                         Choices:                 If set to disabled, then HA is disabled for this virtual machine.
+   ha_restart_priority                   • disabled               If set to high, then virtual machine with this priority have a higher chance of powering on after a failure, when there is
+   string                                • high                   insufficient capacity on hosts to meet all virtual machine needs.
+                                         • low                    If set to medium, then virtual machine with this priority have an intermediate chance of powering on after a failure, when there is
+                                         • medium ←               insufficient capacity on hosts to meet all virtual machine needs.
+                                                                  If set to low, then virtual machine with this priority have a lower chance of powering on after a failure, when there is
+                                                                  insufficient capacity on hosts to meet all virtual machine needs.
+   ha_vm_failure_interval              Default:                   The number of seconds after which virtual machine is declared as failed if no heartbeat has been received.
+   integer                             30                         This setting is only valid if ha_vm_monitoring is set to, either vmAndAppMonitoring or vmMonitoringOnly.
+                                                                  Unit is seconds.
+                                                                  The number of seconds for the window during which up to ha_vm_max_failures resets can occur before automated responses stop.
+   ha_vm_max_failure_window            Default:                   Valid only when ha_vm_monitoring is set to either vmAndAppMonitoring or vmMonitoringOnly.
+   integer                             -1                         Unit is seconds.
+                                                                  Default specifies no failure window.
+   ha_vm_max_failures                  Default:                   Maximum number of failures and automated resets allowed during the time that ha_vm_max_failure_window specifies.
+   integer                             3                          Valid only when ha_vm_monitoring is set to either vmAndAppMonitoring or vmMonitoringOnly.
+   ha_vm_min_up_time                   Default:                   The number of seconds for the virtual machine's heartbeats to stabilize after the virtual machine has been powered on.
+   integer                             120                        Valid only when ha_vm_monitoring is set to either vmAndAppMonitoring or vmMonitoringOnly.
+                                                                  Unit is seconds.
+                                         Choices:                 State of virtual machine health monitoring service.
+   ha_vm_monitoring                      • vmAndAppMonitoring     If set to vmAndAppMonitoring, HA response to both virtual machine and application heartbeat failure.
+   string                                • vmMonitoringOnly       If set to vmMonitoringDisabled, virtual machine health monitoring is disabled.
+                                         • vmMonitoringDisabled ← If set to vmMonitoringOnly, HA response to virtual machine heartbeat failure.
+                                                                  If enable_ha is set to no, then this value is ignored.
+                                         Choices:                 Indicates whether or VMs should be powered off if a host determines that it is isolated from the rest of the compute resource.
+   host_isolation_response               • none ←                 If set to none, do not power off VMs in the event of a host network isolation.
+   string                                • powerOff               If set to powerOff, power off VMs in the event of a host network isolation.
+                                         • shutdown               If set to shutdown, shut down VMs guest operating system in the event of a host network isolation.
+   hostname                                                       The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                                         If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                                                  Environment variable support added in Ansible 2.6.
+                                                                  The password of the vSphere vCenter or ESXi server.
+   password                                                       If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                                         Environment variable support added in Ansible 2.6.
+                                                                  aliases: pass, pwd
+   port                                Default:                   The port number of the vSphere vCenter or ESXi server.
+   integer                             443                        If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                                                   Environment variable support added in Ansible 2.6.
+   proxy_host                                                     Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                                         The format is a hostname or a IP.
+   added in 2.9                                                   If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                                                  This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                                                     Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                                        If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   reservation_based_admission_control                            Configure reservation based admission control policy.
+   dictionary                                                     slot_based_admission_control, reservation_based_admission_control and failover_host_admission_control are mutually exclusive.
+     auto_compute_percentages            Choices:                 By default, failover_level is used to calculate cpu_failover_resources_percent and memory_failover_resources_percent. If a user
+     boolean                             • no                     wants to override the percentage values, he has to set this field to false.
+                                         • yes ←
+     cpu_failover_resources_percent    Default:                   Percentage of CPU resources in the cluster to reserve for failover. Ignored if auto_compute_percentages is not set to false.
+     integer                           50
+     failover_level                                               Number of host failures that should be tolerated.
+     integer / required
+     memory_failover_resources_percent Default:                   Percentage of memory resources in the cluster to reserve for failover. Ignored if auto_compute_percentages is not set to false.
+     integer                           50
+   slot_based_admission_control                                   Configure slot based admission control policy.
+   dictionary                                                     slot_based_admission_control, reservation_based_admission_control and failover_host_admission_control are mutually exclusive.
+     failover_level                                               Number of host failures that should be tolerated.
+     integer / required
+                                                                  The username of the vSphere vCenter or ESXi server.
+   username                                                       If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                                         Environment variable support added in Ansible 2.6.
+                                                                  aliases: admin, user
+                                         Choices:                 Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs                        • no                     If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                               • yes ←                  Environment variable support added in Ansible 2.6.
+                                                                  If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+EXAMPLES                   *vmware_cluster_ha-examples*
+
+ - name: Enable HA without admission control
+   vmware_cluster_ha:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter_name: datacenter
+     cluster_name: cluster
+     enable_ha: yes
+   delegate_to: localhost
+
+ - name: Enable HA and VM monitoring without admission control
+   vmware_cluster_ha:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     validate_certs: no
+     datacenter_name: DC0
+     cluster_name: "{{ cluster_name }}"
+     enable_ha: True
+     ha_vm_monitoring: vmMonitoringOnly
+   delegate_to: localhost
+
+ - name: Enable HA with admission control reserving 50% of resources for HA
+   vmware_cluster_ha:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter_name: datacenter
+     cluster_name: cluster
+     enable_ha: yes
+     reservation_based_admission_control:
+       auto_compute_percentages: False
+       failover_level: 1
+       cpu_failover_resources_percent: 50
+       memory_failover_resources_percent: 50
+   delegate_to: localhost
+
+STATUS                   *vmware_cluster_ha-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joseph Callen (@jcpowermac)
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_cluster_ha-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_cluster_ha_module.html

@@ -1,0 +1,202 @@
+SYNOPSIS                   *vmware_host*
+
+     • This module can be used to add, reconnect, or remove an ESXi host to or from vCenter.
+     • This module can also be used to move an ESXi host to a cluster or folder, or vice versa, within the same datacenter.
+
+REQUIREMENTS                   *vmware_host-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+     • ssl
+     • socket
+     • hashlib
+
+PARAMETERS                   *vmware_host-parameters*
+
+         Parameter          Choices/Defaults                                                                          Comments
+   add_connected            Choices:           If set to True, then the host should be connected as soon as it is added.
+   boolean                  • no               This parameter is ignored if state is set to a value other than present.
+   added in 2.6             • yes ←
+                                               Name of the cluster to add the host.
+   cluster_name                                If folder is not set, then this parameter is required.
+   string                                      Aliases added in version 2.6.
+                                               aliases: cluster
+   datacenter_name                             Name of the datacenter to add the host.
+   string / required                           Aliases added in version 2.6.
+                                               aliases: datacenter
+   esxi_hostname                               ESXi hostname to manage.
+   string / required
+                                               ESXi password.
+   esxi_password                               Required for adding a host.
+   string                                      Optional for reconnect.
+                                               Unused for removing.
+                                               No longer a required parameter from version 2.5.
+                                               Specifying the hostsystem certificate's thumbprint.
+   esxi_ssl_thumbprint    Default:             Use following command to get hostsystem certificate's thumbprint -
+   string                 ""                   # openssl x509 -in /etc/vmware/ssl/rui.crt -fingerprint -sha1 -noout
+   added in 2.5                                Only used if fetch_thumbprint isn't set to true.
+                                               aliases: ssl_thumbprint
+                                               ESXi username.
+   esxi_username                               Required for adding a host.
+   string                                      Optional for reconnect. If both esxi_username and esxi_password are used
+                                               Unused for removing.
+                                               No longer a required parameter from version 2.5.
+                                               Fetch the thumbprint of the host's SSL certificate.
+                                               This basically disables the host certificate verification (check if it was signed by a recognized CA).
+   fetch_ssl_thumbprint     Choices:           Disable this option if you want to allow only hosts with valid certificates to be added to vCenter.
+   boolean                  • no               If this option is set to false and the certificate can't be verified, an add or reconnect will fail.
+   added in 2.8             • yes ←            Unused when esxi_ssl_thumbprint is set.
+                                               Optional for reconnect, but only used if esxi_username and esxi_password are used.
+                                               Unused for removing.
+                                               Name of the folder under which host to add.
+                                               If cluster_name is not set, then this parameter is required.
+                                               For example, if there is a datacenter 'dc1' under folder called 'Site1' then, this value will be '/Site1/dc1/host'.
+   folder                                      Here 'host' is an invisible folder under VMware Web Client.
+   string                                      Another example, if there is a nested folder structure like '/myhosts/india/pune' under datacenter 'dc2', then folder value will be
+   added in 2.6                                '/dc2/host/myhosts/india/pune'.
+                                               Other Examples:
+                                               - '/Site2/dc2/Asia-Cluster/host'
+                                               - '/dc3/Asia-Cluster/host'
+                                               aliases: folder_name
+   force_connection         Choices:
+   boolean                  • no               Force the connection if the host is already being managed by another vCenter server.
+   added in 2.8             • yes ←
+   hostname                                    The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                      If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                               Environment variable support added in Ansible 2.6.
+                                               The password of the vSphere vCenter or ESXi server.
+   password                                    If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                      Environment variable support added in Ansible 2.6.
+                                               aliases: pass, pwd
+   port                   Default:             The port number of the vSphere vCenter or ESXi server.
+   integer                443                  If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                                Environment variable support added in Ansible 2.6.
+   proxy_host                                  Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                      The format is a hostname or a IP.
+   added in 2.9                                If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                               This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                                  Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                     If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   reconnect_disconnected   Choices:           Reconnect disconnected hosts.
+   boolean                  • no               This is only used if state is set to present and if the host already exists.
+   added in 2.8             • yes ←
+                            Choices:           If set to present, add the host if host is absent.
+                            • present ←        If set to present, update the location of the host if host already exists.
+   state                    • absent           If set to absent, remove the host if host is present.
+   string                   • add_or_reconnect If set to absent, do nothing if host already does not exists.
+                            • reconnect        If set to add_or_reconnect, add the host if it's absent else reconnect it and update the location.
+                                               If set to reconnect, then reconnect the host if it's present and update the location.
+                                               The username of the vSphere vCenter or ESXi server.
+   username                                    If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                      Environment variable support added in Ansible 2.6.
+                                               aliases: admin, user
+                            Choices:           Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs           • no               If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                  • yes ←            Environment variable support added in Ansible 2.6.
+                                               If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_host-notes*
+
+   Note
+
+     • Tested on vSphere 5.5, 6.0, 6.5 and 6.7
+
+EXAMPLES                   *vmware_host-examples*
+
+ - name: Add ESXi Host to vCenter
+   vmware_host:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: datacenter_name
+     cluster: cluster_name
+     esxi_hostname: '{{ esxi_hostname }}'
+     esxi_username: '{{ esxi_username }}'
+     esxi_password: '{{ esxi_password }}'
+     state: present
+   delegate_to: localhost
+
+ - name: Add ESXi Host to vCenter under a specific folder
+   vmware_host:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: datacenter_name
+     folder: '/Site2/Asia-Cluster/host'
+     esxi_hostname: '{{ esxi_hostname }}'
+     esxi_username: '{{ esxi_username }}'
+     esxi_password: '{{ esxi_password }}'
+     state: present
+     add_connected: True
+   delegate_to: localhost
+
+ - name: Reconnect ESXi Host (with username/password set)
+   vmware_host:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: datacenter_name
+     cluster: cluster_name
+     esxi_hostname: '{{ esxi_hostname }}'
+     esxi_username: '{{ esxi_username }}'
+     esxi_password: '{{ esxi_password }}'
+     state: reconnect
+   delegate_to: localhost
+
+ - name: Reconnect ESXi Host (with default username/password)
+   vmware_host:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: datacenter_name
+     cluster: cluster_name
+     esxi_hostname: '{{ esxi_hostname }}'
+     state: reconnect
+   delegate_to: localhost
+
+ - name: Add ESXi Host with SSL Thumbprint to vCenter
+   vmware_host:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: datacenter_name
+     cluster: cluster_name
+     esxi_hostname: '{{ esxi_hostname }}'
+     esxi_username: '{{ esxi_username }}'
+     esxi_password: '{{ esxi_password }}'
+     esxi_ssl_thumbprint: "3C:A5:60:6F:7A:B7:C4:6C:48:28:3D:2F:A5:EC:A3:58:13:88:F6:DD"
+     state: present
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_host-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key          Returned                                                                                    Description
+   result                        metadata about the new host system added
+   string on successful addition Sample:
+                                 Host already connected to vCenter 'vcenter01' in cluster 'cluster01'
+
+STATUS                   *vmware_host-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joseph Callen (@jcpowermac)
+     • Russell Teague (@mtnbikenc)
+     • Maxime de Roucy (@tchernomax)
+     • Christian Kotte (@ckotte)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_host-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_host_module.html

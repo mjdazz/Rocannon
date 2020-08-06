@@ -1,0 +1,109 @@
+SYNOPSIS                   *vmware_export_ovf*
+
+     • This module can be used to export a VMware virtual machine to OVF template from vCenter server or ESXi host.
+
+REQUIREMENTS                   *vmware_export_ovf-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_export_ovf-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   datacenter         Default:         Datacenter name of the virtual machine to export.
+   string             "ha-datacenter"  This parameter is case sensitive.
+   download_timeout   Default:         The user defined timeout in minute of exporting file.
+   integer            10               If the vmdk file is too large to export in 10 minutes, specify the value larger than 10, the maximum value is 60.
+   added in 2.9
+   export_dir                          Absolute path to place the exported files on the server running this task, must have write permission.
+   path / required                     If folder not exist will create it, also create a folder under this path named with VM name.
+   export_with_images   Choices:
+   boolean              • no ←         Export an ISO image of the media mounted on the CD/DVD Drive within the virtual machine.
+                        • yes
+                                       Destination folder, absolute path to find the specified guest.
+                                       The folder should include the datacenter. ESX's datacenter is ha-datacenter.
+                                       This parameter is case sensitive.
+                                       If multiple machines are found with same name, this parameter is used to identify uniqueness of the virtual machine. version_added 2.5
+                                       Examples:
+                                       folder: /ha-datacenter/vm
+   folder                              folder: ha-datacenter/vm
+   string                              folder: /datacenter1/vm
+                                       folder: datacenter1/vm
+                                       folder: /datacenter1/vm/folder1
+                                       folder: datacenter1/vm/folder1
+                                       folder: /folder1/datacenter1/vm
+                                       folder: folder1/datacenter1/vm
+                                       folder: /folder1/datacenter1/vm/folder2
+   hostname                            The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                              If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                       Environment variable support added in Ansible 2.6.
+   moid                                Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+   string                              This is required if name or uuid is not supplied.
+   added in 2.9
+   name                                Name of the virtual machine to export.
+   string                              This is a required parameter, if parameter uuid or moid is not supplied.
+                                       The password of the vSphere vCenter or ESXi server.
+   password                            If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                              Environment variable support added in Ansible 2.6.
+                                       aliases: pass, pwd
+   port               Default:         The port number of the vSphere vCenter or ESXi server.
+   integer            443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                        Environment variable support added in Ansible 2.6.
+   proxy_host                          Address of a proxy that will receive all HTTPS requests and relay them.
+   string                              The format is a hostname or a IP.
+   added in 2.9                        If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                       This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                          Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                             If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+                                       The username of the vSphere vCenter or ESXi server.
+   username                            If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                              Environment variable support added in Ansible 2.6.
+                                       aliases: admin, user
+   uuid                                Uuid of the virtual machine to export.
+   string                              This is a required parameter, if parameter name or moid is not supplied.
+                        Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs       • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean              • yes ←        Environment variable support added in Ansible 2.6.
+                                       If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+EXAMPLES                   *vmware_export_ovf-examples*
+
+ - vmware_export_ovf:
+     validate_certs: false
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     name: '{{ vm_name }}'
+     export_with_images: true
+     export_dir: /path/to/ovf_template/
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_export_ovf-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   instance            list of the exported files, if exported from vCenter server, device file is not named with vm name
+   dictionary always   Sample:
+                       None
+
+STATUS                   *vmware_export_ovf-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Diane Wang (@Tomorrow9) <dianew@vmware.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_export_ovf-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_export_ovf_module.html

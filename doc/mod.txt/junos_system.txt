@@ -1,0 +1,110 @@
+SYNOPSIS                   *junos_system*
+
+     • This module provides declarative management of node system attributes on Juniper JUNOS devices. It provides an option to configure host system parameters or remove those parameters from the
+       device active configuration.
+
+REQUIREMENTS                   *junos_system-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.5.2)
+
+PARAMETERS                   *junos_system-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   active          Choices:
+   boolean         • no           Specifies whether or not the configuration is active or deactivated
+                   • yes ←
+   domain_name                    Configure the IP domain name on the remote device to the provided value. Value should be in the dotted name form and will be appended to the hostname to create a
+   -                              fully-qualified domain name.
+   domain_search                  Provides the list of domain suffixes to append to the hostname for the purpose of doing name resolution. This argument accepts a list of names and will be
+   -                              reconciled with the current active configuration on the running node.
+   hostname                       Configure the device hostname parameter. This option takes an ASCII string value.
+   -
+   name_servers                   List of DNS name servers by IP address to use to perform name resolution lookups. This argument accepts either a list of DNS servers See examples.
+   -
+                                  Deprecated
+                                  Starting with Ansible 2.5 we recommend using connection: network_cli or connection: netconf.
+   provider                       For more information please see the Junos OS Platform Options guide.
+   dictionary
+                                  ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                  A dict object containing connection details.
+     host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+     string /                     the transport.
+     required
+     password                     Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                       specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port        Default:         Specifies the port to use when building the connection to the remote device. The port value will default to the well known SSH port of 22 (for transport=cli) or
+     integer     22               port 830 (for transport=netconf) device.
+     ssh_keyfile                  Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+     path                         value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     timeout     Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer     10               operation is completed, the module will error.
+     username                     Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                       specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   state           Choices:       State of the configuration values in the device's current active configuration. When set to present, the values should be configured in the device active
+   -               • present ←    configuration and when set to absent the values should not be in the device active configuration
+                   • absent
+
+NOTES                   *junos_system-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+     • Recommended connection is netconf. See the Junos OS Platform Options.
+     • This module also works with local connections for legacy playbooks.
+     • For information on using CLI and netconf see the Junos OS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Juniper network devices see https://www.ansible.com/ansible-juniper.
+
+EXAMPLES                   *junos_system-examples*
+
+ - name: configure hostname and domain name
+   junos_system:
+     hostname: junos01
+     domain_name: test.example.com
+     domain-search:
+       - ansible.com
+       - redhat.com
+       - juniper.com
+
+ - name: remove configuration
+   junos_system:
+     state: absent
+
+ - name: configure name servers
+   junos_system:
+     name_servers:
+       - 8.8.8.8
+       - 8.8.4.4
+
+RETURN VALUES                   *junos_system-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key                    Returned                                                                                 Description
+   diff.prepared when configuration is changed and     Configuration difference before and after applying change.
+   string        diff option is enabled.               Sample:
+                                                       [edit system] + host-name test; + domain-name ansible.com; + domain-search redhat.com; [edit system name-server] 172.26.1.1 { ... } + 8.8.8.8;
+
+STATUS                   *junos_system-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_system-red hat support*
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_system-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_system_module.html

@@ -1,0 +1,156 @@
+SYNOPSIS                   *aws_batch_compute_environment*
+
+     • This module allows the management of AWS Batch Compute Environments. It is idempotent and supports “Check” mode. Use module aws_batch_compute_environment to manage the compute environment,
+       aws_batch_job_queue to manage job queues, aws_batch_job_definition to manage job definitions.
+
+REQUIREMENTS                   *aws_batch_compute_environment-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *aws_batch_compute_environment-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   bid_percentage                                The minimum percentage that a Spot Instance price must be when compared with the On-Demand price for that instance type before instances are
+   -                                             launched. For example, if your bid percentage is 20%, then the Spot price must be below 20% of the current On-Demand price for that EC2 instance.
+   compute_environment_name                      The name for your compute environment. Up to 128 letters (uppercase and lowercase), numbers, and underscores are allowed.
+   - / required
+   compute_environment_state      Choices:       The state of the compute environment. If the state is ENABLED, then the compute environment accepts jobs from a queue and can scale out
+   -                              • ENABLED ←    automatically based on queues.
+                                  • DISABLED
+   compute_resource_type          Choices:
+   - / required                   • EC2          The type of compute resource.
+                                  • SPOT
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   desiredv_cpus                                 The desired number of EC2 vCPUS in the compute environment.
+   -
+   ec2_key_pair                                  The EC2 key pair that is used for instances launched in the compute environment.
+   -
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   image_id                                      The Amazon Machine Image (AMI) ID used for instances launched in the compute environment.
+   -
+   instance_role                                 The Amazon ECS instance role applied to Amazon EC2 instances in a compute environment.
+   - / required
+   instance_types                                The instance types that may be launched.
+   - / required
+   maxv_cpus                                     The maximum number of EC2 vCPUs that an environment can reach.
+   - / required
+   minv_cpus                                     The minimum number of EC2 vCPUs that an environment should maintain.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_group_ids                            The EC2 security groups that are associated with instances launched in the compute environment.
+   - / required
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   service_role                                  The full Amazon Resource Name (ARN) of the IAM role that allows AWS Batch to make calls to other AWS services on your behalf.
+   - / required
+   spot_iam_fleet_role                           The Amazon Resource Name (ARN) of the Amazon EC2 Spot Fleet IAM role applied to a SPOT compute environment.
+   -
+   state                          Choices:
+   -                              • present ←    Describes the desired state.
+                                  • absent
+   subnets                                       The VPC subnets into which the compute resources are launched.
+   - / required
+   tags                                          Key-value pair tags to be applied to resources that are launched in the compute environment.
+   -
+   type                           Choices:
+   - / required                   • MANAGED      The type of the compute environment.
+                                  • UNMANAGED
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *aws_batch_compute_environment-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_batch_compute_environment-examples*
+
+ ---
+ - hosts: localhost
+   gather_facts: no
+   vars:
+     state: present
+   tasks:
+   - name: My Batch Compute Environment
+     aws_batch_compute_environment:
+       compute_environment_name: computeEnvironmentName
+       state: present
+       region: us-east-1
+       compute_environment_state: ENABLED
+       type: MANAGED
+       compute_resource_type: EC2
+       minv_cpus: 0
+       maxv_cpus: 2
+       desiredv_cpus: 1
+       instance_types:
+         - optimal
+       subnets:
+         - my-subnet1
+         - my-subnet2
+       security_group_ids:
+         - my-sg1
+         - my-sg2
+       instance_role: arn:aws:iam::<account>:instance-profile/<role>
+       tags:
+         tag1: value1
+         tag2: value2
+       service_role: arn:aws:iam::<account>:role/service-role/<role>
+     register: aws_batch_compute_environment_action
+
+   - name: show results
+     debug:
+       var: aws_batch_compute_environment_action
+
+RETURN VALUES                   *aws_batch_compute_environment-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+                       returns what action was taken, whether something was changed, invocation and response
+                       Sample:
+                       {'batch_compute_environment_action': 'none', 'changed': False, 'invocation': {'module_args': {'aws_access_key': None, 'aws_secret_key': None, 'bid_percentage': None,
+                       'compute_environment_name': '<name>', 'compute_environment_state': 'ENABLED', 'compute_resource_type': 'EC2', 'desiredv_cpus': 0, 'ec2_key_pair': None, 'ec2_url': None,
+   output     always   'image_id': None, 'instance_role': 'arn:aws:iam::...', 'instance_types': ['optimal'], 'maxv_cpus': 8, 'minv_cpus': 0, 'profile': None, 'region': 'us-east-1',
+   dictionary          'security_group_ids': ['"""""""'], 'security_token': None, 'service_role': 'arn:aws:iam::....', 'spot_iam_fleet_role': None, 'state': 'present', 'subnets': ['""""""'],
+                       'tags': {'Environment': '<name>', 'Name': '<name>'}, 'type': 'MANAGED', 'validate_certs': True}}, 'response': {'computeEnvironmentArn': 'arn:aws:batch:....',
+                       'computeEnvironmentName': '<name>', 'computeResources': {'desiredvCpus': 0, 'instanceRole': 'arn:aws:iam::...', 'instanceTypes': ['optimal'], 'maxvCpus': 8, 'minvCpus': 0,
+                       'securityGroupIds': ['""""""'], 'subnets': ['"""""""'], 'tags': {'Environment': '<name>', 'Name': '<name>'}, 'type': 'EC2'}, 'ecsClusterArn': 'arn:aws:ecs:.....',
+                       'serviceRole': 'arn:aws:iam::...', 'state': 'ENABLED', 'status': 'VALID', 'statusReason': 'ComputeEnvironment Healthy', 'type': 'MANAGED'}}
+
+STATUS                   *aws_batch_compute_environment-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jon Meran (@jonmer85)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_batch_compute_environment-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_batch_compute_environment_module.html

@@ -1,0 +1,177 @@
+SYNOPSIS                   *nxos_l3_interfaces*
+
+     • This module manages Layer-3 interfaces attributes of NX-OS Interfaces.
+
+PARAMETERS                   *nxos_l3_interfaces-parameters*
+
+            Parameter          Choices/Defaults                                                                       Comments
+   config                                       A dictionary of Layer-3 interface options
+   list / elements=dictionary
+    ipv4                                        IPv4 address and attributes of the L3 interface.
+    list / elements=dictionary
+             address                            IPV4 address of the L3 interface.
+             string
+             secondary           Choices:
+             boolean             • no ←         A boolean attribute to manage addition of secondary IP address.
+                                 • yes
+             tag                                URIB route tag value for local/direct routes.
+             integer
+    ipv6                                        IPv6 address and attributes of the L3 interface.
+    list / elements=dictionary
+             address                            IPV6 address of the L3 interface.
+             string
+             tag                                URIB route tag value for local/direct routes.
+             integer
+    name                                        Full name of L3 interface, i.e. Ethernet1/1.
+    string / required
+                                 Choices:
+   state                         • merged ←
+   string                        • replaced     The state of the configuration after module completion.
+                                 • overridden
+                                 • deleted
+
+NOTES                   *nxos_l3_interfaces-notes*
+
+   Note
+
+     • Tested against NXOS 7.3.(0)D1(1) on VIRL
+
+EXAMPLES                   *nxos_l3_interfaces-examples*
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/6
+
+ - name: Merge provided configuration with device configuration.
+   nxos_l3_interfaces:
+     config:
+       - name: Ethernet1/6
+         ipv4:
+           - address: 192.168.1.1/24
+             tag: 5
+           - address: 10.1.1.1/24
+             secondary: True
+             tag: 10
+         ipv6:
+           - address: fd5d:12c9:2201:2::1/64
+             tag: 6
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/6
+ #   ip address 192.168.22.1/24 tag 5
+ #   ip address 10.1.1.1/24 secondary tag 10
+ # interfaqce Ethernet1/6
+ #   ipv6 address fd5d:12c9:2201:2::1/64 tag 6
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/6
+ #   ip address 192.168.22.1/24
+ #   ipv6 address "fd5d:12c9:2201:1::1/64"
+
+ - name: Replace device configuration of specified L3 interfaces with provided configuration.
+   nxos_l3_interfaces:
+     config:
+       - name: Ethernet1/6
+         ipv4: 192.168.22.3/24
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/6
+ #   ip address 192.168.22.3/24
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/2
+ #   ip address 192.168.22.1/24
+ # interface Ethernet1/6
+ #   ipv6 address "fd5d:12c9:2201:1::1/64"
+
+ - name: Override device configuration of all L3 interfaces on device with provided configuration.
+   nxos_l3_interfaces:
+     config:
+       - name: Ethernet1/2
+         ipv4: 192.168.22.3/4
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/2
+ #   ipv4 address 192.168.22.3/24
+ # interface Ethernet1/6
+
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/6
+ #   ip address 192.168.22.1/24
+ # interface Ethernet1/2
+ #   ipv6 address "fd5d:12c9:2201:1::1/64"
+
+ - name: Delete L3 attributes of given interfaces (This won't delete the interface itself).
+   nxos_l3_interfaces:
+     config:
+       - name: Ethernet1/6
+       - name: Ethernet1/2
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/6
+ # interface Ethernet1/2
+
+RETURN VALUES                   *nxos_l3_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['interface Ethernet1/2', 'ip address 192.168.0.1/2']
+
+STATUS                   *nxos_l3_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_l3_interfaces-red hat support*
+
+     • Trishna Guha (@trishnaguha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_l3_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_l3_interfaces_module.html

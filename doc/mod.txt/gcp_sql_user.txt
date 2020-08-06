@@ -1,0 +1,118 @@
+SYNOPSIS                   *gcp_sql_user*
+
+     • The Users resource represents a database user in a Cloud SQL instance.
+
+REQUIREMENTS                   *gcp_sql_user-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_sql_user-parameters*
+
+          Parameter          Choices/Defaults                                                                         Comments
+                              Choices:
+   auth_kind                  • application    The type of credential used.
+   string / required          • machineaccount
+                              • serviceaccount
+   env_type                                    Specifies which Ansible environment you're running this module within.
+   string                                      This should not be set unless you know what you're doing.
+                                               This only alters the User Agent string for any API requests.
+   host                                        The host name from which the user can connect. For insert operations, host defaults to an empty string. For update operations, host is specified as
+   string / required                           part of the request URL. The host name cannot be updated after insertion.
+                                               The name of the Cloud SQL instance. This does not include the project ID.
+   instance                                    This field represents a link to a Instance resource in GCP. It can be specified in two ways. First, you can place a dictionary with key 'name' and
+   dictionary / required                       value of your resource's name Alternatively, you can add `register: name-of-resource` to a gcp_sql_instance task and then set this instance field to
+                                               "{{ name-of-resource }}"
+   name                                        The name of the user in the Cloud SQL instance.
+   string / required
+   password                                    The password for the user.
+   string
+   project                                     The Google Cloud Platform project to use.
+   string
+   scopes                                      Array of scopes to be used.
+   list
+   service_account_contents                    The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                       An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                        The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+   state                      Choices:
+   string                     • present ←      Whether the given object should exist in GCP
+                              • absent
+
+NOTES                   *gcp_sql_user-notes*
+
+   Note
+
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_sql_user-examples*
+
+ - name: create a instance
+   gcp_sql_instance:
+     name: "{{resource_name}}-1"
+     settings:
+       ip_configuration:
+         authorized_networks:
+         - name: google dns server
+           value: 8.8.8.8/32
+       tier: db-n1-standard-1
+     region: us-central1
+     project: "{{ gcp_project }}"
+     auth_kind: "{{ gcp_cred_kind }}"
+     service_account_file: "{{ gcp_cred_file }}"
+     state: present
+   register: instance
+
+ - name: create a user
+   gcp_sql_user:
+     name: test-user
+     host: 10.1.2.3
+     password: secret-password
+     instance: "{{ instance }}"
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+     state: present
+
+RETURN VALUES                   *gcp_sql_user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   host       success  The host name from which the user can connect. For insert operations, host defaults to an empty string. For update operations, host is specified as part of the request URL.
+   string              The host name cannot be updated after insertion.
+   instance   success  The name of the Cloud SQL instance. This does not include the project ID.
+   dictionary
+   name       success  The name of the user in the Cloud SQL instance.
+   string
+   password   success  The password for the user.
+   string
+
+STATUS                   *gcp_sql_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_sql_user-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_sql_user_module.html

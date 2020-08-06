@@ -1,0 +1,163 @@
+SYNOPSIS                   *ucs_managed_objects*
+
+     • Configures Managed Objects on Cisco UCS Manager.
+     • The Python SDK module, Python class within the module (UCSM Class), and all properties must be directly specified.
+     • More information on the UCSM Python SDK and how to directly configure Managed Objects is available at UCSM Python SDK.
+     • Examples can be used with the UCS Platform Emulator https://communities.cisco.com/ucspe.
+
+REQUIREMENTS                   *ucs_managed_objects-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ucsmsdk
+
+PARAMETERS                   *ucs_managed_objects-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   hostname                           IP address or hostname of Cisco UCS Manager.
+   string / required
+   objects                            List of managed objects to configure. Each managed object has suboptions the specify the Python SDK module, class, and properties to configure.
+   - / required
+      children                        Optional list of child objects. Each child has its own module, class, and properties suboptions.
+      -                               The parent_mo_or_dn property for child objects is automatically set as the list of children is configured.
+      class_name                      Name of the Python class that will be used to configure the Managed Object.
+      - / required
+      module                          Name of the Python SDK module implementing the required class.
+      - / required
+      properties                      List of properties to configure on the Managed Object. See the UCSM Python SDK for information on properties for each class.
+      - / required
+   password                           Password for Cisco UCS Manager authentication.
+   string / required
+   port                               Port number to be used during connection (by default uses 443 for https and 80 for http connection).
+   integer
+   proxy                              If use_proxy is no, specfies proxy to be used for connection. e.g. 'http://proxy.xy.z:8080'
+   string
+   state               Choices:       If present, will verify that the Managed Objects are present and will create if needed.
+   -                   • absent       If absent, will verify that the Managed Objects are absent and will delete if needed.
+                       • present ←
+   use_proxy           Choices:
+   boolean             • no           If no, will not use the proxy as defined by system environment variable.
+                       • yes ←
+   use_ssl             Choices:
+   boolean             • no           If no, an HTTP connection will be used instead of the default HTTPS connection.
+                       • yes ←
+   username          Default:         Username for Cisco UCS Manager authentication.
+   string            "admin"
+
+EXAMPLES                   *ucs_managed_objects-examples*
+
+ - name: Configure Network Control Policy
+   ucs_managed_objects:
+     hostname: 172.16.143.150
+     username: admin
+     password: password
+     objects:
+     - module: ucsmsdk.mometa.nwctrl.NwctrlDefinition
+       class: NwctrlDefinition
+       properties:
+         parent_mo_or_dn: org-root
+         cdp: enabled
+         descr: ''
+         lldp_receive: enabled
+         lldp_transmit: enabled
+         name: Enable-CDP-LLDP
+
+ - name: Remove Network Control Policy
+   ucs_managed_objects:
+     hostname: 172.16.143.150
+     username: admin
+     password: password
+     objects:
+     - module: ucsmsdk.mometa.nwctrl.NwctrlDefinition
+       class: NwctrlDefinition
+       properties:
+         parent_mo_or_dn: org-root
+         name: Enable-CDP-LLDP
+     state: absent
+
+ - name: Configure Boot Policy Using JSON objects list with children
+   ucs_managed_objects:
+     hostname: 172.16.143.150
+     username: admin
+     password: password
+     objects:
+     - {
+           "module": "ucsmsdk.mometa.lsboot.LsbootPolicy",
+           "class": "LsbootPolicy",
+           "properties": {
+               "parent_mo_or_dn": "org-root",
+               "name": "Python_SDS",
+               "enforce_vnic_name": "yes",
+               "boot_mode": "legacy",
+               "reboot_on_update": "no"
+           },
+           "children": [
+               {
+                   "module": "ucsmsdk.mometa.lsboot.LsbootVirtualMedia",
+                   "class": "LsbootVirtualMedia",
+                   "properties": {
+                       "access": "read-only-local",
+                       "lun_id": "0",
+                       "order": "2"
+                   }
+               },
+               {
+                   "module": "ucsmsdk.mometa.lsboot.LsbootStorage",
+                   "class": "LsbootStorage",
+                   "properties": {
+                       "order": "1"
+                   },
+                   "children": [
+                       {
+                           "module": "ucsmsdk.mometa.lsboot.LsbootLocalStorage",
+                           "class": "LsbootLocalStorage",
+                           "properties": {},
+                           "children": [
+                               {
+                                   "module": "ucsmsdk.mometa.lsboot.LsbootDefaultLocalImage",
+                                   "class": "LsbootDefaultLocalImage",
+                                   "properties": {
+                                       "order": "1"
+                                   }
+                               }
+                           ]
+                       }
+                   ]
+               }
+           ]
+       }
+
+ - name: Remove Boot Policy Using JSON objects list
+   ucs_managed_objects:
+     hostname: 172.16.143.150
+     username: admin
+     password: password
+     objects:
+     - {
+           "module": "ucsmsdk.mometa.lsboot.LsbootPolicy",
+           "class": "LsbootPolicy",
+           "properties": {
+               "parent_mo_or_dn": "org-root",
+               "name": "Python_SDS"
+           }
+       }
+     state: absent
+
+STATUS                   *ucs_managed_objects-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Soper (@dsoper2)
+     • CiscoUcs (@CiscoUcs)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ucs_managed_objects-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ucs_managed_objects_module.html

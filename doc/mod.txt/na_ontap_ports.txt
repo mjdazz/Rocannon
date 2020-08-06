@@ -1,0 +1,142 @@
+SYNOPSIS                   *na_ontap_ports*
+
+     • Add or remove ports for broadcast domain and portset.
+
+REQUIREMENTS                   *na_ontap_ports-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_ports-parameters*
+
+     Parameter      Choices/Defaults                                                                              Comments
+   hostname
+   string /                            The hostname or IP address of the ONTAP instance.
+   required
+   http_port                           Override the default port (80 or 443) with this port
+   integer
+   https            Choices:
+   boolean          • no ←             Enable and disable https
+                    • yes
+   ipspace                             Specify the required ipspace for the broadcast domain.
+   string                              A domain ipspace can not be modified after the domain has been created.
+   names
+   list /                              List of ports.
+   required
+   ontapi                              The ontap api version to use
+   integer
+   password                            Password for the specified user.
+   string /                            aliases: pass
+   required
+                    Choices:
+   portset_type     • fcp              Protocols accepted for portset.
+   string           • iscsi
+                    • mixed
+   resource_name
+   string /                            name of the portset or broadcast domain.
+   required
+   resource_type    Choices:
+   string /         • broadcast_domain type of the resource to add a port to or remove a port from.
+   required         • portset
+   state            Choices:
+   string           • present ←        Whether the specified port should be added or removed.
+                    • absent
+                    Choices:           REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest         • Never            Always -- will always use the REST API
+   string           • Always           Never -- will always use the ZAPI
+                    • Auto ←           Auto -- will try to use the REST Api
+   username                            This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read the
+   string /                            documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+   required                            aliases: user
+   validate_certs   Choices:           If set to no, the SSL certificates will not be validated.
+   boolean          • no               This should only set to False used on personally controlled sites using self-signed certificates.
+                    • yes ←
+   vserver                             Name of the SVM.
+   string                              Specify this option when operating on portset.
+
+NOTES                   *na_ontap_ports-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_ports-examples*
+
+ - name: broadcast domain remove port
+   tags:
+   - remove
+   na_ontap_ports:
+     state: absent
+     names: test-vsim1:e0d-1,test-vsim1:e0d-2
+     resource_type: broadcast_domain
+     resource_name: ansible_domain
+     hostname: "{{ hostname }}"
+     username: user
+     password: password
+     https: False
+
+ - name: broadcast domain add port
+   tags:
+   - add
+   na_ontap_ports:
+     state: present
+     names: test-vsim1:e0d-1,test-vsim1:e0d-2
+     resource_type: broadcast_domain
+     resource_name: ansible_domain
+     ipspace: Default
+     hostname: "{{ hostname }}"
+     username: user
+     password: password
+     https: False
+
+ - name: portset remove port
+   tags:
+   - remove
+   na_ontap_ports:
+     state: absent
+     names: lif_2
+     resource_type: portset
+     resource_name: portset_1
+     vserver: "{{ vserver }}"
+     hostname: "{{ hostname }}"
+     username: user
+     password: password
+     https: False
+
+ - name: portset add port
+   tags:
+   - add
+   na_ontap_ports:
+     state: present
+     names: lif_2
+     resource_type: portset
+     resource_name: portset_1
+     portset_type: iscsi
+     vserver: "{{ vserver }}"
+     hostname: "{{ hostname }}"
+     username: user
+     password: password
+     https: False
+
+STATUS                   *na_ontap_ports-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_ports-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_ports_module.html

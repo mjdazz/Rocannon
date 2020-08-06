@@ -1,0 +1,131 @@
+SYNOPSIS                   *ce_ntp_auth*
+
+     • Manages NTP authentication configuration on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_ntp_auth-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   auth_mode        Choices:
+   -                • hmac-sha256   Specify authentication algorithm.
+                    • md5
+   auth_pwd                         Plain text with length of 1 to 255, encrypted text with length of 20 to 392.
+   -
+   auth_type        Choices:
+   -                • text          Whether the given password is in cleartext or has been encrypted. If in cleartext, the device will encrypt it before storing it.
+                    • encrypt ←
+   authentication   Choices:
+   -                • enable        Configure ntp authentication enable or unconfigure ntp authentication enable.
+                    • disable
+   key_id                           Authentication key identifier (numeric).
+   - / required
+   state            Choices:
+   -                • present ←     Manage the state of the resource.
+                    • absent
+   trusted_key      Choices:
+   -                • enable        Whether the given key is required to be supplied by a time source for the device to synchronize to the time source.
+                    • disable ←
+
+NOTES                   *ce_ntp_auth-notes*
+
+   Note
+
+     • If state=absent, the module will attempt to remove the given key configuration. If a matching key configuration isn’t found on the device, the module will fail.
+     • If state=absent and authentication=on, authentication will be turned on.
+     • If state=absent and authentication=off, authentication will be turned off.
+     • Recommended connection is network_cli.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_ntp_auth-examples*
+
+ - name: NTP AUTH test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Configure ntp authentication key-id"
+     ce_ntp_auth:
+       key_id: 32
+       auth_mode: md5
+       auth_pwd: 11111111111111111111111
+       provider: "{{ cli }}"
+
+   - name: "Configure ntp authentication key-id and trusted authentication keyid"
+     ce_ntp_auth:
+       key_id: 32
+       auth_mode: md5
+       auth_pwd: 11111111111111111111111
+       trusted_key: enable
+       provider: "{{ cli }}"
+
+   - name: "Configure ntp authentication key-id and authentication enable"
+     ce_ntp_auth:
+       key_id: 32
+       auth_mode: md5
+       auth_pwd: 11111111111111111111111
+       authentication: enable
+       provider: "{{ cli }}"
+
+   - name: "Unconfigure ntp authentication key-id and trusted authentication keyid"
+     ce_ntp_auth:
+       key_id: 32
+       state: absent
+       provider: "{{ cli }}"
+
+   - name: "Unconfigure ntp authentication key-id and authentication enable"
+     ce_ntp_auth:
+       key_id: 32
+       authentication: enable
+       state: absent
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_ntp_auth-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+                       k/v pairs of ntp authentication after module execution
+   end_state  always   Sample:
+   dictionary          {'authentication': 'off', 'authentication-keyid': [{'auth_mode': 'md5', 'key_id': '1', 'trusted_key': 'disable'}, {'auth_mode': 'md5', 'key_id': '32', 'trusted_key':
+                       'enable'}]}
+   existing            k/v pairs of existing ntp authentication
+   dictionary always   Sample:
+                       {'authentication': 'off', 'authentication-keyid': [{'auth_mode': 'md5', 'key_id': '1', 'trusted_key': 'disable'}]}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'auth_type': 'text', 'authentication': 'enable', 'key_id': '32', 'auth_pwd': '1111', 'auth_mode': 'md5', 'trusted_key': 'enable', 'state': 'present'}
+   state               state as sent in from the playbook
+   string     always   Sample:
+                       present
+   updates             command sent to the device
+   list       always   Sample:
+                       ['ntp authentication-key 32 md5 1111', 'ntp trusted-key 32', 'ntp authentication enable']
+
+STATUS                   *ce_ntp_auth-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Zhijin Zhou (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_ntp_auth-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_ntp_auth_module.html

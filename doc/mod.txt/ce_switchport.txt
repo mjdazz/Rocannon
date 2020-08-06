@@ -1,0 +1,134 @@
+SYNOPSIS                   *ce_switchport*
+
+     • Manages Layer 2 switchport interfaces on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_switchport-parameters*
+
+     Parameter     Choices/Defaults                                                                              Comments
+   default_vlan
+   -                                 If mode=access, or mode=dot1qtunnel, used as the access VLAN ID, in the range from 1 to 4094.
+   added in 2.9
+   interface                         Full name of the interface, i.e. 40GE1/0/22.
+   - / required
+                    Choices:
+   mode             • access
+   -                • trunk          The link type of an interface.
+                    • hybrid
+                    • dot1qtunnel
+   pvid_vlan
+   -                                 If mode=trunk, or mode=hybrid, used as the trunk native VLAN ID, in the range from 1 to 4094.
+   added in 2.9
+                    Choices:
+   state            • present ←      Manage the state of the resource.
+   -                • absent
+                    • unconfigured
+   tagged_vlans
+   -                                 If mode=hybrid, used as the VLAN range to ADD or REMOVE from the trunk, such as 2-10 or 2,5,10-15, etc.
+   added in 2.9
+   trunk_vlans                       If mode=trunk, used as the VLAN range to ADD or REMOVE from the trunk, such as 2-10 or 2,5,10-15, etc.
+   -
+   untagged_vlans
+   -                                 If mode=hybrid, used as the VLAN range to ADD or REMOVE from the trunk, such as 2-10 or 2,5,10-15, etc.
+   added in 2.9
+
+NOTES                   *ce_switchport-notes*
+
+   Note
+
+     • When state=absent, VLANs can be added/removed from trunk links and the existing access VLAN can be ‘unconfigured’ to just having VLAN 1 on that interface.
+     • When working with trunks VLANs the keywords add/remove are always sent in the port trunk allow-pass vlan command. Use verbose mode to see commands sent.
+     • When state=unconfigured, the interface will result with having a default Layer 2 interface, i.e. vlan 1 in access mode.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_switchport-examples*
+
+ - name: switchport module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+   - name: Ensure 10GE1/0/22 is in its default switchport state
+     ce_switchport:
+       interface: 10GE1/0/22
+       state: unconfigured
+       provider: '{{ cli }}'
+
+   - name: Ensure 10GE1/0/22 is configured for access vlan 20
+     ce_switchport:
+       interface: 10GE1/0/22
+       mode: access
+       default_vlan: 20
+       provider: '{{ cli }}'
+
+   - name: Ensure 10GE1/0/22 only has vlans 5-10 as trunk vlans
+     ce_switchport:
+       interface: 10GE1/0/22
+       mode: trunk
+       pvid_vlan: 10
+       trunk_vlans: 5-10
+       provider: '{{ cli }}'
+
+   - name: Ensure 10GE1/0/22 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
+     ce_switchport:
+       interface: 10GE1/0/22
+       mode: trunk
+       pvid_vlan: 10
+       trunk_vlans: 2-50
+       provider: '{{ cli }}'
+
+   - name: Ensure these VLANs are not being tagged on the trunk
+     ce_switchport:
+       interface: 10GE1/0/22
+       mode: trunk
+       trunk_vlans: 51-4000
+       state: absent
+       provider: '{{ cli }}'
+
+RETURN VALUES                   *ce_switchport-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of switchport after module execution
+   dictionary always   Sample:
+                       {'default_vlan': '20', 'interface': '10GE1/0/22', 'mode': 'access', 'switchport': 'enable'}
+   existing            k/v pairs of existing switchport
+   dictionary always   Sample:
+                       {'default_vlan': '10', 'interface': '10GE1/0/22', 'mode': 'access', 'switchport': 'enable'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'default_vlan': '20', 'interface': '10GE1/0/22', 'mode': 'access'}
+   updates             command string sent to the device
+   list       always   Sample:
+                       ['10GE1/0/22', 'port default vlan 20']
+
+STATUS                   *ce_switchport-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_switchport-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_switchport_module.html

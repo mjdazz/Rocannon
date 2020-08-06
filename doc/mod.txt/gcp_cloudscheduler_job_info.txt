@@ -1,0 +1,153 @@
+SYNOPSIS                   *gcp_cloudscheduler_job_info*
+
+     • Gather info for GCP Job
+
+REQUIREMENTS                   *gcp_cloudscheduler_job_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_cloudscheduler_job_info-parameters*
+
+          Parameter           Choices/Defaults                                                                         Comments
+                              Choices:
+   auth_kind                  • application      The type of credential used.
+   string / required          • machineaccount
+                              • serviceaccount
+   env_type                                      Specifies which Ansible environment you're running this module within.
+   string                                        This should not be set unless you know what you're doing.
+                                                 This only alters the User Agent string for any API requests.
+   project                                       The Google Cloud Platform project to use.
+   string
+   region                                        Region where the scheduler job resides .
+   string / required
+   scopes                                        Array of scopes to be used.
+   list
+   service_account_contents                      The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                         An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                          The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+
+NOTES                   *gcp_cloudscheduler_job_info-notes*
+
+   Note
+
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_cloudscheduler_job_info-examples*
+
+ - name: get info on a job
+   gcp_cloudscheduler_job_info:
+     region: us-central1
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+
+RETURN VALUES                   *gcp_cloudscheduler_job_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key            Returned                                                                           Description
+   resources                 always   List of resources
+   complex
+     appEngineHttpTarget     success  App Engine HTTP target.
+     complex                          If the job providers a App Engine HTTP target the cron will send a request to the service instance .
+       appEngineRouting      success  App Engine Routing setting for the job.
+       complex
+         instance            success  App instance.
+         string                       By default, the job is sent to an instance which is available when the job is attempted.
+         service             success  App service.
+         string                       By default, the job is sent to the service which is the default service when the job is attempted.
+         version             success  App version.
+         string                       By default, the job is sent to the version which is the default version when the job is attempted.
+       body                  success  HTTP request body. A request body is allowed only if the HTTP method is POST or PUT. It will result in invalid argument error to set a body on a job with an
+       string                         incompatible HttpMethod.
+       headers               success  HTTP request headers.
+       dictionary                     This map contains the header field names and values. Headers can be set when the job is created.
+       httpMethod            success  Which HTTP method to use for the request.
+       string
+       relativeUri           success  The relative URI.
+       string
+     description             success  A human-readable description for the job. This string must not contain more than 500 characters.
+     string
+     httpTarget              success  HTTP target.
+     complex                          If the job providers a http_target the cron will send a request to the targeted url .
+       body                  success  HTTP request body. A request body is allowed only if the HTTP method is POST, PUT, or PATCH. It is an error to set body on a job with an incompatible
+       string                         HttpMethod.
+       headers               success  This map contains the header field names and values. Repeated headers are not supported, but a header value can contain commas.
+       dictionary
+       httpMethod            success  Which HTTP method to use for the request.
+       string
+       oauthToken            success  Contains information needed for generating an OAuth token.
+       complex                        This type of authorization should be used when sending requests to a GCP endpoint.
+         scope               success  OAuth scope to be used for generating OAuth access token. If not specified, "https://www.googleapis.com/auth/cloud-platform" will be used.
+         string
+         serviceAccountEmail success  Service account email to be used for generating OAuth token.
+         string                       The service account must be within the same project as the job.
+       oidcToken             success  Contains information needed for generating an OpenID Connect token.
+       complex                        This type of authorization should be used when sending requests to third party endpoints or Cloud Run.
+         audience            success  Audience to be used when generating OIDC token. If not specified, the URI specified in target will be used.
+         string
+         serviceAccountEmail success  Service account email to be used for generating OAuth token.
+         string                       The service account must be within the same project as the job.
+       uri                   success  The full URI path that the request will be sent to.
+       string
+     name                    success  The name of the job.
+     string
+     pubsubTarget            success  Pub/Sub target If the job providers a Pub/Sub target the cron will publish a message to the provided topic .
+     complex
+       attributes            success  Attributes for PubsubMessage.
+       dictionary                     Pubsub message must contain either non-empty data, or at least one attribute.
+       data                  success  The message payload for PubsubMessage.
+       string                         Pubsub message must contain either non-empty data, or at least one attribute.
+       topicName             success  The name of the Cloud Pub/Sub topic to which messages will be published when a job is delivered. The topic name must be in the same format as required by
+       string                         PubSub's PublishRequest.name, for example projects/PROJECT_ID/topics/TOPIC_ID.
+     region                  success  Region where the scheduler job resides .
+     string
+     retryConfig             success  By default, if a job does not complete successfully, meaning that an acknowledgement is not received from the handler, then it will be retried with exponential
+     complex                          backoff according to the settings .
+       maxBackoffDuration    success  The maximum amount of time to wait before retrying a job after it fails.
+       string                         A duration in seconds with up to nine fractional digits, terminated by 's'.
+       maxDoublings                   The time between retries will double maxDoublings times.
+       integer               success  A job's retry interval starts at minBackoffDuration, then doubles maxDoublings times, then increases linearly, and finally retries retries at intervals of
+                                      maxBackoffDuration up to retryCount times.
+       maxRetryDuration               The time limit for retrying a failed job, measured from time when an execution was first attempted. If specified with retryCount, the job will be retried until
+       string                success  both limits are reached.
+                                      A duration in seconds with up to nine fractional digits, terminated by 's'.
+       minBackoffDuration    success  The minimum amount of time to wait before retrying a job after it fails.
+       string                         A duration in seconds with up to nine fractional digits, terminated by 's'.
+       retryCount            success  The number of attempts that the system will make to run a job using the exponential backoff procedure described by maxDoublings.
+       integer                        Values greater than 5 and negative values are not allowed.
+     schedule                success  Describes the schedule on which the job will be executed.
+     string
+     timeZone                success  Specifies the time zone to be used in interpreting schedule.
+     string                           The value of this field must be a time zone name from the tz database.
+
+STATUS                   *gcp_cloudscheduler_job_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_cloudscheduler_job_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_cloudscheduler_job_info_module.html

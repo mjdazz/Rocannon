@@ -1,0 +1,137 @@
+SYNOPSIS                   *ce_static_route*
+
+     • Manages the static routes on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_static_route-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   aftype          Choices:
+   - / required    • v4           Destination ip address family type of static route.
+                   • v6
+   description                    Name of the route. Used with the name parameter on the CLI.
+   -
+   destvrf                        VPN instance of next hop ip address.
+   -
+   mask                           Destination ip mask of static route.
+   - / required
+   next_hop                       Next hop address of static route.
+   -
+   nhp_interface                  Next hop interface full name of static route.
+   -
+   pref                           Preference or administrative difference of route (range 1-255).
+   -
+   prefix                         Destination ip address of static route.
+   - / required
+   state           Choices:
+   -               • present ←    Specify desired state of the resource.
+                   • absent
+   tag                            Route tag value (numeric).
+   -
+   vrf                            VPN instance of destination ip address.
+   -
+
+NOTES                   *ce_static_route-notes*
+
+   Note
+
+     • If no vrf is supplied, vrf is set to default.
+     • If state=absent, the route will be removed, regardless of the non-required parameters.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_static_route-examples*
+
+ - name: static route module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: Config a ipv4 static route, next hop is an address and that it has the proper description
+     ce_static_route:
+       prefix: 2.1.1.2
+       mask: 24
+       next_hop: 3.1.1.2
+       description: 'Configured by Ansible'
+       aftype: v4
+       provider: "{{ cli }}"
+   - name: Config a ipv4 static route ,next hop is an interface and that it has the proper description
+     ce_static_route:
+       prefix: 2.1.1.2
+       mask: 24
+       next_hop: 10GE1/0/1
+       description: 'Configured by Ansible'
+       aftype: v4
+       provider: "{{ cli }}"
+   - name: Config a ipv6 static route, next hop is an address and that it has the proper description
+     ce_static_route:
+       prefix: fc00:0:0:2001::1
+       mask: 64
+       next_hop: fc00:0:0:2004::1
+       description: 'Configured by Ansible'
+       aftype: v6
+       provider: "{{ cli }}"
+   - name: Config a ipv4 static route, next hop is an interface and that it has the proper description
+     ce_static_route:
+       prefix: fc00:0:0:2001::1
+       mask: 64
+       next_hop: 10GE1/0/1
+       description: 'Configured by Ansible'
+       aftype: v6
+       provider: "{{ cli }}"
+   - name: Config a VRF and set ipv4 static route, next hop is an address and that it has the proper description
+     ce_static_route:
+       vrf: vpna
+       prefix: 2.1.1.2
+       mask: 24
+       next_hop: 3.1.1.2
+       description: 'Configured by Ansible'
+       aftype: v4
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_static_route-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of switchport after module execution
+   dictionary always   Sample:
+                       {'next_hop': '3.3.3.3', 'pref': '100', 'prefix': '192.168.20.0', 'mask': '24', 'description': 'testing', 'tag': 'null'}
+   existing   always   k/v pairs of existing switchport
+   dictionary
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'next_hop': '3.3.3.3', 'pref': '100', 'prefix': '192.168.20.642', 'mask': '24', 'description': 'testing', 'vrf': '_public_'}
+   updates             command list sent to the device
+   list       always   Sample:
+                       ['ip route-static 192.168.20.0 255.255.255.0 3.3.3.3 preference 100 description testing']
+
+STATUS                   *ce_static_route-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Yang yang (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_static_route-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_static_route_module.html

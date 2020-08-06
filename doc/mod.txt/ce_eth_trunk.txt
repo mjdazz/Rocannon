@@ -1,0 +1,106 @@
+SYNOPSIS                   *ce_eth_trunk*
+
+     • Manages Eth-Trunk specific configuration parameters on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_eth_trunk-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   force       Choices:
+   boolean     • no ←         When true it forces Eth-Trunk members to match what is declared in the members param. This can be used to remove members.
+               • yes
+               Choices:
+               • src-dst-ip
+               • src-dst-mac
+   hash_type   • enhanced     Hash algorithm used for load balancing among Eth-Trunk member interfaces.
+   -           • dst-ip
+               • dst-mac
+               • src-ip
+               • src-mac
+   members                    List of interfaces that will be managed in a given Eth-Trunk. The interface name must be full name.
+   -
+   min_links                  Specifies the minimum number of Eth-Trunk member links in the Up state. The value is an integer ranging from 1 to the maximum number of interfaces that can be added to
+   -                          a Eth-Trunk interface.
+               Choices:
+   mode        • manual       Specifies the working mode of an Eth-Trunk interface.
+   -           • lacp-dynamic
+               • lacp-static
+   state       Choices:
+   -           • present ←    Manage the state of the resource.
+               • absent
+   trunk_id                   Eth-Trunk interface number. The value is an integer. The value range depends on the assign forward eth-trunk mode command. When 256 is specified, the value ranges from
+   - /                        0 to 255. When 512 is specified, the value ranges from 0 to 511. When 1024 is specified, the value ranges from 0 to 1023.
+   required
+
+NOTES                   *ce_eth_trunk-notes*
+
+   Note
+
+     • state=absent removes the Eth-Trunk config and interface if it already exists. If members to be removed are not explicitly passed, all existing members (if any), are removed, and Eth-Trunk
+       removed.
+     • Members must be a list.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_eth_trunk-examples*
+
+ - name: eth_trunk module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+   - name: Ensure Eth-Trunk100 is created, add two members, and set to mode lacp-static
+     ce_eth_trunk:
+       trunk_id: 100
+       members: ['10GE1/0/24','10GE1/0/25']
+       mode: 'lacp-static'
+       state: present
+       provider: '{{ cli }}'
+
+RETURN VALUES                   *ce_eth_trunk-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+                       k/v pairs of Eth-Trunk info after module execution
+   end_state  always   Sample:
+   dictionary          {'trunk_id': '100', 'hash_type': 'mac', 'members_detail': [{'memberIfName': '10GE1/0/24', 'memberIfState': 'Down'}, {'memberIfName': '10GE1/0/25', 'memberIfState': 'Down'}],
+                       'min_links': '1', 'mode': 'lacp-static'}
+   existing            k/v pairs of existing Eth-Trunk
+   dictionary always   Sample:
+                       {'trunk_id': '100', 'hash_type': 'mac', 'members_detail': [{'memberIfName': '10GE1/0/25', 'memberIfState': 'Down'}], 'min_links': '1', 'mode': 'manual'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'trunk_id': '100', 'members': ['10GE1/0/24', '10GE1/0/25'], 'mode': 'lacp-static'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['interface Eth-Trunk 100', 'mode lacp-static', 'interface 10GE1/0/25', 'eth-trunk 100']
+
+STATUS                   *ce_eth_trunk-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_eth_trunk-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_eth_trunk_module.html

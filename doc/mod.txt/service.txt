@@ -1,31 +1,104 @@
-SYNOPSIS                           *service*
+SYNOPSIS                   *service*
 
-Controls services on remote hosts. Supported init systems include BSD init, OpenRC, SysV, systemd, upstart.
+     • Controls services on remote hosts. Supported init systems include BSD init, OpenRC, SysV, Solaris SMF, systemd, upstart.
+     • For Windows targets, use the win_service module instead.
 
-EXAMPLES                           *service-examples*
->
-    # Example action to start service httpd, if not running
-    - service: name=httpd state=started
-   
-    # Example action to stop service httpd, if running
-    - service: name=httpd state=stopped
-   
-    # Example action to restart service httpd, in all cases
-    - service: name=httpd state=restarted
-   
-    # Example action to reload service httpd, in all cases
-    - service: name=httpd state=reloaded
-   
-    # Example action to enable service httpd, and not touch the running state
-    - service: name=httpd enabled=yes
-   
-    # Example action to start service foo, based on running process /usr/bin/foo
-    - service: name=foo pattern=/usr/bin/foo state=started
-   
-    # Example action to restart network service for interface eth0
-    - service: name=network state=restarted args=eth0
-   
+PARAMETERS                   *service-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   arguments                  Additional arguments provided on the command line.
+   string                     aliases: args
+   enabled     Choices:       Whether the service should start on boot.
+   boolean     • no           At least one of state and enabled are required.
+               • yes
+   name
+   string /                   Name of the service.
+   required
+   pattern                    If the service does not respond to the status command, name a substring to look for as would be found in the output of the ps command as a stand-in for a status
+   string                     result.
+                              If the string is found, the service will be assumed to be started.
+   runlevel  Default:         For OpenRC init scripts (e.g. Gentoo) only.
+   string    "default"        The runlevel that this service belongs to.
+   sleep                      If the service is being restarted then sleep this many seconds between the stop and start command.
+   integer                    This helps to work around badly-behaving init scripts that exit immediately after signaling a process to stop.
+                              Not all service managers support sleep, i.e when using systemd this setting will be ignored.
+               Choices:       started/stopped are idempotent actions that will not run commands unless necessary.
+   state       • reloaded     restarted will always bounce the service.
+   string      • restarted    reloaded will always reload.
+               • started      At least one of state and enabled are required.
+               • stopped      Note that reloaded will start the service if it is not already started, even if your chosen init system wouldn't normally.
+   use       Default:         The service module actually uses system specific modules, normally through auto detection, this setting can force a specific module.
+   string    "auto"           Normally it uses the value of the 'ansible_service_mgr' fact and falls back to the old 'service' module when none matching is found.
+
+NOTES                   *service-notes*
+
+   Note
+
+     • For AIX, group subsystem names can be used.
+
+SEE ALSO                   *service-see also*
+
+   See also
+
+   win_service – Manage and query Windows services
+   The official documentation on the win_service module.
+
+EXAMPLES                   *service-examples*
+
+ - name: Start service httpd, if not started
+   service:
+     name: httpd
+     state: started
+
+ - name: Stop service httpd, if started
+   service:
+     name: httpd
+     state: stopped
+
+ - name: Restart service httpd, in all cases
+   service:
+     name: httpd
+     state: restarted
+
+ - name: Reload service httpd, in all cases
+   service:
+     name: httpd
+     state: reloaded
+
+ - name: Enable service httpd, and not touch the state
+   service:
+     name: httpd
+     enabled: yes
+
+ - name: Start service foo, based on running process /usr/bin/foo
+   service:
+     name: foo
+     pattern: /usr/bin/foo
+     state: started
+
+ - name: Restart network service for interface eth0
+   service:
+     name: network
+     state: restarted
+     args: eth0
+
+STATUS                   *service-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *service-red hat support*
+
+     • Ansible Core Team
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *service-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/service_module.html
+https://docs.ansible.com/ansible/latest/modules/service_module.html

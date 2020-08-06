@@ -1,0 +1,176 @@
+SYNOPSIS                   *vmware_vm_info*
+
+     • Return basic information pertaining to a vSphere or ESXi virtual machine guest.
+     • Cluster name as fact is added in version 2.7.
+     • This module was called vmware_vm_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: vmware_vm_facts
+
+REQUIREMENTS                   *vmware_vm_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_vm_info-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+                                   Specify a folder location of VMs to gather information from.
+                                   Examples:
+                                   folder: /ha-datacenter/vm
+                                   folder: ha-datacenter/vm
+   folder                          folder: /datacenter1/vm
+   string                          folder: datacenter1/vm
+   added in 2.9                    folder: /datacenter1/vm/folder1
+                                   folder: datacenter1/vm/folder1
+                                   folder: /folder1/datacenter1/vm
+                                   folder: folder1/datacenter1/vm
+                                   folder: /folder1/datacenter1/vm/folder2
+   hostname                        The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                   Environment variable support added in Ansible 2.6.
+                                   The password of the vSphere vCenter or ESXi server.
+   password                        If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: pass, pwd
+   port           Default:         The port number of the vSphere vCenter or ESXi server.
+   integer        443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                    Environment variable support added in Ansible 2.6.
+   proxy_host                      Address of a proxy that will receive all HTTPS requests and relay them.
+   string                          The format is a hostname or a IP.
+   added in 2.9                    If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                   This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                      Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   show_attribute   Choices:
+   boolean          • no ←         Attributes related to VM guest shown in information only when this is set true.
+   added in 2.8     • yes
+   show_tag         Choices:
+   boolean          • no ←         Tags related to virtual machine are shown if set to True.
+   added in 2.9     • yes
+                                   The username of the vSphere vCenter or ESXi server.
+   username                        If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: admin, user
+                    Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs   • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean          • yes ←        Environment variable support added in Ansible 2.6.
+                                   If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+   vm_type          Choices:       If set to vm, then information are gathered for virtual machines only.
+   string           • all ←        If set to template, then information are gathered for virtual machine templates only.
+   added in 2.5     • vm           If set to all, then information are gathered for all virtual machines and virtual machine templates.
+                    • template
+
+NOTES                   *vmware_vm_info-notes*
+
+   Note
+
+     • Tested on ESXi 6.7, vSphere 5.5 and vSphere 6.5
+     • From 2.8 and onwards, information are returned as list of dict instead of dict.
+
+EXAMPLES                   *vmware_vm_info-examples*
+
+ - name: Gather all registered virtual machines
+   vmware_vm_info:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+   delegate_to: localhost
+   register: vminfo
+
+ - debug:
+     var: vminfo.virtual_machines
+
+ - name: Gather only registered virtual machine templates
+   vmware_vm_info:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     vm_type: template
+   delegate_to: localhost
+   register: template_info
+
+ - debug:
+     var: template_info.virtual_machines
+
+ - name: Gather only registered virtual machines
+   vmware_vm_info:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     vm_type: vm
+   delegate_to: localhost
+   register: vm_info
+
+ - debug:
+     var: vm_info.virtual_machines
+
+ - name: Get UUID from given VM Name
+   block:
+     - name: Get virtual machine info
+       vmware_vm_info:
+         hostname: '{{ vcenter_hostname }}'
+         username: '{{ vcenter_username }}'
+         password: '{{ vcenter_password }}'
+         folder: "/datacenter/vm/folder"
+       delegate_to: localhost
+       register: vm_info
+
+     - debug:
+         msg: "{{ item.uuid }}"
+       with_items:
+         - "{{ vm_info.virtual_machines | json_query(query) }}"
+       vars:
+         query: "[?guest_name=='DC0_H0_VM0']"
+
+ - name: Get Tags from given VM Name
+   block:
+     - name: Get virtual machine info
+       vmware_vm_info:
+         hostname: '{{ vcenter_hostname }}'
+         username: '{{ vcenter_username }}'
+         password: '{{ vcenter_password }}'
+         folder: "/datacenter/vm/folder"
+       delegate_to: localhost
+       register: vm_info
+
+     - debug:
+         msg: "{{ item.tags }}"
+       with_items:
+         - "{{ vm_info.virtual_machines | json_query(query) }}"
+       vars:
+         query: "[?guest_name=='DC0_H0_VM0']"
+
+RETURN VALUES                   *vmware_vm_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+                             list of dictionary of virtual machines and their information
+                             Sample:
+   virtual_machines success  [{'guest_name': 'ubuntu_t', 'cluster': None, 'esxi_hostname': '10.76.33.226', 'guest_fullname': 'Ubuntu Linux (64-bit)', 'ip_address': '', 'mac_address':
+   list                      ['00:50:56:87:a5:9a'], 'power_state': 'poweredOff', 'uuid': '4207072c-edd8-3bd5-64dc-903fd3a0db04', 'vm_network': {'00:50:56:87:a5:9a': {'ipv4': ['10.76.33.228'],
+                             'ipv6': []}}, 'attributes': {'job': 'backup-prepare'}, 'tags': [{'category_id': 'urn:vmomi:InventoryServiceCategory:b316cc45-f1a9-4277-811d-56c7e7975203:GLOBAL',
+                             'category_name': 'cat_0001', 'description': '', 'id': 'urn:vmomi:InventoryServiceTag:43737ec0-b832-4abf-abb1-fd2448ce3b26:GLOBAL', 'name': 'tag_0001'}]}]
+
+STATUS                   *vmware_vm_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joseph Callen (@jcpowermac)
+     • Abhijeet Kasurde (@Akasurde)
+     • Fedor Vompe (@sumkincpp)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_vm_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_vm_info_module.html

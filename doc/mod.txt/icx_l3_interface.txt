@@ -1,0 +1,147 @@
+SYNOPSIS                   *icx_l3_interface*
+
+     • This module provides declarative management of Layer-3 interfaces on ICX network devices.
+
+PARAMETERS                   *icx_l3_interface-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   aggregate                              List of Layer-3 interfaces definitions. Each of the entry in aggregate list should define name of interface name and a optional ipv4 or ipv6 address.
+   list
+    check_running_config   Choices:       Check running configuration. This can be set as environment variable. Module will use environment variable value(default:True), unless it is overridden, by
+    boolean                • no           specifying it as module parameter.
+                           • yes
+    ipv4                                  IPv4 address to be set for the Layer-3 interface mentioned in name option. The address format is <ipv4 address>/<mask>, the mask is number in range 0-32
+    string                                eg. 192.168.0.1/24
+    ipv6                                  IPv6 address to be set for the Layer-3 interface mentioned in name option. The address format is <ipv6 address>/<mask>, the mask is number in range 0-128
+    string                                eg. fd5d:12c9:2201:1::1/64.
+                           Choices:
+    mode                   • dynamic      Specifies if ipv4 address should be dynamic/advertise to ospf/not advertise to ospf. This should be specified only if ipv4 address is configured and if it
+    string                 • ospf-ignore  is not secondary IP address.
+                           • ospf-passive
+    name                                  Name of the Layer-3 interface to be configured eg. GigabitEthernet0/2, ve 10, ethernet 1/1/1
+    string
+    replace                Choices:
+    string                 • yes          Replaces the configured primary IP address on the interface.
+                           • no
+    secondary              Choices:
+    string                 • yes          Specifies that the configured address is a secondary IP address. If this keyword is omitted, the configured address is the primary IP address.
+                           • no
+    state                  Choices:
+    string                 • present      State of the Layer-3 interface configuration. It indicates if the configuration should be present or absent on remote device.
+                           • absent
+   check_running_config    Choices:       Check running configuration. This can be set as environment variable. Module will use environment variable value(default:True), unless it is overridden, by
+   boolean                 • no           specifying it as module parameter.
+                           • yes ←
+   ipv4                                   IPv4 address to be set for the Layer-3 interface mentioned in name option. The address format is <ipv4 address>/<mask>, the mask is number in range 0-32
+   string                                 eg. 192.168.0.1/24
+   ipv6                                   IPv6 address to be set for the Layer-3 interface mentioned in name option. The address format is <ipv6 address>/<mask>, the mask is number in range 0-128
+   string                                 eg. fd5d:12c9:2201:1::1/64.
+                           Choices:
+   mode                    • dynamic      Specifies if ipv4 address should be dynamic/advertise to ospf/not advertise to ospf. This should be specified only if ipv4 address is configured and if it
+   string                  • ospf-ignore  is not secondary IP address.
+                           • ospf-passive
+   name                                   Name of the Layer-3 interface to be configured eg. GigabitEthernet0/2, ve 10, ethernet 1/1/1
+   string
+   replace                 Choices:
+   string                  • yes          Replaces the configured primary IP address on the interface.
+                           • no
+   secondary               Choices:
+   string                  • yes          Specifies that the configured address is a secondary IP address. If this keyword is omitted, the configured address is the primary IP address.
+                           • no
+   state                   Choices:
+   string                  • present ←    State of the Layer-3 interface configuration. It indicates if the configuration should be present or absent on remote device.
+                           • absent
+
+NOTES                   *icx_l3_interface-notes*
+
+   Note
+
+     • Tested against ICX 10.1.
+     • For information on using ICX platform, see the ICX OS Platform Options guide.
+
+EXAMPLES                   *icx_l3_interface-examples*
+
+ - name: Remove ethernet 1/1/1 IPv4 and IPv6 address
+   icx_l3_interface:
+     name: ethernet 1/1/1
+     ipv4: 192.168.0.1/24
+     ipv6: "fd5d:12c9:2201:1::1/64"
+     state: absent
+
+ - name: Replace ethernet 1/1/1 primary IPv4 address
+   icx_l3_interface:
+     name: ethernet 1/1/1
+     ipv4: 192.168.0.1/24
+     replace: yes
+     state: absent
+
+ - name: Replace ethernet 1/1/1 dynamic IPv4 address
+   icx_l3_interface:
+     name: ethernet 1/1/1
+     ipv4: 192.168.0.1/24
+     mode: dynamic
+     state: absent
+
+ - name: Set ethernet 1/1/1 secondary IPv4 address
+   icx_l3_interface:
+     name: ethernet 1/1/1
+     ipv4: 192.168.0.1/24
+     secondary: yes
+     state: absent
+
+ - name: Set ethernet 1/1/1 IPv4 address
+   icx_l3_interface:
+     name: ethernet 1/1/1
+     ipv4: 192.168.0.1/24
+
+ - name: Set ethernet 1/1/1 IPv6 address
+   icx_l3_interface:
+     name: ethernet 1/1/1
+     ipv6: "fd5d:12c9:2201:1::1/64"
+
+ - name: Set IP addresses on aggregate
+   icx_l3_interface:
+     aggregate:
+       - { name: GigabitEthernet0/3, ipv4: 192.168.2.10/24 }
+       - { name: GigabitEthernet0/3, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+
+ - name: Remove IP addresses on aggregate
+   icx_l3_interface:
+     aggregate:
+       - { name: GigabitEthernet0/3, ipv4: 192.168.2.10/24 }
+       - { name: GigabitEthernet0/3, ipv4: 192.168.3.10/24, ipv6: "fd5d:12c9:2201:1::1/64" }
+     state: absent
+
+
+ - name: Set the ipv4 and ipv6 of a virtual ethernet(ve)
+   icx_l3_interface:
+     name: ve 100
+     ipv4: 192.168.0.1
+     ipv6: "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+
+RETURN VALUES                   *icx_l3_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key                                      Returned                                                                                    Description
+   commands always, except for the platforms that use Netconf transport to manage the     The list of configuration mode commands to send to the device
+   list     device.                                                                       Sample:
+                                                                                          ['interface ethernet 1/1/1', 'ip address 192.168.0.1 255.255.255.0', 'ipv6 address fd5d:12c9:2201:1::1/64']
+
+STATUS                   *icx_l3_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ruckus Wireless (@Commscope)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *icx_l3_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/icx_l3_interface_module.html

@@ -1,0 +1,209 @@
+SYNOPSIS                   *bigip_selfip*
+
+     • Manage Self-IPs on a BIG-IP system.
+
+PARAMETERS                   *bigip_selfip-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   address                          The IP addresses for the new self IP. This value is ignored upon update as addresses themselves cannot be changed after they are created.
+   string                           This value is required when creating new self IPs.
+   allow_service                    Configure port lockdown for the Self IP. By default, the Self IP has a "default deny" policy. This can be changed to allow TCP and UDP ports as well as specific
+   list                             protocols. This list should contain protocol:port values.
+   description
+   string                           Description of the traffic selector.
+   added in 2.8
+   name                             The self IP to create.
+   string /                         If this parameter is not specified, then it will default to the value supplied in the address parameter.
+   required
+   netmask                          The netmask for the self IP. When creating a new Self IP, this value is required.
+   string
+   partition       Default:         Device partition to manage resources on. You can set different partitions for Self IPs, but the address used may not match any other address used by a Self IP.
+   string          "Common"         In that sense, Self IPs are not isolated by partitions as other resources on a BIG-IP are.
+   added in 2.5
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   route_domain                     The route domain id of the system. When creating a new Self IP, if this value is not specified, a default value of 0 will be used.
+   integer                          This value cannot be changed after it is set.
+   state             Choices:       When present, guarantees that the Self-IP exists with the provided attributes.
+   string            • absent       When absent, removes the Self-IP from the system.
+                     • present ←
+   traffic_group                    The traffic group for the Self IP addresses in an active-active, redundant load balancer configuration. When creating a new Self IP, if this value is not
+   string                           specified, the default of /Common/traffic-group-local-only will be used.
+   vlan                             The VLAN that the new self IPs will be on. When creating a new Self IP, this value is required.
+   string
+
+NOTES                   *bigip_selfip-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_selfip-examples*
+
+ - name: Create Self IP
+   bigip_selfip:
+     address: 10.10.10.10
+     name: self1
+     netmask: 255.255.255.0
+     vlan: vlan1
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create Self IP with a Route Domain
+   bigip_selfip:
+     name: self1
+     address: 10.10.10.10
+     netmask: 255.255.255.0
+     vlan: vlan1
+     route_domain: 10
+     allow_service: default
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Delete Self IP
+   bigip_selfip:
+     name: self1
+     state: absent
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Allow management web UI to be accessed on this Self IP
+   bigip_selfip:
+     name: self1
+     state: absent
+     allow_service:
+       - tcp:443
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Allow HTTPS and SSH access to this Self IP
+   bigip_selfip:
+     name: self1
+     state: absent
+     allow_service:
+       - tcp:443
+       - tcp:22
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Allow all services access to this Self IP
+   bigip_selfip:
+     name: self1
+     state: absent
+     allow_service:
+       - all
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Allow only GRE and IGMP protocols access to this Self IP
+   bigip_selfip:
+     name: self1
+     state: absent
+     allow_service:
+       - gre:0
+       - igmp:0
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Allow all TCP, but no other protocols access to this Self IP
+   bigip_selfip:
+     name: self1
+     state: absent
+     allow_service:
+       - tcp:0
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_selfip-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   address                The address for the Self IP
+   string        changed  Sample:
+                          192.0.2.10
+   allow_service          Services that allowed via this Self IP
+   list          changed  Sample:
+                          ['igmp:0', 'tcp:22', 'udp:53']
+   name                   The name of the Self IP
+   string        created  Sample:
+                          self1
+   netmask                The netmask of the Self IP
+   string        changed  Sample:
+                          255.255.255.0
+   traffic_group          The traffic group that the Self IP is a member of
+   string        changed  Sample:
+                          traffic-group-local-only
+   vlan                   The VLAN set on the Self IP
+   string        changed  Sample:
+                          vlan1
+
+STATUS                   *bigip_selfip-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_selfip-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_selfip_module.html

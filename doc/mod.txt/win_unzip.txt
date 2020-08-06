@@ -1,0 +1,110 @@
+SYNOPSIS                   *win_unzip*
+
+     • Unzips compressed files and archives.
+     • Supports .zip files natively.
+     • Supports other formats supported by the Powershell Community Extensions (PSCX) module (basically everything 7zip supports).
+     • For non-Windows targets, use the unarchive module instead.
+
+REQUIREMENTS                   *win_unzip-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PSCX
+
+PARAMETERS                   *win_unzip-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   creates                          If this file or directory exists the specified src will not be extracted.
+   path
+   delete_archive    Choices:       Remove the zip file, after unzipping.
+   boolean           • no ←         aliases: rm
+                     • yes
+   dest                             Destination of zip file (provide absolute path of directory). If it does not exist, the directory will be created.
+   path / required
+   recurse           Choices:       Recursively expand zipped files within the src file.
+   boolean           • no ←         Setting to a value of yes requires the PSCX module to be installed.
+                     • yes
+   src                              File to be unzipped (provide absolute path).
+   path / required
+
+NOTES                   *win_unzip-notes*
+
+   Note
+
+     • This module is not really idempotent, it will extract the archive every time, and report a change.
+     • For extracting any compression types other than .zip, the PowerShellCommunityExtensions (PSCX) Module is required. This module (in conjunction with PSCX) has the ability to recursively unzip
+       files within the src zip file provided and also functionality for many other compression types. If the destination directory does not exist, it will be created before unzipping the file.
+       Specifying rm parameter will force removal of the src file after extraction.
+
+SEE ALSO                   *win_unzip-see also*
+
+   See also
+
+   unarchive – Unpacks an archive after (optionally) copying it from the local machine
+   The official documentation on the unarchive module.
+
+EXAMPLES                   *win_unzip-examples*
+
+ # This unzips a library that was downloaded with win_get_url, and removes the file after extraction
+ # $ ansible -i hosts -m win_unzip -a "src=C:\LibraryToUnzip.zip dest=C:\Lib remove=yes" all
+
+ - name: Unzip a bz2 (BZip) file
+   win_unzip:
+     src: C:\Users\Phil\Logs.bz2
+     dest: C:\Users\Phil\OldLogs
+     creates: C:\Users\Phil\OldLogs
+
+ - name: Unzip gz log
+   win_unzip:
+     src: C:\Logs\application-error-logs.gz
+     dest: C:\ExtractedLogs\application-error-logs
+
+ # Unzip .zip file, recursively decompresses the contained .gz files and removes all unneeded compressed files after completion.
+ - name: Unzip ApplicationLogs.zip and decompress all GZipped log files
+   hosts: all
+   gather_facts: no
+   tasks:
+     - name: Recursively decompress GZ files in ApplicationLogs.zip
+       win_unzip:
+         src: C:\Downloads\ApplicationLogs.zip
+         dest: C:\Application\Logs
+         recurse: yes
+         delete_archive: yes
+
+ - name: Install PSCX
+   win_psmodule:
+     name: Pscx
+     state: present
+
+RETURN VALUES                   *win_unzip-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   dest             The provided destination path
+   string  always   Sample:
+                    C:\ExtractedLogs\application-error-logs
+   removed          Whether the module did remove any files during task run
+   boolean always   Sample:
+                    True
+   src              The provided source path
+   string  always   Sample:
+                    C:\Logs\application-error-logs.gz
+
+STATUS                   *win_unzip-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Phil Schwartz (@schwartzmx)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_unzip-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_unzip_module.html

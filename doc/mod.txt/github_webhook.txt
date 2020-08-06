@@ -1,0 +1,101 @@
+SYNOPSIS                   *github_webhook*
+
+     • Create and delete GitHub webhooks
+
+REQUIREMENTS                   *github_webhook-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyGithub >= 1.3.5
+
+PARAMETERS                   *github_webhook-parameters*
+
+    Parameter       Choices/Defaults                                                                               Comments
+   active         Choices:
+   boolean        • no                   Whether or not the hook is active
+                  • yes ←
+   content_type   Choices:
+   -              • form ←               The media type used to serialize the payloads
+                  • json
+   events                                A list of GitHub events the hook is triggered for. Events are listed at https://developer.github.com/v3/activity/events/types/. Required unless state is
+   -                                     absent
+   github_url   Default:                 Base URL of the GitHub API
+   -            "https://api.github.com"
+   insecure_ssl   Choices:
+   boolean        • no ←                 Flag to indicate that GitHub should skip SSL verification when calling the hook.
+                  • yes
+   password                              Password to authenticate to GitHub with
+   -
+   repository                            Full name of the repository to configure a hook for
+   - / required                          aliases: repo
+   secret                                The shared secret between GitHub and the payload URL.
+   -
+   state          Choices:
+   -              • absent               Whether the hook should be present or absent
+                  • present ←
+   token                                 Token to authenticate to GitHub with
+   -
+   url                                   URL to which payloads will be delivered
+   - / required
+   user                                  User to authenticate to GitHub as
+   - / required
+
+EXAMPLES                   *github_webhook-examples*
+
+ - name:  create a new webhook that triggers on push (password auth)
+   github_webhook:
+     repository: ansible/ansible
+     url: https://www.example.com/hooks/
+     events:
+       - push
+     user: "{{ github_user }}"
+     password: "{{ github_password }}"
+
+ - name: create a new webhook in a github enterprise installation with multiple event triggers (token auth)
+   github_webhook:
+     repository: myorg/myrepo
+     url: https://jenkins.example.com/ghprbhook/
+     content_type: json
+     secret: "{{ github_shared_secret }}"
+     insecure_ssl: True
+     events:
+       - issue_comment
+       - pull_request
+     user: "{{ github_user }}"
+     token: "{{ github_user_api_token }}"
+     github_url: https://github.example.com
+
+ - name: delete a webhook (password auth)
+   github_webhook:
+     repository: ansible/ansible
+     url: https://www.example.com/hooks/
+     state: absent
+     user: "{{ github_user }}"
+     password: "{{ github_password }}"
+
+RETURN VALUES                   *github_webhook-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key          Returned                                                                                    Description
+   hook_id                         The GitHub ID of the hook created/updated
+   integer when state is 'present' Sample:
+                                   6206
+
+STATUS                   *github_webhook-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris St. Pierre (@stpierre)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *github_webhook-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/github_webhook_module.html

@@ -1,0 +1,150 @@
+SYNOPSIS                   *cs_traffic_type*
+
+     • Add, remove, update Traffic Types associated with CloudStack Physical Networks.
+
+REQUIREMENTS                   *cs_traffic_type-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_traffic_type-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+                         Choices:       HTTP method used to query the API endpoint.
+   api_http_method       • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                        Fallback value is get if not specified.
+   api_key                              API key of the CloudStack API.
+   string                               If not given, the CLOUDSTACK_KEY env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+   api_region          Default:         Name of the ini section in the cloustack.ini file.
+   string              "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                           Secret key of the CloudStack API.
+   string                               If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+                                        HTTP timeout in seconds.
+   api_timeout                          If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                              As the last option, the value is taken from the ini config file, also see the notes.
+                                        Fallback value is 10 seconds if not specified.
+   api_url                              URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                               If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+   hyperv_networklabel                  The network name label of the physical device dedicated to this traffic on a HyperV host.
+   string
+   isolation_method      Choices:
+   string                • vlan         Use if the physical network has multiple isolation types and traffic type is public.
+                         • vxlan
+   kvm_networklabel                     The network name label of the physical device dedicated to this traffic on a KVM host.
+   string
+   ovm3_networklabel                    The network name of the physical device dedicated to this traffic on an OVM3 host.
+   string
+   physical_network                     the name of the Physical Network
+   string / required
+   poll_async            Choices:
+   boolean               • no           Poll async jobs until job has finished.
+                         • yes ←
+   state                 Choices:
+   string                • present ←    State of the traffic type
+                         • absent
+                         Choices:
+   traffic_type          • Management
+   string / required     • Guest        the trafficType to be added to the physical network.
+                         • Public
+                         • Storage
+   vlan                                 The VLAN id to be used for Management traffic by VMware host.
+   string
+   vmware_networklabel                  The network name label of the physical device dedicated to this traffic on a VMware host.
+   string
+   xen_networklabel                     The network name label of the physical device dedicated to this traffic on a XenServer host.
+   string
+   zone                                 Name of the zone with the physical network.
+   string                               Default zone will be used if this is empty.
+
+NOTES                   *cs_traffic_type-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_traffic_type-examples*
+
+ - name: add a traffic type
+   cs_traffic_type:
+     physical_network: public-network
+     traffic_type: Guest
+     zone: test-zone
+   delegate_to: localhost
+
+ - name: update traffic type
+   cs_traffic_type:
+     physical_network: public-network
+     traffic_type: Guest
+     kvm_networklabel: cloudbr0
+     zone: test-zone
+   delegate_to: localhost
+
+ - name: remove traffic type
+   cs_traffic_type:
+     physical_network: public-network
+     traffic_type: Public
+     state: absent
+     zone: test-zone
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_traffic_type-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+   hyperv_networklabel          The network name label of the physical device dedicated to this traffic on a HyperV host
+   string              success  Sample:
+                                HyperV Internal Switch
+   id                           ID of the network provider
+   string              success  Sample:
+                                659c1840-9374-440d-a412-55ca360c9d3c
+   kvm_networklabel             The network name label of the physical device dedicated to this traffic on a KVM host
+   string              success  Sample:
+                                cloudbr0
+   ovm3_networklabel            The network name of the physical device dedicated to this traffic on an OVM3 host
+   string              success  Sample:
+                                cloudbr0
+   physical_network             the physical network this belongs to
+   string              success  Sample:
+                                28ed70b7-9a1f-41bf-94c3-53a9f22da8b6
+   traffic_type                 the trafficType that was added to the physical network
+   string              success  Sample:
+                                Public
+   vmware_networklabel          The network name label of the physical device dedicated to this traffic on a VMware host
+   string              success  Sample:
+                                Management Network
+   xen_networklabel             The network name label of the physical device dedicated to this traffic on a XenServer host
+   string              success  Sample:
+                                xenbr0
+   zone                         Name of zone the physical network is in.
+   string              success  Sample:
+                                ch-gva-2
+
+STATUS                   *cs_traffic_type-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Patryk Cichy (@PatTheSilent)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_traffic_type-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_traffic_type_module.html

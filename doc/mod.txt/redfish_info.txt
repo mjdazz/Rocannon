@@ -1,0 +1,207 @@
+SYNOPSIS                   *redfish_info*
+
+     • Builds Redfish URIs locally and sends them to remote OOB controllers to get information back.
+     • Information retrieved is placed in a location specified by the user.
+     • This module was called redfish_facts before Ansible 2.9, returning ansible_facts. Note that the redfish_info module no longer returns ansible_facts!
+
+   Aliases: redfish_facts
+
+PARAMETERS                   *redfish_info-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   baseuri                            Base URI of OOB controller
+   string / required
+   category          Default:         List of categories to execute on OOB controller
+   list              ["Systems"]
+   command                            List of commands to execute on OOB controller
+   list
+   password                           Password for authentication with OOB controller
+   string / required
+   timeout           Default:
+   integer           10               Timeout in seconds for URL requests to OOB controller
+   added in 2.8
+   username
+   string / required                  User for authentication with OOB controller
+   added in 2.8
+
+EXAMPLES                   *redfish_info-examples*
+
+ - name: Get CPU inventory
+   redfish_info:
+     category: Systems
+     command: GetCpuInventory
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+   register: result
+ - debug:
+     msg: "{{ result.redfish_facts.cpu.entries | to_nice_json }}"
+
+ - name: Get CPU model
+   redfish_info:
+     category: Systems
+     command: GetCpuInventory
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+   register: result
+ - debug:
+     msg: "{{ result.redfish_facts.cpu.entries.0.Model }}"
+
+ - name: Get memory inventory
+   redfish_info:
+     category: Systems
+     command: GetMemoryInventory
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+   register: result
+
+ - name: Get fan inventory with a timeout of 20 seconds
+   redfish_info:
+     category: Chassis
+     command: GetFanInventory
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     timeout: 20
+   register: result
+
+ - name: Get Virtual Media information
+   redfish_info:
+     category: Manager
+     command: GetVirtualMedia
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+   register: result
+ - debug:
+     msg: "{{ result.redfish_facts.virtual_media.entries | to_nice_json }}"
+
+ - name: Get Volume Inventory
+   redfish_info:
+     category: Systems
+     command: GetVolumeInventory
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+   register: result
+ - debug:
+     msg: "{{ result.redfish_facts.volume.entries | to_nice_json }}"
+
+ - name: Get Session information
+   redfish_info:
+     category: Sessions
+     command: GetSessions
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+   register: result
+ - debug:
+     msg: "{{ result.redfish_facts.session.entries | to_nice_json }}"
+
+ - name: Get default inventory information
+   redfish_info:
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+   register: result
+ - debug:
+     msg: "{{ result.redfish_facts | to_nice_json }}"
+
+ - name: Get several inventories
+   redfish_info:
+     category: Systems
+     command: GetNicInventory,GetBiosAttributes
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get default system inventory and user information
+   redfish_info:
+     category: Systems,Accounts
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get default system, user and firmware information
+   redfish_info:
+     category: ["Systems", "Accounts", "Update"]
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get Manager NIC inventory information
+   redfish_info:
+     category: Manager
+     command: GetManagerNicInventory
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get boot override information
+   redfish_info:
+     category: Systems
+     command: GetBootOverride
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get chassis inventory
+   redfish_info:
+     category: Chassis
+     command: GetChassisInventory
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get all information available in the Manager category
+   redfish_info:
+     category: Manager
+     command: all
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get firmware update capability information
+   redfish_info:
+     category: Update
+     command: GetFirmwareUpdateCapabilities
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Get all information available in all categories
+   redfish_info:
+     category: all
+     command: all
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+RETURN VALUES                   *redfish_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   result              different results depending on task
+   dictionary always   Sample:
+                       List of CPUs on system
+
+STATUS                   *redfish_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jose Delarosa (@jose-delarosa)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *redfish_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/redfish_info_module.html

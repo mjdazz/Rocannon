@@ -1,0 +1,149 @@
+SYNOPSIS                   *win_inet_proxy*
+
+     • Used to set or remove proxy settings for Windows INet which includes Internet Explorer.
+     • WinINet is a framework used by interactive applications to submit web requests through.
+     • The proxy settings can also be used by other applications like Firefox, Chrome, and others but there is no definitive list.
+
+PARAMETERS                   *win_inet_proxy-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+                                    The URL of a proxy configuration script.
+   auto_config_url                  Proxy configuration scripts are typically JavaScript files with the .pac extension that implement the C(FindProxyForURurl function.
+   string                           Omit, set to null or an empty string to remove the auto config URL.
+                                    This corresponds to the checkbox Use automatic configuration script in the connection settings window.
+   auto_detect       Choices:       Whether to configure WinINet to automatically detect proxy settings through Web Proxy Auto-Detection WPAD.
+   boolean           • no           This corresponds to the checkbox Automatically detect settings in the connection settings window.
+                     • yes ←
+                                    A list of hosts that will bypass the set proxy when being accessed.
+                                    Use <local> to match hostnames that are not fully qualified domain names. This is useful when needing to connect to intranet sites using just the hostname. If
+   bypass                           defined, this should be the last entry in the bypass list.
+   list                             Use <-loopback> to stop automatically bypassing the proxy when connecting through any loopback address like 127.0.0.1, localhost, or the local hostname.
+                                    Omit, set to null or an empty string/list to remove the bypass list.
+                                    If this is set then proxy must also be set.
+   connection                       The name of the IE connection to set the proxy settings for.
+   string                           These are the connections under the Dial-up and Virtual Private Network header in the IE settings.
+                                    When omitted, the default LAN connection is used.
+                                    A string or dict that specifies the proxy to be set.
+                                    If setting a string, should be in the form hostname, hostname:port, or protocol=hostname:port.
+   proxy                            If the port is undefined, the default port for the protocol in use is used.
+   -                                If setting a dict, the keys should be the protocol and the values should be the hostname and/or port for that protocol.
+                                    Valid protocols are http, https, ftp, and socks.
+                                    Omit, set to null or an empty string to remove the proxy settings.
+
+NOTES                   *win_inet_proxy-notes*
+
+   Note
+
+     • This is not the same as the proxy settings set in WinHTTP through the netsh command. Use the win_http_proxy module to manage that instead.
+     • These settings are by default set per user and not system wide. A registry property must be set independently from this module if you wish to apply the proxy for all users. See examples for
+       more detail.
+     • If per user proxy settings are desired, use become to become any local user on the host. No password is needed to be set for this to work.
+     • If the proxy requires authentication, set the credentials using the win_credential module. This requires become to be used so the credential store can be accessed.
+
+SEE ALSO                   *win_inet_proxy-see also*
+
+   See also
+
+   win_http_proxy – Manages proxy settings for WinHTTP
+   The official documentation on the win_http_proxy module.
+
+   win_credential – Manages Windows Credentials in the Credential Manager
+   The official documentation on the win_credential module.
+
+EXAMPLES                   *win_inet_proxy-examples*
+
+ # This should be set before running the win_inet_proxy module
+ - name: Configure IE proxy settings to apply to all users
+   win_regedit:
+     path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings
+     name: ProxySettingsPerUser
+     data: 0
+     type: dword
+     state: present
+
+ # This should be set before running the win_inet_proxy module
+ - name: Configure IE proxy settings to apply per user
+   win_regedit:
+     path: HKLM:\SOFTWARE\Policies\Microsoft\Windows\CurrentVersion\Internet Settings
+     name: ProxySettingsPerUser
+     data: 1
+     type: dword
+     state: present
+
+ - name: Configure IE proxy to use auto detected settings without an explicit proxy
+   win_inet_proxy:
+     auto_detect: yes
+
+ - name: Configure IE proxy to use auto detected settings with a configuration script
+   win_inet_proxy:
+     auto_detect: yes
+     auto_config_url: http://proxy.ansible.com/proxy.pac
+
+ - name: Configure IE to use explicit proxy host
+   win_inet_proxy:
+     auto_detect: yes
+     proxy: ansible.proxy
+
+ - name: Configure IE to use explicit proxy host with port and without auto detection
+   win_inet_proxy:
+     auto_detect: no
+     proxy: ansible.proxy:8080
+
+ - name: Configure IE to use a specific proxy per protocol
+   win_inet_proxy:
+     proxy:
+       http: ansible.proxy:8080
+       https: ansible.proxy:8443
+
+ - name: Configure IE to use a specific proxy per protocol using a string
+   win_inet_proxy:
+     proxy: http=ansible.proxy:8080;https=ansible.proxy:8443
+
+ - name: Set a proxy with a bypass list
+   win_inet_proxy:
+     proxy: ansible.proxy
+     bypass:
+     - server1
+     - server2
+     - <-loopback>
+     - <local>
+
+ - name: Remove any explicit proxies that are set
+   win_inet_proxy:
+     proxy: ''
+     bypass: ''
+
+ # This should be done after setting the IE proxy with win_inet_proxy
+ - name: Import IE proxy configuration to WinHTTP
+   win_http_proxy:
+     source: ie
+
+ # Explicit credentials can only be set per user and require become to work
+ - name: Set credential to use for proxy auth
+   win_credential:
+     name: ansible.proxy  # The name should be the FQDN of the proxy host
+     type: generic_password
+     username: proxyuser
+     secret: proxypass
+     state: present
+   become: yes
+   become_user: '{{ ansible_user }}'
+   become_method: runas
+
+STATUS                   *win_inet_proxy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_inet_proxy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_inet_proxy_module.html

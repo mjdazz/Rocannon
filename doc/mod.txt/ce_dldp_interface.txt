@@ -1,0 +1,124 @@
+SYNOPSIS                   *ce_dldp_interface*
+
+     • Manages interface DLDP configuration on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_dldp_interface-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   enable         Choices:
+   -              • enable       Set interface DLDP enable state.
+                  • disable
+   interface                     Must be fully qualified interface name, i.e. GE1/0/1, 10GE1/0/1, 40GE1/0/22, 100GE1/0/1.
+   - / required
+   local_mac                     Set the source MAC address for DLDP packets sent in the DLDP-compatible mode. The value of MAC address is in H-H-H format. H contains 1 to 4 hexadecimal digits.
+   -
+   mode_enable    Choices:
+   -              • enable       Set DLDP compatible-mode enable state.
+                  • disable
+   reset          Choices:
+   -              • enable       Specify whether reseting interface DLDP state.
+                  • disable
+   state          Choices:
+   -              • present ←    Manage the state of the resource.
+                  • absent
+
+NOTES                   *ce_dldp_interface-notes*
+
+   Note
+
+     • If state=present, enable=disable, interface DLDP enable will be turned off and related interface DLDP configuration will be cleared.
+     • If state=absent, only local_mac is supported to configure.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_dldp_interface-examples*
+
+ - name: DLDP interface test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Configure interface DLDP enable state and ensure global dldp enable is turned on"
+     ce_dldp_interface:
+       interface: 40GE2/0/1
+       enable: enable
+       provider: "{{ cli }}"
+
+   - name: "Configuire interface DLDP compatible-mode enable state  and ensure interface DLDP state is already enabled"
+     ce_dldp_interface:
+       interface: 40GE2/0/1
+       enable: enable
+       mode_enable: enable
+       provider: "{{ cli }}"
+
+   - name: "Configuire the source MAC address for DLDP packets sent in the DLDP-compatible mode  and
+            ensure interface DLDP state and compatible-mode enable state  is already enabled"
+     ce_dldp_interface:
+       interface: 40GE2/0/1
+       enable: enable
+       mode_enable: enable
+       local_mac: aa-aa-aa
+       provider: "{{ cli }}"
+
+   - name: "Reset DLDP state of specified interface and ensure interface DLDP state is already enabled"
+     ce_dldp_interface:
+       interface: 40GE2/0/1
+       enable: enable
+       reset: enable
+       provider: "{{ cli }}"
+
+   - name: "Unconfigure interface DLDP local mac address when C(state=absent)"
+     ce_dldp_interface:
+       interface: 40GE2/0/1
+       state: absent
+       local_mac: aa-aa-aa
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_dldp_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of interface DLDP configuration after module execution
+   dictionary always   Sample:
+                       {'enable': 'enable', 'interface': '40GE2/0/22', 'local_mac': '00aa-00aa-00aa', 'mode_enable': 'enable', 'reset': 'enable'}
+   existing            k/v pairs of existing interface DLDP configuration
+   dictionary always   Sample:
+                       {'enable': 'disable', 'interface': '40GE2/0/22', 'local_mac': None, 'mode_enable': None, 'reset': 'disable'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'enable': 'enalbe', 'interface': '40GE2/0/22', 'local_mac': 'aa-aa-aa', 'mode_enable': 'enable', 'reset': 'enable'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['dldp enable', 'dldp compatible-mode enable', 'dldp compatible-mode local-mac aa-aa-aa', 'dldp reset']
+
+STATUS                   *ce_dldp_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Zhou Zhijin (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_dldp_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_dldp_interface_module.html

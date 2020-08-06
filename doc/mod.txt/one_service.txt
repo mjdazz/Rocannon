@@ -1,0 +1,170 @@
+SYNOPSIS                   *one_service*
+
+     • Manage OpenNebula services
+
+PARAMETERS                   *one_service-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   api_password                   Password of the user to login into OpenNebula OneFlow API server. If not set then the value of the ONEFLOW_PASSWORD environment variable is used.
+   -
+   api_url                        URL of the OpenNebula OneFlow API server.
+   -                              It is recommended to use HTTPS so that the username/password are not transferred over the network unencrypted.
+                                  If not set then the value of the ONEFLOW_URL environment variable is used.
+   api_username                   Name of the user to login into the OpenNebula OneFlow API server. If not set then the value of the ONEFLOW_USERNAME environment variable is used.
+   -
+   cardinality                    Number of VMs for the specified role
+   -
+   custom_attrs  Default:         Dictionary of key/value custom attributes which will be used when instantiating a new service.
+   -             {}
+   force           Choices:
+   boolean         • no ←         Force the new cardinality even if it is outside the limits
+                   • yes
+   group_id                       ID of the group which will be set as the group of the service
+   -
+   mode                           Set permission mode of a service instance in octet format, e.g. 600 to give owner use and manage and nothing to group and others.
+   -
+   owner_id                       ID of the user which will be set as the owner of the service
+   -
+   role                           Name of the role whose cardinality should be changed
+   -
+   service_id                     ID of a service instance that you would like to manage
+   -
+   service_name                   Name of a service instance that you would like to manage
+   -
+   state           Choices:       present - instantiate a service from a template specified with template_id/template_name.
+   -               • present ←    absent - terminate an instance of a service specified with service_id/service_name.
+                   • absent
+   template_id                    ID of a service template to use to create a new instance of a service
+   -
+   template_name                  Name of service template to use to create a new instance of a service
+   -
+   unique          Choices:       Setting unique=yes will make sure that there is only one service instance running with a name set with service_name when
+   boolean         • no ←         instantiating a service from a template specified with template_id/template_name. Check examples below.
+                   • yes
+   wait            Choices:
+   boolean         • no ←         Wait for the instance to reach RUNNING state after DEPLOYING or COOLDOWN state after SCALING
+                   • yes
+   wait_timeout  Default:         How long before wait gives up, in seconds
+   -             300
+
+EXAMPLES                   *one_service-examples*
+
+ # Instantiate a new service
+ - one_service:
+     template_id: 90
+   register: result
+
+ # Print service properties
+ - debug:
+     msg: result
+
+ # Instantiate a new service with specified service_name, service group and mode
+ - one_service:
+     template_name: 'app1_template'
+     service_name: 'app1'
+     group_id: 1
+     mode: '660'
+
+ # Instantiate a new service with template_id and pass custom_attrs dict
+ - one_service:
+     template_id: 90
+     custom_attrs:
+       public_network_id: 21
+       private_network_id: 26
+
+ # Instantiate a new service 'foo' if the service doesn't already exist, otherwise do nothing
+ - one_service:
+     template_id: 53
+     service_name: 'foo'
+     unique: yes
+
+ # Delete a service by ID
+ - one_service:
+     service_id: 153
+     state: absent
+
+ # Get service info
+ - one_service:
+     service_id: 153
+   register: service_info
+
+ # Change service owner, group and mode
+ - one_service:
+     service_name: 'app2'
+     owner_id: 34
+     group_id: 113
+     mode: '600'
+
+ # Instantiate service and wait for it to become RUNNING
+ -  one_service:
+     template_id: 43
+     service_name: 'foo1'
+
+ # Wait service to become RUNNING
+ - one_service:
+     service_id: 112
+     wait: yes
+
+ # Change role cardinality
+ - one_service:
+     service_id: 153
+     role: bar
+     cardinality: 5
+
+ # Change role cardinality and wait for it to be applied
+ - one_service:
+     service_id: 112
+     role: foo
+     cardinality: 7
+     wait: yes
+
+RETURN VALUES                   *one_service-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   group_id              service's group id
+   integer      success  Sample:
+                         1
+   group_name            service's group name
+   string       success  Sample:
+                         one-users
+   mode                  service's mode
+   integer      success  Sample:
+                         660
+   owner_id              service's owner id
+   integer      success  Sample:
+                         143
+   owner_name            service's owner name
+   string       success  Sample:
+                         ansible-test
+   roles                 list of dictionaries of roles, each role is described by name, cardinality, state and nodes ids
+   list         success  Sample:
+                         [{"cardinality": 1,"name": "foo","state": "RUNNING","ids": [ 123, 456 ]}, {"cardinality": 2,"name": "bar","state": "RUNNING", "ids": [ 452, 567, 746 ]}]
+   service_id            service id
+   integer      success  Sample:
+                         153
+   service_name          service name
+   string       success  Sample:
+                         app1
+   state                 state of service instance
+   string       success  Sample:
+                         RUNNING
+
+STATUS                   *one_service-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Milan Ilic (@ilicmilan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *one_service-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/one_service_module.html

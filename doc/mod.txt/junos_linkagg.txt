@@ -1,0 +1,168 @@
+DEPRECATED                   *junos_linkagg*
+
+                         Removed in Ansible:
+                  version: 2.13
+        Why:      Updated modules released with more functionality
+    Alternative:  Use junos_lag_interfaces instead.
+
+SYNOPSIS                   *junos_linkagg-synopsis*
+
+     • This module provides declarative management of link aggregation groups on Juniper JUNOS network devices.
+
+REQUIREMENTS                   *junos_linkagg-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.5.2)
+
+PARAMETERS                   *junos_linkagg-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   active         Choices:
+   boolean        • no           Specifies whether or not the configuration is active or deactivated
+                  • yes ←
+   aggregate                     List of link aggregation definitions.
+   -
+   description                   Description of Interface.
+   -
+   device_count                  Number of aggregated ethernet devices that can be configured. Acceptable integer value is between 1 and 128.
+   -
+   members                       List of members interfaces of the link aggregation group. The value can be single interface or list of interfaces.
+   - / required
+   min_links                     Minimum members that should be up before bringing up the link aggregation group.
+   -
+                  Choices:
+                  • on
+                  • off
+   mode           • active       Mode of the link aggregation group. A value of on will enable LACP in passive mode. active configures the link to actively information about the state of the link,
+   -              • passive      or it can be configured in passive mode ie. send link state information only when received them from another link. A value of off will disable LACP.
+
+                Default:
+                "no"
+   name                          Name of the link aggregation group.
+   - / required
+                                 Deprecated
+                                 Starting with Ansible 2.5 we recommend using connection: network_cli or connection: netconf.
+   provider                      For more information please see the Junos OS Platform Options guide.
+   dictionary
+                                 ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                 A dict object containing connection details.
+    host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+    string /                     the transport.
+    required
+    password                     Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not specified
+    string                       in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+    port        Default:         Specifies the port to use when building the connection to the remote device. The port value will default to the well known SSH port of 22 (for transport=cli) or
+    integer     22               port 830 (for transport=netconf) device.
+    ssh_keyfile                  Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+    path                         value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    timeout     Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer     10               operation is completed, the module will error.
+    username                     Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+    string                       specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+                  Choices:
+   state          • present ←
+   -              • absent       State of the link aggregation group.
+                  • up
+                  • down
+
+NOTES                   *junos_linkagg-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+     • Recommended connection is netconf. See the Junos OS Platform Options.
+     • This module also works with local connections for legacy playbooks.
+     • For information on using CLI and netconf see the Junos OS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Juniper network devices see https://www.ansible.com/ansible-juniper.
+
+EXAMPLES                   *junos_linkagg-examples*
+
+ - name: configure link aggregation
+   junos_linkagg:
+     name: ae11
+     members:
+       - ge-0/0/5
+       - ge-0/0/6
+       - ge-0/0/7
+     lacp: active
+     device_count: 4
+     state: present
+
+ - name: delete link aggregation
+   junos_linkagg:
+     name: ae11
+     members:
+       - ge-0/0/5
+       - ge-0/0/6
+       - ge-0/0/7
+     lacp: active
+     device_count: 4
+     state: delete
+
+ - name: deactivate link aggregation
+   junos_linkagg:
+     name: ae11
+     members:
+       - ge-0/0/5
+       - ge-0/0/6
+       - ge-0/0/7
+     lacp: active
+     device_count: 4
+     state: present
+     active: False
+
+ - name: Activate link aggregation
+   junos_linkagg:
+     name: ae11
+     members:
+       - ge-0/0/5
+       - ge-0/0/6
+       - ge-0/0/7
+     lacp: active
+     device_count: 4
+     state: present
+     active: True
+
+ - name: Disable link aggregation
+   junos_linkagg:
+     name: ae11
+     state: down
+
+ - name: Enable link aggregation
+   junos_linkagg:
+     name: ae11
+     state: up
+
+RETURN VALUES                   *junos_linkagg-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key     Returned                                                                                     Description
+          when
+          configuration Configuration difference before and after applying change.
+   diff   is changed    Sample:
+   string and diff      [edit interfaces] + ge-0/0/6 { + ether-options { + 802.3ad ae0; + } + } [edit interfaces ge-0/0/7] + ether-options { + 802.3ad ae0; + } [edit interfaces] + ae0 { +
+          option is     description "configured by junos_linkagg"; + aggregated-ether-options { + lacp { + active; + } + } + }
+          enabled.
+
+STATUS                   *junos_linkagg-status*
+
+     • This module will be removed in version 2.13. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_linkagg-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_linkagg_module.html

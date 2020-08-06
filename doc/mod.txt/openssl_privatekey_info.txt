@@ -1,0 +1,102 @@
+SYNOPSIS                   *openssl_privatekey_info*
+
+     • This module allows one to query information on OpenSSL private keys.
+     • In case the key consistency checks fail, the module will fail as this indicates a faked private key. In this case, all return variables are still returned. Note that key consistency checks
+       are not available all key types; if none is available, none is returned for key_is_consistent.
+     • It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
+       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with select_crypto_backend). Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and
+       will be removed in Ansible 2.13.
+
+REQUIREMENTS                   *openssl_privatekey_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyOpenSSL >= 0.15 or cryptography >= 1.2.3
+
+PARAMETERS                   *openssl_privatekey_info-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+   passphrase                               The passphrase for the private key.
+   string
+   path                                     Remote absolute path where the private key file is loaded from.
+   path / required
+   return_private_key_data   Choices:       Whether to return private key data.
+   boolean                   • no ←         Only set this to yes when you want private information about this key to leave the remote machine.
+                             • yes          WARNING: you have to make sure that private key data isn't accidentally logged!
+                                            Determines which crypto backend to use.
+                             Choices:       The default choice is auto, which tries to use cryptography if available, and falls back to pyopenssl.
+   select_crypto_backend     • auto ←       If set to pyopenssl, will try to use the pyOpenSSL library.
+   string                    • cryptography If set to cryptography, will try to use the cryptography library.
+                             • pyopenssl    Please note that the pyopenssl backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13. From that point on, only the cryptography
+                                            backend will be available.
+
+SEE ALSO                   *openssl_privatekey_info-see also*
+
+   See also
+
+   openssl_privatekey – Generate OpenSSL private keys
+   The official documentation on the openssl_privatekey module.
+
+EXAMPLES                   *openssl_privatekey_info-examples*
+
+ - name: Generate an OpenSSL private key with the default values (4096 bits, RSA)
+   openssl_privatekey:
+     path: /etc/ssl/private/ansible.com.pem
+
+ - name: Get information on generated key
+   openssl_privatekey_info:
+     path: /etc/ssl/private/ansible.com.pem
+   register: result
+
+ - name: Dump information
+   debug:
+     var: result
+
+RETURN VALUES                   *openssl_privatekey_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key                  Returned                                                                            Description
+   can_load_key            always                  Whether the module was able to load the private key from disk
+   boolean
+   can_parse_key           always                  Whether the module was able to parse the private key
+   boolean
+   key_is_consistent       always                  Whether the key is consistent. Can also return none next to yes and no, to indicate that consistency couldn't be checked.
+   boolean                                         In case the check returns no, the module will fail.
+   private_data            success and when
+   dictionary              return_private_key_data Private key data. Depends on key type.
+                           is set to yes
+   public_data             success                 Public key data. Depends on key type.
+   dictionary
+   public_key                                      Private key's public key in PEM format
+   string                  success                 Sample:
+                                                   -----BEGIN PUBLIC KEY----- MIICIjANBgkqhkiG9w0BAQEFAAOCAg8A...
+                                                   Fingerprints of private key's public key.
+   public_key_fingerprints                         For every hash algorithm available, the fingerprint is computed.
+   dictionary              success                 Sample:
+                                                   {'sha256': 'd4:b3:aa:6d:c8:04:ce:4e:ba:f6:29:4d:92:a3:94:b0:c2:ff:bd:bf:33:63:11:43:34:0f:51:b0:95:09:2f:63', 'sha512':
+                                                   'f7:07:4a:f0:b0:f0:e6:8b:95:5f:f9:e6:61:0a:32:68:f1...
+                                                   The key's type.
+   type                                            One of RSA, DSA, ECC, Ed25519, X25519, Ed448, or X448.
+   string                  success                 Will start with unknown if the key type cannot be determined.
+                                                   Sample:
+                                                   RSA
+
+STATUS                   *openssl_privatekey_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Fontein (@felixfontein)
+     • Yanis Guenane (@Spredzy)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *openssl_privatekey_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/openssl_privatekey_info_module.html

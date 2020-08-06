@@ -1,0 +1,230 @@
+SYNOPSIS                   *vmware_vmkernel*
+
+     • This module can be used to manage the VMKernel adapters / VMKernel network interfaces of an ESXi host.
+     • The module assumes that the host is already configured with the Port Group in case of a vSphere Standard Switch (vSS).
+     • The module assumes that the host is already configured with the Distributed Port Group in case of a vSphere Distributed Switch (vDS).
+     • The module automatically migrates the VMKernel adapter from vSS to vDS or vice versa if present.
+
+REQUIREMENTS                   *vmware_vmkernel-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_vmkernel-parameters*
+
+         Parameter                 Choices/Defaults                                                                          Comments
+   device                                                    Search VMkernel adapter by device name.
+   string                                                    The parameter is required only in case of type is set to dhcp.
+   added in 2.8
+   dvswitch_name                                             The name of the vSphere Distributed Switch (vDS) where to add the VMKernel interface.
+   string                                                    Required parameter only if state is set to present.
+   added in 2.8                                              Optional parameter from version 2.8 and onwards.
+                                                             aliases: dvswitch
+   enable_ft                Choices:                         Enable Fault Tolerance traffic on the VMKernel adapter.
+   boolean                  • no                             This option is only allowed if the default TCP/IP stack is used.
+                            • yes
+   enable_mgmt              Choices:                         Enable Management traffic on the VMKernel adapter.
+   boolean                  • no                             This option is only allowed if the default TCP/IP stack is used.
+                            • yes
+   enable_provisioning      Choices:                         Enable Provisioning traffic on the VMKernel adapter.
+   boolean                  • no                             This option is only allowed if the default TCP/IP stack is used.
+   added in 2.8             • yes
+   enable_replication       Choices:                         Enable vSphere Replication traffic on the VMKernel adapter.
+   boolean                  • no                             This option is only allowed if the default TCP/IP stack is used.
+   added in 2.8             • yes
+   enable_replication_nfc   Choices:                         Enable vSphere Replication NFC traffic on the VMKernel adapter.
+   boolean                  • no                             This option is only allowed if the default TCP/IP stack is used.
+   added in 2.8             • yes
+   enable_vmotion           Choices:                         Enable vMotion traffic on the VMKernel adapter.
+   boolean                  • no                             This option is only allowed if the default TCP/IP stack is used.
+                            • yes                            You cannot enable vMotion on an additional adapter if you already have an adapter with the vMotion TCP/IP stack configured.
+   enable_vsan              Choices:                         Enable VSAN traffic on the VMKernel adapter.
+   boolean                  • no                             This option is only allowed if the default TCP/IP stack is used.
+                            • yes
+   esxi_hostname                                             Name of ESXi host to which VMKernel is to be managed.
+   string / required                                         From version 2.5 onwards, this parameter is required.
+   added in 2.5
+   hostname                                                  The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                                    If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                                             Environment variable support added in Ansible 2.6.
+   ip_address                                                The IP Address for the VMKernel interface.
+   string                                                    Use network parameter with ip_address instead.
+                                                             Deprecated option, will be removed in version 2.9.
+   mtu                    Default:                           The MTU for the VMKernel interface.
+   integer                1500                               The default value of 1500 is valid from version 2.5 and onwards.
+                                                             A dictionary of network details.
+                                                             The following parameter is required:
+                                                             - type (string): Type of IP assignment (either dhcp or static).
+   network                Default:                           The following parameters are required in case of type is set to static:
+   dictionary             {"tcpip_stack": "default", "type": - ip_address (string): Static IP address (implies type: static).
+   added in 2.5           "static"}                          - subnet_mask (string): Static netmask required for ip_address.
+                                                             The following parameter is optional in case of type is set to static:
+                                                             - default_gateway (string): Default gateway (Override default gateway for this adapter).
+                                                             The following parameter is optional:
+                                                             - tcpip_stack (string): The TCP/IP stack for the VMKernel interface. Can be default, provisioning, vmotion, or vxlan. (default: default)
+                                                             The password of the vSphere vCenter or ESXi server.
+   password                                                  If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                                    Environment variable support added in Ansible 2.6.
+                                                             aliases: pass, pwd
+   port                   Default:                           The port number of the vSphere vCenter or ESXi server.
+   integer                443                                If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                                              Environment variable support added in Ansible 2.6.
+   portgroup_name                                            The name of the port group for the VMKernel interface.
+   string / required                                         aliases: portgroup
+   proxy_host                                                Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                                    The format is a hostname or a IP.
+   added in 2.9                                              If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                                             This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                                                Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                                   If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   state                    Choices:                         If set to present, the VMKernel adapter will be created with the given specifications.
+   string                   • present ←                      If set to absent, the VMKernel adapter will be removed.
+   added in 2.5             • absent                         If set to present and VMKernel adapter exists, the configurations will be updated.
+   subnet_mask                                               The Subnet Mask for the VMKernel interface.
+   string                                                    Use network parameter with subnet_mask instead.
+                                                             Deprecated option, will be removed in version 2.9.
+                                                             The username of the vSphere vCenter or ESXi server.
+   username                                                  If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                                    Environment variable support added in Ansible 2.6.
+                                                             aliases: admin, user
+                            Choices:                         Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs           • no                             If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                  • yes ←                          Environment variable support added in Ansible 2.6.
+                                                             If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+                                                             The name of the vSwitch where to add the VMKernel interface.
+   vswitch_name                                              Required parameter only if state is set to present.
+   string                                                    Optional parameter from version 2.5 and onwards.
+                                                             aliases: vswitch
+
+NOTES                   *vmware_vmkernel-notes*
+
+   Note
+
+     • The option device need to be used with DHCP because otherwise it’s not possible to check if a VMkernel device is already present
+     • You can only change from DHCP to static, and vSS to vDS, or vice versa, in one step, without creating a new device, with device specified.
+     • You can only create the VMKernel adapter on a vDS if authenticated to vCenter and not if authenticated to ESXi.
+     • Tested on vSphere 5.5 and 6.5
+
+EXAMPLES                   *vmware_vmkernel-examples*
+
+ -  name: Add Management vmkernel port using static network type
+    vmware_vmkernel:
+       hostname: '{{ esxi_hostname }}'
+       username: '{{ esxi_username }}'
+       password: '{{ esxi_password }}'
+       esxi_hostname: '{{ esxi_hostname }}'
+       vswitch_name: vSwitch0
+       portgroup_name: PG_0001
+       network:
+         type: 'static'
+         ip_address: 192.168.127.10
+         subnet_mask: 255.255.255.0
+       state: present
+       enable_mgmt: True
+    delegate_to: localhost
+
+ -  name: Add Management vmkernel port using DHCP network type
+    vmware_vmkernel:
+       hostname: '{{ esxi_hostname }}'
+       username: '{{ esxi_username }}'
+       password: '{{ esxi_password }}'
+       esxi_hostname: '{{ esxi_hostname }}'
+       vswitch_name: vSwitch0
+       portgroup_name: PG_0002
+       state: present
+       network:
+         type: 'dhcp'
+       enable_mgmt: True
+    delegate_to: localhost
+
+ -  name: Change IP allocation from static to dhcp
+    vmware_vmkernel:
+       hostname: '{{ esxi_hostname }}'
+       username: '{{ esxi_username }}'
+       password: '{{ esxi_password }}'
+       esxi_hostname: '{{ esxi_hostname }}'
+       vswitch_name: vSwitch0
+       portgroup_name: PG_0002
+       state: present
+       device: vmk1
+       network:
+         type: 'dhcp'
+       enable_mgmt: True
+    delegate_to: localhost
+
+ -  name: Delete VMkernel port
+    vmware_vmkernel:
+       hostname: '{{ esxi_hostname }}'
+       username: '{{ esxi_username }}'
+       password: '{{ esxi_password }}'
+       esxi_hostname: '{{ esxi_hostname }}'
+       vswitch_name: vSwitch0
+       portgroup_name: PG_0002
+       state: absent
+    delegate_to: localhost
+
+ -  name: Add Management vmkernel port to Distributed Switch
+    vmware_vmkernel:
+       hostname: '{{ vcenter_hostname }}'
+       username: '{{ vcenter_username }}'
+       password: '{{ vcenter_password }}'
+       esxi_hostname: '{{ esxi_hostname }}'
+       dvswitch_name: dvSwitch1
+       portgroup_name: dvPG_0001
+       network:
+         type: 'static'
+         ip_address: 192.168.127.10
+         subnet_mask: 255.255.255.0
+       state: present
+       enable_mgmt: True
+    delegate_to: localhost
+
+ -  name: Add vMotion vmkernel port with vMotion TCP/IP stack
+    vmware_vmkernel:
+       hostname: '{{ vcenter_hostname }}'
+       username: '{{ vcenter_username }}'
+       password: '{{ vcenter_password }}'
+       esxi_hostname: '{{ esxi_hostname }}'
+       dvswitch_name: dvSwitch1
+       portgroup_name: dvPG_0001
+       network:
+         type: 'static'
+         ip_address: 192.168.127.10
+         subnet_mask: 255.255.255.0
+         tcpip_stack: vmotion
+       state: present
+    delegate_to: localhost
+
+RETURN VALUES                   *vmware_vmkernel-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+                       metadata about VMKernel name
+   result     always   Sample:
+   dictionary          {'changed': False, 'msg': 'VMkernel Adapter already configured properly', 'device': 'vmk1', 'ipv4': 'static', 'ipv4_gw': 'No override', 'ipv4_ip': '192.168.1.15', 'ipv4_sm':
+                       '255.255.255.0', 'mtu': 9000, 'services': 'vMotion', 'switch': 'vDS'}
+
+STATUS                   *vmware_vmkernel-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joseph Callen (@jcpowermac)
+     • Russell Teague (@mtnbikenc)
+     • Abhijeet Kasurde (@Akasurde)
+     • Christian Kotte (@ckotte)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_vmkernel-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_vmkernel_module.html

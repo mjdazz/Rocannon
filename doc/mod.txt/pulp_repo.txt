@@ -1,0 +1,146 @@
+SYNOPSIS                   *pulp_repo*
+
+     • Add or remove Pulp repos from a remote host.
+
+PARAMETERS                   *pulp_repo-parameters*
+
+         Parameter         Choices/Defaults                                                                          Comments
+   add_export_distributor   Choices:
+   boolean                  • no ←           Whether or not to add the export distributor to new rpm repositories.
+                            • yes
+   client_cert                               PEM formatted certificate chain file to be used for SSL client authentication.
+   path                                      This file can also include the key as well, and if the key is included, client_key is not required.
+   client_key                                PEM formatted file that contains your private key to be used for SSL client authentication.
+   path                                      If client_cert contains both the certificate and key, this option is not required.
+   feed                                      Upstream feed URL to receive updates from.
+   -
+   feed_ca_cert                              CA certificate string used to validate the feed source SSL certificate. This can be the file content or the path to the file. The ca_cert alias will be
+   string                                    removed in Ansible 2.14.
+                                             aliases: importer_ssl_ca_cert, ca_cert
+                                             Certificate used as the client certificate when synchronizing the repository. This is used to communicate authentication information to the feed source.
+   feed_client_cert                          The value to this option must be the full path to the certificate. The specified file may be the certificate itself or a single file containing both the
+   string                                    certificate and private key. This can be the file content or the path to the file.
+   added in 2.9.2                            If not specified the default value will come from client_cert. Which will change in Ansible 2.14.
+                                             aliases: importer_ssl_client_cert
+   feed_client_key                           Private key to the certificate specified in importer_ssl_client_cert, assuming it is not included in the certificate file itself. This can be the file
+   string                                    content or the path to the file.
+   added in 2.9.2                            If not specified the default value will come from client_key. Which will change in Ansible 2.14.
+                                             aliases: importer_ssl_client_key
+   force                    Choices:         If yes do not get a cached copy.
+   boolean                  • no ←           Alias thirsty has been deprecated and will be removed in 2.13.
+                            • yes            aliases: thirsty
+   force_basic_auth         Choices:         httplib2, the library used by the uri module only sends authentication information when a webservice responds to an initial request with a 401 status.
+   boolean                  • no ←           Since some basic auth services do not properly send a 401, logins will fail. This option forces the sending of the Basic authentication header upon
+                            • yes            initial request.
+   generate_sqlite          Choices:
+   boolean                  • no ←           Boolean flag to indicate whether sqlite files should be generated during a repository publish.
+   added in 2.8             • yes
+   http_agent             Default:           Header to identify as, generally appears in web server logs.
+   string                 "ansible-httpget"
+   name                                      Name of the repo to add or remove. This correlates to repo-id in Pulp.
+   - / required
+   proxy_host             Default:           Proxy url setting for the pulp repository importer. This is in the format scheme://host.
+   -                      null
+   proxy_password         Default:
+   -                      null               Proxy password for the pulp repository importer.
+   added in 2.8
+   proxy_port             Default:           Proxy port setting for the pulp repository importer.
+   -                      null
+   proxy_username         Default:
+   -                      null               Proxy username for the pulp repository importer.
+   added in 2.8
+   publish_distributor                       Distributor to use when state is publish. The default is to publish all distributors.
+   -
+   pulp_host              Default:           URL of the pulp server to connect to.
+   -                      "http://127.0.0.1"
+   relative_url                              Relative URL for the local repository.
+   - / required
+   repo_type              Default:           Repo plugin type to use (i.e. rpm, docker).
+   -                      "rpm"
+   repoview                 Choices:
+   boolean                  • no ←           Whether to generate repoview files for a published repository. Setting this to "yes" automatically activates `generate_sqlite`.
+   added in 2.8             • yes
+   serve_http               Choices:
+   boolean                  • no ←           Make the repo available over HTTP.
+                            • yes
+   serve_https              Choices:
+   boolean                  • no             Make the repo available over HTTPS.
+                            • yes ←
+                            Choices:
+   state                    • present ←      The repo state. A state of sync will queue a sync of the repo. This is asynchronous but not delayed like a scheduled sync. A state of publish will use
+   -                        • absent         the repository's distributor to publish the content.
+                            • sync
+                            • publish
+   url                                       HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+   string
+   url_password                              The password for use in HTTP basic authentication to the pulp API. If the url_username parameter is not specified, the url_password parameter will not
+   string                                    be used.
+   url_username                              The username for use in HTTP basic authentication to the pulp API.
+   string
+   use_proxy                Choices:
+   boolean                  • no             If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                            • yes ←
+   validate_certs           Choices:
+   boolean                  • no             If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+                            • yes ←
+   wait_for_completion      Choices:
+   boolean                  • no ←           Wait for asynchronous tasks to complete before returning.
+                            • yes
+
+NOTES                   *pulp_repo-notes*
+
+   Note
+
+     • This module can currently only create distributors and importers on rpm repositories. Contributions to support other repo types are welcome.
+
+EXAMPLES                   *pulp_repo-examples*
+
+ - name: Create a new repo with name 'my_repo'
+   pulp_repo:
+     name: my_repo
+     relative_url: my/repo
+     state: present
+
+ - name: Create a repo with a feed and a relative URL
+   pulp_repo:
+     name: my_centos_updates
+     repo_type: rpm
+     feed: http://mirror.centos.org/centos/6/updates/x86_64/
+     relative_url: centos/6/updates
+     url_username: admin
+     url_password: admin
+     force_basic_auth: yes
+     state: present
+
+ - name: Remove a repo from the pulp server
+   pulp_repo:
+     name: my_old_repo
+     repo_type: rpm
+     state: absent
+
+RETURN VALUES                   *pulp_repo-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   repo            Name of the repo that the action was performed on.
+   string success  Sample:
+                   my_repo
+
+STATUS                   *pulp_repo-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joe Adams (@sysadmind)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *pulp_repo-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/pulp_repo_module.html

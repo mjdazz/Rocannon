@@ -1,0 +1,182 @@
+SYNOPSIS                   *bigip_message_routing_router*
+
+     • Manages router profiles for message-routing protocols.
+
+PARAMETERS                   *bigip_message_routing_router-parameters*
+
+             Parameter           Choices/Defaults                                                                      Comments
+   description                                    The user defined description of the router profile.
+   string
+   ignore_client_port              Choices:       When yes, the remote port on clientside connections ie. connections where the peer connected to the BIG-IP is ignored when searching for an
+   boolean                         • no           existing connection.
+                                   • yes
+   inherited_traffic_group         Choices:       When set to yes the traffic_group will be inherited from the containing folder. When not specified the system sets this to no when creating new
+   boolean                         • no           router profile.
+                                   • yes
+   max_pending_bytes                              The maximum number of bytes worth of pending messages that will be held while waiting for a connection to a peer to be created. Once reached, any
+   integer                                        additional messages to the peer will be flagged as undeliverable and returned to the originator.
+                                                  The accepted range is between 0 and 4294967295 inclusive.
+   max_pending_messages                           The maximum number of pending messages that will be held while waiting for a connection to a peer to be created. Once reached, any additional
+   integer                                        messages to the peer will be flagged as undeliverable and returned to the originator.
+                                                  The accepted range is between 0 and 65535 inclusive.
+   max_retries                                    Sets the maximum number of time a message may be resubmitted for rerouting by the MR::retry iRule command.
+   integer                                        The accepted range is between 0 and 4294967295 inclusive.
+   mirror                          Choices:       Enables or disables state mirroring. State mirroring can be used to maintain the same state information in the standby unit that is in the active
+   boolean                         • no           unit.
+                                   • yes
+                                                  Specifies the maximum time in milliseconds that a message will be held on the standby device as it waits for the active device to route the
+   mirrored_msg_sweeper_interval                  message.
+   integer                                        Messages on the standby device held for longer then the configurable sweeper interval, will be dropped.
+                                                  The accepted range is between 0 and 4294967295 inclusive.
+   name                                           Specifies the name of the router profile.
+   string / required
+   parent                                         The parent template of this router profile. Once this value has been set, it cannot be changed.
+   string                                         The default values are set by the system if not specified and they correspond to the router type created, ie. /Common/messagerouter for generic
+                                                  type and so on.
+   partition                     Default:         Device partition to create router profile on.
+   string                        "Common"
+   provider
+   dictionary                                     A dict object containing connection details.
+   added in 2.5
+           auth_provider                          Configures the auth provider for to obtain authentication tokens from the remote device.
+           string                                 This option is really used when working with BIG-IQ devices.
+           password                               The password for the user account used to connect to the BIG-IP.
+           string / required                      You may omit this option by setting the environment variable F5_PASSWORD.
+                                                  aliases: pass, pwd
+           server                                 The BIG-IP host.
+           string / required                      You may omit this option by setting the environment variable F5_SERVER.
+           server_port           Default:         The BIG-IP server port.
+           integer               443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+           ssh_keyfile                            Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+           path                                   You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+           timeout                                Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+           integer                                before the operation is completed, the module will error.
+           transport               Choices:
+           string                  • cli          Configures the transport connection to use when connecting to the remote device.
+                                   • rest ←
+           user                                   The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+           string / required                      You may omit this option by setting the environment variable F5_USER.
+           validate_certs          Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+           boolean                 • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                                   • yes ←
+   routes                                         Specifies a list of static routes for the router instance to use.
+   list                                           The route must be on the same partition as router profile.
+   state                           Choices:       When present, ensures that the router profile exists.
+   string                          • present ←    When absent, ensures the router profile is removed.
+                                   • absent
+   traffic_group                                  Specifies the traffic-group of the router profile.
+   string                                         Setting the traffic_group to an empty string value "" will cause the device to inherit from containing folder, which means the value of
+                                                  inherited_traffic_group on device will be yes.
+   type                            Choices:       Parameter used to specify the type of the router profile to manage.
+   string                          • generic ←    Default setting is generic with more options added in future.
+   use_local_connection            Choices:
+   boolean                         • no           If yes, the router will route a message to an existing connection on the same TMM as the message was received on.
+                                   • yes
+
+NOTES                   *bigip_message_routing_router-notes*
+
+   Note
+
+     • Requires BIG-IP >= 14.0.0
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_message_routing_router-examples*
+
+ - name: Create a generic router profile
+   bigip_message_routing_router:
+     name: foo
+     max_retries: 10
+     ignore_client_port: yes
+     routes:
+       - /Common/route1
+       - /Common/route2
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify a generic router profile
+   bigip_message_routing_router:
+     name: foo
+     ignore_client_port: no
+     mirror: yes
+     mirrored_msg_sweeper_interval: 4000
+     traffic_group: /Common/traffic-group-2
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove a generic router profile
+   bigip_message_routing_router:
+     name: foo
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_message_routing_router-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key              Returned                                                                         Description
+   description                            The user defined description of the router profile.
+   string                        changed  Sample:
+                                          My description
+   ignore_client_port            changed  Enables ignoring of the remote port on clientside connections when searching for an existing connection.
+   boolean
+   inherited_traffic_group                Specifies if traffic-group should be inherited from containing folder.
+   boolean                       changed  Sample:
+                                          True
+   max_pending_bytes                      The maximum number of bytes worth of pending messages that will be held.
+   integer                       changed  Sample:
+                                          10000
+   max_pending_messages                   The maximum number of pending messages that will be held.
+   integer                       changed  Sample:
+                                          64
+   max_retries                            The maximum number of time a message may be resubmitted for rerouting.
+   integer                       changed  Sample:
+                                          10
+   mirror                                 Enables or disables state mirroring.
+   boolean                       changed  Sample:
+                                          True
+   mirrored_msg_sweeper_interval          The maximum time in milliseconds that a message will be held on the standby device.
+   integer                       changed  Sample:
+                                          2000
+   parent                                 The parent template of this router profile.
+   string                        changed  Sample:
+                                          /Common/messagerouter
+   routes                                 The list of static routes for the router instance to use.
+   list                          changed  Sample:
+                                          ['/Common/route1', '/Common/route2']
+   traffic_group                          The traffic-group of the router profile.
+   string                        changed  Sample:
+                                          /Common/traffic-group-1
+   use_local_connection                   Enables routing of messages to an existing connection on the same TMM as the message was received on.
+   boolean                       changed  Sample:
+                                          True
+
+STATUS                   *bigip_message_routing_router-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_message_routing_router-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_message_routing_router_module.html

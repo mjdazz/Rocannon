@@ -1,0 +1,153 @@
+SYNOPSIS                   *os_subnet*
+
+     • Add or Remove a subnet to an OpenStack network
+
+REQUIREMENTS                   *os_subnet-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_subnet-parameters*
+
+         Parameter          Choices/Defaults                                                                          Comments
+   allocation_pool_end                         From the subnet pool the last IP that should be assigned to the virtual machines.
+   -
+   allocation_pool_start                       From the subnet pool the starting address from which the IP should be allocated.
+   -
+   api_timeout                                 How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                               Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url,
+   auth                                        username, password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports
+   dictionary                                  them. For other plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud
+                                               is provided or OpenStack OS_" environment variables are present.
+   auth_type                                   Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and
+   string                                      the contents of the auth parameter should be updated accordingly.
+   availability_zone                           Ignored. Present for backwards compatibility
+   -
+   ca_cert                                     A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                                      aliases: cacert
+   cidr                                        The CIDR representation of the subnet that should be assigned to the subnet. Required when state is 'present' and a subnetpool is not specified.
+   -
+   client_cert                                 A path to a client certificate to use as part of the SSL transaction.
+   string                                      aliases: cert
+   client_key                                  A path to a client key to use as part of the SSL transaction.
+   string                                      aliases: key
+   cloud                                       Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file.
+   raw                                         Provides default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are
+                                               present. If cloud is a dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   dns_nameservers                             List of DNS nameservers for this subnet.
+   -
+   enable_dhcp              Choices:
+   boolean                  • no               Whether DHCP should be enabled for this subnet.
+                            • yes ←
+   extra_specs            Default:
+   -                      {}                   Dictionary with extra key/value pairs passed to the API
+   added in 2.7
+   gateway_ip                                  The ip that would be assigned to the gateway for this subnet
+   -
+   host_routes                                 A list of host route dictionaries for the subnet.
+   -
+                            Choices:
+   interface                • admin            Endpoint URL type to fetch from the service catalog.
+   string                   • internal         aliases: endpoint_type
+                            • public ←
+   ip_version             Default:             The IP version of the subnet 4 or 6
+   -                      4
+                            Choices:
+   ipv6_address_mode        • dhcpv6-stateful  IPv6 address mode
+   -                        • dhcpv6-stateless
+                            • slaac
+                            Choices:
+   ipv6_ra_mode             • dhcpv6-stateful  IPv6 router advertisement mode
+   -                        • dhcpv6-stateless
+                            • slaac
+   name                                        The name of the subnet that should be created. Although Neutron allows for non-unique subnet names, this module enforces subnet name uniqueness.
+   - / required
+   network_name                                Name of the network to which the subnet should be attached
+   -                                           Required when state is 'present'
+   no_gateway_ip            Choices:
+   boolean                  • no ←             The gateway IP would not be assigned for this subnet
+                            • yes
+   project                                     Project name or ID containing the subnet (name admin-only)
+   -
+   region_name                                 Name of the region.
+   string
+   state                    Choices:
+   -                        • present ←        Indicate desired state of the resource
+                            • absent
+   timeout                Default:             How long should ansible wait for the requested resource.
+   integer                180
+   use_default_subnetpool   Choices:
+   boolean                  • no ←             Use the default subnetpool for ip_version to obtain a CIDR.
+                            • yes
+   validate_certs           Choices:           Whether or not SSL API requests should be verified.
+   boolean                  • no ←             Before Ansible 2.3 this defaulted to yes.
+                            • yes              aliases: verify
+   wait                     Choices:
+   boolean                  • no               Should ansible wait until the requested resource is complete.
+                            • yes ←
+
+NOTES                   *os_subnet-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_subnet-examples*
+
+ # Create a new (or update an existing) subnet on the specified network
+ - os_subnet:
+     state: present
+     network_name: network1
+     name: net1subnet
+     cidr: 192.168.0.0/24
+     dns_nameservers:
+        - 8.8.8.7
+        - 8.8.8.8
+     host_routes:
+        - destination: 0.0.0.0/0
+          nexthop: 12.34.56.78
+        - destination: 192.168.0.0/24
+          nexthop: 192.168.0.1
+
+ # Delete a subnet
+ - os_subnet:
+     state: absent
+     name: net1subnet
+
+ # Create an ipv6 stateless subnet
+ - os_subnet:
+     state: present
+     name: intv6
+     network_name: internal
+     ip_version: 6
+     cidr: 2db8:1::/64
+     dns_nameservers:
+         - 2001:4860:4860::8888
+         - 2001:4860:4860::8844
+     ipv6_ra_mode: dhcpv6-stateless
+     ipv6_address_mode: dhcpv6-stateless
+
+STATUS                   *os_subnet-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Monty Taylor (@emonty)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_subnet-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_subnet_module.html

@@ -1,0 +1,189 @@
+SYNOPSIS                   *bigip_ipsec_policy*
+
+     • Manage IPSec policies on a BIG-IP.
+
+PARAMETERS                   *bigip_ipsec_policy-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+                             Choices:
+                             • sha1
+                             • sha256
+                             • sha384
+   auth_algorithm            • sha512
+   string                    • aes-gcm128   Specifies the algorithm to use for IKE authentication.
+                             • aes-gcm192
+                             • aes-gcm256
+                             • aes-gmac128
+                             • aes-gmac192
+                             • aes-gmac256
+   description                              Description of the policy
+   string
+                             Choices:
+                             • none
+                             • 3des
+                             • aes128
+                             • aes192
+   encrypt_algorithm         • aes256
+   string                    • aes-gmac256  Specifies the algorithm to use for IKE encryption.
+                             • aes-gmac192
+                             • aes-gmac128
+                             • aes-gcm256
+                             • aes-gcm192
+                             • aes-gcm256
+                             • aes-gcm128
+                             Choices:       Specifies whether to use IPComp encapsulation.
+   ipcomp                    • none         When none, specifies that IPComp is disabled.
+   string                    • null         When deflate, specifies that IPComp is enabled and uses the Deflate compression algorithm.
+                             • deflate
+   ipv4_interface            Choices:       When mode is interface indicate if the IPv4 any address should be used. By default BIG-IP assumes any6 address for tunnel addresses when mode is
+   boolean                   • no           interface.
+   added in 2.9              • yes          This option takes effect only when mode is set to interface.
+   kb_lifetime                              Specifies the length of time, in kilobytes, before the IKE security association expires.
+   integer
+   lifetime                                 Specifies the length of time, in minutes, before the IKE security association expires.
+   integer
+                                            Specifies the processing mode.
+                             Choices:       When transport, specifies a mode that encapsulates only the payload (adding an ESP header, trailer, and authentication tag).
+                             • transport    When tunnel, specifies a mode that includes encapsulation of the header as well as the payload (adding a new IP header, in addition to adding an ESP
+   mode                      • interface    header, trailer, and authentication tag). If you select this option, you must also provide IP addresses for the local and remote endpoints of the IPsec
+   string                    • isession     tunnel.
+                             • tunnel       When isession, specifies the use of iSession over an IPsec tunnel. To use this option, you must also configure the iSession endpoints with IPsec in the
+                                            Acceleration section of the user interface.
+                                            When interface, specifies that the IPsec policy can be used in the tunnel profile for network interfaces.
+   name                                     Specifies the name of the IPSec policy.
+   string / required
+   partition               Default:         Device partition to manage resources on.
+   string                  "Common"
+                             Choices:
+                             • none
+                             • modp768
+                             • modp1024
+   perfect_forward_secrecy   • modp1536     Specifies the Diffie-Hellman group to use for IKE Phase 2 negotiation.
+   string                    • modp2048
+                             • modp3072
+                             • modp4096
+                             • modp6144
+                             • modp8192
+   protocol                  Choices:       Specifies the IPsec protocol
+   string                    • esp          Options include ESP (Encapsulating Security Protocol) or AH (Authentication Header).
+                             • ah
+   provider
+   dictionary                               A dict object containing connection details.
+   added in 2.5
+       auth_provider                        Configures the auth provider for to obtain authentication tokens from the remote device.
+       string                               This option is really used when working with BIG-IQ devices.
+       password                             The password for the user account used to connect to the BIG-IP.
+       string / required                    You may omit this option by setting the environment variable F5_PASSWORD.
+                                            aliases: pass, pwd
+       server                               The BIG-IP host.
+       string / required                    You may omit this option by setting the environment variable F5_SERVER.
+       server_port         Default:         The BIG-IP server port.
+       integer             443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+       ssh_keyfile                          Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+       path                                 You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+       timeout                              Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+       integer                              the operation is completed, the module will error.
+       transport             Choices:
+       string                • cli          Configures the transport connection to use when connecting to the remote device.
+                             • rest ←
+       user                                 The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+       string / required                    You may omit this option by setting the environment variable F5_USER.
+       validate_certs        Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+       boolean               • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                             • yes ←
+   route_domain                             Specifies the route domain, when interface is selected for the mode setting.
+   integer
+   state                     Choices:       When present, ensures that the resource exists.
+   string                    • present ←    When absent, ensures the resource is removed.
+                             • absent
+   tunnel_local_address                     Specifies the local endpoint IP address of the IPsec tunnel.
+   string                                   This parameter is only valid when mode is tunnel.
+   tunnel_remote_address                    Specifies the remote endpoint IP address of the IPsec tunnel.
+   string                                   This parameter is only valid when mode is tunnel.
+
+NOTES                   *bigip_ipsec_policy-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_ipsec_policy-examples*
+
+ - name: Create a IPSec policy
+   bigip_ipsec_policy:
+     name: policy1
+     mode: tunnel
+     tunnel_local_address: 1.1.1.1
+     tunnel_remote_address: 2.2.2.
+     auth_algorithm: sha1
+     encrypt_algorithm: 3des
+     protocol: esp
+     perfect_forward_secrecy: modp1024
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_ipsec_policy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key           Returned                                                                            Description
+   auth_algorithm                   The new IKE Phase 2 Authentication Algorithm value.
+   string                  changed  Sample:
+                                    sha512
+   description                      The new description value.
+   string                  changed  Sample:
+                                    My policy
+   encrypt_algorithm                The new IKE Phase 2 Encryption Algorithm value.
+   string                  changed  Sample:
+                                    aes256
+   ipcomp                           The new IKE Phase 2 IPComp value.
+   string                  changed  Sample:
+                                    deflate
+   kb_lifetime             changed  The new IKE Phase 2 KB Lifetime value.
+   integer
+   lifetime                         The new IKE Phase 2 Lifetime value.
+   integer                 changed  Sample:
+                                    1440
+   mode                             The new Mode value.
+   string                  changed  Sample:
+                                    tunnel
+   perfect_forward_secrecy          The new IKE Phase 2 Perfect Forward Secrecy value.
+   string                  changed  Sample:
+                                    modp2048
+   protocol                         The new IPsec Protocol value.
+   string                  changed  Sample:
+                                    ah
+   route_domain                     The new Route Domain value when in Tunnel mode.
+   integer                 changed  Sample:
+                                    2
+   tunnel_local_address             The new Tunnel Local Address value.
+   string                  changed  Sample:
+                                    1.2.2.1
+   tunnel_remote_address            The new Tunnel Remote Address value.
+   string                  changed  Sample:
+                                    2.1.1.2
+
+STATUS                   *bigip_ipsec_policy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_ipsec_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_ipsec_policy_module.html

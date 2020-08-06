@@ -1,0 +1,129 @@
+SYNOPSIS                   *win_hotfix*
+
+     • Install, uninstall a Windows hotfix.
+
+PARAMETERS                   *win_hotfix-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+                                      The name of the hotfix as shown in DISM, see examples for details.
+   hotfix_identifier                  This or hotfix_kb MUST be set when state=absent.
+   string                             If state=present then the hotfix at source will be validated against this value, if it does not match an error will occur.
+                                      You can get the identifier by running 'Get-WindowsPackage -Online -PackagePath path-to-cab-in-msu' after expanding the msu file.
+                                      The name of the KB the hotfix relates to, see examples for details.
+   hotfix_kb                          This or hotfix_identifier MUST be set when state=absent.
+   string                             If state=present then the hotfix at source will be validated against this value, if it does not match an error will occur.
+                                      Because DISM uses the identifier as a key and doesn't refer to a KB in all cases it is recommended to use hotfix_identifier instead.
+   source                             The path to the downloaded hotfix .msu file.
+   path                               This MUST be set if state=present and MUST be a .msu hotfix file.
+   state               Choices:       Whether to install or uninstall the hotfix.
+   string              • absent       When present, source MUST be set.
+                       • present ←    When absent, hotfix_identifier or hotfix_kb MUST be set.
+
+NOTES                   *win_hotfix-notes*
+
+   Note
+
+     • This must be run on a host that has the DISM powershell module installed and a Powershell version >= 4.
+     • This module is installed by default on Windows 8 and Server 2012 and newer.
+     • You can manually install this module on Windows 7 and Server 2008 R2 by installing the Windows ADK https://developer.microsoft.com/en-us/windows/hardware/windows-assessment-deployment-kit,
+       see examples to see how to do it with chocolatey.
+     • You can download hotfixes from https://www.catalog.update.microsoft.com/Home.aspx.
+
+SEE ALSO                   *win_hotfix-see also*
+
+   See also
+
+   win_package – Installs/uninstalls an installable package
+   The official documentation on the win_package module.
+
+   win_updates – Download and install Windows updates
+   The official documentation on the win_updates module.
+
+EXAMPLES                   *win_hotfix-examples*
+
+ - name: Install Windows ADK with DISM for Server 2008 R2
+   win_chocolatey:
+     name: windows-adk
+     version: 8.100.26866.0
+     state: present
+     install_args: /features OptionId.DeploymentTools
+
+ - name: Install hotfix without validating the KB and Identifier
+   win_hotfix:
+     source: C:\temp\windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
+     state: present
+   register: hotfix_install
+
+ - win_reboot:
+   when: hotfix_install.reboot_required
+
+ - name: Install hotfix validating KB
+   win_hotfix:
+     hotfix_kb: KB3172729
+     source: C:\temp\windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
+     state: present
+   register: hotfix_install
+
+ - win_reboot:
+   when: hotfix_install.reboot_required
+
+ - name: Install hotfix validating Identifier
+   win_hotfix:
+     hotfix_identifier: Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.0
+     source: C:\temp\windows8.1-kb3172729-x64_e8003822a7ef4705cbb65623b72fd3cec73fe222.msu
+     state: present
+   register: hotfix_install
+
+ - win_reboot:
+   when: hotfix_install.reboot_required
+
+ - name: Uninstall hotfix with Identifier
+   win_hotfix:
+     hotfix_identifier: Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.0
+     state: absent
+   register: hotfix_uninstall
+
+ - win_reboot:
+   when: hotfix_uninstall.reboot_required
+
+ - name: Uninstall hotfix with KB (not recommended)
+   win_hotfix:
+     hotfix_kb: KB3172729
+     state: absent
+   register: hotfix_uninstall
+
+ - win_reboot:
+   when: hotfix_uninstall.reboot_required
+
+RETURN VALUES                   *win_hotfix-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   identifier               The DISM identifier for the hotfix.
+   string          success  Sample:
+                            Package_for_KB3172729~31bf3856ad364e35~amd64~~6.3.1.0
+   kb                       The KB the hotfix relates to.
+   string          success  Sample:
+                            KB3172729
+   reboot_required          Whether a reboot is required for the install or uninstall to finalise.
+   string          success  Sample:
+                            True
+
+STATUS                   *win_hotfix-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_hotfix-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_hotfix_module.html

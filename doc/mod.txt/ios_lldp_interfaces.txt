@@ -1,0 +1,421 @@
+SYNOPSIS                   *ios_lldp_interfaces*
+
+     • This module manages link layer discovery protocol (LLDP) attributes of interfaces on Cisco IOS devices.
+
+PARAMETERS                   *ios_lldp_interfaces-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   config
+   list /                                  A dictionary of LLDP options
+   elements=dictionary
+                                           Selection of LLDP MED TLVs to send
+    med_tlv_select                         NOTE, if med-tlv-select is configured idempotency won't be maintained as Cisco device doesn't record configured med-tlv-select options. As such, Ansible
+    dictionary                             cannot verify if the respective med-tlv-select options is already configured or not from the device side. If you try to apply med-tlv-select option in
+                                           every play run, Ansible will show changed as True.
+     inventory_management   Choices:
+     boolean                • no           LLDP MED Inventory Management TLV
+                            • yes
+    name                                   Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
+    string / required
+    receive                 Choices:
+    boolean                 • no           Enable LLDP reception on interface.
+                            • yes
+                                           Selection of LLDP type-length-value i.e. TLVs to send
+    tlv_select                             NOTE, if tlv-select is configured idempotency won't be maintained as Cisco device doesn't record configured tlv-select options. As such, Ansible cannot
+    dictionary                             verify if the respective tlv-select options is already configured or not from the device side. If you try to apply tlv-select option in every play run,
+                                           Ansible will show changed as True.
+     power_management       Choices:
+     boolean                • no           IEEE 802.3 DTE Power via MDI TLV
+                            • yes
+    transmit                Choices:
+    boolean                 • no           Enable LLDP transmission on interface.
+                            • yes
+                            Choices:
+   state                    • merged ←
+   string                   • replaced     The state of the configuration after module completion
+                            • overridden
+                            • deleted
+
+NOTES                   *ios_lldp_interfaces-notes*
+
+   Note
+
+     • Tested against Cisco IOSv Version 15.2 on VIRL
+     • This module works with connection network_cli, See IOS Platform Options.
+
+EXAMPLES                   *ios_lldp_interfaces-examples*
+
+ # Using merged
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: enabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ - name: Merge provided configuration with device configuration
+   ios_lldp_interfaces:
+     config:
+       - name: GigabitEthernet0/1
+         receive: True
+         transmit: True
+       - name: GigabitEthernet0/2
+         receive: True
+       - name: GigabitEthernet0/3
+         transmit: True
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: enabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: enabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ # Using overridden
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ - name: Override device configuration of all lldp_interfaces with provided configuration
+   ios_lldp_interfaces:
+     config:
+       - name: GigabitEthernet0/2
+         receive: True
+         transmit: True
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+
+ # Using replaced
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ - name: Replaces device configuration of listed lldp_interfaces with provided configuration
+   ios_lldp_interfaces:
+     config:
+       - name: GigabitEthernet0/2
+         receive: True
+         transmit: True
+       - name: GigabitEthernet0/3
+         receive: True
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: disabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ # Using Deleted
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ - name: "Delete LLDP attributes of given interfaces (Note: This won't delete the interface itself)"
+   ios_lldp_interfaces:
+     config:
+       - name: GigabitEthernet0/1
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ # Using Deleted without any config passed
+ # "(NOTE: This will delete all of configured LLDP module attributes)"
+ #
+ # Before state:
+ # -------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: enabled
+ #    Rx: enabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+ - name: "Delete LLDP attributes for all configured interfaces (Note: This won't delete the interface itself)"
+   ios_lldp_interfaces:
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # vios#sh lldp interface
+ # GigabitEthernet0/0:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/1:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+ # GigabitEthernet0/2:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: INIT
+ #
+ # GigabitEthernet0/3:
+ #    Tx: disabled
+ #    Rx: disabled
+ #    Tx state: IDLE
+ #    Rx state: WAIT FOR FRAME
+ #
+
+RETURN VALUES                   *ios_lldp_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['interface GigabitEthernet 0/1', 'lldp transmit', 'lldp receive']
+
+STATUS                   *ios_lldp_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *ios_lldp_interfaces-red hat support*
+
+     • Sumit Jaiswal (@justjais)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_lldp_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_lldp_interfaces_module.html

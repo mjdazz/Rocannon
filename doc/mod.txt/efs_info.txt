@@ -1,0 +1,149 @@
+SYNOPSIS                   *efs_info*
+
+     • This module can be used to search Amazon EFS file systems.
+     • This module was called efs_facts before Ansible 2.9, returning ansible_facts. Note that the efs_info module no longer returns ansible_facts!
+
+   Aliases: efs_facts
+
+REQUIREMENTS                   *efs_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *efs_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   id                                            ID of Amazon EFS.
+   -
+   name                                          Creation Token of Amazon EFS file system.
+   -                                             aliases: creation_token
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   tags                                          List of tags of Amazon EFS. Should be defined as dictionary.
+   -
+   targets                                       List of targets on which to filter the returned results.
+   -                                             Result must match all of the specified targets, each of which can be a security group ID, a subnet ID or an IP address.
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *efs_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *efs_info-examples*
+
+ - name: Find all existing efs
+   efs_info:
+   register: result
+
+ - name: Find efs using id
+   efs_info:
+     id: fs-1234abcd
+   register: result
+
+ - name: Searching all EFS instances with tag Name = 'myTestNameTag', in subnet 'subnet-1a2b3c4d' and with security group 'sg-4d3c2b1a'
+   efs_info:
+     tags:
+         name: myTestNameTag
+     targets:
+         - subnet-1a2b3c4d
+         - sg-4d3c2b1a
+   register: result
+
+ - debug:
+     msg: "{{ result['efs'] }}"
+
+RETURN VALUES                   *efs_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                 Key                  Returned                                                                        Description
+   creation_time                                   timestamp of creation date
+   string                          always          Sample:
+                                                   2015-11-16 07:30:57-05:00
+   creation_token                                  EFS creation token
+   string                          always          Sample:
+                                                   console-88609e04-9a0e-4a2e-912c-feaa99509961
+   file_system_id                                  ID of the file system
+   string                          always          Sample:
+                                                   fs-xxxxxxxx
+   filesystem_address                              url of file system
+   string                          always          Sample:
+                                                   fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
+   life_cycle_state                                state of the EFS file system
+   string                          always          Sample:
+                                                   creating, available, deleting, deleted
+   mount_point                                     url of file system with leading dot from the time AWS EFS required to add network suffix to EFS address
+   string                          always          Sample:
+                                                   .fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
+                                                   list of mount targets
+   mount_targets                   always          Sample:
+   list                                            [{'file_system_id': 'fs-a7ad440e', 'ip_address': '172.31.17.173', 'life_cycle_state': 'available', 'mount_target_id': 'fsmt-d8907871',
+                                                   'network_interface_id': 'eni-6e387e26', 'owner_id': '740748460359', 'security_groups': ['sg-a30b22c6'], 'subnet_id': 'subnet-e265c895'}, '...']
+   name                                            name of the file system
+   string                          always          Sample:
+                                                   my-efs
+   number_of_mount_targets                         the number of targets mounted
+   integer                         always          Sample:
+                                                   3
+   owner_id                                        AWS account ID of EFS owner
+   string                          always          Sample:
+                                                   XXXXXXXXXXXX
+   performance_mode                                performance mode of the file system
+   string                          always          Sample:
+                                                   generalPurpose
+                                   when botocore
+   provisioned_throughput_in_mibps >= 1.10.57 and  throughput provisioned in Mibps
+   float                           throughput_mode Sample:
+                                   is set to       15.0
+                                   "provisioned"
+   size_in_bytes                                   size of the file system in bytes as of a timestamp
+   dictionary                      always          Sample:
+                                                   {'timestamp': '2015-12-21 13:59:59-05:00', 'value': 12288}
+   tags                                            tags on the efs instance
+   dictionary                      always          Sample:
+                                                   {'name': 'my-efs', 'key': 'Value'}
+   throughput_mode                 when botocore   mode of throughput for the file system
+   string                          >= 1.10.57      Sample:
+                                                   bursting
+
+STATUS                   *efs_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ryan Sydnor (@ryansydnor)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *efs_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/efs_info_module.html

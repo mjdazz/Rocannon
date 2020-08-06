@@ -1,0 +1,73 @@
+SYNOPSIS                   *win_path*
+
+     • Allows element-based ordering, addition, and removal of Windows path environment variables.
+
+PARAMETERS                   *win_path-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+                              A single path element, or a list of path elements (ie, directories) to add or remove.
+                              When multiple elements are included in the list (and state is present), the elements are guaranteed to appear in the same relative order in the resultant path value.
+   elements                   Variable expansions (eg, %VARNAME%) are allowed, and are stored unexpanded in the target path element.
+   list /                     Any existing path elements not mentioned in elements are always preserved in their current order.
+   required                   New path elements are appended to the path, and existing path elements may be moved closer to the end to satisfy the requested ordering.
+                              Paths are compared in a case-insensitive fashion, and trailing backslashes are ignored for comparison purposes. However, note that trailing backslashes in YAML require
+                              quotes.
+   name      Default:         Target path environment variable name.
+   string    "PATH"
+   scope       Choices:
+   string      • machine ←    The level at which the environment variable specified by name should be managed (either for the current user or global machine scope).
+               • user
+   state       Choices:
+   string      • absent       Whether the path elements specified in elements should be present or absent.
+               • present
+
+NOTES                   *win_path-notes*
+
+   Note
+
+     • This module is for modifying individual elements of path-like environment variables. For general-purpose management of other environment vars, use the win_environment module.
+     • This module does not broadcast change events. This means that the minority of windows applications which can have their environment changed without restarting will not be notified and
+       therefore will need restarting to pick up new environment settings.
+     • User level environment variables will require an interactive user to log out and in again before they become available.
+
+SEE ALSO                   *win_path-see also*
+
+   See also
+
+   win_environment – Modify environment variables on windows hosts
+   The official documentation on the win_environment module.
+
+EXAMPLES                   *win_path-examples*
+
+ - name: Ensure that system32 and Powershell are present on the global system path, and in the specified order
+   win_path:
+     elements:
+     - '%SystemRoot%\system32'
+     - '%SystemRoot%\system32\WindowsPowerShell\v1.0'
+
+ - name: Ensure that C:\Program Files\MyJavaThing is not on the current user's CLASSPATH
+   win_path:
+     name: CLASSPATH
+     elements: C:\Program Files\MyJavaThing
+     scope: user
+     state: absent
+
+STATUS                   *win_path-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_path-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_path-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_path_module.html

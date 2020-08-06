@@ -1,0 +1,352 @@
+SYNOPSIS                   *iosxr_l3_interfaces*
+
+     • This module provides declarative management of Layer-3 interface on Cisco IOS-XR devices.
+
+PARAMETERS                   *iosxr_l3_interfaces-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   config                                      A dictionary of Layer-3 interface options
+   list / elements=dictionary
+       ipv4                                    IPv4 address to be set for the Layer-3 interface mentioned in name option.
+       list                                    The address format is <ipv4 address>/<mask>, the mask is number in range 0-32 eg. 192.168.0.1/24
+               address                         Configures the IPv4 address for Interface.
+               string
+               secondary        Choices:
+               boolean          • no           Configures the IP address as a secondary address.
+                                • yes
+       ipv6                                    IPv6 address to be set for the Layer-3 interface mentioned in name option.
+       list                                    The address format is <ipv6 address>/<mask>, the mask is number in range 0-128 eg. fd5d:12c9:2201:1::1/64
+               address                         Configures the IPv6 address for Interface.
+               string
+       name                                    Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
+       string / required
+                                Choices:
+   state                        • merged ←
+   string                       • replaced     The state of the configuration after module completion
+                                • overridden
+                                • deleted
+
+NOTES                   *iosxr_l3_interfaces-notes*
+
+   Note
+
+     • Tested against Cisco IOS-XRv Version 6.1.3 on VIRL.
+     • This module works with connection network_cli. See the IOS-XR Platform Options.
+
+EXAMPLES                   *iosxr_l3_interfaces-examples*
+
+ ---
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv4 address 192.168.0.2 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  ipv6 address fd5d:12c9:2201:1::1/64
+ #  shutdown
+ # !
+
+ - name: Merge provided configuration with device configuration
+   iosxr_l3_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/2
+         ipv4:
+         - address: 192.168.0.1/24
+       - name: GigabitEthernet0/0/0/3
+         ipv4:
+         - address: 192.168.2.1/24
+           secondary: True
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  ipv4 address 192.168.0.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv4 address 192.168.1.0 255.255.255.0
+ #  ipv4 address 192.168.2.1 255.255.255.0 secondary
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  ipv6 address fd5d:12c9:2201:1::1/64
+ #  shutdown
+ # !
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  ipv4 address 192.168.0.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv4 address 192.168.1.0 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  ipv6 address fd5d:12c9:2201:1::1/64
+ #  shutdown
+ # !
+
+ - name: Override device configuration of all interfaces with provided configuration
+   iosxr_l3_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/3
+         ipv4:
+         - address: 192.168.0.1/24
+       - name: GigabitEthernet0/0/0/3.700
+         ipv4:
+         - address: 192.168.0.2/24
+         - address: 192.168.2.1/24
+           secondary: True
+     state: overridden
+
+ # After state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv4 address 192.168.0.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ #  ipv4 address 192.168.0.2 255.255.255.0
+ #  ipv4 address 192.168.2.1 255.255.255.0 secondary
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  shutdown
+ # !
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv4 address 192.168.0.2 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ #  ipv4 address 192.168.0.1 255.255.255.0
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  ipv6 address fd5d:12c9:2201:1::1/64
+ #  shutdown
+ # !
+
+ - name: Replaces device configuration of listed interfaces with provided configuration
+   iosxr_l3_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/3
+         ipv6:
+         - address: fd5d:12c9:2201:1::1/64
+       - name: GigabitEthernet0/0/0/4
+         ipv4:
+         - address: 192.168.0.2/24
+     state: replaced
+
+ # After state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv6 address fd5d:12c9:2201:1::1/64
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ #  ipv4 address 192.168.0.1 255.255.255.0
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  ipv4 address 192.168.0.2 255.255.255.0
+ #  shutdown
+ # !
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  ipv4 address 192.168.2.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  ipv4 address 192.168.3.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv4 address 192.168.0.2 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ #  ipv4 address 192.168.0.1 255.255.255.0
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  ipv6 address fd5d:12c9:2201:1::1/64
+ #  shutdown
+ # !
+
+ - name: "Delete L3 attributes of given interfaces (Note: This won't delete the interface itself)"
+   iosxr_l3_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/3
+       - name: GigabitEthernet0/0/0/4
+       - name: GigabitEthernet0/0/0/3.700
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  ipv4 address 192.168.2.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  ipv4 address 192.168.3.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  shutdown
+ # !
+
+ # Using Deleted without any config passed
+ # "(NOTE: This will delete all of configured resource module attributes from each configured interface)"
+
+ # Before state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  ipv4 address 192.168.2.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  ipv4 address 192.168.3.1 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  ipv4 address 192.168.0.2 255.255.255.0
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ #  ipv4 address 192.168.0.1 255.255.255.0
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  ipv6 address fd5d:12c9:2201:1::1/64
+ #  shutdown
+ # !
+
+
+ - name: "Delete L3 attributes of all interfaces (Note: This won't delete the interface itself)"
+   iosxr_l3_interfaces:
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/3.700
+ # !
+ # interface GigabitEthernet0/0/0/4
+ #  shutdown
+ # !
+
+RETURN VALUES                   *iosxr_l3_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device
+   list     always       Sample:
+                         ['interface GigabitEthernet0/0/0/1', 'ipv4 address 192.168.0.1 255.255.255.0']
+
+STATUS                   *iosxr_l3_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *iosxr_l3_interfaces-red hat support*
+
+     • Sumit Jaiswal (@justjais)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iosxr_l3_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iosxr_l3_interfaces_module.html

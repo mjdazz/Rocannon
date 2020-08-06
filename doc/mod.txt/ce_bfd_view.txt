@@ -1,0 +1,128 @@
+SYNOPSIS                   *ce_bfd_view*
+
+     • Manages BFD session view configuration on HUAWEI CloudEngine devices.
+
+PARAMETERS                   *ce_bfd_view-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   admin_down        Choices:
+   boolean           • no ←         Enables the BFD session to enter the AdminDown state. By default, a BFD session is enabled. The default value is bool type.
+                     • yes
+   description                      Specifies the description of a BFD session. The value is a string of 1 to 51 case-sensitive characters with spaces.
+   -
+   detect_multi                     Specifies the local detection multiplier of a BFD session. The value is an integer that ranges from 3 to 50.
+   -
+   local_discr                      Specifies the local discriminator of a BFD session. The value is an integer that ranges from 1 to 16384.
+   -
+   min_rx_interval                  Specifies the minimum interval for sending BFD packets. The value is an integer that ranges from 50 to 1000, in milliseconds.
+   -
+   min_tx_interval                  Specifies the minimum interval for receiving BFD packets. The value is an integer that ranges from 50 to 1000, in milliseconds.
+   -
+   provider                         A dict object containing connection details.
+   -
+     host                           Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+     string /                       the transport.
+     required
+     password                       Specifies the password to use to authenticate the connection to the remote device. This is a common argument used for cli transports. If the value is not
+     string                         specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port          Default:         Specifies the port to use when building the connection to the remote device. This value applies to either cli or netconf. The port value will default to the
+     integer       "0 (use common   appropriate transport common port if none is provided in the task. (cli=22, netconf=22).
+                   port)"
+     ssh_keyfile                    Specifies the SSH key to use to authenticate the connection to the remote device. This argument is used for the cli transport. If the value is not specified in
+     path                           the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     transport       Choices:
+     string /        • cli ←        Configures the transport connection to use when connecting to the remote device. The transport argument supports connectivity to the device over cli (ssh).
+     required        • netconf
+     username                       Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the CLI login. If the value is not
+     string                         specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   remote_discr                     Specifies the remote discriminator of a BFD session. The value is an integer that ranges from 1 to 4294967295.
+   -
+   session_name                     Specifies the name of a BFD session. The value is a string of 1 to 15 case-sensitive characters without spaces.
+   - / required
+   state             Choices:
+   -                 • present ←    Determines whether the config should be present or not on the device.
+                     • absent
+   tos_exp                          Specifies a priority for BFD control packets. The value is an integer ranging from 0 to 7. The default value is 7, which is the highest priority.
+   -
+   wtr_interval                     Specifies the WTR time of a BFD session. The value is an integer that ranges from 1 to 60, in minutes. The default value is 0.
+   -
+
+NOTES                   *ce_bfd_view-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_bfd_view-examples*
+
+ - name: bfd view module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+   - name: Set the local discriminator of a BFD session to 80 and the remote discriminator to 800
+     ce_bfd_view:
+       session_name: atob
+       local_discr: 80
+       remote_discr: 800
+       state: present
+       provider: '{{ cli }}'
+
+   - name: Set the minimum interval for receiving BFD packets to 500 ms
+     ce_bfd_view:
+       session_name: atob
+       min_rx_interval: 500
+       state: present
+       provider: '{{ cli }}'
+
+RETURN VALUES                   *ce_bfd_view-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+                       k/v pairs of configuration after module execution
+   end_state  always   Sample:
+   dictionary          {'session': {'adminDown': 'false', 'createType': 'SESS_STATIC', 'description': None, 'detectMulti': '3', 'localDiscr': '80', 'minRxInt': None, 'minTxInt': None,
+                       'remoteDiscr': '800', 'sessName': 'atob', 'tosExp': None, 'wtrTimerInt': None}}
+                       k/v pairs of existing configuration
+   existing   always   Sample:
+   dictionary          {'session': {'adminDown': 'false', 'createType': 'SESS_STATIC', 'description': None, 'detectMulti': '3', 'localDiscr': None, 'minRxInt': None, 'minTxInt': None,
+                       'remoteDiscr': None, 'sessName': 'atob', 'tosExp': None, 'wtrTimerInt': None}}
+                       k/v pairs of parameters passed into module
+   proposed   always   Sample:
+   dictionary          {'admin_down': False, 'description': None, 'detect_multi': None, 'local_discr': 80, 'min_rx_interval': None, 'min_tx_interval': None, 'remote_discr': 800, 'session_name':
+                       'atob', 'state': 'present', 'tos_exp': None, 'wtr_interval': None}
+   updates             commands sent to the device
+   list       always   Sample:
+                       ['bfd atob', 'discriminator local 80', 'discriminator remote 800']
+
+STATUS                   *ce_bfd_view-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_bfd_view-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_bfd_view_module.html

@@ -1,0 +1,163 @@
+SYNOPSIS                   *junos_vrf*
+
+     • This module provides declarative management of VRF definitions on Juniper JUNOS devices. It allows playbooks to manage individual or the entire VRF collection.
+
+REQUIREMENTS                   *junos_vrf-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.5.2)
+
+PARAMETERS                   *junos_vrf-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   active         Choices:
+   boolean        • no           Specifies whether or not the configuration is active or deactivated
+                  • yes ←
+   aggregate                     The set of VRF definition objects to be configured on the remote JUNOS device. Ths list entries can either be the VRF name or a hash of VRF definitions and
+   -                             attributes. This argument is mutually exclusive with the name argument.
+   description                   Provides a short description of the VRF definition in the current active configuration. The VRF definition value accepts alphanumeric characters used to provide
+   -                             additional information about the VRF.
+   interfaces                    Identifies the set of interfaces that should be configured in the VRF. Interfaces must be routed interfaces in order to be placed into a VRF.
+   -
+   name                          The name of the VRF definition to be managed on the remote IOS device. The VRF definition name is an ASCII string name used to uniquely identify the VRF. This
+   -                             argument is mutually exclusive with the aggregate argument
+                                 Deprecated
+                                 Starting with Ansible 2.5 we recommend using connection: network_cli or connection: netconf.
+   provider                      For more information please see the Junos OS Platform Options guide.
+   dictionary
+                                 ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                 A dict object containing connection details.
+    host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+    string /                     the transport.
+    required
+    password                     Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not specified
+    string                       in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+    port        Default:         Specifies the port to use when building the connection to the remote device. The port value will default to the well known SSH port of 22 (for transport=cli) or
+    integer     22               port 830 (for transport=netconf) device.
+    ssh_keyfile                  Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+    path                         value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    timeout     Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer     10               operation is completed, the module will error.
+    username                     Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+    string                       specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   rd                            The router-distinguisher value uniquely identifies the VRF to routing processes on the remote IOS system. The RD value takes the form of A:B where A and B are both
+   -                             numeric values.
+   state          Choices:       Configures the state of the VRF definition as it relates to the device operational configuration. When set to present, the VRF should be configured in the device
+   -              • present ←    active configuration and when set to absent the VRF should not be in the device active configuration
+                  • absent
+   table_label    Choices:
+   boolean        • no           Causes JUNOS to allocate a VPN label per VRF rather than per VPN FEC. This allows for forwarding of traffic to directly connected subnets, COS Egress filtering etc.
+                  • yes
+   target                        It configures VRF target community configuration. The target value takes the form of target:A:B where A and B are both numeric values.
+   -
+
+NOTES                   *junos_vrf-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+     • Recommended connection is netconf. See the Junos OS Platform Options.
+     • This module also works with local connections for legacy playbooks.
+     • For information on using CLI and netconf see the Junos OS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Juniper network devices see https://www.ansible.com/ansible-juniper.
+
+EXAMPLES                   *junos_vrf-examples*
+
+ - name: Configure vrf configuration
+   junos_vrf:
+     name: test-1
+     description: test-vrf-1
+     interfaces:
+       - ge-0/0/3
+       - ge-0/0/2
+     rd: 192.0.2.1:10
+     target: target:65514:113
+     state: present
+
+ - name: Remove vrf configuration
+   junos_vrf:
+     name: test-1
+     description: test-vrf-1
+     interfaces:
+       - ge-0/0/3
+       - ge-0/0/2
+     rd: 192.0.2.1:10
+     target: target:65514:113
+     state: absent
+
+ - name: Deactivate vrf configuration
+   junos_vrf:
+     name: test-1
+     description: test-vrf-1
+     interfaces:
+       - ge-0/0/3
+       - ge-0/0/2
+     rd: 192.0.2.1:10
+     target: target:65514:113
+     active: False
+
+ - name: Activate vrf configuration
+   junos_vrf:
+     name: test-1
+     description: test-vrf-1
+     interfaces:
+       - ge-0/0/3
+       - ge-0/0/2
+     rd: 192.0.2.1:10
+     target: target:65514:113
+     active: True
+
+ - name: Create vrf using aggregate
+   junos_vrf:
+     aggregate:
+     - name: test-1
+       description: test-vrf-1
+       interfaces:
+         - ge-0/0/3
+          - ge-0/0/2
+       rd: 192.0.2.1:10
+       target: target:65514:113
+     - name: test-2
+       description: test-vrf-2
+       interfaces:
+         - ge-0/0/4
+         - ge-0/0/5
+       rd: 192.0.2.2:10
+       target: target:65515:114
+   state: present
+
+RETURN VALUES                   *junos_vrf-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key        Returned                                                                                 Description
+                 when
+                 configuration Configuration difference before and after applying change.
+   diff.prepared is changed    Sample:
+   string        and diff      [edit routing-instances] + test-1 { + description test-vrf-1; + instance-type vrf; + interface ge-0/0/2.0; + interface ge-0/0/3.0; + route-distinguisher 192.0.2.1:10;
+                 option is     + vrf-target target:65514:113; + }
+                 enabled.
+
+STATUS                   *junos_vrf-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_vrf-red hat support*
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_vrf-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_vrf_module.html

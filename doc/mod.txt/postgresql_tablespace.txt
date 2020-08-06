@@ -1,0 +1,160 @@
+SYNOPSIS                   *postgresql_tablespace*
+
+     • Adds or removes PostgreSQL tablespaces from remote hosts.
+
+REQUIREMENTS                   *postgresql_tablespace-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_tablespace-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+   ca_cert                             Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                              If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                       aliases: ssl_rootcert
+   db                                  Name of database to connect to and run queries against.
+   string                              aliases: login_db
+   location                            Path to the tablespace directory in the file system.
+   path                                Ensure that the location exists and has right privileges.
+                                       aliases: path
+   login_host                          Host running the database.
+   string
+   login_password                      The password used to authenticate with.
+   string
+   login_unix_socket                   Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:          The username used to authenticate with.
+   string            "postgres"
+   owner                               Name of the role to set as an owner of the tablespace.
+   string                              If this option is not specified, the tablespace owner is a role that creates the tablespace.
+   port              Default:          Database port to connect to.
+   integer           5432              aliases: login_port
+   rename_to                           New name of the tablespace.
+   -                                   The new name cannot begin with pg_, as such names are reserved for system tablespaces.
+   session_role                        Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                              Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+   set                                 Dict of tablespace options to set. Supported from PostgreSQL 9.0.
+   dictionary                          For more information see https://www.postgresql.org/docs/current/sql-createtablespace.html.
+                                       When reset is passed as an option's value, if the option was set previously, it will be removed.
+                       Choices:
+                       • allow
+   ssl_mode            • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                       • require       Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+                       Choices:        Tablespace state.
+   state               • absent        state=present implies the tablespace must be created if it doesn't exist.
+   string              • present ←     state=absent implies the tablespace must be removed if present. state=absent is mutually exclusive with location, owner, i(set).
+                                       See the Notes section for information about check mode restrictions.
+   tablespace                          Name of the tablespace to add or remove.
+   string / required                   aliases: name
+
+NOTES                   *postgresql_tablespace-notes*
+
+   Note
+
+     • state=absent and state=present (the second one if the tablespace doesn’t exist) do not support check mode because the corresponding PostgreSQL DROP and CREATE TABLESPACE commands can not be
+       run inside the transaction block.
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_tablespace-see also*
+
+   See also
+
+   PostgreSQL tablespaces
+   General information about PostgreSQL tablespaces.
+
+   CREATE TABLESPACE reference
+   Complete reference of the CREATE TABLESPACE command documentation.
+
+   ALTER TABLESPACE reference
+   Complete reference of the ALTER TABLESPACE command documentation.
+
+   DROP TABLESPACE reference
+   Complete reference of the DROP TABLESPACE command documentation.
+
+EXAMPLES                   *postgresql_tablespace-examples*
+
+ - name: Create a new tablespace called acme and set bob as an its owner
+   postgresql_tablespace:
+     name: acme
+     owner: bob
+     location: /data/foo
+
+ - name: Create a new tablespace called bar with tablespace options
+   postgresql_tablespace:
+     name: bar
+     set:
+       random_page_cost: 1
+       seq_page_cost: 1
+
+ - name: Reset random_page_cost option
+   postgresql_tablespace:
+     name: bar
+     set:
+       random_page_cost: reset
+
+ - name: Rename the tablespace from bar to pcie_ssd
+   postgresql_tablespace:
+     name: bar
+     rename_to: pcie_ssd
+
+ - name: Drop tablespace called bloat
+   postgresql_tablespace:
+     name: bloat
+     state: absent
+
+RETURN VALUES                   *postgresql_tablespace-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key      Returned                                                                                   Description
+   location               Path to the tablespace in the file system.
+   string     always      Sample:
+                          /incredible/fast/ssd
+   newname                New tablespace name
+   string     if existent Sample:
+                          new_ssd
+   options                Tablespace options.
+   dictionary always      Sample:
+                          {'random_page_cost': 1, 'seq_page_cost': 1}
+   owner                  Tablespace owner.
+   string     always      Sample:
+                          Bob
+   queries                List of queries that was tried to be executed.
+   string     always      Sample:
+                          ["CREATE TABLESPACE bar LOCATION '/incredible/ssd'"]
+   state                  Tablespace state at the end of execution.
+   string     always      Sample:
+                          present
+   tablespace             Tablespace name.
+   string     always      Sample:
+                          ssd
+
+STATUS                   *postgresql_tablespace-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Flavien Chantelot (@Dorn-)
+     • Antoine Levy-Lambert (@antoinell)
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_tablespace-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_tablespace_module.html

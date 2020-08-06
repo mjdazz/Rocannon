@@ -1,0 +1,165 @@
+SYNOPSIS                   *junos_lldp_interfaces*
+
+     • This module manages link layer discovery protocol (LLDP) attributes of interfaces on Juniper JUNOS devices.
+
+PARAMETERS                   *junos_lldp_interfaces-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   config                                      The list of link layer discovery protocol interface attribute configurations
+   list / elements=dictionary
+        enabled                 Choices:
+        boolean                 • no           This is a boolean value to control disabling of LLDP on the interface name
+                                • yes
+        name                                   Name of the interface LLDP needs to be configured on.
+        string / required
+                                Choices:
+   state                        • merged ←
+   string                       • replaced     The state of the configuration after module completion.
+                                • overridden
+                                • deleted
+
+EXAMPLES                   *junos_lldp_interfaces-examples*
+
+ # Using merged
+ # Before state:
+ # -------------
+ # [email protected]# # show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+
+ - name: Merge provided configuration with device configuration
+   junos_lldp_interfaces:
+     config:
+       - name: ge-0/0/1
+       - name: ge-0/0/2
+         enabled: False
+     state: merged
+
+ # After state:
+ # -------------
+ # [email protected]# show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+ # interface ge-0/0/1;
+ # interface ge-0/0/2 {
+ #     disable;
+ # }
+
+ # Using replaced
+ # Before state:
+ # -------------
+ # [email protected]# show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+ # interface ge-0/0/1;
+ # interface ge-0/0/2 {
+ #     disable;
+ # }
+
+ - name: Replace provided configuration with device configuration
+   junos_lldp_interfaces:
+     config:
+       - name: ge-0/0/2
+         disable: False
+       - name: ge-0/0/3
+         enabled: False
+     state: replaced
+
+ # After state:
+ # -------------
+ # [email protected]# show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+ # interface ge-0/0/1;
+ # interface ge-0/0/2;
+ # interface ge-0/0/3 {
+ #     disable;
+ # }
+
+ # Using overridden
+ # Before state:
+ # -------------
+ # [email protected]# show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+ # interface ge-0/0/1;
+ # interface ge-0/0/2 {
+ #     disable;
+ # }
+
+ - name: Override provided configuration with device configuration
+   junos_lldp_interfaces:
+     config:
+       - name: ge-0/0/2
+         enabled: False
+     state: overridden
+
+ # After state:
+ # -------------
+ # [email protected]# show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+ # interface ge-0/0/2 {
+ #     disable;
+ # }
+
+ # Using deleted
+ # Before state:
+ # -------------
+ # [email protected]# show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+ # interface ge-0/0/1;
+ # interface ge-0/0/2;
+ # interface ge-0/0/3 {
+ #     disable;
+ # }
+ - name: Delete lldp interface configuration (this will not delete other lldp configuration)
+   junos_lldp_interfaces:
+     config:
+     - name: ge-0/0/1
+     - name: ge-0/0/3
+     state: deleted
+
+ # After state:
+ # -------------
+ # [email protected]# show protocols lldp
+ # management-address 10.1.1.1;
+ # advertisement-interval 10000;
+ # interface ge-0/0/2;
+ # interface ge-0/0/1;
+
+RETURN VALUES                   *junos_lldp_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['xml 1', 'xml 2', 'xml 3']
+
+STATUS                   *junos_lldp_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_lldp_interfaces-red hat support*
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_lldp_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_lldp_interfaces_module.html

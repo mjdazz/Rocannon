@@ -1,0 +1,114 @@
+SYNOPSIS                   *ec2_vpc_nacl_info*
+
+     • Gather information about Network ACLs in an AWS VPC
+     • This module was called ec2_vpc_nacl_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: ec2_vpc_nacl_facts
+
+REQUIREMENTS                   *ec2_vpc_nacl_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_nacl_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   filters                      Default:         A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+   -                            {}               https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeNetworkAcls.html for possible filters. Filter names and values are case
+                                                 sensitive.
+   nacl_ids                     Default:         A list of Network ACL IDs to retrieve information about.
+   -                            []               aliases: nacl_id
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_vpc_nacl_info-notes*
+
+   Note
+
+     • By default, the module will return all Network ACLs.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_nacl_info-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Gather information about all Network ACLs:
+ - name: Get All NACLs
+   register: all_nacls
+   ec2_vpc_nacl_info:
+     region: us-west-2
+
+ # Retrieve default Network ACLs:
+ - name: Get Default NACLs
+   register: default_nacls
+   ec2_vpc_nacl_info:
+     region: us-west-2
+     filters:
+       'default': 'true'
+
+RETURN VALUES                   *ec2_vpc_nacl_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   nacls            success  Returns an array of complex objects as described below.
+   complex
+                             A list of NACL egress rules with the following format.
+     egress         always   [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
+     list of list            Sample:
+                             [[100, 'all', 'allow', '0.0.0.0/0', None, None, None, None]]
+                             A list of NACL ingress rules with the following format.
+     ingress        always   [rule no, protocol, allow/deny, v4 or v6 cidr, icmp_type, icmp_code, port from, port to]
+     list of list            Sample:
+                             [[100, 'tcp', 'allow', '0.0.0.0/0', None, None, 22, 22]]
+     is_default     always   True if the NACL is the default for its VPC.
+     boolean
+     nacl_id        always   The ID of the Network Access Control List.
+     string
+     subnets        always   A list of subnet IDs that are associated with the NACL.
+     list of string
+     tags           always   A dict of tags associated with the NACL.
+     dictionary
+     vpc_id         always   The ID of the VPC that the NACL is attached to.
+     string
+
+STATUS                   *ec2_vpc_nacl_info-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Brad Davidson (@brandond)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_nacl_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_nacl_info_module.html

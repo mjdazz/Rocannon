@@ -1,37 +1,260 @@
-SYNOPSIS                           *ec2_lc*
+SYNOPSIS                   *ec2_lc*
 
-New in version 1.6.
+     • Can create or delete AWS Autoscaling Configurations
+     • Works with the ec2_asg module to manage Autoscaling Groups
 
-Can create or delete AwS Autoscaling Configurations Works with the ec2_asg module to manage Autoscaling Groups
+REQUIREMENTS                   *ec2_lc-requirements*
 
-EXAMPLES                           *ec2_lc-examples*
->
-    - ec2_lc:
-        name: special
-        image_id: ami-XXX
-        key_name: default
-        security_groups: ['group', 'group2' ]
-        instance_type: t1.micro
-   
-      Note
-   
-      Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration after it is changed will not modify the launch configuration on AWS. You must create a new
-      config and assign it to the ASG instead.
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3 >= 1.4.4
+     • python >= 2.6
+
+PARAMETERS                   *ec2_lc-parameters*
+
+              Parameter             Choices/Defaults                                                                     Comments
+   assign_public_ip                                  Used for Auto Scaling groups that launch instances into an Amazon Virtual Private Cloud. Specifies whether to assign a public IP address to each
+   -                                                 instance launched in a Amazon VPC.
+   aws_access_key                                    AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                            aliases: ec2_access_key, access_key
+   aws_secret_key                                    AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                            aliases: ec2_secret_key, secret_key
+   classic_link_vpc_id                               Id of ClassicLink enabled VPC
+   -
+   classic_link_vpc_security_groups                  A list of security group IDs with which to associate the ClassicLink VPC instances.
+   -
+   debug_botocore_endpoint_logs       Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                            • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                       • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ebs_optimized                    Default:         Specifies whether the instance is optimized for EBS I/O (true) or not (false).
+   -                                "no"
+   ec2_url                                           Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                            required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any,
+                                                     is used.
+   image_id                                          The AMI unique identifier to be used for the group
+   -
+   instance_id
+   -                                                 The Id of a running instance to use as a basis for a launch configuration. Can be used in place of image_id and instance_type.
+   added in 2.4
+   instance_monitoring                Choices:
+   boolean                            • no ←         Specifies whether instances are launched with detailed monitoring.
+                                      • yes
+   instance_profile_name                             The name or the Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instances.
+   -
+   instance_type                                     Instance type to use for the instance
+   - / required
+   kernel_id                                         Kernel id for the EC2 instance
+   -
+   key_name                                          The SSH key name to be used for access to managed instances
+   -
+   name                                              Unique name for configuration
+   - / required
+   placement_tenancy                Default:
+   -                                "default"        Determines whether the instance runs on single-tenant hardware or not.
+   added in 2.4
+   profile                                           Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   ramdisk_id                                        A RAM disk id for the instances.
+   -
+   region                                            The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                            http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                     aliases: aws_region, ec2_region
+   security_groups                                   A list of security groups to apply to the instances. Since version 2.4 you can specify either security group names or IDs or a mix. Previous to
+   -                                                 2.4, for VPC instances, specify security group IDs and for EC2-Classic, specify either security group names or IDs.
+   security_token                                    AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                            aliases: access_token
+   spot_price                                        The spot price you are bidding. Only applies for an autoscaling group with spot instances.
+   -
+   state                              Choices:
+   -                                  • present ←    Register or deregister the instance
+                                      • absent
+   user_data                                         Opaque blob of data which is made available to the ec2 instance. Mutually exclusive with user_data_path.
+   -
+   user_data_path                                    Path to the file that contains userdata for the ec2 instances. Mutually exclusive with user_data.
+   -
+   validate_certs                     Choices:
+   boolean                            • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                      • yes ←
+   volumes                                           A list of volume dicts, each containing device name and optionally ephemeral id or snapshot id. Size and type (and number of iops for io device
+   -                                                 type) must be specified for a new volume or a root volume, and may be passed for a snapshot volume. For any volume, a volume size less than 1
+                                                     will be interpreted as a request not to create the volume.
+   vpc_id
+   -                                                 VPC ID, used when resolving security group names to IDs.
+   added in 2.4
+
+NOTES                   *ec2_lc-notes*
+
+   Note
+
+     • Amazon ASG Autoscaling Launch Configurations are immutable once created, so modifying the configuration after it is changed will not modify the launch configuration on AWS. You must create a
+       new config and assign it to the ASG instead.
+     • encrypted volumes are supported on versions >= 2.4
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_lc-examples*
+
+ # create a launch configuration using an AMI image and instance type as a basis
+
+ - name: note that encrypted volumes are only supported in >= Ansible 2.4
+   ec2_lc:
+     name: special
+     image_id: ami-XXX
+     key_name: default
+     security_groups: ['group', 'group2' ]
+     instance_type: t1.micro
+     volumes:
+     - device_name: /dev/sda1
+       volume_size: 100
+       volume_type: io1
+       iops: 3000
+       delete_on_termination: true
+       encrypted: true
+     - device_name: /dev/sdb
+       ephemeral: ephemeral0
+
+ # create a launch configuration using a running instance id as a basis
+
+ - ec2_lc:
+     name: special
+     instance_id: i-00a48b207ec59e948
+     key_name: default
+     security_groups: ['launch-wizard-2' ]
+     volumes:
+     - device_name: /dev/sda1
+       volume_size: 120
+       volume_type: io1
+       iops: 3000
+       delete_on_termination: true
+
+ # create a launch configuration to omit the /dev/sdf EBS device that is included in the AMI image
+
+ - ec2_lc:
+     name: special
+     image_id: ami-XXX
+     key_name: default
+     security_groups: ['group', 'group2' ]
+     instance_type: t1.micro
+     volumes:
+     - device_name: /dev/sdf
+       no_device: true
+
+RETURN VALUES                   *ec2_lc-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                  Key                     Returned                                                                      Description
+   arn                                when             The Amazon Resource Name of the launch configuration.
+   string                             state=present    Sample:
+                                                       arn:aws:autoscaling:us-east-1:148830907657:launchConfiguration:888d9b58-d93a-40c4-90cf-759197a2621a:launchConfigurationName/launch_config_name
+   changed                            always           Whether the state of the launch configuration has changed.
+   boolean
+   created_time                       when             The creation date and time for the launch configuration.
+   string                             state=present    Sample:
+                                                       2017-11-03 23:46:44.841000
+   image_id                           when             The ID of the Amazon Machine Image used by the launch configuration.
+   string                             state=present    Sample:
+                                                       ami-9be6f38c
+   instance_type                      when             The instance type for the instances.
+   string                             state=present    Sample:
+                                                       t1.micro
+   name                               when             The name of the launch configuration.
+   string                             state=present    Sample:
+                                                       launch_config_name
+   result                             when             The specification details for the launch configuration.
+   complex                            state=present
+     associate_public_ip_address      when             (EC2-VPC) Indicates whether to assign a public IP address to each instance.
+     NoneType                         state=present
+     block_device_mappings            when             A block device mapping, which specifies the block devices.
+     complex                          state=present
+             device_name              when             The device name exposed to the EC2 instance (for example, /dev/sdh or xvdh).
+             string                   state=present    Sample:
+                                                       /dev/sda1
+             ebs                      when             The information about the Amazon EBS volume.
+             complex                  state=present
+                     snapshot_id      when             The ID of the snapshot.
+                     NoneType         state=present
+                     volume_size      when             The volume size, in GiB.
+                     string           state=present    Sample:
+                                                       100
+             virtual_name             when             The name of the virtual device (for example, ephemeral0).
+             NoneType                 state=present
+     classic_link_vpc_id              when             The ID of a ClassicLink-enabled VPC to link your EC2-Classic instances to.
+     NoneType                         state=present
+     classic_link_vpc_security_groups when             The IDs of one or more security groups for the VPC specified in ClassicLinkVPCId.
+     list                             state=present
+     created_time                     when             The creation date and time for the launch configuration.
+     string                           state=present    Sample:
+                                                       2017-11-03 23:46:44.841000
+     delete_on_termination            when             Indicates whether the volume is deleted on instance termination.
+     boolean                          state=present    Sample:
+                                                       True
+     ebs_optimized                    when             Indicates whether the instance is optimized for EBS I/O (true) or not (false).
+     boolean                          state=present
+     image_id                         when             The ID of the Amazon Machine Image used by the launch configuration.
+     string                           state=present    Sample:
+                                                       ami-9be6f38c
+     instance_monitoring              when             Indicates whether instances in this group are launched with detailed (true) or basic (false) monitoring.
+     boolean                          state=present    Sample:
+                                                       True
+     instance_profile_name            when             The name or Amazon Resource Name (ARN) of the instance profile associated with the IAM role for the instance.
+     string                           state=present
+     instance_type                    when             The instance type for the instances.
+     string                           state=present    Sample:
+                                                       t1.micro
+     iops                             when             The number of I/O operations per second (IOPS) to provision for the volume.
+     NoneType                         state=present
+     kernel_id                        when             The ID of the kernel associated with the AMI.
+     string                           state=present
+     key_name                         when             The name of the key pair.
+     string                           state=present    Sample:
+                                                       testkey
+     launch_configuration_arn         when             The Amazon Resource Name (ARN) of the launch configuration.
+     string                           state=present    Sample:
+                                                       arn:aws:autoscaling:us-east-1:148830907657:launchConfiguration:888d9b58-d93a-40c4-90cf-759197a2621a:launchConfigurationName/launch_config_name
+     member                           when             Sample:
+     string                           state=present
+     name                             when             The name of the launch configuration.
+     string                           state=present    Sample:
+                                                       launch_config_name
+     PlacementTenancy                 when             The tenancy of the instances, either default or dedicated.
+     string                           state=present    Sample:
+                                                       default
+     ramdisk_id                       when             The ID of the RAM disk associated with the AMI.
+     string                           state=present
+     security_groups                  when             The security groups to associate with the instances.
+     list                             state=present    Sample:
+                                                       ['sg-5e27db2f']
+     spot_price                       when             The price to bid when launching Spot Instances.
+     NoneType                         state=present
+     use_block_device_types           when             Indicates whether to suppress a device mapping.
+     boolean                          state=present
+     user_data                        when             The user data available to the instances.
+     string                           state=present
+     volume_type                      when             The volume type (one of standard, io1, gp2).
+     NoneType                         state=present
+   security_groups                    when             The security groups to associate with the instances.
+   list                               state=present    Sample:
+                                                       ['sg-5e27db2f']
+
+STATUS                   *ec2_lc-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Gareth Rushgrove (@garethr)
+     • Willem van Ketwich (@wilvk)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_lc-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_lc_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_lc_module.html

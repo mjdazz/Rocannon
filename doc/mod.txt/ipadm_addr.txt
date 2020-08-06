@@ -1,0 +1,86 @@
+SYNOPSIS                   *ipadm_addr*
+
+     • Create/delete static/dynamic IP addresses on network interfaces on Solaris/illumos systems.
+     • Up/down static/dynamic IP addresses on network interfaces on Solaris/illumos systems.
+     • Manage IPv6 link-local addresses on network interfaces on Solaris/illumos systems.
+
+PARAMETERS                   *ipadm_addr-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   address                       Specifiies an IP address to configure in CIDR notation.
+   -                             aliases: addr
+   addrobj                       Specifies an unique IP address on the system.
+   - / required
+                  Choices:
+   addrtype       • static ←     Specifiies a type of IP address to configure.
+   -              • dhcp
+                  • addrconf
+                  Choices:
+                  • absent
+                  • present ←
+   state          • up           Create/delete/enable/disable an IP address on the network interface.
+   -              • down
+                  • enabled
+                  • disabled
+                  • refreshed
+   temporary      Choices:
+   boolean        • no ←         Specifies that the configured IP address is temporary. Temporary IP addresses do not persist across reboots.
+                  • yes
+   wait         Default:         Specifies the time in seconds we wait for obtaining address via DHCP.
+   -            60
+
+EXAMPLES                   *ipadm_addr-examples*
+
+ - name: Configure IP address 10.0.0.1 on e1000g0
+   ipadm_addr: addr=10.0.0.1/32 addrobj=e1000g0/v4 state=present
+
+ - name: Delete addrobj
+   ipadm_addr: addrobj=e1000g0/v4 state=absent
+
+ - name: Configure link-local IPv6 address
+   ipadm_addr: addtype=addrconf addrobj=vnic0/v6
+
+ - name: Configure address via DHCP and wait 180 seconds for address obtaining
+   ipadm_addr: addrobj=vnic0/dhcp addrtype=dhcp wait=180
+
+RETURN VALUES                   *ipadm_addr-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key              Returned                                                                                   Description
+   address                                IP address
+   string    only if addrtype is 'static' Sample:
+                                          1.3.3.7/32
+   addrobj                                address object name
+   string    always                       Sample:
+                                          bge0/v4
+   addrtype                               address type
+   string    always                       Sample:
+                                          static
+   state                                  state of the target
+   string    always                       Sample:
+                                          present
+   temporary                              specifies if operation will persist across reboots
+   boolean   always                       Sample:
+                                          True
+   wait                                   time we wait for DHCP
+   string    only if addrtype is 'dhcp'   Sample:
+                                          10
+
+STATUS                   *ipadm_addr-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Adam Števko (@xen0l)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ipadm_addr-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ipadm_addr_module.html

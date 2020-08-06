@@ -1,0 +1,126 @@
+SYNOPSIS                   *na_ontap_user*
+
+     • Create or destroy users.
+
+REQUIREMENTS                   *na_ontap_user-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_user-parameters*
+
+         Parameter         Choices/Defaults                                                                           Comments
+                           Choices:
+                           • console
+                           • http
+                           • ontapi
+   applications            • rsh               List of application to grant access to.
+   list / required         • snmp              aliases: application
+                           • service-processor
+                           • sp
+                           • ssh
+                           • telnet
+                                               Authentication method for the application.
+                                               Not all authentication methods are valid for an application.
+                           Choices:            Valid authentication methods for each application are as denoted in authentication_choices_description.
+                           • community         Password for console application
+                           • password          Password, domain, nsswitch, cert for http application.
+   authentication_method   • publickey         Password, domain, nsswitch, cert for ontapi application.
+   - / required            • domain            Community for snmp application (when creating SNMPv1 and SNMPv2 users).
+                           • nsswitch          The usm and community for snmp application (when creating SNMPv3 users).
+                           • usm               Password for sp application.
+                           • cert              Password for rsh application.
+                                               Password for telnet application.
+                                               Password, publickey, domain, nsswitch for ssh application.
+   hostname                                    The hostname or IP address of the ONTAP instance.
+   string / required
+   http_port                                   Override the default port (80 or 443) with this port
+   integer
+   https                   Choices:
+   boolean                 • no ←              Enable and disable https
+                           • yes
+   lock_user               Choices:
+   boolean                 • no                Whether the specified user account is locked.
+                           • yes
+   name                                        The name of the user to manage.
+   - / required
+   ontapi                                      The ontap api version to use
+   integer
+   password                                    Password for the specified user.
+   string / required                           aliases: pass
+   role_name                                   The name of the role. Required when state=present
+   -
+   set_password                                Password for the user account.
+   -                                           It is ignored for creating snmp users, but is required for creating non-snmp users.
+                                               For an existing user, this value will be used as the new password.
+   state                   Choices:
+   -                       • present ←         Whether the specified user should exist or not.
+                           • absent
+                           Choices:            REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest                • Never             Always -- will always use the REST API
+   string                  • Always            Never -- will always use the ZAPI
+                           • Auto ←            Auto -- will try to use the REST Api
+   username                                    This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please
+   string / required                           read the documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+                                               aliases: user
+   validate_certs          Choices:            If set to no, the SSL certificates will not be validated.
+   boolean                 • no                This should only set to False used on personally controlled sites using self-signed certificates.
+                           • yes ←
+   vserver                                     The name of the vserver to use.
+   - / required
+
+NOTES                   *na_ontap_user-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_user-examples*
+
+ - name: Create User
+   na_ontap_user:
+     state: present
+     name: SampleUser
+     applications: ssh,console
+     authentication_method: password
+     set_password: apn1242183u1298u41
+     lock_user: True
+     role_name: vsadmin
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Delete User
+   na_ontap_user:
+     state: absent
+     name: SampleUser
+     applications: ssh
+     authentication_method: password
+     vserver: ansibleVServer
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+STATUS                   *na_ontap_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_user-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_user_module.html

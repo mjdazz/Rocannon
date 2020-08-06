@@ -1,0 +1,272 @@
+SYNOPSIS                   *netscaler_servicegroup*
+
+     • Manage service group configuration in Netscaler.
+     • This module is intended to run either on the ansible control node or a bastion (jumpserver) with access to the actual netscaler instance.
+
+REQUIREMENTS                   *netscaler_servicegroup-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • nitro python sdk
+
+PARAMETERS                   *netscaler_servicegroup-parameters*
+
+       Parameter       Choices/Defaults                                                                            Comments
+   appflowlog           Choices:
+   -                    • enabled        Enable logging of AppFlow information for the specified service group.
+                        • disabled
+                        Choices:
+   autoscale            • DISABLED       Auto scale option for a servicegroup.
+   -                    • DNS
+                        • POLICY
+   cacheable            Choices:         Use the transparent cache redirection virtual server to forward the request to the cache server.
+   boolean              • no             Note: Do not set this parameter if you set the Cache Type.
+                        • yes
+                        Choices:
+   cachetype            • TRANSPARENT    Cache type supported by the cache server.
+   -                    • REVERSE
+                        • FORWARD
+   cip                  Choices:
+   -                    • enabled        Insert the Client IP header in requests forwarded to the service.
+                        • disabled
+                                         Name of the HTTP header whose value must be set to the IP address of the client. Used with the Client IP parameter. If client IP insertion is enabled, and
+   cipheader                             the client IP header is not specified, the value of Client IP Header parameter or the value set by the set ns config command is used as client's IP header
+   -                                     name.
+                                         Minimum length = 1
+   cka                  Choices:
+   boolean              • no             Enable client keep-alive for the service group.
+                        • yes
+   clttimeout                            Time, in seconds, after which to terminate an idle client connection.
+   -                                     Minimum value = 0
+                                         Maximum value = 31536000
+   cmp                  Choices:
+   boolean              • no             Enable compression for the specified service.
+                        • yes
+   comment                               Any information about the service group.
+   -
+   disabled             Choices:         When set to yes the service group state will be set to DISABLED.
+   boolean              • no ←           When set to no the service group state will be set to ENABLED.
+                        • yes            Note that due to limitations of the underlying NITRO API a disabled state change alone does not cause the module result to report a changed status.
+   downstateflush       Choices:         Flush all active transactions associated with all the services in the service group whose state transitions from UP to DOWN. Do not enable this option for
+   -                    • enabled        applications that must complete their transactions.
+                        • disabled
+   graceful             Choices:
+   boolean              • no             Wait for all existing connections to the service to terminate before shutting down the service.
+                        • yes
+   healthmonitor        Choices:         Monitor the health of this service. Available settings function as follows:
+   boolean              • no             yes - Send probes to check the health of the service.
+                        • yes            no - Do not send probes to check the health of the service. With the NO option, the appliance shows the service as UP at all times.
+   httpprofilename                       Name of the HTTP profile that contains HTTP configuration settings for the service group.
+   -                                     Minimum length = 1
+                                         Maximum length = 127
+   maxbandwidth                          Maximum bandwidth, in Kbps, allocated for all the services in the service group.
+   -                                     Minimum value = 0
+                                         Maximum value = 4294967287
+   maxclient                             Maximum number of simultaneous open connections for the service group.
+   -                                     Minimum value = 0
+                                         Maximum value = 4294967294
+                                         Maximum number of requests that can be sent on a persistent connection to the service group.
+   maxreq                                Note: Connection requests beyond this value are rejected.
+   -                                     Minimum value = 0
+                                         Maximum value = 65535
+   memberport                            member port.
+   -
+   monitorbindings                       A list of monitornames to bind to this service
+   -                                     Note that the monitors must have already been setup possibly using the netscaler_lb_monitor module or some other method
+      monitorname                        The monitor name to bind to this servicegroup.
+      -
+      weight                             Weight to assign to the binding between the monitor and servicegroup.
+      -
+   monthreshold                          Minimum sum of weights of the monitors that are bound to this service. Used to determine whether to mark a service as UP or DOWN.
+   -                                     Minimum value = 0
+                                         Maximum value = 65535
+   netprofile                            Network profile for the service group.
+   -                                     Minimum length = 1
+                                         Maximum length = 127
+   nitro_pass                            The password with which to authenticate to the netscaler node.
+   string / required
+   nitro_protocol       Choices:
+   string               • http ←         Which protocol to use when accessing the nitro API objects.
+                        • https
+   nitro_timeout      Default:           Time in seconds until a timeout error is thrown when establishing a new session with Netscaler
+   float              310
+   nitro_user                            The username with which to authenticate to the netscaler node.
+   string / required
+   nsip                                  The ip address of the netscaler appliance where the nitro API calls will be made.
+   string / required                     The port can be specified with the colon (:). E.g. 192.168.1.1:555.
+   pathmonitor          Choices:
+   boolean              • no             Path monitoring for clustering.
+                        • yes
+   pathmonitorindv      Choices:
+   boolean              • no             Individual Path monitoring decisions.
+                        • yes
+   rtspsessionidremap   Choices:
+   boolean              • no             Enable RTSP session ID mapping for the service group.
+                        • yes
+   save_config          Choices:         If yes the module will save the configuration on the netscaler node if it makes any changes.
+   boolean              • no             The module will not save the configuration on the netscaler node if it made no changes.
+                        • yes ←
+   servicegroupname                      Name of the service group. Must begin with an ASCII alphabetic or underscore _ character, and must contain only ASCII alphanumeric, underscore _, hash #,
+   -                                     period ., space  , colon :, at @, equals =, and hyphen - characters. Can be changed after the name is created.
+                                         Minimum length = 1
+   servicemembers                        A list of dictionaries describing each service member of the service group.
+   -
+      customserverid                     The identifier for this IP:Port pair.
+      -                                  Used when the persistency type is set to Custom Server ID.
+                                         The hash identifier for the service.
+      hashid                             This must be unique for each service.
+      -                                  This parameter is used by hash based load balancing methods.
+                                         Minimum value = 1
+      ip                                 IP address of the service. Must not overlap with an existing server entity defined by name.
+      -
+      port                               Server port number.
+      -                                  Range 1 - 65535
+                                         " in CLI is represented as 65535 in NITRO API
+      serverid                           The identifier for the service.
+      -                                  This is used when the persistency type is set to Custom Server ID.
+      servername                         Name of the server to which to bind the service group.
+      -                                  The server must already be configured as a named server.
+                                         Minimum length = 1
+      state             Choices:
+      -                 • enabled        Initial state of the service after binding.
+                        • disabled
+                                         Weight to assign to the servers in the service group.
+      weight                             Specifies the capacity of the servers relative to the other servers in the load balancing configuration.
+      -                                  The higher the weight, the higher the percentage of requests sent to the service.
+                                         Minimum value = 1
+                                         Maximum value = 100
+                        Choices:
+                        • HTTP
+                        • FTP
+                        • TCP
+                        • UDP
+                        • SSL
+                        • SSL_BRIDGE
+                        • SSL_TCP
+                        • DTLS
+                        • NNTP
+                        • RPCSVR
+                        • DNS
+                        • ADNS
+                        • SNMP
+                        • RTSP
+                        • DHCPRA
+                        • ANY
+                        • SIP_UDP
+   servicetype          • SIP_TCP        Protocol used to exchange data with the service.
+   -                    • SIP_SSL
+                        • DNS_TCP
+                        • ADNS_TCP
+                        • MYSQL
+                        • MSSQL
+                        • ORACLE
+                        • RADIUS
+                        • RADIUSListener
+                        • RDP
+                        • DIAMETER
+                        • SSL_DIAMETER
+                        • TFTP
+                        • SMPP
+                        • PPTP
+                        • GRE
+                        • SYSLOGTCP
+                        • SYSLOGUDP
+                        • FIX
+                        • SSL_FIX
+   sp                   Choices:
+   boolean              • no             Enable surge protection for the service group.
+                        • yes
+   state                Choices:         The state of the resource being configured by the module on the netscaler node.
+   string               • absent         When present the resource will be created if needed and configured according to the module's parameters.
+                        • present ←      When absent the resource will be deleted from the netscaler node.
+   svrtimeout                            Time, in seconds, after which to terminate an idle server connection.
+   -                                     Minimum value = 0
+                                         Maximum value = 31536000
+   tcpb                 Choices:
+   boolean              • no             Enable TCP buffering for the service group.
+                        • yes
+   tcpprofilename                        Name of the TCP profile that contains TCP configuration settings for the service group.
+   -                                     Minimum length = 1
+                                         Maximum length = 127
+   useproxyport         Choices:         Use the proxy port as the source port when initiating connections with the server. With the NO setting, the client-side connection port is used as the
+   boolean              • no             source port for the server-side connection.
+                        • yes            Note: This parameter is available only when the Use Source IP usip parameter is set to yes.
+   usip                 Choices:         Use client's IP address as the source IP address when initiating connection to the server. With the NO setting, which is the default, a mapped IP (MIP)
+   boolean              • no             address or subnet IP (SNIP) address is used as the source IP address to initiate server side connections.
+                        • yes
+   validate_certs       Choices:
+   boolean              • no             If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+                        • yes ←
+
+NOTES                   *netscaler_servicegroup-notes*
+
+   Note
+
+     • For more information on using Ansible to manage Citrix NetScaler Network devices see https://www.ansible.com/ansible-netscaler.
+
+EXAMPLES                   *netscaler_servicegroup-examples*
+
+ # The LB Monitors monitor-1 and monitor-2 must already exist
+ # Service members defined by C(ip) must not redefine an existing server's ip address.
+ # Service members defined by C(servername) must already exist.
+
+ - name: Setup http service with ip members
+   delegate_to: localhost
+   netscaler_servicegroup:
+     nsip: 172.18.0.2
+     nitro_user: nsroot
+     nitro_pass: nsroot
+
+     state: present
+
+     servicegroupname: service-group-1
+     servicetype: HTTP
+     servicemembers:
+       - ip: 10.78.78.78
+         port: 80
+         weight: 50
+       - ip: 10.79.79.79
+         port: 80
+         weight: 40
+       - servername: server-1
+         port: 80
+         weight: 10
+
+     monitorbindings:
+       - monitorname: monitor-1
+         weight: 50
+       - monitorname: monitor-2
+         weight: 50
+
+RETURN VALUES                   *netscaler_servicegroup-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   diff                List of differences between the actual configured object and the configuration specified in the module
+   dictionary failure  Sample:
+                       {'clttimeout': 'difference. ours: (float) 10.0 other: (float) 20.0'}
+   loglines            list of logged messages by the module
+   list       always   Sample:
+                       ['message 1', 'message 2']
+   msg                 Message detailing the failure reason
+   string     failure  Sample:
+                       Action does not exist
+
+STATUS                   *netscaler_servicegroup-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • George Nikolopoulos (@giorgos-nikolopoulos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netscaler_servicegroup-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netscaler_servicegroup_module.html

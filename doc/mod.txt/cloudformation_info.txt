@@ -1,0 +1,187 @@
+SYNOPSIS                   *cloudformation_info*
+
+     • Gets information about an AWS CloudFormation stack
+     • This module was called cloudformation_facts before Ansible 2.9, returning ansible_facts. Note that the cloudformation_info module no longer returns ansible_facts!
+
+   Aliases: cloudformation_facts
+
+REQUIREMENTS                   *cloudformation_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3 >= 1.0.0
+     • python >= 2.6
+
+PARAMETERS                   *cloudformation_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   all_facts                      Choices:
+   boolean                        • no ←         Get all stack information for the stack
+                                  • yes
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   stack_events                   Choices:
+   boolean                        • no ←         Get stack events for the stack
+                                  • yes
+   stack_name                                    The name or id of the CloudFormation stack. Gathers information on all stacks by default.
+   -
+   stack_policy                   Choices:
+   boolean                        • no ←         Get stack policy for the stack
+                                  • yes
+   stack_resources                Choices:
+   boolean                        • no ←         Get stack resources for the stack
+                                  • yes
+   stack_template                 Choices:
+   boolean                        • no ←         Get stack template body for the stack
+                                  • yes
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *cloudformation_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *cloudformation_info-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Get summary information about a stack
+ - cloudformation_info:
+     stack_name: my-cloudformation-stack
+   register: output
+
+ - debug:
+     msg: "{{ output['cloudformation']['my-cloudformation-stack'] }}"
+
+ # When the module is called as cloudformation_facts, return values are published
+ # in ansible_facts['cloudformation'][<stack_name>] and can be used as follows.
+ # Note that this is deprecated and will stop working in Ansible 2.13.
+
+ - cloudformation_facts:
+     stack_name: my-cloudformation-stack
+
+ - debug:
+     msg: "{{ ansible_facts['cloudformation']['my-cloudformation-stack'] }}"
+
+ # Get stack outputs, when you have the stack name available as a fact
+ - set_fact:
+     stack_name: my-awesome-stack
+
+ - cloudformation_info:
+     stack_name: "{{ stack_name }}"
+   register: my_stack
+
+ - debug:
+     msg: "{{ my_stack.cloudformation[stack_name].stack_outputs }}"
+
+ # Get all stack information about a stack
+ - cloudformation_info:
+     stack_name: my-cloudformation-stack
+     all_facts: true
+
+ # Get stack resource and stack policy information about a stack
+ - cloudformation_info:
+     stack_name: my-cloudformation-stack
+     stack_resources: true
+     stack_policy: true
+
+ # Fail if the stack doesn't exist
+ - name: try to get facts about a stack but fail if it doesn't exist
+   cloudformation_info:
+     stack_name: nonexistent-stack
+     all_facts: yes
+   failed_when: cloudformation['nonexistent-stack'] is undefined
+
+ # Example dictionary outputs for stack_outputs, stack_parameters and stack_resources:
+ # "stack_outputs": {
+ #     "ApplicationDatabaseName": "dazvlpr01xj55a.ap-southeast-2.rds.amazonaws.com",
+ #     ...
+ # },
+ # "stack_parameters": {
+ #     "DatabaseEngine": "mysql",
+ #     "DatabasePassword": """""",
+ #     ...
+ # },
+ # "stack_resources": {
+ #     "AutoscalingGroup": "dev-someapp-AutoscalingGroup-1SKEXXBCAN0S7",
+ #     "AutoscalingSecurityGroup": "sg-abcd1234",
+ #     "ApplicationDatabase": "dazvlpr01xj55a",
+ #     "EcsTaskDefinition": "arn:aws:ecs:ap-southeast-2:123456789:task-definition/dev-someapp-EcsTaskDefinition-1F2VM9QB0I7K9:1"
+ #     ...
+ # }
+
+RETURN VALUES                   *cloudformation_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key            Returned                                                                              Description
+   stack_description   if the stack    Summary facts about the stack
+   dictionary          exists
+                       only if
+   stack_events        all_facts or
+   list                stack_events is All stack events for the stack
+                       true and the
+                       stack exists
+   stack_outputs       if the stack    Dictionary of stack outputs keyed by the value of each output 'OutputKey' parameter and corresponding value of each output 'OutputValue' parameter
+   dictionary          exists
+   stack_parameters    if the stack    Dictionary of stack parameters keyed by the value of each parameter 'ParameterKey' parameter and corresponding value of each parameter 'ParameterValue'
+   dictionary          exists          parameter
+                       only if
+   stack_policy        all_facts or
+   dictionary          stack_policy is Describes the stack policy for the stack
+                       true and the
+                       stack exists
+                       only if
+   stack_resource_list all_facts or
+   list                stack_resourses Describes stack resources for the stack
+                       is true and the
+                       stack exists
+                       only if
+   stack_resources     all_facts or    Dictionary of stack resources keyed by the value of each resource 'LogicalResourceId' parameter and corresponding value of each resource 'PhysicalResourceId'
+   dictionary          stack_resourses parameter
+                       is true and the
+                       stack exists
+                       only if
+   stack_template      all_facts or
+   dictionary          stack_template  Describes the stack template for the stack
+                       is true and the
+                       stack exists
+
+STATUS                   *cloudformation_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Justin Menga (@jmenga)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cloudformation_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cloudformation_info_module.html

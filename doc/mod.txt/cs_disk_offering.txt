@@ -1,0 +1,184 @@
+SYNOPSIS                   *cs_disk_offering*
+
+     • Create and delete disk offerings for guest VMs.
+     • Update display_text or display_offering of existing disk offering.
+
+REQUIREMENTS                   *cs_disk_offering-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_disk_offering-parameters*
+
+            Parameter          Choices/Defaults                                                                       Comments
+                                 Choices:       HTTP method used to query the API endpoint.
+   api_http_method               • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                        • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                                Fallback value is get if not specified.
+   api_key                                      API key of the CloudStack API.
+   string                                       If not given, the CLOUDSTACK_KEY env variable is considered.
+                                                As the last option, the value is taken from the ini config file, also see the notes.
+   api_region                  Default:         Name of the ini section in the cloustack.ini file.
+   string                      "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                                   Secret key of the CloudStack API.
+   string                                       If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                                As the last option, the value is taken from the ini config file, also see the notes.
+                                                HTTP timeout in seconds.
+   api_timeout                                  If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                                      As the last option, the value is taken from the ini config file, also see the notes.
+                                                Fallback value is 10 seconds if not specified.
+   api_url                                      URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                                       If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                                As the last option, the value is taken from the ini config file, also see the notes.
+   bytes_read_rate                              Bytes read rate of the disk offering.
+   integer
+   bytes_write_rate                             Bytes write rate of the disk offering.
+   integer
+   customized                    Choices:
+   boolean                       • no ←         Whether disk offering iops is custom or not.
+                                 • yes
+   disk_size                                    Size of the disk offering in GB (1GB = 1,073,741,824 bytes).
+   integer
+   display_offering              Choices:
+   boolean                       • no           An optional field, whether to display the offering to the end user or not.
+                                 • yes
+   display_text                                 Display text of the disk offering.
+   string                                       If not set, name will be used as display_text while creating.
+   domain                                       Domain the disk offering is related to.
+   string                                       Public for all domains and subdomains if not set.
+   hypervisor_snapshot_reserve                  Hypervisor snapshot reserve space as a percent of a volume.
+   integer                                      Only for managed storage using Xen or VMware.
+   iops_max                                     Max. iops of the disk offering.
+   integer
+   iops_min                                     Min. iops of the disk offering.
+   integer
+   iops_read_rate                               IO requests read rate of the disk offering.
+   integer
+   iops_write_rate                              IO requests write rate of the disk offering.
+   integer
+   name                                         Name of the disk offering.
+   string / required
+                                 Choices:
+   provisioning_type             • thin         Provisioning type used to create volumes.
+   string                        • sparse
+                                 • fat
+   state                         Choices:
+   string                        • present ←    State of the disk offering.
+                                 • absent
+   storage_tags                                 The storage tags for this disk offering.
+   list                                         aliases: storage_tag
+   storage_type                  Choices:
+   string                        • local        The storage type of the disk offering.
+                                 • shared
+
+NOTES                   *cs_disk_offering-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_disk_offering-examples*
+
+ - name: Create a disk offering with local storage
+   cs_disk_offering:
+     name: small
+     display_text: Small 10GB
+     disk_size: 10
+     storage_type: local
+   delegate_to: localhost
+
+ - name: Create or update a disk offering with shared storage
+   cs_disk_offering:
+     name: small
+     display_text: Small 10GB
+     disk_size: 10
+     storage_type: shared
+     storage_tags: SAN01
+   delegate_to: localhost
+
+ - name: Remove a disk offering
+   cs_disk_offering:
+     name: small
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_disk_offering-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   bytes_read_rate            Bytes read rate of the disk offering
+   integer           success  Sample:
+                              1000
+   bytes_write_rate           Bytes write rate of the disk offering
+   integer           success  Sample:
+                              1000
+   created                    Date the offering was created
+   string            success  Sample:
+                              2017-11-19T10:48:59+0000
+   customized        success  Whether the offering uses custom IOPS or not
+   boolean
+   disk_size                  Size of the disk offering in GB
+   integer           success  Sample:
+                              10
+   display_offering  success  Whether to display the offering to the end user or not.
+   boolean
+   display_text               Display text of the offering
+   string            success  Sample:
+                              Small 10GB
+   domain                     Domain the offering is into
+   string            success  Sample:
+                              ROOT
+   id                         UUID of the disk offering
+   string            success  Sample:
+                              a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   iops_max                   Max iops of the disk offering
+   integer           success  Sample:
+                              1000
+   iops_min                   Min iops of the disk offering
+   integer           success  Sample:
+                              500
+   iops_read_rate             IO requests per second read rate of the disk offering
+   integer           success  Sample:
+                              1000
+   iops_write_rate            IO requests per second write rate of the disk offering
+   integer           success  Sample:
+                              1000
+   name                       Name of the system offering
+   string            success  Sample:
+                              Micro
+   provisioning_type          Provisioning type used to create volumes
+   string            success  Sample:
+                              thin
+   storage_tags               List of storage tags
+   list              success  Sample:
+                              ['eco']
+   storage_type               Storage type used to create volumes
+   string            success  Sample:
+                              shared
+
+STATUS                   *cs_disk_offering-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Passante (@dpassante)
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_disk_offering-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_disk_offering_module.html

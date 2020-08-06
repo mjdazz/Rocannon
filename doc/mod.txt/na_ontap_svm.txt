@@ -1,0 +1,160 @@
+SYNOPSIS                   *na_ontap_svm*
+
+     • Create, modify or delete SVM on NetApp ONTAP
+
+REQUIREMENTS                   *na_ontap_svm-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_svm-parameters*
+
+           Parameter            Choices/Defaults                                                                        Comments
+                                                   List of aggregates assigned for volume operations.
+   aggr_list                                       These aggregates could be shared for use with other Vservers.
+   -                                               When specified as part of a vserver-create, this field represents the list of aggregates that are assigned to the Vserver for volume operations.
+                                                   When part of vserver-get-iter call, this will return the list of Vservers which have any of the aggregates specified as part of the aggr list.
+                                                   Allowed Protocols.
+                                                   When specified as part of a vserver-create, this field represent the list of protocols allowed on the Vserver.
+                                                   When part of vserver-get-iter call, this will return the list of Vservers which have any of the protocols specified as part of the
+                                                   allowed-protocols.
+                                                   When part of vserver-modify, this field should include the existing list along with new protocol list to be added to prevent data disruptions.
+   allowed_protocols                               Possible values
+   -                                               nfs NFS protocol,
+                                                   cifs CIFS protocol,
+                                                   fcp FCP protocol,
+                                                   iscsi iSCSI protocol,
+                                                   ndmp NDMP protocol,
+                                                   http HTTP protocol,
+                                                   nvme NVMe protocol
+   comment                                         When specified as part of a vserver-create, this field represents the comment associated with the Vserver.
+   -                                               When part of vserver-get-iter call, this will return the list of matching Vservers.
+   added in 2.8
+   from_name
+   -                                               Name of the SVM to be renamed
+   added in 2.7
+   hostname                                        The hostname or IP address of the ONTAP instance.
+   string / required
+   http_port                                       Override the default port (80 or 443) with this port
+   integer
+   https                        Choices:
+   boolean                      • no ←             Enable and disable https
+                                • yes
+   ipspace                                         IPSpace name
+   -                                               Cannot be modified after creation.
+   added in 2.7
+                                                   Language to use for the SVM
+                                                   Default to C.UTF-8
+                                                   Possible values Language
+                                                   c POSIX
+                                                   ar Arabic
+                                                   cs Czech
+                                                   da Danish
+                                                   de German
+                                                   en English
+                                                   en_us English (US)
+                                                   es Spanish
+                                                   fi Finnish
+                                                   fr French
+                                                   he Hebrew
+                                                   hr Croatian
+                                                   hu Hungarian
+                                                   it Italian
+   language                                        ja Japanese euc-j
+   -                                               ja_v1 Japanese euc-j
+   added in 2.7                                    ja_jp.pck Japanese PCK (sjis)
+                                                   ja_jp.932 Japanese cp932
+                                                   ja_jp.pck_v2 Japanese PCK (sjis)
+                                                   ko Korean
+                                                   no Norwegian
+                                                   nl Dutch
+                                                   pl Polish
+                                                   pt Portuguese
+                                                   ro Romanian
+                                                   ru Russian
+                                                   sk Slovak
+                                                   sl Slovenian
+                                                   sv Swedish
+                                                   tr Turkish
+                                                   zh Simplified Chinese
+                                                   zh.gbk Simplified Chinese (GBK)
+                                                   zh_tw Traditional Chinese euc-tw
+                                                   zh_tw.big5 Traditional Chinese Big 5
+   name                                            The name of the SVM to manage.
+   - / required
+   ontapi                                          The ontap api version to use
+   integer
+   password                                        Password for the specified user.
+   string / required                               aliases: pass
+   root_volume                                     Root volume of the SVM.
+   -                                               Cannot be modified after creation.
+   root_volume_aggregate                           The aggregate on which the root volume will be created.
+   -                                               Cannot be modified after creation.
+                                Choices:           Security Style of the root volume.
+   root_volume_security_style   • unix             When specified as part of the vserver-create, this field represents the security style for the Vserver root volume.
+   -                            • ntfs             When specified as part of vserver-get-iter call, this will return the list of matching Vservers.
+                                • mixed            The 'unified' security style, which applies only to Infinite Volumes, cannot be applied to a Vserver's root volume.
+                                • unified          Cannot be modified after creation.
+   snapshot_policy                                 Default snapshot policy setting for all volumes of the Vserver. This policy will be assigned to all volumes created in this Vserver unless the
+   -                                               volume create request explicitly provides a snapshot policy or volume is modified later with a specific snapshot policy. A volume-level snapshot
+   added in 2.7                                    policy always overrides the default Vserver-wide snapshot policy.
+   state                        Choices:
+   -                            • present ←        Whether the specified SVM should exist or not.
+                                • absent
+                                Choices:
+   subtype                      • default          The subtype for vserver to be created.
+   -                            • dp_destination   Cannot be modified after creation.
+   added in 2.7                 • sync_source
+                                • sync_destination
+                                Choices:           REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest                     • Never            Always -- will always use the REST API
+   string                       • Always           Never -- will always use the ZAPI
+                                • Auto ←           Auto -- will try to use the REST Api
+   username                                        This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information,
+   string / required                               please read the documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+                                                   aliases: user
+   validate_certs               Choices:           If set to no, the SSL certificates will not be validated.
+   boolean                      • no               This should only set to False used on personally controlled sites using self-signed certificates.
+                                • yes ←
+
+NOTES                   *na_ontap_svm-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_svm-examples*
+
+ - name: Create SVM
+   na_ontap_svm:
+     state: present
+     name: ansibleVServer
+     root_volume: vol1
+     root_volume_aggregate: aggr1
+     root_volume_security_style: mixed
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+STATUS                   *na_ontap_svm-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_svm-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_svm_module.html

@@ -1,0 +1,124 @@
+SYNOPSIS                   *postgresql_schema*
+
+     • Add or remove PostgreSQL schema.
+
+REQUIREMENTS                   *postgresql_schema-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_schema-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+   ca_cert                             Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                              If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+   added in 2.8                        aliases: ssl_rootcert
+   cascade_drop        Choices:
+   boolean             • no ←          Drop schema with CASCADE to remove child objects.
+   added in 2.8        • yes
+   database          Default:          Name of the database to connect to and add or remove the schema.
+   string            "postgres"        aliases: db, login_db
+   login_host                          Host running the database.
+   string
+   login_password                      The password used to authenticate with.
+   string
+   login_unix_socket                   Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:          The username used to authenticate with.
+   string            "postgres"
+   name                                Name of the schema to add or remove.
+   string / required                   aliases: schema
+   owner                               Name of the role to set as owner of the schema.
+   string
+   port              Default:          Database port to connect to.
+   integer           5432              aliases: login_port
+   session_role                        Switch to session_role after connecting.
+   string                              The specified session_role must be a role that the current login_user is a member of.
+   added in 2.8                        Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                       Choices:
+                       • allow
+   ssl_mode            • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+   added in 2.8        • require       Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+   state               Choices:
+   string              • absent        The schema state.
+                       • present ←
+
+NOTES                   *postgresql_schema-notes*
+
+   Note
+
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_schema-see also*
+
+   See also
+
+   PostgreSQL schemas
+   General information about PostgreSQL schemas.
+
+   CREATE SCHEMA reference
+   Complete reference of the CREATE SCHEMA command documentation.
+
+   ALTER SCHEMA reference
+   Complete reference of the ALTER SCHEMA command documentation.
+
+   DROP SCHEMA reference
+   Complete reference of the DROP SCHEMA command documentation.
+
+EXAMPLES                   *postgresql_schema-examples*
+
+ - name: Create a new schema with name acme in test database
+   postgresql_schema:
+     db: test
+     name: acme
+
+ - name: Create a new schema acme with a user bob who will own it
+   postgresql_schema:
+     name: acme
+     owner: bob
+
+ - name: Drop schema "acme" with cascade
+   postgresql_schema:
+     name: acme
+     state: absent
+     cascade_drop: yes
+
+RETURN VALUES                   *postgresql_schema-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key       Returned                                                                                    Description
+   queries                  List of executed queries.
+   list    always           Sample:
+                            ['CREATE SCHEMA "acme"']
+   schema                   Name of the schema.
+   string  success, changed Sample:
+                            acme
+
+STATUS                   *postgresql_schema-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Flavien Chantelot (@Dorn-) <contact@flavien.io>
+     • Thomas O’Donnell (@andytom)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_schema-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_schema_module.html

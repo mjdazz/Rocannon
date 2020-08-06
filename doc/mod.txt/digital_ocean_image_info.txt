@@ -1,0 +1,86 @@
+SYNOPSIS                   *digital_ocean_image_info*
+
+     • This module can be used to gather information about DigitalOcean provided images.
+     • These images can be either of type distribution, application and private.
+     • This module was called digital_ocean_image_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: digital_ocean_image_facts
+
+REQUIREMENTS                   *digital_ocean_image_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+
+PARAMETERS                   *digital_ocean_image_info-parameters*
+
+     Parameter     Choices/Defaults                                                                              Comments
+                    Choices:         Specifies the type of image information to be retrieved.
+   image_type       • all ←          If set to application, then information are gathered related to all application images.
+   -                • application    If set to distribution, then information are gathered related to all distribution images.
+                    • distribution   If set to private, then information are gathered related to all private images.
+                    • private        If not set to any of above, then information are gathered related to all images.
+                                     DigitalOcean OAuth token.
+   oauth_token                       There are several other environment variables which can be used to provide this value.
+   string                            i.e., - 'DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN' and 'OAUTH_TOKEN'
+                                     aliases: api_token
+   timeout        Default:           The timeout in seconds used for polling DigitalOcean's API.
+   integer        30
+   validate_certs   Choices:         If set to no, the SSL certificates will not be validated.
+   boolean          • no             This should only set to no used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+EXAMPLES                   *digital_ocean_image_info-examples*
+
+ - name: Gather information about all images
+   digital_ocean_image_info:
+     image_type: all
+     oauth_token: "{{ oauth_token }}"
+
+ - name: Gather information about application images
+   digital_ocean_image_info:
+     image_type: application
+     oauth_token: "{{ oauth_token }}"
+
+ - name: Gather information about distribution images
+   digital_ocean_image_info:
+     image_type: distribution
+     oauth_token: "{{ oauth_token }}"
+
+ - name: Get distribution about image with slug coreos-beta
+   digital_ocean_image_info:
+   register: resp_out
+ - set_fact:
+     distribution_name: "{{ item.distribution }}"
+   loop: "{{ resp_out.data|json_query(name) }}"
+   vars:
+     name: "[?slug=='coreos-beta']"
+ - debug: var=distribution_name
+
+RETURN VALUES                   *digital_ocean_image_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+   Key  Returned                                                                                     Description
+                 DigitalOcean image information
+   data success  Sample:
+   list          [{'created_at': '2018-02-02T07:11:43Z', 'distribution': 'CoreOS', 'id': 31434061, 'min_disk_size': 20, 'name': '1662.1.0 (beta)', 'public': True, 'regions': ['nyc1', 'sfo1',
+                 'nyc2', 'ams2', 'sgp1', 'lon1', 'nyc3', 'ams3', 'fra1', 'tor1', 'sfo2', 'blr1'], 'size_gigabytes': 0.42, 'slug': 'coreos-beta', 'type': 'snapshot'}]
+
+STATUS                   *digital_ocean_image_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *digital_ocean_image_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/digital_ocean_image_info_module.html

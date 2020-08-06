@@ -1,0 +1,183 @@
+SYNOPSIS                   *bigip_virtual_address*
+
+     • Manage LTM virtual addresses on a BIG-IP.
+
+PARAMETERS                   *bigip_virtual_address-parameters*
+
+          Parameter            Choices/Defaults                                                                         Comments
+   address                                         Virtual address. This value cannot be modified after it is set.
+   string                                          If you never created a virtual address, but did create virtual servers, then a virtual address for each virtual server was created automatically.
+                                                   The name of this virtual address is its IP address value.
+                                                   Specifies whether the system accepts ARP requests.
+   arp                        Choices:             When no, specifies that the system does not accept ARP requests.
+   boolean                    • no                 When yes, then the packets are dropped.
+   added in 2.7               • yes                Note that both ARP and ICMP Echo must be disabled in order for forwarding virtual servers using that virtual address to forward ICMP packets.
+                                                   When creating a new virtual address, if this parameter is not specified, the default value is yes.
+                                                   Specifies whether the system accepts ARP requests. When (disabled), specifies that the system does not accept ARP requests. Note that both ARP and
+   arp_state                  Choices:             ICMP Echo must be disabled in order for forwarding virtual servers using that virtual address to forward ICMP packets. If (enabled), then the
+   string                     • enabled            packets are dropped.
+                              • disabled           Deprecated. Use the arp parameter instead.
+                                                   When creating a new virtual address, if this parameter is not specified, the default value is enabled.
+                                                   Specifies whether the system automatically deletes the virtual address with the deletion of the last associated virtual server. When disabled,
+   auto_delete                                     specifies that the system leaves the virtual address even when all associated virtual servers have been deleted. When creating the virtual
+   string                                          address, the default value is enabled.
+                                                   enabled and disabled are deprecated and will be removed in Ansible 2.11. Instead, use known Ansible booleans such as yes and no
+   availability_calculation   Choices:             Specifies what routes of the virtual address the system advertises. When when_any_available, advertises the route when any virtual server is
+   string                     • always             available. When when_all_available, advertises the route when all virtual servers are available. When (always), always advertises the route
+   added in 2.6               • when_all_available regardless of the virtual servers available.
+                              • when_any_available aliases: advertise_route
+   connection_limit                                Specifies the number of concurrent connections that the system allows on this virtual address.
+   integer
+                              Choices:             Specifies how the systems sends responses to (ICMP) echo requests on a per-virtual address basis for enabling route advertisement. When enabled,
+   icmp_echo                  • enabled            the BIG-IP system intercepts ICMP echo request packets and responds to them directly. When disabled, the BIG-IP system passes ICMP echo requests
+   string                     • disabled           through to the backend servers. When (selective), causes the BIG-IP system to internally enable or disable responses based on virtual server
+                              • selective          state; when_any_available, when_all_available, or C(always, regardless of the state of any virtual servers.
+   name                                            Name of the virtual address.
+   string                                          If this parameter is not provided, then the value of address will be used.
+   added in 2.6
+   netmask                                         Netmask of the provided virtual address. This value cannot be modified after it is set.
+   string                                          When creating a new virtual address, if this parameter is not specified, the default value is 255.255.255.255 for IPv4 addresses and
+                                                   ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff for IPv6 addresses.
+   partition                Default:
+   string                   "Common"               Device partition to manage resources on.
+   added in 2.5
+   provider
+   dictionary                                      A dict object containing connection details.
+   added in 2.5
+       auth_provider                               Configures the auth provider for to obtain authentication tokens from the remote device.
+       string                                      This option is really used when working with BIG-IQ devices.
+       password                                    The password for the user account used to connect to the BIG-IP.
+       string / required                           You may omit this option by setting the environment variable F5_PASSWORD.
+                                                   aliases: pass, pwd
+       server                                      The BIG-IP host.
+       string / required                           You may omit this option by setting the environment variable F5_SERVER.
+       server_port          Default:               The BIG-IP server port.
+       integer              443                    You may omit this option by setting the environment variable F5_SERVER_PORT.
+       ssh_keyfile                                 Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+       path                                        You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+       timeout                                     Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+       integer                                     before the operation is completed, the module will error.
+       transport              Choices:
+       string                 • cli                Configures the transport connection to use when connecting to the remote device.
+                              • rest ←
+       user                                        The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+       string / required                           You may omit this option by setting the environment variable F5_USER.
+       validate_certs         Choices:             If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+       boolean                • no                 You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                              • yes ←
+                                                   Specifies whether the system uses route advertisement for this virtual address.
+                                                   When disabled, the system does not advertise routes for this virtual address.
+                                                   The majority of these options are only supported on versions 13.0.0-HF1 or higher. On versions less than this, all choices expect disabled will
+                              Choices:             translate to enabled.
+                              • disabled           When always, the BIG-IP system will always advertise the route for the virtual address, regardless of availability status. This requires an
+   route_advertisement        • enabled            enabled virtual address.
+   string                     • always             When enabled, the BIG-IP system will advertise the route for the available virtual address, based on the calculation method in the availability
+   added in 2.6               • selective          calculation.
+                              • any                When disabled, the BIG-IP system will not advertise the route for the virtual address, regardless of the availability status.
+                              • all                When selective, you can also selectively enable ICMP echo responses, which causes the BIG-IP system to internally enable or disable responses
+                                                   based on virtual server state. Either any virtual server, all virtual servers, or always, regardless of the state of any virtual server.
+                                                   When any, the BIG-IP system will advertise the route for the virtual address when any virtual server is available.
+                                                   When all, the BIG-IP system will advertise the route for the virtual address when all virtual servers are available.
+   route_domain                                    The route domain of the address that you want to use.
+   string                                          This value cannot be modified after it is set.
+   added in 2.6
+                                                   Enables all BIG-IP systems in a device group to listen for and process traffic on the same virtual address.
+                                                   Spanning for a virtual address occurs when you enable the spanning option on a device and then sync the virtual address to the other members of
+   spanning                   Choices:             the device group.
+   boolean                    • no                 Spanning also relies on the upstream router to distribute application flows to the BIG-IP systems using ECMP routes. ECMP defines a route to the
+   added in 2.7               • yes                virtual address using distinct Floating self-IP addresses configured on each BIG-IP system.
+                                                   You must also configure MAC masquerade addresses and disable arp on the virtual address when Spanning is enabled.
+                                                   When creating a new virtual address, if this parameter is not specified, the default valus is no.
+                              Choices:
+   state                      • present ←          The virtual address state. If absent, an attempt to delete the virtual address will be made. This will only succeed if this virtual address is not
+   string                     • absent             in use by a virtual server. present creates the virtual address and enables it. If enabled, enable the virtual address if it exists. If disabled,
+                              • enabled            create the virtual address if needed, and set state to disabled.
+                              • disabled
+   traffic_group                                   The traffic group for the virtual address. When creating a new address, if this value is not specified, the default of /Common/traffic-group-1
+   string                                          will be used.
+   added in 2.5
+
+NOTES                   *bigip_virtual_address-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_virtual_address-examples*
+
+ - name: Add virtual address
+   bigip_virtual_address:
+     state: present
+     partition: Common
+     address: 10.10.10.10
+     provider:
+       server: lb.mydomain.net
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Enable route advertisement on the virtual address
+   bigip_virtual_address:
+     state: present
+     address: 10.10.10.10
+     route_advertisement: any
+     provider:
+       server: lb.mydomain.net
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_virtual_address-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key            Returned                                                                           Description
+   address                           The address of the virtual address.
+   integer                  created  Sample:
+                                     2345
+   arp                               The new way the virtual address handles ARP requests.
+   boolean                  changed  Sample:
+                                     True
+   auto_delete                       New setting for auto deleting virtual address.
+   string                   changed  Sample:
+                                     enabled
+   availability_calculation          Specifies what routes of the virtual address the system advertises.
+   string                   changed  Sample:
+                                     always
+   connection_limit                  The new connection limit of the virtual address.
+   integer                  changed  Sample:
+                                     1000
+   icmp_echo                         New ICMP echo setting applied to virtual address.
+   string                   changed  Sample:
+                                     disabled
+   netmask                           The netmask of the virtual address.
+   integer                  created  Sample:
+                                     2345
+   spanning                          Whether spanning is enabled or not
+   string                   changed  Sample:
+                                     disabled
+   state                             The new state of the virtual address.
+   string                   changed  Sample:
+                                     disabled
+
+STATUS                   *bigip_virtual_address-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_virtual_address-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_virtual_address_module.html

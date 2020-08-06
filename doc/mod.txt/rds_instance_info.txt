@@ -1,0 +1,240 @@
+SYNOPSIS                   *rds_instance_info*
+
+     • obtain information about one or more RDS instances
+     • This module was called rds_instance_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: rds_instance_facts
+
+REQUIREMENTS                   *rds_instance_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+     • python >= 2.7
+
+PARAMETERS                   *rds_instance_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   db_instance_identifier                        The RDS instance's unique identifier.
+   -                                             aliases: id
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   filters                                       A filter that specifies one or more DB instances to describe. See
+   -                                             https://docs.aws.amazon.com/AmazonRDS/latest/APIReference/API_DescribeDBInstances.html
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *rds_instance_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *rds_instance_info-examples*
+
+ # Get information about an instance
+ - rds_instance_info:
+     db_instance_identifier: new-database
+   register: new_database_info
+
+ # Get all RDS instances
+ - rds_instance_info:
+
+RETURN VALUES                   *rds_instance_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                    Key                   Returned                                                                    Description
+   instances                              always   List of RDS instances
+   complex
+     allocated_storage                             Gigabytes of storage allocated to the database
+     integer                              always   Sample:
+                                                   10
+     auto_minor_version_upgrade                    Whether minor version upgrades happen automatically
+     boolean                              always   Sample:
+                                                   True
+     availability_zone                             Availability Zone in which the database resides
+     string                               always   Sample:
+                                                   us-west-2b
+     backup_retention_period                       Days for which backups are retained
+     integer                              always   Sample:
+                                                   7
+     ca_certificate_identifier                     ID for the CA certificate
+     string                               always   Sample:
+                                                   rds-ca-2015
+     copy_tags_to_snapshot                always   Whether DB tags should be copied to the snapshot
+     boolean
+     db_instance_arn                               ARN of the database instance
+     string                               always   Sample:
+                                                   arn:aws:rds:us-west-2:111111111111:db:helloworld-rds
+     db_instance_class                             Instance class of the database instance
+     string                               always   Sample:
+                                                   db.t2.small
+     db_instance_identifier                        Database instance identifier
+     string                               always   Sample:
+                                                   helloworld-rds
+     db_instance_port                     always   Port used by the database instance
+     integer
+     db_instance_status                            Status of the database instance
+     string                               always   Sample:
+                                                   available
+     db_name                                       Name of the database
+     string                               always   Sample:
+                                                   management
+     db_parameter_groups                  always   List of database parameter groups
+     complex
+          db_parameter_group_name                  Name of the database parameter group
+          string                          always   Sample:
+                                                   psql-pg-helloworld
+          parameter_apply_status                   Whether the parameter group has been applied
+          string                          always   Sample:
+                                                   in-sync
+     db_security_groups                   always   List of security groups used by the database instance
+     list
+     db_subnet_group                      always   list of subnet groups
+     complex
+          db_subnet_group_description              Description of the DB subnet group
+          string                          always   Sample:
+                                                   My database subnet group
+          db_subnet_group_name                     Name of the database subnet group
+          string                          always   Sample:
+                                                   my-subnet-group
+          subnet_group_status                      Subnet group status
+          string                          always   Sample:
+                                                   Complete
+          subnets                         always   List of subnets in the subnet group
+          complex
+               subnet_availability_zone   always   Availability zone of the subnet
+               complex
+                          name                     Name of the availability zone
+                          string          always   Sample:
+                                                   us-west-2c
+               subnet_identifier                   Subnet ID
+               string                     always   Sample:
+                                                   subnet-abcd1234
+               subnet_status                       Subnet status
+               string                     always   Sample:
+                                                   Active
+          vpc_id                                   VPC id of the subnet group
+          string                          always   Sample:
+                                                   vpc-abcd1234
+     dbi_resource_id                               AWS Region-unique, immutable identifier for the DB instance
+     string                               always   Sample:
+                                                   db-AAAAAAAAAAAAAAAAAAAAAAAAAA
+     domain_memberships                   always   List of domain memberships
+     list
+     endpoint                             always   Database endpoint
+     complex
+          address                                  Database endpoint address
+          string                          always   Sample:
+                                                   helloworld-rds.ctrqpe3so1sf.us-west-2.rds.amazonaws.com
+          hosted_zone_id                           Route53 hosted zone ID
+          string                          always   Sample:
+                                                   Z1PABCD0000000
+          port                                     Database endpoint port
+          integer                         always   Sample:
+                                                   5432
+     engine                                        Database engine
+     string                               always   Sample:
+                                                   postgres
+     engine_version                                Database engine version
+     string                               always   Sample:
+                                                   9.5.10
+     iam_database_authentication_enabled  always   Whether database authentication through IAM is enabled
+     boolean
+     instance_create_time                          Date and time the instance was created
+     string                               always   Sample:
+                                                   2017-10-10T04:00:07.434000+00:00
+     kms_key_id                                    KMS Key ID
+     string                               always   Sample:
+                                                   arn:aws:kms:us-west-2:111111111111:key/abcd1234-0000-abcd-1111-0123456789ab
+     latest_restorable_time                        Latest time to which a database can be restored with point-in-time restore
+     string                               always   Sample:
+                                                   2018-05-17T00:03:56+00:00
+     license_model                                 License model
+     string                               always   Sample:
+                                                   postgresql-license
+     master_username                               Database master username
+     string                               always   Sample:
+                                                   dbadmin
+     monitoring_interval                  always   Interval, in seconds, between points when Enhanced Monitoring metrics are collected for the DB instance
+     integer
+     multi_az                             always   Whether Multi-AZ is on
+     boolean
+     option_group_memberships             always   List of option groups
+     complex
+          option_group_name                        Option group name
+          string                          always   Sample:
+                                                   default:postgres-9-5
+          status                                   Status of option group
+          string                          always   Sample:
+                                                   in-sync
+     pending_modified_values              always   Modified values pending application
+     complex
+     performance_insights_enabled         always   Whether performance insights are enabled
+     boolean
+     preferred_backup_window                       Preferred backup window
+     string                               always   Sample:
+                                                   04:00-05:00
+     preferred_maintenance_window                  Preferred maintenance window
+     string                               always   Sample:
+                                                   mon:05:00-mon:05:30
+     publicly_accessible                  always   Whether the DB is publicly accessible
+     boolean
+     read_replica_db_instance_identifiers always   List of database instance read replicas
+     list
+     storage_encrypted                             Whether the storage is encrypted
+     boolean                              always   Sample:
+                                                   True
+     storage_type                                  Storage type of the Database instance
+     string                               always   Sample:
+                                                   gp2
+     tags                                 always   Tags used by the database instance
+     complex
+     vpc_security_groups                  always   List of VPC security groups
+     complex
+          status                                   Status of the VPC security group
+          string                          always   Sample:
+                                                   active
+          vpc_security_group_id                    VPC Security Group ID
+          string                          always   Sample:
+                                                   sg-abcd1234
+
+STATUS                   *rds_instance_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Will Thames (@willthames)
+     • Michael De La Rue (@mikedlr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *rds_instance_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/rds_instance_info_module.html

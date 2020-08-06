@@ -1,0 +1,180 @@
+SYNOPSIS                   *cs_vlan_ip_range*
+
+     • Create and delete VLAN IP range.
+
+REQUIREMENTS                   *cs_vlan_ip_range-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_vlan_ip_range-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   account                              Account who owns the VLAN.
+   string                               Mutually exclusive with project.
+                         Choices:       HTTP method used to query the API endpoint.
+   api_http_method       • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                        Fallback value is get if not specified.
+   api_key                              API key of the CloudStack API.
+   string                               If not given, the CLOUDSTACK_KEY env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+   api_region          Default:         Name of the ini section in the cloustack.ini file.
+   string              "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                           Secret key of the CloudStack API.
+   string                               If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+                                        HTTP timeout in seconds.
+   api_timeout                          If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                              As the last option, the value is taken from the ini config file, also see the notes.
+                                        Fallback value is 10 seconds if not specified.
+   api_url                              URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                               If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                        As the last option, the value is taken from the ini config file, also see the notes.
+   cidr_ipv6                            The CIDR of IPv6 network, must be at least /64.
+   string
+   domain                               Domain of the account owning the VLAN.
+   string
+   end_ip                               The ending IPv4 address in the VLAN IP range.
+   string                               If not specified, value of start_ip is used.
+                                        Only considered on create.
+   end_ipv6                             The ending IPv6 address in the IPv6 network range.
+   string                               If not specified, value of start_ipv6 is used.
+                                        Only considered on create.
+   for_virtual_network   Choices:       yes if VLAN is of Virtual type, no if Direct.
+   boolean               • no ←         If set to yes but neither physical_network or network is set CloudStack will try to add the VLAN range to the Physical Network with a Public traffic type.
+                         • yes
+   gateway                              The gateway of the VLAN IP range.
+   string                               Required if state=present.
+   gateway_ipv6                         The gateway of the IPv6 network.
+   string                               Only considered on create.
+   netmask                              The netmask of the VLAN IP range.
+   string                               Required if state=present.
+   network                              The network name or id.
+   string                               Required if for_virtual_network and physical_network are not set.
+   physical_network                     The physical network name or id.
+   string
+   project                              Project who owns the VLAN.
+   string                               Mutually exclusive with account.
+   start_ip                             The beginning IPv4 address in the VLAN IP range.
+   string / required                    Only considered on create.
+   start_ipv6                           The beginning IPv6 address in the IPv6 network range.
+   string                               Only considered on create.
+   state                 Choices:
+   string                • present ←    State of the network ip range.
+                         • absent
+   vlan                                 The ID or VID of the network.
+   string                               If not specified, will be defaulted to the vlan of the network.
+   zone                                 The Zone ID of the VLAN IP range.
+   string                               If not set, default zone is used.
+
+NOTES                   *cs_vlan_ip_range-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_vlan_ip_range-examples*
+
+ - name: create a VLAN IP range for network test
+   cs_vlan_ip_range:
+     network: test
+     vlan: 98
+     start_ip: 10.2.4.10
+     end_ip: 10.2.4.100
+     gateway: 10.2.4.1
+     netmask: 255.255.255.0
+     zone: zone-02
+   delegate_to: localhost
+
+ - name: remove a VLAN IP range for network test
+   cs_vlan_ip_range:
+     state: absent
+     network: test
+     start_ip: 10.2.4.10
+     end_ip: 10.2.4.100
+     zone: zone-02
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_vlan_ip_range-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key           Returned                                                                              Description
+   account                          Account who owns the network.
+   string              if available Sample:
+                                    example account
+   cidr_ipv6                        The CIDR of IPv6 network.
+   string              if available Sample:
+                                    2001:db8::/64
+   domain                           Domain name of the VLAN IP range.
+   string              success      Sample:
+                                    ROOT
+   end_ip                           The end ip of the VLAN IP range.
+   string              success      Sample:
+                                    10.2.4.100
+   end_ipv6                         The end ipv6 of the VLAN IP range.
+   string              if available Sample:
+                                    2001:db8::50
+   for_systemvms       success      Whether VLAN IP range is dedicated to system vms or not.
+   boolean
+   for_virtual_network success      Whether VLAN IP range is of Virtual type or not.
+   boolean
+   gateway                          IPv4 gateway.
+   string              success      Sample:
+                                    10.2.4.1
+   gateway_ipv6                     IPv6 gateway.
+   string              if available Sample:
+                                    2001:db8::1
+   id                               UUID of the VLAN IP range.
+   string              success      Sample:
+                                    04589590-ac63-4ffc-93f5-b698b8ac38b6
+   netmask                          IPv4 netmask.
+   string              success      Sample:
+                                    255.255.255.0
+   network                          The network of vlan range
+   string              if available Sample:
+                                    test
+   physical_network                 The physical network VLAN IP range belongs to.
+   string              success      Sample:
+                                    04589590-ac63-4ffc-93f5-b698b8ac38b6
+   project                          Project who owns the network.
+   string              if available Sample:
+                                    example project
+   start_ip                         The start ip of the VLAN IP range.
+   string              success      Sample:
+                                    10.2.4.10
+   start_ipv6                       The start ipv6 of the VLAN IP range.
+   string              if available Sample:
+                                    2001:db8::10
+   vlan                             The ID or VID of the VLAN.
+   string              success      Sample:
+                                    vlan://98
+   zone                             Name of zone.
+   string              success      Sample:
+                                    zone-02
+
+STATUS                   *cs_vlan_ip_range-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Passante (@dpassante)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_vlan_ip_range-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_vlan_ip_range_module.html

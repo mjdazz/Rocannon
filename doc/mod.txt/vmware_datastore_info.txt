@@ -1,0 +1,116 @@
+SYNOPSIS                   *vmware_datastore_info*
+
+     • This module can be used to gather information about datastores in VMWare infrastructure.
+     • All values and VMware object names are case sensitive.
+     • This module was called vmware_datastore_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: vmware_datastore_facts
+
+REQUIREMENTS                   *vmware_datastore_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_datastore_info-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   cluster                                 Cluster to search for datastores.
+   string                                  If set, information of datastores belonging this clusters will be returned.
+                                           This parameter is required, if datacenter is not supplied.
+   datacenter                              Datacenter to search for datastores.
+   string                                  This parameter is required, if cluster is not supplied.
+                                           aliases: datacenter_name
+   gather_nfs_mount_info    Choices:       Gather mount information of NFS datastores.
+   boolean                  • no ←         Disabled per default because this slows down the execution if you have a lot of datastores.
+   added in 2.8             • yes
+   gather_vmfs_mount_info   Choices:       Gather mount information of VMFS datastores.
+   boolean                  • no ←         Disabled per default because this slows down the execution if you have a lot of datastores.
+   added in 2.8             • yes
+   hostname                                The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                  If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                           Environment variable support added in Ansible 2.6.
+   name                                    Name of the datastore to match.
+   string                                  If set, information of specific datastores are returned.
+                                           The password of the vSphere vCenter or ESXi server.
+   password                                If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                  Environment variable support added in Ansible 2.6.
+                                           aliases: pass, pwd
+   port                   Default:         The port number of the vSphere vCenter or ESXi server.
+   integer                443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                            Environment variable support added in Ansible 2.6.
+   proxy_host                              Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                  The format is a hostname or a IP.
+   added in 2.9                            If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                           This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                              Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                 If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+                                           The username of the vSphere vCenter or ESXi server.
+   username                                If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                  Environment variable support added in Ansible 2.6.
+                                           aliases: admin, user
+                            Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs           • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                  • yes ←        Environment variable support added in Ansible 2.6.
+                                           If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_datastore_info-notes*
+
+   Note
+
+     • Tested on vSphere 5.5, 6.0 and 6.5
+
+EXAMPLES                   *vmware_datastore_info-examples*
+
+ - name: Gather info from standalone ESXi server having datacenter as 'ha-datacenter'
+   vmware_datastore_info:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter_name: '{{ datacenter_name }}'
+     validate_certs: no
+   delegate_to: localhost
+   register: info
+
+ - name: Gather info from datacenter about specific datastore
+   vmware_datastore_info:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter_name: '{{ datacenter_name }}'
+     name: datastore1
+   delegate_to: localhost
+   register: info
+
+RETURN VALUES                   *vmware_datastore_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+                       metadata about the available datastores
+                       Sample:
+   datastores          [{'accessible': False, 'capacity': 42681237504, 'datastore_cluster': 'datacluster0', 'freeSpace': 39638269952, 'maintenanceMode': 'normal', 'multipleHostAccess': False,
+   list       always   'name': 'datastore2', 'provisioned': 12289211488, 'type': 'VMFS', 'uncommitted': 9246243936, 'url': 'ds:///vmfs/volumes/5a69b18a-c03cd88c-36ae-5254001249ce/',
+                       'vmfs_blockSize': 1024, 'vmfs_uuid': '5a69b18a-c03cd88c-36ae-5254001249ce', 'vmfs_version': '6.81'}, {'accessible': True, 'capacity': 5497558138880, 'datastore_cluster':
+                       'datacluster0', 'freeSpace': 4279000641536, 'maintenanceMode': 'normal', 'multipleHostAccess': True, 'name': 'datastore3', 'nfs_path': '/vol/datastore3', 'nfs_server':
+                       'nfs_server1', 'provisioned': 1708109410304, 'type': 'NFS', 'uncommitted': 489551912960, 'url': 'ds:///vmfs/volumes/420b3e73-67070776/'}]
+
+STATUS                   *vmware_datastore_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Tim Rightnour (@garbled1)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_datastore_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_datastore_info_module.html

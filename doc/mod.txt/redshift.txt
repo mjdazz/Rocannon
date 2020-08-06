@@ -1,0 +1,190 @@
+SYNOPSIS                   *redshift*
+
+     • Creates, deletes, or modifies amazon Redshift cluster instances.
+
+REQUIREMENTS                   *redshift-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *redshift-parameters*
+
+                Parameter              Choices/Defaults                                                                    Comments
+   allow_version_upgrade               Default:          flag to determinate if upgrade of version is possible
+   -                                   "yes"             aliases: version_upgrade
+   automated_snapshot_retention_period                   period when the snapshot take place
+   -                                                     aliases: retention_period
+   availability_zone                                     availability zone in which to launch cluster
+   -                                                     aliases: zone, aws_zone
+   aws_access_key                                        AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                                aliases: ec2_access_key, access_key
+   aws_secret_key                                        AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                                aliases: ec2_secret_key, secret_key
+   cluster_parameter_group_name                          name of the cluster parameter group
+   -                                                     aliases: param_group_name
+   cluster_security_groups                               in which security group the cluster belongs
+   -                                                     aliases: security_groups
+   cluster_subnet_group_name                             which subnet to place the cluster
+   -                                                     aliases: subnet
+   cluster_type                          Choices:
+   -                                     • multi-node    The type of cluster.
+                                         • single-node ←
+   cluster_version                       Choices:        which version the cluster should have
+   -                                     • 1.0           aliases: version
+                                         Choices:
+   command                               • create
+   - / required                          • facts         Specifies the action to take.
+                                         • delete
+                                         • modify
+   db_name                                               Name of the database.
+   -
+   debug_botocore_endpoint_logs          Choices:        Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to
+   boolean                               • no ←          the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                          • yes           ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                               Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                                required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if
+                                                         any, is used.
+   elastic_ip                                            if the cluster has an elastic IP or not
+   -
+   encrypted                           Default:          if the cluster is encrypted or not
+   -                                   "no"
+   final_cluster_snapshot_identifier                     identifier of the final snapshot to be created before deleting the cluster. If this parameter is provided, final_cluster_snapshot_identifier
+   -                                                     must be false. Used only when command=delete.
+   added in 2.4                                          aliases: final_snapshot_id
+   identifier                                            Redshift cluster identifier.
+   - / required
+   new_cluster_identifier                                Only used when command=modify.
+   -                                                     aliases: new_identifier
+                                         Choices:
+                                         • ds1.xlarge
+                                         • ds1.8xlarge
+                                         • ds2.xlarge
+                                         • ds2.8xlarge
+   node_type                             • dc1.large
+   -                                     • dc1.8xlarge   The node type of the cluster. Must be specified when command=create.
+                                         • dc2.large
+                                         • dc2.8xlarge
+                                         • dw1.xlarge
+                                         • dw1.8xlarge
+                                         • dw2.large
+                                         • dw2.8xlarge
+   number_of_nodes                                       Number of nodes. Only used when cluster_type=multi-node.
+   -
+   password                                              Master database password. Used only when command=create.
+   -
+   port                                                  which port the cluster is listening
+   -
+   preferred_maintenance_window                          maintenance window
+   -                                                     aliases: maintance_window, maint_window
+   profile                                               Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   publicly_accessible                 Default:          if the cluster is accessible publicly or not
+   -                                   "no"
+   region                                                The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                                http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                         aliases: aws_region, ec2_region
+   security_token                                        AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                                aliases: access_token
+   skip_final_cluster_snapshot         Default:          skip a final snapshot before deleting the cluster. Used only when command=delete.
+   -                                   "no"              aliases: skip_final_snapshot
+   added in 2.4
+   username                                              Master database username. Used only when command=create.
+   -
+   validate_certs                        Choices:
+   boolean                               • no            When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                         • yes ←
+   vpc_security_group_ids                                VPC security group
+   -                                                     aliases: vpc_security_groups
+   wait                                  Choices:        When command=create, modify or restore then wait for the database to enter the 'available' state. When command=delete wait for the database
+   boolean                               • no ←          to be terminated.
+                                         • yes
+   wait_timeout                        Default:          how long before wait gives up, in seconds
+   -                                   300
+
+NOTES                   *redshift-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *redshift-examples*
+
+ # Basic cluster provisioning example
+ - redshift: >
+     command=create
+     node_type=ds1.xlarge
+     identifier=new_cluster
+     username=cluster_admin
+     password=1nsecure
+
+ # Cluster delete example
+ - redshift:
+     command: delete
+     identifier: new_cluster
+     skip_final_cluster_snapshot: true
+     wait: true
+
+RETURN VALUES                   *redshift-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   cluster                success  dictionary containing all the cluster information
+   complex
+     availability_zone             Amazon availability zone where the cluster is located. "None" until cluster is available.
+     string               success  Sample:
+                                   us-east-1b
+     create_time                   Time of the cluster creation as timestamp.
+     float                success  Sample:
+                                   1430158536.308
+     db_name                       Name of the database.
+     string               success  Sample:
+                                   new_db_name
+     enhanced_vpc_routing success  status of the enhanced vpc routing feature.
+     boolean
+     identifier                    Id of the cluster.
+     string               success  Sample:
+                                   new_redshift_cluster
+     maintenance_window            Time frame when maintenance/upgrade are done.
+     string               success  Sample:
+                                   sun:09:30-sun:10:00
+     port                          Port of the cluster. "None" until cluster is available.
+     integer              success  Sample:
+                                   5439
+     private_ip_address            Private IP address of the main node.
+     string               success  Sample:
+                                   10.10.10.10
+     public_ip_address             Public IP address of the main node. "None" when enhanced_vpc_routing is enabled.
+     string               success  Sample:
+                                   0.0.0.0
+     status                        Status of the cluster.
+     string               success  Sample:
+                                   available
+     url                           FQDN of the main cluster node. "None" until cluster is available.
+     string               success  Sample:
+                                   new-redshift_cluster.jfkdjfdkj.us-east-1.redshift.amazonaws.com
+
+STATUS                   *redshift-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jens Carl (@j-carl), Hothead Games Inc.
+     • Rafael Driutti (@rafaeldriutti)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *redshift-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/redshift_module.html

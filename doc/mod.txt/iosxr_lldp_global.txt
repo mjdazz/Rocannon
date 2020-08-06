@@ -1,0 +1,307 @@
+SYNOPSIS                   *iosxr_lldp_global*
+
+     • This module manages Global Link Layer Discovery Protocol (LLDP) settings on IOS-XR devices.
+
+PARAMETERS                   *iosxr_lldp_global-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   config                                 The provided global LLDP configuration.
+   dictionary
+    holdtime                              Specifies the holdtime (in sec) to be sent in packets.
+    integer
+    reinit                                Specifies the delay (in sec) for LLDP initialization on any interface.
+    integer
+    subinterfaces          Choices:
+    boolean                • no           Enable or disable LLDP over sub-interfaces.
+                           • yes
+    timer                                 Specifies the rate at which LLDP packets are sent (in sec).
+    integer
+    tlv_select                            Specifies the LLDP TLVs to enable or disable.
+    dictionary
+     management_address    Choices:
+     boolean               • no           Enable or disable management address TLV.
+                           • yes
+     port_description      Choices:
+     boolean               • no           Enable or disable port description TLV.
+                           • yes
+     system_capabilities   Choices:
+     boolean               • no           Enable or disable system capabilities TLV.
+                           • yes
+     system_description    Choices:
+     boolean               • no           Enable or disable system description TLV.
+                           • yes
+     system_name           Choices:
+     boolean               • no           Enable or disable system name TLV.
+                           • yes
+                           Choices:
+   state                   • merged ←     The state of the configuration after module completion.
+   string                  • replaced
+                           • deleted
+
+NOTES                   *iosxr_lldp_global-notes*
+
+   Note
+
+     • Tested against IOS-XR 6.1.3.
+     • This module works with connection network_cli. See the IOS-XR Platform Options.
+
+EXAMPLES                   *iosxr_lldp_global-examples*
+
+ # Using merged
+ #
+ #
+ # -------------
+ # Before State
+ # -------------
+ #
+ #
+ # RP/0/0/CPU0:an-iosxr#sh run lldp
+ # Tue Aug  6 19:27:54.933 UTC
+ # % No such configuration item(s)
+ #
+ #
+
+ - name: Merge provided LLDP configuration with the existing configuration
+   iosxr_lldp_global:
+     config:
+       holdtime: 100
+       reinit: 2
+       timer: 3000
+       subinterfaces: True
+       tlv_select:
+         management_address: False
+         system_description: False
+     state: merged
+
+ #
+ #
+ # ------------------------
+ # Module Execution Result
+ # ------------------------
+ #
+ #  "before": {}
+ #
+ #  "commands": [
+ #        "lldp subinterfaces enable",
+ #        "lldp holdtime 100",
+ #        "lldp reinit 2",
+ #        "lldp tlv-select system-description disable",
+ #        "lldp tlv-select management-address disable",
+ #        "lldp timer 3000"
+ #  ]
+ #
+ #  "after": {
+ #        "holdtime": 100,
+ #        "reinit": 2,
+ #        "subinterfaces": true,
+ #        "timer": 3000,
+ #        "tlv_select": {
+ #            "management_address": false,
+ #            "system_description": false
+ #        }
+ #  }
+ #
+ #
+ # ------------
+ # After state
+ # ------------
+ #
+ #
+ # RP/0/0/CPU0:an-iosxr#sh run lldp
+ # Tue Aug  6 21:31:10.587 UTC
+ # lldp
+ #  timer 3000
+ #  reinit 2
+ #  subinterfaces enable
+ #  holdtime 100
+ #  tlv-select
+ #   management-address disable
+ #   system-description disable
+ #  !
+ # !
+ #
+ #
+
+
+ # Using replaced
+ #
+ #
+ # -------------
+ # Before State
+ # -------------
+ #
+ # RP/0/0/CPU0:an-iosxr#sh run lldp
+ # Tue Aug  6 21:31:10.587 UTC
+ # lldp
+ #  timer 3000
+ #  reinit 2
+ #  subinterfaces enable
+ #  holdtime 100
+ #  tlv-select
+ #   management-address disable
+ #   system-description disable
+ #  !
+ # !
+ #
+ #
+
+ - name: Replace existing LLDP device configuration with provided configuration
+   iosxr_lldp_global:
+     config:
+       holdtime: 100
+       tlv_select:
+         port_description: False
+         system_description: True
+         management_description: True
+     state: replaced
+
+ #
+ #
+ # ------------------------
+ # Module Execution Result
+ # ------------------------
+ #
+ #  "before": {
+ #        "holdtime": 100,
+ #        "reinit": 2,
+ #        "subinterfaces": true,
+ #        "timer": 3000,
+ #        "tlv_select": {
+ #            "management_address": false,
+ #            "system_description": false
+ #        }
+ #  }
+ #
+ #  "commands": [
+ #        "no lldp reinit 2",
+ #        "no lldp subinterfaces enable",
+ #        "no lldp timer 3000",
+ #        "no lldp tlv-select management-address disable",
+ #        "no lldp tlv-select system-description disable",
+ #        "lldp tlv-select port-description disable"
+ #  ]
+ #
+ #  "after": {
+ #        "holdtime": 100,
+ #        "tlv_select": {
+ #            "port_description": false
+ #        }
+ #  }
+ #
+ #
+ # ------------
+ # After state
+ # ------------
+ #
+ # RP/0/0/CPU0:an-iosxr#sh run lldp
+ # Tue Aug  6 21:53:08.407 UTC
+ # lldp
+ #  holdtime 100
+ #  tlv-select
+ #   port-description disable
+ #  !
+ # !
+ #
+ #
+
+
+ # Using deleted
+ #
+ # ------------
+ # Before state
+ # ------------
+ #
+ #
+ # RP/0/0/CPU0:an-iosxr#sh run lldp
+ # Tue Aug  6 21:31:10.587 UTC
+ # lldp
+ #  timer 3000
+ #  reinit 2
+ #  subinterfaces enable
+ #  holdtime 100
+ #  tlv-select
+ #   management-address disable
+ #   system-description disable
+ #  !
+ # !
+ #
+ #
+
+ - name: Deleted existing LLDP configurations from the device
+   iosxr_lldp_global:
+     state: deleted
+
+ #
+ #
+ # ------------------------
+ # Module Execution Result
+ # ------------------------
+ #
+ #  "before": {
+ #        "holdtime": 100,
+ #        "reinit": 2,
+ #        "subinterfaces": true,
+ #        "timer": 3000,
+ #        "tlv_select": {
+ #            "management_address": false,
+ #            "system_description": false
+ #        }
+ #  },
+ #
+ #  "commands": [
+ #        "no lldp holdtime 100",
+ #        "no lldp reinit 2",
+ #        "no lldp subinterfaces enable",
+ #        "no lldp timer 3000",
+ #        "no lldp tlv-select management-address disable",
+ #        "no lldp tlv-select system-description disable"
+ #  ]
+ #
+ #  "after": {}
+ #
+ #
+ # -----------
+ # After state
+ # -----------
+ #
+ # RP/0/0/CPU0:an-iosxr#sh run lldp
+ # Tue Aug  6 21:38:31.187 UTC
+ # lldp
+ # !
+ #
+ #
+
+RETURN VALUES                   *iosxr_lldp_global-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                  Description
+   after                   The configuration as structured data after module completion.
+   dictionary when changed Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   before                  The configuration as structured data prior to module invocation.
+   dictionary always       Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   commands                The set of commands pushed to the remote device.
+   list       always       Sample:
+                           ['lldp subinterfaces enable', 'lldp holdtime 100', 'no lldp tlv-select management-address disable']
+
+STATUS                   *iosxr_lldp_global-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *iosxr_lldp_global-red hat support*
+
+     • Nilashish Chakraborty (@NilashishC)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iosxr_lldp_global-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iosxr_lldp_global_module.html

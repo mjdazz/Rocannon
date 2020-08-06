@@ -1,27 +1,189 @@
-SYNOPSIS                           *template*
+SYNOPSIS                   *template*
 
-Templates are processed by the Jinja2 templating language (http://jinja.pocoo.org/docs/) - documentation on the template formatting can be found in the Template Designer Documentation
-(http://jinja.pocoo.org/docs/templates/). Six additional variables can be used in templates: ansible_managed (configurable via the defaults section of ansible.cfg) contains a string which can be
-used to describe the template name, host, modification time of the template file and the owner uid, template_host contains the node name of the template’s machine, template_uid the owner,
-template_path the absolute path of the template, template_fullpath is the absolute path of the template, and template_run_date is the date that the template was rendered. Note that including a
-string that uses a date in the template will result in the template being marked ‘changed’ each time.
+     • Templates are processed by the Jinja2 templating language.
+     • Documentation on the template formatting can be found in the Template Designer Documentation.
+     • Additional variables listed below can be used in templates.
+     • ansible_managed (configurable via the defaults section of ansible.cfg) contains a string which can be used to describe the template name, host, modification time of the template file and the
+       owner uid.
+     • template_host contains the node name of the template’s machine.
+     • template_uid is the numeric user id of the owner.
+     • template_path is the path of the template.
+     • template_fullpath is the absolute path of the template.
+     • template_destpath is the path of the template on the remote system (added in 2.8).
+     • template_run_date is the date that the template was rendered.
 
-EXAMPLES                           *template-examples*
->
-    # Example from Ansible Playbooks
-    - template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode=0644
-   
-    # The same example, but using symbolic modes equivalent to 0644
-    - template: src=/mytemplates/foo.j2 dest=/etc/file.conf owner=bin group=wheel mode="u=rw,g=r,o=r"
-   
-    # Copy a new "sudoers" file into place, after passing validation with visudo
-    - template: src=/mine/sudoers dest=/etc/sudoers validate='visudo -cf %s'
-   
-      Note
-   
-      Since Ansible version 0.9, templates are loaded with trim_blocks=True.
-   
+PARAMETERS                   *template-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+                                          The attributes the resulting file or directory should have.
+   attributes                             To get supported flags look at the man page for chattr on the target system.
+   string                                 This string should contain the attributes in the same order as the one displayed by lsattr.
+                                          The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                          aliases: attr
+   backup                  Choices:
+   boolean                 • no ←         Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                           • yes
+   block_end_string      Default:
+   string                "%}"             The string marking the end of a block.
+   added in 2.4
+   block_start_string    Default:
+   string                "{%"             The string marking the beginning of a block.
+   added in 2.4
+   dest                                   Location to render the template to on the remote machine.
+   path / required
+   follow                  Choices:       Determine whether symbolic links should be followed.
+   boolean                 • no ←         When set to yes symbolic links will be followed, if they exist.
+   added in 2.4            • yes          When set to no symbolic links will not be followed.
+                                          Previous to Ansible 2.4, this was hardcoded as yes.
+   force                   Choices:       Determine when the file is being transferred if the destination already exists.
+   boolean                 • no           When set to yes, replace the remote file when contents are different than the source.
+                           • yes ←        When set to no, the file will only be transferred if the destination does not exist.
+   group                                  Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   lstrip_blocks           Choices:       Determine when leading spaces and tabs should be stripped.
+   boolean                 • no ←         When set to yes leading spaces and tabs are stripped from the start of a line to a block.
+   added in 2.6            • yes          This functionality requires Jinja 2.7 or newer.
+                                          The permissions the resulting file or directory should have.
+                                          For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it
+                                          is an octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into
+   mode                                   number.
+   string                                 Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                          As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                          As of Ansible 2.6, the mode may also be the special string preserve.
+                                          When set to preserve the file will be given the same permissions as the source file.
+   newline_sequence        Choices:
+   string                  • \n ←         Specify the newline sequence to use for templating files.
+   added in 2.4            • \r
+                           • \r\n
+   output_encoding       Default:         Overrides the encoding used to write the template file defined by dest.
+   string                "utf-8"          It defaults to utf-8, but any encoding supported by python can be used.
+   added in 2.7                           The source template file must always be encoded using utf-8, for homogeneity.
+   owner                                  Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   selevel               Default:         The level part of the SELinux file context.
+   string                "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                          When set to _default, it will use the level portion of the policy if available.
+   serole                                 The role part of the SELinux file context.
+   string                                 When set to _default, it will use the role portion of the policy if available.
+   setype                                 The type part of the SELinux file context.
+   string                                 When set to _default, it will use the type portion of the policy if available.
+   seuser                                 The user part of the SELinux file context.
+   string                                 By default it uses the system policy, where applicable.
+                                          When set to _default, it will use the user portion of the policy if available.
+   src                                    Path of a Jinja2 formatted template on the Ansible controller.
+   path / required                        This can be a relative or an absolute path.
+                                          The file must be encoded with utf-8 but output_encoding can be used to control the encoding of the output template.
+   trim_blocks             Choices:       Determine when newlines should be removed from blocks.
+   boolean                 • no           When set to yes the first newline after a block is removed (block, not variable tag!).
+   added in 2.4            • yes ←
+                                          Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                          By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured
+   unsafe_writes           Choices:       or just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be
+   boolean                 • no ←         written in an unsafe manner.
+                           • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform
+                                          unsafe writes).
+                                          IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   validate                               The validation command to run before copying into place.
+   string                                 The path to the file to validate is passed in via '%s' which must be present as in the examples below.
+                                          The command is passed securely so shell features like expansion and pipes will not work.
+   variable_end_string   Default:
+   string                "}}"             The string marking the end of a print statement.
+   added in 2.4
+   variable_start_string Default:
+   string                "{{"             The string marking the beginning of a print statement.
+   added in 2.4
+
+NOTES                   *template-notes*
+
+   Note
+
+     • You can use the copy module with the content: option if you prefer the template inline, as part of the playbook.
+     • For Windows you can use win_template which uses ‘\r\n’ as newline_sequence by default.
+     • Including a string that uses a date in the template will result in the template being marked ‘changed’ each time.
+     • Since Ansible 0.9, templates are loaded with trim_blocks=True.
+     • Also, you can override jinja2 settings by adding a special header to template file. i.e. #jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False which changes the
+       variable interpolation markers to [% var %] instead of {{ var }}. This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
+     • Using raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated.
+     • To find Byte Order Marks in files, use Format-Hex <file> -Count 16 on Windows, and use od -a -t x1 -N 16 <file> on Linux.
+
+SEE ALSO                   *template-see also*
+
+   See also
+
+   copy – Copy files to remote locations
+   The official documentation on the copy module.
+
+   win_copy – Copies files to remote locations on windows hosts
+   The official documentation on the win_copy module.
+
+   win_template – Template a file out to a remote server
+   The official documentation on the win_template module.
+
+EXAMPLES                   *template-examples*
+
+ - name: Template a file to /etc/files.conf
+   template:
+     src: /mytemplates/foo.j2
+     dest: /etc/file.conf
+     owner: bin
+     group: wheel
+     mode: '0644'
+
+ - name: Template a file, using symbolic modes (equivalent to 0644)
+   template:
+     src: /mytemplates/foo.j2
+     dest: /etc/file.conf
+     owner: bin
+     group: wheel
+     mode: u=rw,g=r,o=r
+
+ - name: Copy a version of named.conf that is dependent on the OS. setype obtained by doing ls -Z /etc/named.conf on original file
+   template:
+     src: named.conf_{{ ansible_os_family }}.j2
+     dest: /etc/named.conf
+     group: named
+     setype: named_conf_t
+     mode: 0640
+
+ - name: Create a DOS-style text file from a template
+   template:
+     src: config.ini.j2
+     dest: /share/windows/config.ini
+     newline_sequence: '\r\n'
+
+ - name: Copy a new sudoers file into place, after passing validation with visudo
+   template:
+     src: /mine/sudoers
+     dest: /etc/sudoers
+     validate: /usr/sbin/visudo -cf %s
+
+ - name: Update sshd configuration safely, avoid locking yourself out
+   template:
+     src: etc/ssh/sshd_config.j2
+     dest: /etc/ssh/sshd_config
+     owner: root
+     group: root
+     mode: '0600'
+     validate: /usr/sbin/sshd -t -f %s
+     backup: yes
+
+STATUS                   *template-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *template-red hat support*
+
+     • Ansible Core Team
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *template-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/template_module.html
+https://docs.ansible.com/ansible/latest/modules/template_module.html

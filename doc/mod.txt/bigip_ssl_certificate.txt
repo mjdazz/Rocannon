@@ -1,0 +1,136 @@
+SYNOPSIS                   *bigip_ssl_certificate*
+
+     • This module will import/delete SSL certificates on BIG-IP LTM. Certificates can be imported from certificate and key files on the local disk, in PEM format.
+
+REQUIREMENTS                   *bigip_ssl_certificate-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • BIG-IP >= v12
+
+PARAMETERS                   *bigip_ssl_certificate-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   content                          Sets the contents of a certificate directly to the specified value. This is used with lookup plugins or for anything with formatting or
+   string                           content must be provided when state is present.
+                                    aliases: cert_content
+   issuer_cert                      Issuer certificate used for OCSP monitoring.
+   string                           This parameter is only valid on versions of BIG-IP 13.0.0 or above.
+   added in 2.5
+   name
+   string /                         SSL Certificate Name. This is the cert name used when importing a certificate into the F5. It also determines the filenames of the objects on the LTM.
+   required
+   partition       Default:
+   string          "Common"         Device partition to manage resources on.
+   added in 2.5
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:
+   string            • present ←    Certificate state. This determines if the provided certificate and key is to be made present on the device or absent.
+                     • absent
+
+NOTES                   *bigip_ssl_certificate-notes*
+
+   Note
+
+     • This module does not behave like other modules that you might include in roles where referencing files or templates first looks in the role’s files or templates directory. To have it behave
+       that way, use the Ansible file or template lookup (see Examples). The lookups behave as expected in a role context.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_ssl_certificate-examples*
+
+ - name: Use a file lookup to import PEM Certificate
+   bigip_ssl_certificate:
+     name: certificate-name
+     state: present
+     content: "{{ lookup('file', '/path/to/cert.crt') }}"
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Use a file lookup to import CA certificate chain
+   bigip_ssl_certificate:
+     name: ca-chain-name
+     state: present
+     content: "{{ lookup('file', '/path/to/ca-chain.crt') }}"
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Delete Certificate
+   bigip_ssl_certificate:
+     name: certificate-name
+     state: absent
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_ssl_certificate-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key          Returned                                                                                  Description
+   cert_name                       The name of the certificate that the user provided
+   string      created             Sample:
+                                   cert1
+   checksum                        SHA1 checksum of the cert that was provided.
+   string      changed and created Sample:
+                                   f7ff9e8b7bb2e09b70935a5d785e0cc5d9d0abf0
+   filename                        The name of the SSL certificate.
+   string      created             Sample:
+                                   cert1.crt
+   source_path                     Path on BIG-IP where the source of the certificate is stored.
+   string      created             Sample:
+                                   /var/config/rest/downloads/cert1.crt
+
+STATUS                   *bigip_ssl_certificate-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_ssl_certificate-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_ssl_certificate_module.html

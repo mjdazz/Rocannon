@@ -1,0 +1,333 @@
+SYNOPSIS                   *azure_rm_iothub*
+
+     • Create, delete an Azure IoT hub.
+
+REQUIREMENTS                   *azure_rm_iothub-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_iothub-parameters*
+
+              Parameter                    Choices/Defaults                                                                     Comments
+   ad_user                                                          Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   adfs_authority_url
+   string                                                           Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile                      Default:                        Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds;
+   string                           "latest"                        future values will allow use with Azure Stack.
+   added in 2.5
+   append_tags                        Choices:                      Use to control if tags field is canonical or just appends to existing tags.
+   boolean                            • no                          When canonical, any tags not found in the tags parameter will be removed from the object's metadata.
+                                      • yes ←
+                                                                    Controls the source of the credentials to use for authentication.
+                                                                    If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                                      Choices:                      auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file
+   auth_source                        • auto                        ~/.azure/credentials.
+   string                             • cli                         When set to cli, the credentials will be sources from the default Azure CLI profile.
+   added in 2.5                       • credential_file             Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+                                      • env                         When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment
+                                      • msi                         variable AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one
+                                                                    subscription, otherwise the first subscription is chosen.
+                                                                    The msi was added in Ansible 2.6.
+   cert_validation_mode               Choices:                      Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate,
+   string                             • ignore                      but when an HTTPS proxy is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can
+   added in 2.5                       • validate                    also be set via credential file profile or the AZURE_CERT_VALIDATION environment variable.
+   client_id                                                        Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment                Default:                        For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud,
+   string                           "AzureCloud"                    AzureUSGovernment), or a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile
+   added in 2.4                                                     or the AZURE_CLOUD_ENVIRONMENT environment variable.
+   enable_file_upload_notifications   Choices:
+   boolean                            • no                          File upload notifications are enabled if set to True.
+                                      • yes
+   event_endpoint                                                   The Event Hub-compatible endpoint property.
+   dictionary
+         partition_count                                            The number of partitions for receiving device-to-cloud messages in the Event Hub-compatible endpoint.
+         integer                                                    See https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages.
+                                                                    Default is 2.
+         retention_time_in_days                                     The retention time for device-to-cloud messages in days.
+         integer                                                    See https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages.
+                                                                    Default is 1.
+   ip_filters                                                       Configure rules for rejecting or accepting traffic from specific IPv4 addresses.
+   list
+         action                       Choices:
+         string / required            • accept                      The desired action for requests captured by this rule.
+                                      • reject
+         ip_mask                                                    A string that contains the IP address range in CIDR notation for the rule.
+         string / required
+         name                                                       Name of the filter.
+         string / required
+   location                                                         Location of the IoT hub.
+   string
+   name                                                             Name of the IoT hub.
+   string / required
+   password                                                         Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   profile                                                          Security profile found in ~/.azure/credentials file.
+   string
+   resource_group                                                   Name of resource group.
+   string / required
+   routes                                                           Route device-to-cloud messages to service-facing endpoints.
+   list
+                                                                    The query expression for the routing query that is run against the message application properties, system properties, message
+         condition                                                  body, device twin tags, and device twin properties to determine if it is a match for the endpoint.
+         string                                                     For more information about constructing a query, see
+                                                                    https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax
+         enabled                      Choices:
+         boolean / required           • no                          Whether to enable the route.
+                                      • yes
+         endpoint_name                                              The name of the endpoint in routing_endpoints where IoT Hub sends messages that match the query.
+         string / required
+         name                                                       Name of the route.
+         string / required
+                                      Choices:
+         source                       • device_messages
+         string / required            • twin_change_events          The origin of the data stream to be acted upon.
+                                      • device_lifecycle_events
+                                      • device_job_lifecycle_events
+   routing_endpoints                                                Custom endpoints.
+   list
+         connection_string                                          Connection string of the custom endpoint.
+         string / required                                          The connection string should have send privilege.
+         container                                                  Container name of the custom endpoint when resource_type=storage.
+         string
+         encoding                                                   Encoding of the message when resource_type=storage.
+         string
+         name                                                       Name of the custom endpoint.
+         string / required
+         resource_group                                             Resource group of the endpoint.
+         string                                                     Default is the same as resource_group.
+                                      Choices:
+         resource_type                • eventhub
+         string / required            • queue                       Resource type of the custom endpoint.
+                                      • storage
+                                      • topic
+         subscription                                               Subscription id of the endpoint.
+         string                                                     Default is the same as subscription.
+   secret                                                           Azure client secret. Use when authenticating with a Service Principal.
+   string
+                                      Choices:
+                                      • b1
+                                      • b2                          Pricing tier for Azure IoT Hub.
+   sku                                • b3                          Note that only one free IoT hub instance is allowed in each subscription. Exception will be thrown if free instances exceed one.
+   string                             • f1                          Default is s1 when creation.
+                                      • s1
+                                      • s2
+                                      • s3
+   state                              Choices:
+   string                             • absent                      State of the IoT hub. Use present to create or update an IoT hub and absent to delete an IoT hub.
+                                      • present ←
+   subscription_id                                                  Your Azure subscription Id.
+   string
+   tags                                                             Dictionary of string:string pairs to assign as metadata to the object.
+   dictionary                                                       Metadata tags on the object will be updated with any provided values.
+                                                                    To remove tags set append_tags option to false.
+   tenant                                                           Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+   unit                                                             Units in your IoT Hub.
+   integer                                                          Default is 1.
+
+NOTES                   *azure_rm_iothub-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_iothub-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_iothub-examples*
+
+ - name: Create a simplest IoT hub
+   azure_rm_iothub:
+     name: Testing
+     resource_group: myResourceGroup
+ - name: Create an IoT hub with route
+   azure_rm_iothub:
+     resource_group: myResourceGroup
+     name: Testing
+     routing_endpoints:
+         - connection_string: "Endpoint=sb://qux.servicebus.windows.net/;SharedAccessKeyName=quux;SharedAccessKey="""";EntityPath=myQueue"
+           name: foo
+           resource_type: queue
+           resource_group: myResourceGroup1
+     routes:
+         - name: bar
+           source: device_messages
+           endpoint_name: foo
+           enabled: yes
+
+RETURN VALUES                   *azure_rm_iothub-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                 Key                Returned                                                                       Description
+   cloud_to_device                  success  Cloud to device message properties.
+   complex
+                                             The number of times the IoT hub attempts to deliver a message on the feedback queue.
+         max_delivery_count         success  See https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages.
+         integer                             Sample:
+                                             10
+                                             The period of time for which a message is available to consume before it is expired by the IoT hub.
+         ttl_as_iso8601             success  See https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#cloud-to-device-messages.
+         string                              Sample:
+                                             1:00:00
+   enable_file_upload_notifications          Whether file upload notifications are enabled.
+   boolean                          success  Sample:
+                                             True
+   event_endpoints                  success  Built-in endpoint where to deliver device message.
+   complex
+         endpoint                            The Event Hub-compatible endpoint.
+         string                     success  Sample:
+                                             sb://iothub-ns-testing-1478811-9bbc4a15f0.servicebus.windows.net/
+                                             The number of partitions for receiving device-to-cloud messages in the Event Hub-compatible endpoint.
+         partition_count            success  See https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages.
+         integer                             Sample:
+                                             2
+         partition_ids                       List of the partition id for the event endpoint.
+         list                       success  Sample:
+                                             ['0', '1']
+                                             The retention time for device-to-cloud messages in days.
+         retention_time_in_days     success  See https://docs.microsoft.com/azure/iot-hub/iot-hub-devguide-messaging#device-to-cloud-messages.
+         integer                             Sample:
+                                             1
+   host_name                                 Host of the IoT hub.
+   string                           success  Sample:
+                                             testing.azure-devices.net
+   id                                        Resource ID of the IoT hub.
+   string                           success  Sample:
+                                             /subscriptions/XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX/resourceGroups/myResourceGroup/providers/Microsoft.Devices/IotHubs/Testing
+   ip_filters                       success  Configure rules for rejecting or accepting traffic from specific IPv4 addresses.
+   complex
+         action                              The desired action for requests captured by this rule.
+         string                     success  Sample:
+                                             Reject
+         ip_mask                             A string that contains the IP address range in CIDR notation for the rule.
+         string                     success  Sample:
+                                             40.54.7.3
+         name                                Name of the filter.
+         string                     success  Sample:
+                                             filter
+   location                                  Location of the IoT hub.
+   string                           success  Sample:
+                                             eastus
+   name                                      Name of the IoT hub.
+   string                           success  Sample:
+                                             Testing
+   resource_group                            Resource group of the IoT hub.
+   string                           success  Sample:
+                                             myResourceGroup.
+   routes                           success  Route device-to-cloud messages to service-facing endpoints.
+   complex
+                                             The query expression for the routing query that is run against the message application properties, system properties, message body, device twin tags,
+         condition                           and device twin properties to determine if it is a match for the endpoint.
+         boolean                    success  For more information about constructing a query, see https://docs.microsoft.com/en-us/azure/iot-hub/iot-hub-devguide-routing-query-syntax
+                                             Sample:
+                                             true
+         enabled                             Whether to enable the route.
+         string                     success  Sample:
+                                             True
+         endpoint_name                       The name of the endpoint in routing_endpoints where IoT Hub sends messages that match the query.
+         string                     success  Sample:
+                                             foo
+         name                                Name of the route.
+         string                     success  Sample:
+                                             route1
+         source                              The origin of the data stream to be acted upon.
+         string                     success  Sample:
+                                             device_messages
+   routing_endpoints                success  Custom endpoints.
+   complex
+         event_hubs                 success  List of custom endpoints of event hubs.
+         complex
+               connection_string             Connection string of the custom endpoint.
+               string               success  Sample:
+                                             Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey="""";EntityPath=foo
+               name                          Name of the custom endpoint.
+               string               success  Sample:
+                                             foo
+               resource_group                Resource group of the endpoint.
+               string               success  Sample:
+                                             bar
+               subscription                  Subscription id of the endpoint.
+               string               success  Sample:
+                                             XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+         service_bus_queues         always   List of custom endpoints of service bus queue.
+         complex
+               connection_string             Connection string of the custom endpoint.
+               string               success  Sample:
+                                             Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey="""";EntityPath=foo
+               name                          Name of the custom endpoint.
+               string               success  Sample:
+                                             foo
+               resource_group                Resource group of the endpoint.
+               string               success  Sample:
+                                             bar
+               subscription                  Subscription ID of the endpoint.
+               string               success  Sample:
+                                             XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+         service_bus_topics         success  List of custom endpoints of service bus topic.
+         complex
+               connection_string             Connection string of the custom endpoint.
+               string               success  Sample:
+                                             Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey="""";EntityPath=foo
+               name                          Name of the custom endpoint.
+               string               success  Sample:
+                                             foo
+               resource_group                Resource group of the endpoint.
+               string               success  Sample:
+                                             bar
+               subscription                  Subscription ID of the endpoint.
+               string               success  Sample:
+                                             XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+         storage_containers         success  List of custom endpoints of storage
+         complex
+               connection_string             Connection string of the custom endpoint.
+               string               success  Sample:
+                                             Endpoint=sb://quux.servicebus.windows.net:5671/;SharedAccessKeyName=qux;SharedAccessKey="""";EntityPath=foo
+               name                          Name of the custom endpoint.
+               string               success  Sample:
+                                             foo
+               resource_group                Resource group of the endpoint.
+               string               success  Sample:
+                                             bar
+               subscription                  Subscription ID of the endpoint.
+               string               success  Sample:
+                                             XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
+   sku                                       Pricing tier for Azure IoT Hub.
+   string                           success  Sample:
+                                             f1
+   unit                                      Units in the IoT Hub.
+   integer                          success  Sample:
+                                             1
+
+STATUS                   *azure_rm_iothub-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Yuwei Zhou (@yuwzho)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_iothub-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_iothub_module.html

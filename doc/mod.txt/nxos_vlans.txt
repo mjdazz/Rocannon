@@ -1,0 +1,183 @@
+SYNOPSIS                   *nxos_vlans*
+
+     • This module creates and manages VLAN configurations on Cisco NX-OS Interfaces.
+
+PARAMETERS                   *nxos_vlans-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   config                               A dictionary of Vlan options
+   list
+    enabled              Choices:
+    boolean              • no           Manage administrative state of the vlan.
+                         • yes
+    mapped_vni                          The Virtual Network Identifier (VNI) ID that is mapped to the VLAN.
+    integer
+    mode                 Choices:
+    string               • ce           Set vlan mode to classical ethernet or fabricpath. This is a valid option for Nexus 5000, 6000 and 7000 series.
+                         • fabricpath
+    name                                Name of VLAN.
+    string
+    state                Choices:
+    string               • active       Manage operational state of the vlan.
+                         • suspend
+    vlan_id                             Vlan ID.
+    integer / required
+                         Choices:
+   state                 • merged ←
+   string                • replaced     The state of the configuration after module completion.
+                         • overridden
+                         • deleted
+
+NOTES                   *nxos_vlans-notes*
+
+   Note
+
+     • Tested against NXOS 7.3.(0)D1(1) on VIRL
+
+EXAMPLES                   *nxos_vlans-examples*
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ # vlan 1
+
+ - name: Merge provided configuration with device configuration.
+   nxos_vlans:
+     config:
+       - vlan_id: 5
+         name: test-vlan5
+       - vlan_id: 10
+         enabled: False
+     state: merged
+
+ # After state:
+ # ------------
+ # vlan 5
+ #   name test-vlan5
+ #   state active
+ #   no shutdown
+ # vlan 10
+ #   state active
+ #   shutdown
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ # vlan 1
+ # vlan 5
+ #   name test-vlan5
+ # vlan 10
+ #   shutdown
+
+ - name: Replace device configuration of specified vlan with provided configuration.
+   nxos_vlans:
+     config:
+       - vlan_id: 5
+         name: test-vlan
+         enabled: False
+       - vlan_id: 10
+         enabled: False
+     state: replaced
+
+ # After state:
+ # ------------
+ # vlan 1
+ # vlan 5
+ #   name test-vlan
+ #   state active
+ #   shutdown
+ # vlan 10
+ #   state active
+ #   shutdown
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ # vlan 1
+ # vlan 3
+ #   name testing
+ # vlan 5
+ #   name test-vlan5
+ #   shutdown
+ # vlan 10
+ #   shutdown
+
+ - name: Override device configuration of all vlans with provided configuration.
+   nxos_vlans:
+     config:
+       - vlan_id: 5
+         name: test-vlan
+       - vlan_id: 10
+         state: active
+     state: overridden
+
+ # After state:
+ # ------------
+ # vlan 1
+ # vlan 5
+ #   name test-vlan
+ #   state active
+ #   no shutdown
+ # vlan 10
+ #   state active
+ #   no shutdown
+
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ # vlan 1
+ # vlan 5
+ # vlan 10
+
+ - name: Delete vlans.
+   nxos_vlans:
+     config:
+       - vlan_id: 5
+       - vlan_id: 10
+     state: deleted
+
+ # After state:
+ # ------------
+ # vlan 1
+
+RETURN VALUES                   *nxos_vlans-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['vlan 5', 'name test-vlan5', 'state suspend']
+
+STATUS                   *nxos_vlans-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_vlans-red hat support*
+
+     • Trishna Guha (@trishnaguha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_vlans-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_vlans_module.html

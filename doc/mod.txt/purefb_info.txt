@@ -1,0 +1,116 @@
+SYNOPSIS                   *purefb_info*
+
+     • Collect information from a Pure Storage FlashBlade running the Purity//FB operating system. By default, the module will collect basic information including hosts, host groups, protection
+       groups and volume counts. Additional information can be collected based on the configured set of arguments.
+
+REQUIREMENTS                   *purefb_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • purity_fb >= 1.1
+
+PARAMETERS                   *purefb_info-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   api_token                      FlashBlade API token for admin privileged user.
+   string
+   fb_url                         FlashBlade management IP address or Hostname.
+   string
+   gather_subset Default:         When supplied, this argument will define the information to be collected. Possible values for this include all, minimum, config, performance, capacity, network,
+   list          "minimum"        subnets, lags, filesystems and snapshots.
+
+NOTES                   *purefb_info-notes*
+
+   Note
+
+     • This module requires the purity_fb Python library
+     • You must set PUREFB_URL and PUREFB_API environment variables if fb_url and api_token arguments are not passed to the module directly
+
+EXAMPLES                   *purefb_info-examples*
+
+ - name: collect default set of info
+   purefb_info:
+     fb_url: 10.10.10.2
+     api_token: T-55a68eb5-c785-4720-a2ca-8b03903bf641
+   register: blade_info
+ - name: show default information
+   debug:
+     msg: "{{ blade_info['purefb_info']['default'] }}"
+
+ - name: collect configuration and capacity info
+   purefb_info:
+     gather_subset:
+       - config
+     fb_url: 10.10.10.2
+     api_token: T-55a68eb5-c785-4720-a2ca-8b03903bf641
+   register: blade_info
+ - name: show config information
+   debug:
+     msg: "{{ blade_info['purefb_info']['config'] }}"
+
+ - name: collect all info
+   purefb_info:
+     gather_subset:
+       - all
+     fb_url: 10.10.10.2
+     api_token: T-55a68eb5-c785-4720-a2ca-8b03903bf641
+   register: blade_info
+ - name: show all information
+   debug:
+     msg: "{{ blade_info['purefb_info'] }}"
+
+RETURN VALUES                   *purefb_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+                        Returns the information collected from the FlashBlade
+                        Sample:
+                        {'capacity': {'aggregate': {'data_reduction': 1.1179228, 'snapshots': 0, 'total_physical': 17519748439, 'unique': 17519748439, 'virtual': 19585726464}, 'file-system':
+                        {'data_reduction': 1.3642412, 'snapshots': 0, 'total_physical': 4748219708, 'unique': 4748219708, 'virtual': 6477716992}, 'object-store': {'data_reduction': 1.0263462,
+                        'snapshots': 0, 'total_physical': 12771528731, 'unique': 12771528731, 'virtual': 6477716992}, 'total': 83359896948925}, 'config': {'alert_watchers': {'enabled': True,
+                        'name': '[email protected]'}, 'array_management': {'base_dn': None, 'bind_password': None, 'bind_user': None, 'enabled': False, 'name': 'management', 'services':
+                        ['management'], 'uris': []}, 'directory_service_roles': {'array_admin': {'group': None, 'group_base': None}, 'ops_admin': {'group': None, 'group_base': None}, 'readonly':
+                        {'group': None, 'group_base': None}, 'storage_admin': {'group': None, 'group_base': None}}, 'dns': {'domain': 'demo.acmestorage.com', 'name': 'demo-fb-1', 'nameservers':
+                        ['8.8.8.8'], 'search': ['demo.acmestorage.com']}, 'nfs_directory_service': {'base_dn': None, 'bind_password': None, 'bind_user': None, 'enabled': False, 'name': 'nfs',
+                        'services': ['nfs'], 'uris': []}, 'ntp': ['0.ntp.pool.org'], 'smb_directory_service': {'base_dn': None, 'bind_password': None, 'bind_user': None, 'enabled': False, 'name':
+                        'smb', 'services': ['smb'], 'uris': []}, 'smtp': {'name': 'demo-fb-1', 'relay_host': None, 'sender_domain': 'acmestorage.com'}, 'ssl_certs': {'certificate': '-----BEGIN
+                        CERTIFICATE-----\n\n-----END CERTIFICATE-----', 'common_name': 'Acme Storage', 'country': 'US', 'email': None, 'intermediate_certificate': None, 'issued_by': 'Acme Storage',
+                        'issued_to': 'Acme Storage', 'key_size': 4096, 'locality': None, 'name': 'global', 'organization': 'Acme Storage', 'organizational_unit': 'Acme Storage', 'passphrase': None,
+                        'private_key': None, 'state': None, 'status': 'self-signed', 'valid_from': '1508433967000', 'valid_to': '2458833967000'}}, 'default': {'blades': 15, 'buckets': 7,
+   purefb_info          'filesystems': 2, 'flashblade_name': 'demo-fb-1', 'object_store_accounts': 1, 'object_store_users': 1, 'purity_version': '2.2.0', 'snapshots': 1, 'total_capacity':
+   complex     always   83359896948925}, 'filesystems': {'k8s-pvc-d24b1357-579e-11e8-811f-ecf4bbc88f54': {'destroyed': False, 'fast_remove': False, 'hard_limit': True, 'nfs_rules':
+                        '"(rw,no_root_squash)', 'provisioned': 21474836480, 'snapshot_enabled': False}, 'z': {'destroyed': False, 'fast_remove': False, 'hard_limit': False, 'provisioned':
+                        1073741824, 'snapshot_enabled': False}}, 'lag': {'uplink': {'lag_speed': 0, 'port_speed': 40000000000, 'ports': [{'name': 'CH1.FM1.ETH1.1'}, {'name': 'CH1.FM1.ETH1.2'}],
+                        'status': 'healthy'}}, 'network': {'fm1.admin0': {'address': '10.10.100.6', 'gateway': '10.10.100.1', 'mtu': 1500, 'netmask': '255.255.255.0', 'services': ['support'],
+                        'type': 'vip', 'vlan': 2200}, 'fm2.admin0': {'address': '10.10.100.7', 'gateway': '10.10.100.1', 'mtu': 1500, 'netmask': '255.255.255.0', 'services': ['support'], 'type':
+                        'vip', 'vlan': 2200}, 'nfs1': {'address': '10.10.100.4', 'gateway': '10.10.100.1', 'mtu': 1500, 'netmask': '255.255.255.0', 'services': ['data'], 'type': 'vip', 'vlan':
+                        2200}, 'vir0': {'address': '10.10.100.5', 'gateway': '10.10.100.1', 'mtu': 1500, 'netmask': '255.255.255.0', 'services': ['management'], 'type': 'vip', 'vlan': 2200}},
+                        'performance': {'aggregate': {'bytes_per_op': 0, 'bytes_per_read': 0, 'bytes_per_write': 0, 'read_bytes_per_sec': 0, 'reads_per_sec': 0, 'usec_per_other_op': 0,
+                        'usec_per_read_op': 0, 'usec_per_write_op': 0, 'write_bytes_per_sec': 0, 'writes_per_sec': 0}, 'http': {'bytes_per_op': 0, 'bytes_per_read': 0, 'bytes_per_write': 0,
+                        'read_bytes_per_sec': 0, 'reads_per_sec': 0, 'usec_per_other_op': 0, 'usec_per_read_op': 0, 'usec_per_write_op': 0, 'write_bytes_per_sec': 0, 'writes_per_sec': 0}, 'nfs':
+                        {'bytes_per_op': 0, 'bytes_per_read': 0, 'bytes_per_write': 0, 'read_bytes_per_sec': 0, 'reads_per_sec': 0, 'usec_per_other_op': 0, 'usec_per_read_op': 0,
+                        'usec_per_write_op': 0, 'write_bytes_per_sec': 0, 'writes_per_sec': 0}, 's3': {'bytes_per_op': 0, 'bytes_per_read': 0, 'bytes_per_write': 0, 'read_bytes_per_sec': 0,
+                        'reads_per_sec': 0, 'usec_per_other_op': 0, 'usec_per_read_op': 0, 'usec_per_write_op': 0, 'write_bytes_per_sec': 0, 'writes_per_sec': 0}}, 'snapshots': {'z.188':
+                        {'destroyed': False, 'source': 'z', 'source_destroyed': False, 'suffix': '188'}}, 'subnet': {'new-mgmt': {'gateway': '10.10.100.1', 'interfaces': [{'name': 'fm1.admin0'},
+                        {'name': 'fm2.admin0'}, {'name': 'nfs1'}, {'name': 'vir0'}], 'lag': 'uplink', 'mtu': 1500, 'prefix': '10.10.100.0/24', 'services': ['data', 'management', 'support'], 'vlan':
+                        2200}}}
+
+STATUS                   *purefb_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pure Storage Ansible Team (@sdodsley) <pure-ansible-team@purestorage.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *purefb_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/purefb_info_module.html

@@ -1,0 +1,254 @@
+SYNOPSIS                   *ios_bgp*
+
+     • This module provides configuration management of global BGP parameters on devices running Cisco IOS
+
+PARAMETERS                   *ios_bgp-parameters*
+
+           Parameter          Choices/Defaults                                                                         Comments
+   config                                        Specifies the BGP related configuration.
+   -
+    address_family                               Specifies BGP address family related configurations.
+    -
+     afi                       Choices:
+     - / required              • ipv4            Type of address family to configure.
+                               • ipv6
+     auto_summary              Choices:
+     boolean                   • no              Enable/disable automatic network number summarization.
+                               • yes
+     neighbors                                   Specifies BGP neighbor related configurations in Address Family configuration mode.
+     -
+      activate                 Choices:
+      boolean                  • no              Enable the Address Family for this Neighbor.
+                               • yes
+      advertisement_interval                     Minimum interval between sending BGP routing updates for this neighbor.
+      integer
+      maximum_prefix                             Maximum number of prefixes to accept from this peer.
+      integer                                    The range is from 1 to 2147483647.
+      neighbor                                   Neighbor router address.
+      - / required
+      next_hop_self            Choices:
+      boolean                  • no              Enable/disable the next hop calculation for this neighbor.
+                               • yes
+      next_hop_unchanged       Choices:
+      boolean                  • no              Propagate next hop unchanged for iBGP paths to this neighbor.
+                               • yes
+      remove_private_as        Choices:
+      boolean                  • no              Remove the private AS number from outbound updates.
+                               • yes
+      route_reflector_client   Choices:
+      boolean                  • no              Specify a neighbor as a route reflector client.
+                               • yes
+      route_server_client      Choices:
+      boolean                  • no              Specify a neighbor as a route server client.
+                               • yes
+     networks                                    Specify Networks to announce via BGP.
+     -                                           For operation replace, this option is mutually exclusive with root level networks option.
+      masklen                                    Subnet mask length for the Network to announce(e.g, 8, 16, 24, etc.).
+      -
+      prefix                                     Network ID to announce via BGP.
+      - / required
+      route_map                                  Route map to modify the attributes.
+      -
+     redistribute                                Specifies the redistribute information from another routing protocol.
+     -
+      id                                         Identifier for the routing protocol for configuring redistribute information.
+      -                                          Valid for protocols 'ospf', 'ospfv3' and 'eigrp'.
+      metric                                     Specifies the metric for redistributed routes.
+      -
+                               Choices:
+                               • ospf
+                               • ospfv3
+                               • eigrp
+      protocol                 • isis
+      - / required             • static          Specifies the protocol for configuring redistribute information.
+                               • connected
+                               • odr
+                               • lisp
+                               • mobile
+                               • rip
+      route_map                                  Specifies the route map reference.
+      -
+                               Choices:
+     safi                      • flowspec
+     -                         • unicast ←       Specifies the type of cast for the address family.
+                               • multicast
+                               • labeled-unicast
+     synchronization           Choices:
+     boolean                   • no              Enable/disable IGP synchronization.
+                               • yes
+    bgp_as                                       Specifies the BGP Autonomous System (AS) number to configure on the device.
+    integer / required
+    log_neighbor_changes       Choices:
+    boolean                    • no              Enable/disable logging neighbor up/down and reset reason.
+                               • yes
+    neighbors                                    Specifies BGP neighbor related configurations.
+    -
+     description                                 Neighbor specific description.
+     -
+     ebgp_multihop                               Specifies the maximum hop count for EBGP neighbors not on directly connected networks.
+     integer                                     The range is from 1 to 255.
+     enabled                   Choices:
+     boolean                   • no              Administratively shutdown or enable a neighbor.
+                               • yes
+     local_as                                    The local AS number for the neighbor.
+     integer
+     neighbor                                    Neighbor router address.
+     - / required
+     password                                    Password to authenticate the BGP peer connection.
+     -
+     peer_group                                  Name of the peer group that the neighbor is a member of.
+     -
+     remote_as                                   Remote AS of the BGP neighbor to configure.
+     integer / required
+     timers                                      Specifies BGP neighbor timer related configurations.
+     -
+      holdtime                                   Interval (in seconds) after not receiving a keepalive message that IOS declares a peer dead.
+      integer / required                         The range is from 0 to 65535.
+      keepalive                                  Frequency (in seconds) with which the device sends keepalive messages to its peer.
+      integer / required                         The range is from 0 to 65535.
+      min_neighbor_holdtime                      Interval (in seconds) specifying the minimum acceptable hold-time from a BGP neighbor.
+      integer                                    The minimum acceptable hold-time must be less than, or equal to, the interval specified in the holdtime argument.
+                                                 The range is from 0 to 65535.
+     update_source                               Source of the routing updates.
+     -
+    networks                                     Specify Networks to announce via BGP.
+    -                                            For operation replace, this option is mutually exclusive with networks option under address_family.
+                                                 For operation replace, if the device already has an address family activated, this option is not allowed.
+     masklen                                     Subnet mask length for the Network to announce(e.g, 8, 16, 24, etc.).
+     -
+     prefix                                      Network ID to announce via BGP.
+     - / required
+     route_map                                   Route map to modify the attributes.
+     -
+    router_id                Default:            Configures the BGP routing process router-id value.
+    -                        null
+                               Choices:          Specifies the operation to be performed on the BGP process configured on the device.
+                               • merge ←         In case of merge, the input configuration will be merged with the existing BGP configuration on the device.
+   operation                   • replace         In case of replace, if there is a diff between the existing configuration and the input configuration, the existing configuration will be replaced
+   -                           • override        by the input configuration for every option that has the diff.
+                               • delete          In case of override, all the existing BGP configuration will be removed from the device and replaced with the input configuration.
+                                                 In case of delete the existing BGP configuration will be removed from the device.
+
+NOTES                   *ios_bgp-notes*
+
+   Note
+
+     • Tested against Cisco IOS Version 15.6(3)M2
+
+EXAMPLES                   *ios_bgp-examples*
+
+ - name: configure global bgp as 64496
+   ios_bgp:
+     config:
+       bgp_as: 64496
+       router_id: 192.0.2.1
+       log_neighbor_changes: True
+       neighbors:
+         - neighbor: 203.0.113.5
+           remote_as: 64511
+           timers:
+             keepalive: 300
+             holdtime: 360
+             min_neighbor_holdtime: 360
+         - neighbor: 198.51.100.2
+           remote_as: 64498
+       networks:
+         - prefix: 198.51.100.0
+           route_map: RMAP_1
+         - prefix: 192.0.2.0
+           masklen: 23
+       address_family:
+         - afi: ipv4
+           safi: unicast
+           redistribute:
+             - protocol: ospf
+               id: 223
+               metric: 10
+     operation: merge
+
+ - name: Configure BGP neighbors
+   ios_bgp:
+     config:
+       bgp_as: 64496
+       neighbors:
+         - neighbor: 192.0.2.10
+           remote_as: 64496
+           password: ansible
+           description: IBGP_NBR_1
+           ebgp_multihop: 100
+           timers:
+             keepalive: 300
+             holdtime: 360
+             min_neighbor_holdtime: 360
+         - neighbor: 192.0.2.15
+           remote_as: 64496
+           description: IBGP_NBR_2
+           ebgp_multihop: 150
+     operation: merge
+
+ - name: Configure root-level networks for BGP
+   ios_bgp:
+     config:
+       bgp_as: 64496
+       networks:
+         - prefix: 203.0.113.0
+           masklen: 27
+           route_map: RMAP_1
+         - prefix: 203.0.113.32
+           masklen: 27
+           route_map: RMAP_2
+     operation: merge
+
+ - name: Configure BGP neighbors under address family mode
+   ios_bgp:
+     config:
+       bgp_as: 64496
+       address_family:
+         - afi: ipv4
+           safi: unicast
+           neighbors:
+             - neighbor: 203.0.113.10
+               activate: yes
+               maximum_prefix: 250
+               advertisement_interval: 120
+             - neighbor: 192.0.2.15
+               activate: yes
+               route_reflector_client: True
+     operation: merge
+
+ - name: remove bgp as 64496 from config
+   ios_bgp:
+     config:
+       bgp_as: 64496
+     operation: delete
+
+RETURN VALUES                   *ios_bgp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+                     The list of configuration mode commands to send to the device
+   commands          Sample:
+   list     always   ['router bgp 64496', 'bgp router-id 192.0.2.1', 'bgp log-neighbor-changes', 'neighbor 203.0.113.5 remote-as 64511', 'neighbor 203.0.113.5 timers 300 360 360', 'neighbor
+                     198.51.100.2 remote-as 64498', 'network 198.51.100.0 route-map RMAP_1', 'network 192.0.2.0 mask 255.255.254.0', 'address-family ipv4', 'redistribute ospf 223 metric 70',
+                     'exit-address-family']
+
+STATUS                   *ios_bgp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *ios_bgp-red hat support*
+
+     • Nilashish Chakraborty (@NilashishC)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_bgp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_bgp_module.html

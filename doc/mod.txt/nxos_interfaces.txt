@@ -1,0 +1,208 @@
+SYNOPSIS                   *nxos_interfaces*
+
+     • This module manages the interface attributes of NX-OS interfaces.
+
+PARAMETERS                   *nxos_interfaces-parameters*
+
+               Parameter              Choices/Defaults                                                                    Comments
+   config                                              A dictionary of interface options
+   list / elements=dictionary
+    description                                        Interface description.
+    string
+                                        Choices:
+    duplex                              • full         Interface link status. Applicable for Ethernet interfaces only.
+    string                              • half
+                                        • auto
+    enabled                             Choices:
+    boolean                             • no           Administrative state of the interface. Set the value to true to administratively enable the interface or false to disable it
+                                        • yes
+    fabric_forwarding_anycast_gateway   Choices:
+    boolean                             • no           Associate SVI with anycast gateway under VLAN configuration mode. Applicable for SVI interfaces only.
+                                        • yes
+    ip_forward                          Choices:
+    boolean                             • no           Enable or disable IP forward feature on SVIs. Set the value to true to enable or false to disable.
+                                        • yes
+    mode                                Choices:
+    string                              • layer2       Manage Layer2 or Layer3 state of the interface. Applicable for Ethernet and port channel interfaces only.
+                                        • layer3
+    mtu                                                MTU for a specific interface. Must be an even number between 576 and 9216. Applicable for Ethernet interfaces only.
+    string
+    name                                               Full name of interface, e.g. Ethernet1/1, port-channel10.
+    string / required
+    speed                                              Interface link speed. Applicable for Ethernet interfaces only.
+    string
+                                        Choices:
+   state                                • merged ←
+   string                               • replaced     The state of the configuration after module completion
+                                        • overridden
+                                        • deleted
+
+NOTES                   *nxos_interfaces-notes*
+
+   Note
+
+     • Tested against NXOS 7.3.(0)D1(1) on VIRL
+
+EXAMPLES                   *nxos_interfaces-examples*
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #   description testing
+ #   mtu 1800
+
+ - name: Merge provided configuration with device configuration
+   nxos_interfaces:
+     config:
+       - name: Ethernet1/1
+         description: 'Configured by Ansible'
+         enabled: True
+       - name: Ethernet1/2
+         description: 'Configured by Ansible Network'
+         enabled: False
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ #    description Configured by Ansible
+ #    no shutdown
+ #    mtu 1800
+ # interface Ethernet2
+ #    description Configured by Ansible Network
+ #    shutdown
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #    description Interface 1/1
+ # interface Ethernet1/2
+
+ - name: Replaces device configuration of listed interfaces with provided configuration
+   nxos_interfaces:
+     config:
+       - name: Ethernet1/1
+         description: 'Configured by Ansible'
+         enabled: True
+         mtu: 2000
+       - name: Ethernet1/2
+         description: 'Configured by Ansible Network'
+         enabled: False
+         mode: layer2
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ #   description Configured by Ansible
+ #   no shutdown
+ #   mtu 1500
+ # interface Ethernet2/2
+ #    description Configured by Ansible Network
+ #    shutdown
+ #    switchport
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #    description Interface Ethernet1/1
+ # interface Ethernet1/2
+ # interface mgmt0
+ #    description Management interface
+ #    ip address dhcp
+
+ - name: Override device configuration of all interfaces with provided configuration
+   nxos_interfaces:
+     config:
+       - name: Ethernet1/1
+         enabled: True
+       - name: Ethernet1/2
+         description: 'Configured by Ansible Network'
+         enabled: False
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ # interface Ethernet1/2
+ #    description Configured by Ansible Network
+ #    shutdown
+ # interface mgmt0
+ #    ip address dhcp
+
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #    description Interface Ethernet1/1
+ # interface Ethernet1/2
+ # interface mgmt0
+ #    description Management interface
+ #    ip address dhcp
+
+ - name: Delete or return interface parameters to default settings
+   nxos_interfaces:
+     config:
+       - name: Ethernet1/1
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ # interface Ethernet1/2
+ # interface mgmt0
+ #    description Management interface
+ #    ip address dhcp
+
+RETURN VALUES                   *nxos_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['interface Ethernet1/1', 'mtu 1800']
+
+STATUS                   *nxos_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_interfaces-red hat support*
+
+     • Trishna Guha (@trishnaguha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_interfaces_module.html

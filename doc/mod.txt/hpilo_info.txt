@@ -1,0 +1,99 @@
+SYNOPSIS                   *hpilo_info*
+
+     • This module gathers information on a specific system using its HP iLO interface. These information includes hardware and network related information useful for provisioning (e.g. macaddress,
+       uuid).
+     • This module requires the hpilo python module.
+     • This module was called hpilo_facts before Ansible 2.9, returning ansible_facts. Note that the hpilo_info module no longer returns ansible_facts!
+
+   Aliases: hpilo_facts
+
+REQUIREMENTS                   *hpilo_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • hpilo
+
+PARAMETERS                   *hpilo_info-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   host                          The HP iLO hostname/address that is linked to the physical system.
+   - / required
+   login        Default:         The login name to authenticate to the HP iLO interface.
+   -            "Administrator"
+   password     Default:         The password to authenticate to the HP iLO interface.
+   -            "admin"
+                  Choices:
+   ssl_version    • SSLv3
+   -              • SSLv23       Change the ssl_version used.
+   added in 2.4   • TLSv1 ←
+                  • TLSv1_1
+                  • TLSv1_2
+
+NOTES                   *hpilo_info-notes*
+
+   Note
+
+     • This module ought to be run from a system that can access the HP iLO interface directly, either by using local_action or using delegate_to.
+
+EXAMPLES                   *hpilo_info-examples*
+
+ # Task to gather facts from a HP iLO interface only if the system is an HP server
+ - hpilo_info:
+     host: YOUR_ILO_ADDRESS
+     login: YOUR_ILO_LOGIN
+     password: YOUR_ILO_PASSWORD
+   when: cmdb_hwmodel.startswith('HP ')
+   delegate_to: localhost
+   register: results
+
+ - fail:
+     msg: 'CMDB serial ({{ cmdb_serialno }}) does not match hardware serial ({{ results.hw_system_serial }}) !'
+   when: cmdb_serialno != results.hw_system_serial
+
+RETURN VALUES                   *hpilo_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   hw_bios_date              BIOS date
+   string           always   Sample:
+                             05/05/2011
+   hw_bios_version           BIOS version
+   string           always   Sample:
+                             P68
+   hw_eth_ilo                Interface information (for the iLO network interface)
+   dictionary       always   Sample:
+                             [{'macaddress': '00:11:22:33:44:BA'}, {'macaddress_dash': '00-11-22-33-44-BA'}]
+   hw_ethX                   Interface information (for each interface)
+   dictionary       always   Sample:
+                             [{'macaddress': '00:11:22:33:44:55', 'macaddress_dash': '00-11-22-33-44-55'}]
+   hw_product_name           Product name
+   string           always   Sample:
+                             ProLiant DL360 G7
+   hw_product_uuid           Product UUID
+   string           always   Sample:
+                             ef50bac8-2845-40ff-81d9-675315501dac
+   hw_system_serial          System serial number
+   string           always   Sample:
+                             ABC12345D6
+   hw_uuid                   Hardware UUID
+   string           always   Sample:
+                             123456ABC78901D2
+
+STATUS                   *hpilo_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *hpilo_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/hpilo_info_module.html

@@ -1,0 +1,126 @@
+SYNOPSIS                   *aws_waf_rule*
+
+     • Read the AWS documentation for WAF https://aws.amazon.com/documentation/waf/
+
+REQUIREMENTS                   *aws_waf_rule-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *aws_waf_rule-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   conditions                                    list of conditions used in the rule. Each condition should contain type: which is one of [byte, geo, ip, size, sql or xss] negated: whether the
+   -                                             condition should be negated, and condition, the name of the existing condition. aws_waf_condition can be used to create new conditions
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+                                                 A friendly name or description for the metrics for the rule
+   metric_name                                   The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
+   -                                             You can't change metric_name after you create the rule
+                                                 Defaults to the same as name with disallowed characters removed
+   name                                          Name of the Web Application Firewall rule
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_conditions               Choices:
+   boolean                        • no ←         Whether or not to remove conditions that are not passed when updating `conditions`.
+                                  • yes
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    whether the rule should be present or absent
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   waf_regional                   Choices:
+   boolean                        • no ←         Whether to use waf_regional module. Defaults to false
+   added in 2.9                   • yes
+
+NOTES                   *aws_waf_rule-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_waf_rule-examples*
+
+ - name: create WAF rule
+   aws_waf_rule:
+     name: my_waf_rule
+     conditions:
+       - name: my_regex_condition
+         type: regex
+         negated: no
+       - name: my_geo_condition
+         type: geo
+         negated: no
+       - name: my_byte_condition
+         type: byte
+         negated: yes
+
+ - name: remove WAF rule
+   aws_waf_rule:
+     name: "my_waf_rule"
+     state: absent
+
+RETURN VALUES                   *aws_waf_rule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   rule          always   WAF rule contents
+   complex
+     metric_name          Metric name for the rule
+     string      always   Sample:
+                          ansibletest1234rule
+     name                 Friendly name for the rule
+     string      always   Sample:
+                          ansible-test-1234_rule
+     predicates  always   List of conditions used in the rule
+     complex
+        data_id           ID of the condition
+        string   always   Sample:
+                          8251acdb-526c-42a8-92bc-d3d13e584166
+        negated  always   Whether the sense of the condition is negated
+        boolean
+        type              type of the condition
+        string   always   Sample:
+                          ByteMatch
+     rule_id              ID of the WAF rule
+     string      always   Sample:
+                          15de0cbc-9204-4e1f-90e6-69b2f415c261
+
+STATUS                   *aws_waf_rule-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mike Mochan (@mmochan)
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_waf_rule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_waf_rule_module.html

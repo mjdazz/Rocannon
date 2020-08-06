@@ -1,0 +1,300 @@
+SYNOPSIS                   *iptables*
+
+     • iptables is used to set up, maintain, and inspect the tables of IP packet filter rules in the Linux kernel.
+     • This module does not handle the saving and/or loading of rules, but rather only manipulates the current rules that are present in memory. This is the same as the behaviour of the iptables
+       and ip6tables command which this module uses internally.
+
+PARAMETERS                   *iptables-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   action                Choices:       Whether the rule should be appended at the bottom or inserted at the top.
+   string                • append ←     If the rule already exists the chain will not be modified.
+                         • insert
+   chain                                Specify the iptables chain to modify.
+   string                               This could be a user-defined chain or one of the standard iptables chains, like INPUT, FORWARD, OUTPUT, PREROUTING, POSTROUTING, SECMARK or CONNSECMARK.
+   comment                              This specifies a comment that will be added to the rule.
+   string
+   ctstate             Default:         ctstate is a list of the connection states to match in the conntrack module.
+   list                []               Possible states are INVALID, NEW, ESTABLISHED, RELATED, UNTRACKED, SNAT, DNAT
+                                        Destination specification.
+                                        Address can be either a network name, a hostname, a network IP address (with /mask), or a plain IP address.
+   destination                          Hostnames will be resolved once only, before the rule is submitted to the kernel. Please note that specifying any name to be resolved with a remote query
+   string                               such as DNS is a really bad idea.
+                                        The mask can be either a network mask or a plain number, specifying the number of 1's at the left side of the network mask. Thus, a mask of 24 is equivalent
+                                        to 255.255.255.0. A ! argument before the address specification inverts the sense of the address.
+   destination_port                     Destination port or port range specification. This can either be a service name or a port number. An inclusive range can also be specified, using the format
+   string                               first:last. If the first port is omitted, '0' is assumed; if the last is omitted, '65535' is assumed. If the first port is greater than the second one they
+                                        will be swapped. This is only valid if the rule also specifies one of the following protocols: tcp, udp, dccp or sctp.
+   dst_range
+   string                               Specifies the destination IP range to match in the iprange module.
+   added in 2.8
+   flush                 Choices:       Flushes the specified table and chain of all rules.
+   boolean               • no           If no chain is specified then the entire table is purged.
+                         • yes          Ignores all other parameters.
+   fragment                             This means that the rule only refers to second and further fragments of fragmented packets.
+   string                               Since there is no way to tell the source or destination ports of such a packet (or ICMP type), such a packet will not match any rules which specify them.
+                                        When the "!" argument precedes fragment argument, the rule will only match head fragments, or unfragmented packets.
+   gateway                              This specifies the IP address of host to send the cloned packets.
+   string                               This option is only valid when jump is set to TEE.
+   added in 2.8
+   gid_owner
+   string                               Specifies the GID or group to use in match by owner rule.
+   added in 2.9
+   goto                                 This specifies that the processing should continue in a user specified chain.
+   string                               Unlike the jump argument return will not continue processing in this chain but instead in the chain that called us via jump.
+   icmp_type                            This allows specification of the ICMP type, which can be a numeric ICMP type, type/code pair, or one of the ICMP type names shown by the command 'iptables -p
+   string                               icmp -h'
+                                        Name of an interface via which a packet was received (only for packets entering the INPUT, FORWARD and PREROUTING chains).
+   in_interface                         When the ! argument is used before the interface name, the sense is inverted.
+   string                               If the interface name ends in a +, then any interface which begins with this name will match.
+                                        If this option is omitted, any interface name will match.
+   ip_version            Choices:
+   string                • ipv4 ←       Which version of the IP protocol this rule should apply to.
+                         • ipv6
+                                        This specifies the target of the rule; i.e., what to do if the packet matches it.
+   jump                                 The target can be a user-defined chain (other than the one this rule is in), one of the special builtin targets which decide the fate of the packet
+   string                               immediately, or an extension (see EXTENSIONS below).
+                                        If this option is omitted in a rule (and the goto parameter is not used), then matching the rule will have no effect on the packet's fate, but the counters
+                                        on the rule will be incremented.
+   limit                                Specifies the maximum average number of matches to allow per second.
+   string                               The number can specify units explicitly, using `/second', `/minute', `/hour' or `/day', or parts of them (so `5/second' is the same as `5/s').
+   limit_burst                          Specifies the maximum burst before the above limit kicks in.
+   string
+                         Choices:
+                         • 0
+                         • 1
+                         • 2
+                         • 3
+                         • 4
+                         • 5
+   log_level             • 6            Logging level according to the syslogd-defined priorities.
+   string                • 7            The value can be strings or numbers from 1-8.
+   added in 2.8          • emerg        This parameter is only applicable if jump is set to LOG.
+                         • alert
+                         • crit
+                         • error
+                         • warning
+                         • notice
+                         • info
+                         • debug
+   log_prefix
+   string                               Specifies a log text for the rule. Only make sense with a LOG jump.
+   added in 2.5
+   match               Default:         Specifies a match to use, that is, an extension module that tests for a specific property.
+   list                []               The set of matches make up the condition under which a target is invoked.
+                                        Matches are evaluated first to last if specified as an array and work in short-circuit fashion, i.e. if one extension yields false, evaluation will stop.
+                                        Name of an interface via which a packet is going to be sent (for packets entering the FORWARD, OUTPUT and POSTROUTING chains).
+   out_interface                        When the ! argument is used before the interface name, the sense is inverted.
+   string                               If the interface name ends in a +, then any interface which begins with this name will match.
+                                        If this option is omitted, any interface name will match.
+                         Choices:       Set the policy for the chain to the given target.
+   policy                • ACCEPT       Only built-in chains can have policies.
+   string                • DROP         This parameter requires the chain parameter.
+                         • QUEUE        Ignores all other parameters.
+                         • RETURN
+                                        The protocol of the rule or of the packet to check.
+                                        The specified protocol can be one of tcp, udp, udplite, icmp, esp, ah, sctp or the special keyword all, or it can be a numeric value, representing one of
+   protocol                             these protocols or a different one.
+   string                               A protocol name from /etc/protocols is also allowed.
+                                        A ! argument before the protocol inverts the test.
+                                        The number zero is equivalent to all.
+                                        all will match with all protocols and is taken as default when this option is omitted.
+   reject_with                          Specifies the error packet type to return while rejecting. It implies "jump: REJECT"
+   string
+   rule_num                             Insert the rule as the given rule number.
+   string                               This works only with action=insert.
+   added in 2.5
+   set_counters                         This enables the administrator to initialize the packet and byte counters of a rule (during INSERT, APPEND, REPLACE operations).
+   string
+   set_dscp_mark                        This allows specifying a DSCP mark to be added to packets. It takes either an integer or hex value.
+   string                               Mutually exclusive with set_dscp_mark_class.
+   set_dscp_mark_class                  This allows specifying a predefined DiffServ class which will be translated to the corresponding DSCP mark.
+   string                               Mutually exclusive with set_dscp_mark.
+                                        Source specification.
+                                        Address can be either a network name, a hostname, a network IP address (with /mask), or a plain IP address.
+   source                               Hostnames will be resolved once only, before the rule is submitted to the kernel. Please note that specifying any name to be resolved with a remote query
+   string                               such as DNS is a really bad idea.
+                                        The mask can be either a network mask or a plain number, specifying the number of 1's at the left side of the network mask. Thus, a mask of 24 is equivalent
+                                        to 255.255.255.0. A ! argument before the address specification inverts the sense of the address.
+                                        Source port or port range specification.
+   source_port                          This can either be a service name or a port number.
+   string                               An inclusive range can also be specified, using the format first:last.
+                                        If the first port is omitted, 0 is assumed; if the last is omitted, 65535 is assumed.
+                                        If the first port is greater than the second one they will be swapped.
+   src_range
+   string                               Specifies the source IP range to match in the iprange module.
+   added in 2.8
+   state                 Choices:
+   string                • absent       Whether the rule should be absent or present.
+                         • present ←
+   syn                   Choices:
+   string                • ignore ←     This allows matching packets that have the SYN bit set and the ACK and RST bits unset.
+   added in 2.5          • match        When negated, this matches all packets with the RST or the ACK bits set.
+                         • negate
+                         Choices:
+                         • filter ←
+   table                 • nat          This option specifies the packet matching table which the command should operate on.
+   string                • mangle       If the kernel is configured with automatic module loading, an attempt will be made to load the appropriate module for that table if it is not already there.
+                         • raw
+                         • security
+   tcp_flags           Default:         TCP flags specification.
+   dictionary          {}               tcp_flags expects a dict with the two keys flags and flags_set.
+   added in 2.4
+          flags                         List of flags you want to examine.
+          list
+          flags_set                     Flags to be set.
+          list
+   to_destination                       This specifies a destination address to use with DNAT.
+   string                               Without this, the destination address is never altered.
+   to_ports                             This specifies a destination port or range of ports to use, without this, the destination port is never altered.
+   string                               This is only valid if the rule also specifies one of the protocol tcp, udp, dccp or sctp.
+   to_source                            This specifies a source address to use with SNAT.
+   string                               Without this, the source address is never altered.
+   uid_owner                            Specifies the UID or username to use in match by owner rule.
+   string                               From Ansible 2.6 when the ! argument is prepended then the it inverts the rule to apply instead to all users except that one specified.
+
+NOTES                   *iptables-notes*
+
+   Note
+
+     • This module just deals with individual rules.If you need advanced chaining of rules the recommended way is to template the iptables restore file.
+
+EXAMPLES                   *iptables-examples*
+
+ - name: Block specific IP
+   iptables:
+     chain: INPUT
+     source: 8.8.8.8
+     jump: DROP
+   become: yes
+
+ - name: Forward port 80 to 8600
+   iptables:
+     table: nat
+     chain: PREROUTING
+     in_interface: eth0
+     protocol: tcp
+     match: tcp
+     destination_port: 80
+     jump: REDIRECT
+     to_ports: 8600
+     comment: Redirect web traffic to port 8600
+   become: yes
+
+ - name: Allow related and established connections
+   iptables:
+     chain: INPUT
+     ctstate: ESTABLISHED,RELATED
+     jump: ACCEPT
+   become: yes
+
+ - name: Allow new incoming SYN packets on TCP port 22 (SSH).
+   iptables:
+     chain: INPUT
+     protocol: tcp
+     destination_port: 22
+     ctstate: NEW
+     syn: match
+     jump: ACCEPT
+     comment: Accept new SSH connections.
+
+ - name: Match on IP ranges
+   iptables:
+     chain: FORWARD
+     src_range: 192.168.1.100-192.168.1.199
+     dst_range: 10.0.0.1-10.0.0.50
+     jump: ACCEPT
+
+ - name: Tag all outbound tcp packets with DSCP mark 8
+   iptables:
+     chain: OUTPUT
+     jump: DSCP
+     table: mangle
+     set_dscp_mark: 8
+     protocol: tcp
+
+ - name: Tag all outbound tcp packets with DSCP DiffServ class CS1
+   iptables:
+     chain: OUTPUT
+     jump: DSCP
+     table: mangle
+     set_dscp_mark_class: CS1
+     protocol: tcp
+
+ - name: Insert a rule on line 5
+   iptables:
+     chain: INPUT
+     protocol: tcp
+     destination_port: 8080
+     jump: ACCEPT
+     action: insert
+     rule_num: 5
+
+ - name: Set the policy for the INPUT chain to DROP
+   iptables:
+     chain: INPUT
+     policy: DROP
+
+ - name: Reject tcp with tcp-reset
+   iptables:
+     chain: INPUT
+     protocol: tcp
+     reject_with: tcp-reset
+     ip_version: ipv4
+
+ - name: Set tcp flags
+   iptables:
+     chain: OUTPUT
+     jump: DROP
+     protocol: tcp
+     tcp_flags:
+       flags: ALL
+       flags_set:
+         - ACK
+         - RST
+         - SYN
+         - FIN
+
+ - name: iptables flush filter
+   iptables:
+     chain: "{{ item }}"
+     flush: yes
+   with_items:  [ 'INPUT', 'FORWARD', 'OUTPUT' ]
+
+ - name: iptables flush nat
+   iptables:
+     table: nat
+     chain: '{{ item }}'
+     flush: yes
+   with_items: [ 'INPUT', 'OUTPUT', 'PREROUTING', 'POSTROUTING' ]
+
+ - name: Log packets arriving into an user-defined chain
+   iptables:
+     chain: LOGGING
+     action: append
+     state: present
+     limit: 2/second
+     limit_burst: 20
+     log_prefix: "IPTABLES:INFO: "
+     log_level: info
+
+STATUS                   *iptables-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *iptables-red hat support*
+
+     • Linus Unnebäck (@LinusU) <linus@folkdatorn.se>
+     • Sébastien DA ROCHA (@sebastiendarocha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iptables-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iptables_module.html

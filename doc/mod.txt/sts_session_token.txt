@@ -1,0 +1,101 @@
+SYNOPSIS                   *sts_session_token*
+
+     • Obtain a session token from the AWS Security Token Service
+
+REQUIREMENTS                   *sts_session_token-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *sts_session_token-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   duration_seconds                              The duration, in seconds, of the session token. See
+   -                                             https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html#API_GetSessionToken_RequestParameters for acceptable and default
+                                                 values.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   mfa_serial_number                             The identification number of the MFA device that is associated with the user who is making the GetSessionToken call.
+   -
+   mfa_token                                     The value provided by the MFA device, if the trust policy of the user requires MFA.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *sts_session_token-notes*
+
+   Note
+
+     • In order to use the session token in a following playbook task you must pass the access_key, access_secret and access_token.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *sts_session_token-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Get a session token (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_GetSessionToken.html)
+ sts_session_token:
+   duration_seconds: 3600
+ register: session_credentials
+
+ # Use the session token obtained above to tag an instance in account 123456789012
+ ec2_tag:
+   aws_access_key: "{{ session_credentials.sts_creds.access_key }}"
+   aws_secret_key: "{{ session_credentials.sts_creds.secret_key }}"
+   security_token: "{{ session_credentials.sts_creds.session_token }}"
+   resource: i-xyzxyz01
+   state: present
+   tags:
+     MyNewTag: value
+
+RETURN VALUES                   *sts_session_token-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key    Returned                                                                                   Description
+   changed   always   True if obtaining the credentials succeeds
+   boolean
+                      The Credentials object returned by the AWS Security Token Service
+   sts_creds always   Sample:
+   list               {'access_key': 'ASXXXXXXXXXXXXXXXXXX', 'expiration': '2016-04-08T11:59:47+00:00', 'secret_key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', 'session_token':
+                      'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+
+STATUS                   *sts_session_token-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Victor Costan (@pwnall)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sts_session_token-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sts_session_token_module.html

@@ -1,0 +1,197 @@
+SYNOPSIS                   *redshift_info*
+
+     • Gather information about Redshift cluster(s)
+     • This module was called redshift_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: redshift_facts
+
+REQUIREMENTS                   *redshift_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *redshift_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   cluster_identifier                            The prefix of cluster identifier of the Redshift cluster you are searching for.
+   -                                             This is a regular expression match with implicit '^'. Append '$' for a complete match.
+                                                 aliases: name, identifier
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   tags                                          A dictionary/hash of tags in the format { tag1_name: 'tag1_value', tag2_name: 'tag2_value' } to match against the security group(s) you are
+   -                                             searching for.
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *redshift_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *redshift_info-examples*
+
+ # Note: These examples do net set authentication details, see the AWS guide for details.
+
+ # Find all clusters
+ - redshift_info:
+   register: redshift
+
+ # Find cluster(s) with matching tags
+ - redshift_info:
+     tags:
+       env: prd
+       stack: monitoring
+   register: redshift_tags
+
+ # Find cluster(s) with matching name/prefix and tags
+ - redshift_info:
+     tags:
+       env: dev
+       stack: web
+     name: user-
+   register: redshift_web
+
+ # Fail if no cluster(s) is/are found
+ - redshift_info:
+     tags:
+       env: stg
+       stack: db
+   register: redshift_user
+   failed_when: "{{ redshift_user.results | length == 0 }}"
+
+RETURN VALUES                   *redshift_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                   Key                 Returned                                                                      Description
+   allow_version_upgrade                        A Boolean value that, if true, indicates that major version upgrades will be applied automatically to the cluster during the maintenance window.
+   boolean                             success  Sample:
+                                                true|false
+   automated_snapshot_retention_period          The number of days that automatic cluster snapshots are retained.
+   integer                             success  Sample:
+                                                1
+   availability_zone                            The name of the Availability Zone in which the cluster is located.
+   string                              success  Sample:
+                                                us-east-1b
+   cluster_create_time                          The date and time that the cluster was created.
+   string                              success  Sample:
+                                                2016-05-10T08:33:16.629000+00:00
+   cluster_identifier                           Unique key to identify the cluster.
+   string                              success  Sample:
+                                                redshift-identifier
+                                                The nodes in the cluster.
+   cluster_nodes                       success  Sample:
+   list                                         [{'node_role': 'LEADER', 'private_ip_address': '10.0.0.1', 'public_ip_address': 'x.x.x.x'}, {'node_role': 'COMPUTE-1', 'private_ip_address':
+                                                '10.0.0.3', 'public_ip_address': 'x.x.x.x'}]
+                                                The list of cluster parameters that are associated with this cluster.
+   cluster_paramater_groups            success  Sample:
+   list                                         [{'cluster_parameter_status_list': [{'parameter_apply_status': 'in-sync', 'parameter_name': 'statement_timeout'}, {'parameter_apply_status':
+                                                'in-sync', 'parameter_name': 'require_ssl'}], 'parameter_apply_status': 'in-sync', 'parameter_group_name': 'tuba'}]
+   cluster_public_keys                          The public key for the cluster.
+   string                              success  Sample:
+                                                ssh-rsa anjigfam Amazon-Redshift
+   cluster_revision_number                      The specific revision number of the database in the cluster.
+   string                              success  Sample:
+                                                1231
+   cluster_security_groups             success  A list of cluster security groups that are associated with the cluster.
+   list
+   cluster_snapshot_copy_status        success  A value that returns the destination region and retention period that are configured for cross-region snapshot copy.
+   dictionary
+   cluster_status                               Current state of the cluster.
+   string                              success  Sample:
+                                                available
+   cluster_subnet_group_name                    The name of the subnet group that is associated with the cluster.
+   string                              success  Sample:
+                                                redshift-subnet
+   cluster_version                              The version ID of the Amazon Redshift engine that is running on the cluster.
+   string                              success  Sample:
+                                                1.0
+   db_name                                      The name of the initial database that was created when the cluster was created.
+   string                              success  Sample:
+                                                dev
+   elastic_ip_status                   success  The status of the elastic IP (EIP) address.
+   dictionary
+   encrypted                                    Boolean value that, if true , indicates that data in the cluster is encrypted at rest.
+   boolean                             success  Sample:
+                                                true|false
+   endpoint                                     The connection endpoint.
+   string                              success  Sample:
+                                                {'address': 'cluster-ds2.ocmugla0rf.us-east-1.redshift.amazonaws.com', 'port': 5439}
+   enhanced_vpc_routing                         An option that specifies whether to create the cluster with enhanced VPC routing enabled.
+   boolean                             success  Sample:
+                                                true|false
+   hsm_status                          success  A value that reports whether the Amazon Redshift cluster has finished applying any hardware security module (HSM) settings changes specified in a
+   dictionary                                   modify cluster command.
+   iam_roles                           success  List of IAM roles attached to the cluster.
+   list
+   kms_key_id                          success  The AWS Key Management Service (AWS KMS) key ID of the encryption key used to encrypt data in the cluster.
+   string
+   master_username                              The master user name for the cluster.
+   string                              success  Sample:
+                                                admin
+   modify_status                       optional The status of a modify operation.
+   string
+   node_type                                    The node type for nodes in the cluster.
+   string                              success  Sample:
+                                                ds2.xlarge
+   number_of_nodes                              The number of compute nodes in the cluster.
+   integer                             success  Sample:
+                                                12
+   pending_modified_values             success  A value that, if present, indicates that changes to the cluster are pending.
+   dictionary
+   preferred_maintenance_window                 The weekly time range, in Universal Coordinated Time (UTC), during which system maintenance can occur.
+   string                              success  Sample:
+                                                tue:07:30-tue:08:00
+   publicly_accessible                          A Boolean value that, if true , indicates that the cluster can be accessed from a public network.
+   boolean                             success  Sample:
+                                                true|false
+   restore_status                      success  A value that describes the status of a cluster restore action.
+   dictionary
+   tags                                success  The list of tags for the cluster.
+   list
+   vpc_id                                       The identifier of the VPC the cluster is in, if the cluster is in a VPC.
+   string                              success  Sample:
+                                                vpc-1234567
+   vpc_security_groups                          A list of VPC security groups the are associated with the cluster.
+   list                                success  Sample:
+                                                [{'status': 'active', 'vpc_security_group_id': 'sg-12cghhg'}]
+
+STATUS                   *redshift_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jens Carl (@j-carl)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *redshift_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/redshift_info_module.html

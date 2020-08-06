@@ -1,0 +1,164 @@
+SYNOPSIS                   *ce_bgp*
+
+     • Manages BGP configurations on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_bgp-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   as_number                           Local AS number. The value is a string of 1 to 11 characters.
+   -
+   as_path_limit                       Maximum number of AS numbers in the AS_Path attribute. The default value is 255.
+   -
+                        Choices:
+   bgp_rid_auto_sel     • no_use ←     The function to automatically select router IDs for all VPN BGP instances is enabled.
+   -                    • true
+                        • false
+                        Choices:
+   check_first_as       • no_use ←     Check the first AS in the AS_Path of the update messages from EBGP peers.
+   -                    • true
+                        • false
+   clear_interval                      Clear interval.
+   -
+   confed_id_number                    Confederation ID. The value is a string of 1 to 11 characters.
+   -
+                        Choices:
+   confed_nonstanded    • no_use ←     Configure the device to be compatible with devices in a nonstandard confederation.
+   -                    • true
+                        • false
+   confed_peer_as_num                  Confederation AS number, in two-byte or four-byte format. The value is a string of 1 to 11 characters.
+   -
+   conn_retry_time                     ConnectRetry interval. The value is an integer, in seconds. The default value is 32s.
+   -
+   default_af_type      Choices:
+   -                    • ipv4uni      Type of a created address family, which can be IPv4 unicast or IPv6 unicast. The default type is IPv4 unicast.
+                        • ipv6uni
+                        Choices:       If the value is true, After the fast EBGP interface awareness function is enabled, EBGP sessions on an interface are deleted immediately when the interface
+   ebgp_if_sensitive    • no_use ←     goes Down. If the value is false, After the fast EBGP interface awareness function is enabled, EBGP sessions on an interface are not deleted immediately when
+   -                    • true         the interface goes Down.
+                        • false
+                        Choices:
+   gr_peer_reset        • no_use ←     Peer disconnection through GR.
+   -                    • true
+                        • false
+                        Choices:
+   graceful_restart     • no_use ←     Enable GR of the BGP speaker in the specified address family, peer address, or peer group.
+   -                    • true
+                        • false
+   hold_interval                       Hold interval.
+   -
+   hold_time                           Hold time, in seconds. The value of the hold time can be 0 or range from 3 to 65535.
+   -
+                        Choices:
+   is_shutdown          • no_use ←     Interrupt BGP all neighbor.
+   -                    • true
+                        • false
+                        Choices:
+   keep_all_routes      • no_use ←     If the value is true, the system stores all route update messages received from all peers (groups) after BGP connection setup. If the value is false, the
+   -                    • true         system stores only BGP update messages that are received from peers and pass the configured import policy.
+                        • false
+   keepalive_time                      If the value of a timer changes, the BGP peer relationship between the routers is disconnected. The value is an integer ranging from 0 to 21845. The default
+   -                                   value is 60.
+                        Choices:
+   memory_limit         • no_use ←     Support BGP RIB memory protection.
+   -                    • true
+                        • false
+   min_hold_time                       Min hold time, in seconds. The value of the hold time can be 0 or range from 20 to 65535.
+   -
+   router_id                           ID of a router that is in IPv4 address format.
+   -
+   state                Choices:
+   -                    • present ←    Specify desired state of the resource.
+                        • absent
+   suppress_interval                   Suppress interval.
+   -
+   time_wait_for_rib                   Period of waiting for the End-Of-RIB flag. The value is an integer ranging from 3 to 3000. The default value is 600.
+   -
+   vrf_name                            Name of a BGP instance. The name is a case-sensitive string of characters.
+   -
+                        Choices:
+   vrf_rid_auto_sel     • no_use ←     If the value is true, VPN BGP instances are enabled to automatically select router IDs. If the value is false, VPN BGP instances are disabled from
+   -                    • true         automatically selecting router IDs.
+                        • false
+
+NOTES                   *ce_bgp-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_bgp-examples*
+
+ - name: CloudEngine BGP test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Enable BGP"
+     ce_bgp:
+       state: present
+       as_number: 100
+       confed_id_number: 250
+       provider: "{{ cli }}"
+
+   - name: "Disable BGP"
+     ce_bgp:
+       state: absent
+       as_number: 100
+       confed_id_number: 250
+       provider: "{{ cli }}"
+
+   - name: "Create confederation peer AS num"
+     ce_bgp:
+       state: present
+       confed_peer_as_num: 260
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_bgp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of aaa params after module execution
+   dictionary always   Sample:
+                       {'bgp_enable': [['100'], ['true']]}
+   existing            k/v pairs of existing aaa server
+   dictionary always   Sample:
+                       {'bgp_enable': [['100'], ['true']]}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'as_number': '100', 'state"': 'present'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['bgp 100']
+
+STATUS                   *ce_bgp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • wangdezhuang (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_bgp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_bgp_module.html

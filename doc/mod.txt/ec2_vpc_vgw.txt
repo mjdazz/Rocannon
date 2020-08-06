@@ -1,0 +1,131 @@
+SYNOPSIS                   *ec2_vpc_vgw*
+
+     • Creates AWS VPN Virtual Gateways
+     • Deletes AWS VPN Virtual Gateways
+     • Attaches Virtual Gateways to VPCs
+     • Detaches Virtual Gateways from VPCs
+
+REQUIREMENTS                   *ec2_vpc_vgw-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_vgw-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   asn
+   -                                             the BGP ASN of the amazon side
+   added in 2.6
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   name                                          name of the vgw to be created or deleted
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:       present to ensure resource is created.
+   -                              • present ←    absent to remove resource
+                                  • absent
+   tags                                          dictionary of resource tags
+   -                                             aliases: resource_tags
+   type                           Choices:       type of the virtual gateway to be created
+   -                              • ipsec.1
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   vpc_id                                        the vpc-id of a vpc to attach or detach
+   -
+   vpn_gateway_id                                vpn gateway id of an existing virtual gateway
+   -
+   wait_timeout                 Default:         number of seconds to wait for status during vpc attach and detach
+   -                            320
+
+NOTES                   *ec2_vpc_vgw-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_vgw-examples*
+
+ - name: Create a new vgw attached to a specific VPC
+   ec2_vpc_vgw:
+     state: present
+     region: ap-southeast-2
+     profile: personal
+     vpc_id: vpc-12345678
+     name: personal-testing
+     type: ipsec.1
+   register: created_vgw
+
+ - name: Create a new unattached vgw
+   ec2_vpc_vgw:
+     state: present
+     region: ap-southeast-2
+     profile: personal
+     name: personal-testing
+     type: ipsec.1
+     tags:
+       environment: production
+       owner: ABC
+   register: created_vgw
+
+ - name: Remove a new vgw using the name
+   ec2_vpc_vgw:
+     state: absent
+     region: ap-southeast-2
+     profile: personal
+     name: personal-testing
+     type: ipsec.1
+   register: deleted_vgw
+
+ - name: Remove a new vgw using the vpn_gateway_id
+   ec2_vpc_vgw:
+     state: absent
+     region: ap-southeast-2
+     profile: personal
+     vpn_gateway_id: vgw-3a9aa123
+   register: deleted_vgw
+
+RETURN VALUES                   *ec2_vpc_vgw-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   result     success  The result of the create, or delete action.
+   dictionary
+
+STATUS                   *ec2_vpc_vgw-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Nick Aslanidis (@naslanidis)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_vgw-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_vgw_module.html

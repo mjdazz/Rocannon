@@ -1,0 +1,241 @@
+SYNOPSIS                   *ovirt_instance_type*
+
+     • This module manages whole lifecycle of the Instance Type in oVirt/RHV.
+
+REQUIREMENTS                   *ovirt_instance_type-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • ovirt-engine-sdk-python >= 4.3.0
+
+PARAMETERS                   *ovirt_instance_type-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   auth                                        Dictionary with values needed to create HTTP/HTTPS connection to oVirt:
+   dictionary / required
+                                               A PEM file containing the trusted CA certificates.
+         ca_file                               The certificate presented by the server will be verified using these CA certificates.
+         string                                If ca_file parameter is not set, system wide CA certificate store is used.
+                                               Default value is set by OVIRT_CAFILE environment variable.
+         headers                               Dictionary of HTTP headers to be added to each API call.
+         dictionary
+         hostname                              A string containing the hostname of the server, usually something like `server.example.com`.
+         string                                Default value is set by OVIRT_HOSTNAME environment variable.
+                                               Either url or hostname is required.
+         insecure               Choices:
+         boolean                • no           A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                                • yes
+         kerberos               Choices:
+         boolean                • no           A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                                • yes
+         password                              The password of the user.
+         string / required                     Default value is set by OVIRT_PASSWORD environment variable.
+         token                                 Token to be used instead of login with username/password.
+         string                                Default value is set by OVIRT_TOKEN environment variable.
+         url                                   A string containing the API URL of the server, usually something like `https://server.example.com/ovirt-engine/api`.
+         string                                Default value is set by OVIRT_URL environment variable.
+                                               Either url or hostname is required.
+         username                              The name of the user, something like [email protected].
+         string / required                     Default value is set by OVIRT_USERNAME environment variable.
+   ballooning_enabled           Choices:       If true, use memory ballooning.
+   boolean                      • no           Memory balloon is a guest device, which may be used to re-distribute / reclaim the host memory based on instance type needs in a dynamic way. In this
+                                • yes          way it's possible to create memory over commitment states.
+                                Choices:
+   boot_devices                 • cdrom        List of boot devices which should be used to boot. For example [ cdrom, hd ].
+   -                            • hd           Default value is set by oVirt/RHV engine.
+                                • network
+   cpu_cores                                   Number of virtual CPUs cores of the Instance Type.
+   -                                           Default value is set by oVirt/RHV engine.
+   cpu_mode                                    CPU mode of the instance type. It can be some of the following: host_passthrough, host_model or custom.
+   -                                           For host_passthrough CPU type you need to set placement_policy to pinned.
+                                               If no value is passed, default value is set by oVirt/RHV engine.
+                                               CPU Pinning topology to map instance type CPU to host CPU.
+   cpu_pinning                                 CPU Pinning topology is a list of dictionary which can have following values:
+   -                                           cpu - Number of the host CPU.
+                                               vcpu - Number of the instance type CPU.
+   cpu_sockets                                 Number of virtual CPUs sockets of the Instance Type.
+   -                                           Default value is set by oVirt/RHV engine.
+   cpu_threads                                 Number of virtual CPUs sockets of the Instance Type.
+   -                                           Default value is set by oVirt/RHV engine.
+   description                                 Description of the instance type.
+   -
+   fetch_nested                 Choices:       If True the module will fetch additional data from the API.
+   boolean                      • no           It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other attributes of the nested entities by specifying
+                                • yes          nested_attributes.
+                                               Assign graphical console to the instance type.
+   graphical_console                           Graphical console is a dictionary which can have following values:
+   -                                           headless_mode - If true disable the graphics console for this instance type.
+                                               protocol - Graphical protocol, a list of spice, vnc, or both.
+   high_availability            Choices:       If yes Instance Type will be set as highly available.
+   boolean                      • no           If no Instance Type won't be set as highly available.
+                                • yes          If no value is passed, default value is set by oVirt/RHV engine.
+   high_availability_priority                  Indicates the priority of the instance type inside the run and migration queues. Instance Type with higher priorities will be started and migrated
+   -                                           before instance types with lower priorities. The value is an integer between 0 and 100. The higher the value, the higher the priority.
+                                               If no value is passed, default value is set by oVirt/RHV engine.
+   host                                        Specify host where Instance Type should be running. By default the host is chosen by engine scheduler.
+   -                                           This parameter is used only when state is running or present.
+   id                                          ID of the Instance Type to manage.
+   -
+   io_threads                                  Number of IO threads used by instance type. 0 means IO threading disabled.
+   -
+   memory                                      Amount of memory of the Instance Type. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+   -                                           Default value is set by engine.
+   memory_guaranteed                           Amount of minimal guaranteed memory of the Instance Type. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+   -                                           memory_guaranteed parameter can't be lower than memory parameter.
+                                               Default value is set by engine.
+   memory_max                                  Upper bound of instance type memory up to which memory hot-plug can be performed. Prefix uses IEC 60027-2 standard (for example 1GiB, 1024MiB).
+   -                                           Default value is set by engine.
+   name                                        Name of the Instance Type to manage.
+   -                                           If instance type don't exists name is required. Otherwise id or name can be used.
+   nested_attributes                           Specifies list of the attributes which should be fetched from the API.
+   list                                        This parameter apply only when fetch_nested is true.
+                                               List of NICs, which should be attached to Virtual Machine. NIC is described by following dictionary.
+                                               name - Name of the NIC.
+   nics                                        profile_name - Profile name where NIC should be attached.
+   -                                           interface - Type of the network interface. One of following virtio, e1000, rtl8139, default is virtio.
+                                               mac_address - Custom MAC address of the network interface, by default it's obtained from MAC pool.
+                                               NOTE - This parameter is used only when state is running or present and is able to only create NICs. To manage NICs of the instance type in more depth
+                                               please use ovirt_nic module instead.
+                                               Operating system of the Instance Type.
+                                               Default value is set by oVirt/RHV engine.
+   operating_system                            Possible values: debian_7, freebsd, freebsdx64, other, other_linux, other_linux_kernel_4, other_linux_ppc64, other_linux_s390x, other_ppc64,
+   -                                           other_s390x, rhcos_x64, rhel_3, rhel_3x64, rhel_4, rhel_4x64, rhel_5, rhel_5x64, rhel_6, rhel_6_9_plus_ppc64, rhel_6_ppc64, rhel_6x64, rhel_7_ppc64,
+                                               rhel_7_s390x, rhel_7x64, rhel_8x64, rhel_atomic7x64, sles_11, sles_11_ppc64, sles_12_s390x, ubuntu_12_04, ubuntu_12_10, ubuntu_13_04, ubuntu_13_10,
+                                               ubuntu_14_04, ubuntu_14_04_ppc64, ubuntu_16_04_s390x, windows_10, windows_10x64, windows_2003, windows_2003x64, windows_2008, windows_2008R2x64,
+                                               windows_2008x64, windows_2012R2x64, windows_2012x64, windows_2016x64, windows_2019x64, windows_7, windows_7x64, windows_8, windows_8x64, windows_xp
+                                               The configuration of the instance type's placement policy.
+                                               Placement policy can be one of the following values:
+   placement_policy                            migratable - Allow manual and automatic migration.
+   -                                           pinned - Do not allow migration.
+                                               user_migratable - Allow manual migration only.
+                                               If no value is passed, default value is set by oVirt/RHV engine.
+   poll_interval              Default:         Number of the seconds the module waits until another poll request on entity status is sent.
+   integer                    3
+   rng_bytes                                   Number of bytes allowed to consume per period.
+   -
+   rng_device                                  Random number generator (RNG). You can choose of one the following devices urandom, random or hwrng.
+   -                                           In order to select hwrng, you must have it enabled on cluster first.
+                                               /dev/urandom is used for cluster version >= 4.1, and /dev/random for cluster version <= 4.0
+   rng_period                                  Duration of one period in milliseconds.
+   -
+   serial_console               Choices:
+   boolean                      • no           True enable VirtIO serial console, False to disable it. By default is chosen by oVirt/RHV engine.
+                                • yes
+   smartcard_enabled            Choices:
+   boolean                      • no           If true, use smart card authentication.
+                                • yes
+   soundcard_enabled            Choices:
+   boolean                      • no           If true, the sound card is added to the instance type.
+                                • yes
+   state                        Choices:       Should the Instance Type be present/absent.
+   -                            • absent       present state will create/update instance type and don't change its state if it already exists.
+                                • present ←
+   timeout                    Default:         The amount of time in seconds the module should wait for the instance to get into desired state.
+   integer                    180
+   usb_support                  Choices:
+   boolean                      • no           True enable USB support, False to disable it. By default is chosen by oVirt/RHV engine.
+                                • yes
+   virtio_scsi                  Choices:
+   boolean                      • no           If true, virtio scsi will be enabled.
+                                • yes
+   wait                         Choices:
+   boolean                      • no           yes if the module should wait for the entity to get into desired state.
+                                • yes ←
+                                               Assign watchdog device for the instance type.
+   watchdog                                    Watchdogs is a dictionary which can have following values:
+   -                                           model - Model of the watchdog device. For example: i6300esb, diag288 or null.
+                                               action - Watchdog action to be performed when watchdog is triggered. For example: none, reset, poweroff, pause or dump.
+
+NOTES                   *ovirt_instance_type-notes*
+
+   Note
+
+     • In order to use this module you have to install oVirt Python SDK. To ensure it’s installed with correct version you can create the following task: pip: name=ovirt-engine-sdk-python
+       version=4.3.0
+
+EXAMPLES                   *ovirt_instance_type-examples*
+
+ # Examples don't contain auth parameter for simplicity,
+ # look at ovirt_auth module to see how to reuse authentication:
+
+ # Create instance type
+ - name: Create instance type
+   ovirt_instance_type:
+     state: present
+     name: myit
+     rng_device: hwrng
+     rng_bytes: 200
+     rng_period: 200
+     soundcard_enabled: true
+     virtio_scsi: true
+     boot_devices:
+       - network
+
+ # Remove instance type
+ - ovirt_instance_type:
+     state: absent
+     name: myit
+
+
+ # Create instance type with predefined memory and cpu limits.
+ - ovirt_instance_type:
+     state: present
+     name: myit
+     memory: 2GiB
+     cpu_cores: 2
+     cpu_sockets: 2
+     nics:
+       - name: nic1
+
+ # Enable usb support and serial console
+ - ovirt_instance_type:
+     name: myit
+     usb_support: True
+     serial_console: True
+
+ # Use graphical console with spice and vnc
+ - name: Create a instance type that has the console configured for both Spice and VNC
+   ovirt_instance_type:
+     name: myit
+     graphical_console:
+       protocol:
+         - spice
+         - vnc
+
+RETURN VALUES                   *ovirt_instance_type-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+                On
+                success  ID of the instance type which is managed
+   id           if       Sample:
+   string       instance 7de90f31-222c-436c-a1ca-7e655bd5b60c
+                type is
+                found.
+                On
+                success
+   instancetype if       Dictionary of all the instance type attributes. instance type attributes can be found on your oVirt/RHV instance at following url:
+   dictionary   instance http://ovirt.github.io/ovirt-engine-api-model/master/#types/instance_type.
+                type is
+                found.
+
+STATUS                   *ovirt_instance_type-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Martin Necas (@mnecas)
+     • Ondra Machacek (@machacekondra)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovirt_instance_type-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovirt_instance_type_module.html

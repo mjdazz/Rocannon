@@ -1,0 +1,130 @@
+SYNOPSIS                   *rax_mon_check*
+
+     • Create or delete a Rackspace Cloud Monitoring check associated with an existing rax_mon_entity. A check is a specific test or measurement that is performed, possibly from different
+       monitoring zones, on the systems you monitor. Rackspace monitoring module flow | rax_mon_entity -> rax_mon_check -> rax_mon_notification -> rax_mon_notification_plan -> rax_mon_alarm
+
+REQUIREMENTS                   *rax_mon_check-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • pyrax
+
+PARAMETERS                   *rax_mon_check-parameters*
+
+         Parameter                      Choices/Defaults                                                                           Comments
+   api_key                                                               Rackspace API key, overrides credentials.
+   -                                                                     aliases: password
+   auth_endpoint         Default:                                        The URI of the authentication service.
+   -                     "https://identity.api.rackspacecloud.com/v2.0/"
+                           Choices:
+                           • remote.dns
+                           • remote.ftp-banner
+                           • remote.http
+                           • remote.imap-banner
+                           • remote.mssql-banner
+                           • remote.mysql-banner
+                           • remote.ping
+                           • remote.pop3-banner
+                           • remote.postgresql-banner
+   check_type              • remote.smtp-banner                          The type of check to create. remote. checks may be created on any rax_mon_entity. agent. checks may only be created on
+   - / required            • remote.smtp                                 rax_mon_entities that have a non-null agent_id.
+                           • remote.ssh
+                           • remote.tcp
+                           • remote.telnet-banner
+                           • agent.filesystem
+                           • agent.memory
+                           • agent.load_average
+                           • agent.cpu
+                           • agent.disk
+                           • agent.network
+                           • agent.plugin
+   credentials                                                           File to find the Rackspace credentials in. Ignored if api_key and username are provided.
+   -                                                                     aliases: creds_file
+   details                                                               Additional details specific to the check type. Must be a hash of strings between 1 and 255 characters long, or an array or
+   -                                                                     object containing 0 to 256 items.
+   disabled                Choices:
+   boolean                 • no                                          If "yes", ensure the check is created, but don't actually use it yet.
+                           • yes
+   entity_id                                                             ID of the rax_mon_entity to target with this check.
+   - / required
+   env                                                                   Environment as configured in ~/.pyrax.cfg, see
+   -                                                                     https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration.
+   identity_type         Default:                                        Authentication mechanism to use, such as rackspace or keystone.
+   -                     "rackspace"
+   label                                                                 Defines a label for this check, between 1 and 64 characters long.
+   - / required
+   metadata                                                              Hash of arbitrary key-value pairs to accompany this check if it fires. Keys and values must be strings between 1 and 255
+   -                                                                     characters long.
+   monitoring_zones_poll                                                 Comma-separated list of the names of the monitoring zones the check should run from. Available monitoring zones include
+   -                                                                     mzdfw, mzhkg, mziad, mzlon, mzord and mzsyd. Required for remote." checks; prohibited for agent." checks.
+   period                                                                The number of seconds between each time the check is performed. Must be greater than the minimum period set on your account.
+   -
+   region                Default:                                        Region to create an instance in.
+   -                     "DFW"
+   state                   Choices:
+   -                       • present                                     Ensure that a check with this label exists or does not exist.
+                           • absent
+   target_alias                                                          One of `target_alias` and `target_hostname` is required for remote." checks, but prohibited for agent." checks. Use the
+   -                                                                     corresponding key in the entity's `ip_addresses` hash to resolve an IP address to target.
+   target_hostname                                                       One of `target_hostname` and `target_alias` is required for remote." checks, but prohibited for agent." checks. The hostname
+   -                                                                     this check should target. Must be a valid IPv4, IPv6, or FQDN.
+   tenant_id                                                             The tenant ID used for authentication.
+   -
+   tenant_name                                                           The tenant name used for authentication.
+   -
+   timeout                                                               The number of seconds this check will wait when attempting to collect results. Must be less than the period.
+   -
+   username                                                              Rackspace username, overrides credentials.
+   -
+   validate_certs          Choices:                                      Whether or not to require SSL validation of API endpoints.
+   boolean                 • no                                          aliases: verify_ssl
+                           • yes
+
+NOTES                   *rax_mon_check-notes*
+
+   Note
+
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+
+EXAMPLES                   *rax_mon_check-examples*
+
+ - name: Create a monitoring check
+   gather_facts: False
+   hosts: local
+   connection: local
+   tasks:
+   - name: Associate a check with an existing entity.
+     rax_mon_check:
+       credentials: ~/.rax_pub
+       state: present
+       entity_id: "{{ the_entity['entity']['id'] }}"
+       label: the_check
+       check_type: remote.ping
+       monitoring_zones_poll: mziad,mzord,mzdfw
+       details:
+         count: 10
+       meta:
+         hurf: durf
+     register: the_check
+
+STATUS                   *rax_mon_check-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ash Wilson (@smashwilson)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *rax_mon_check-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/rax_mon_check_module.html

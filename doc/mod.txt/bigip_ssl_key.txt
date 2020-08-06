@@ -1,0 +1,121 @@
+SYNOPSIS                   *bigip_ssl_key*
+
+     • This module will import/delete SSL keys on a BIG-IP. Keys can be imported from key files on the local disk, in PEM format.
+
+REQUIREMENTS                   *bigip_ssl_key-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • BIG-IP >= v12
+
+PARAMETERS                   *bigip_ssl_key-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   content                          Sets the contents of a key directly to the specified value. This is used with lookup plugins or for anything with formatting or templating. This must be provided
+   string                           when state is present.
+                                    aliases: key_content
+   name
+   string /                         The name of the key.
+   required
+   partition       Default:
+   string          "Common"         Device partition to manage resources on.
+   added in 2.5
+   passphrase                       Passphrase on key.
+   string
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:       When present, ensures that the key is uploaded to the device. When absent, ensures that the key is removed from the device. If the key is currently in use, the
+   string            • present ←    module will not be able to remove the key.
+                     • absent
+
+NOTES                   *bigip_ssl_key-notes*
+
+   Note
+
+     • This module does not behave like other modules that you might include in roles where referencing files or templates first looks in the role’s files or templates directory. To have it behave
+       that way, use the Ansible file or template lookup (see Examples). The lookups behave as expected in a role context.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_ssl_key-examples*
+
+ - name: Use a file lookup to import key
+   bigip_ssl_key:
+     name: key-name
+     state: present
+     content: "{{ lookup('file', '/path/to/key.key') }}"
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Delete key
+   bigip_ssl_key:
+     name: key-name
+     state: absent
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_ssl_key-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key            Returned                                                                                Description
+   key_checksum                        SHA1 checksum of the key that was provided.
+   string          changed and created Sample:
+                                       cf23df2207d99a74fbe169e3eba035e633b65d94
+   key_filename                        The name of the SSL certificate key. The key_filename and cert_filename will be similar to each other, however the key_filename will have a .key extension.
+   string          created             Sample:
+                                       cert1.key
+   key_source_path                     Path on BIG-IP where the source of the key is stored
+   string          created             Sample:
+                                       /var/config/rest/downloads/cert1.key
+
+STATUS                   *bigip_ssl_key-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_ssl_key-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_ssl_key_module.html

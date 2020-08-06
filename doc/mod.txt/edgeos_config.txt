@@ -1,0 +1,99 @@
+SYNOPSIS                   *edgeos_config*
+
+     • This module provides configuration file management of EdgeOS devices. It provides arguments for managing both the configuration file and state of the active configuration. All configuration
+       statements are based on set and delete commands in the device configuration.
+     • This is a network module and requires the connection: network_cli in order to work properly.
+     • For more information please see the Network Guide.
+
+PARAMETERS                   *edgeos_config-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   backup           Choices:       The backup argument will backup the current device's active configuration to the Ansible control host prior to making any changes. If the backup_options value is
+   boolean          • no ←         not given, the backup file will be located in the backup folder in the playbook root directory or role root directory if the playbook is part of an ansible role.
+                    • yes          If the directory does not exist, it is created.
+   backup_options                  This is a dict object containing configurable options related to backup file path. The value of this option is read only when backup is set to yes, if backup is
+   dictionary                      set to no this option will be silently ignored.
+   added in 2.8
+       dir_path                    This option provides the path ending with directory name in which the backup configuration file will be stored. If the directory does not exist it will be first
+       path                        created and the filename is either the value of filename or default filename as described in filename options description. If the path value is not given in that
+                                   case a backup directory will be created in the current working directory and backup configuration will be copied in filename within backup directory.
+       filename                    The filename to be used to store the backup configuration. If the the filename is not given it will be generated based on the hostname, current time and date in
+       -                           format defined by <hostname>_config.<current-date>@<current-time>
+   comment        Default:         Allows a commit description to be specified to be included when the configuration is committed. If the configuration is not changed or committed, this argument is
+   -              "configured by   ignored.
+                  edgeos_config"
+   config                          The config argument specifies the base configuration to use to compare against the desired configuration. If this value is not specified, the module will
+   -                               automatically retrieve the current active configuration from the remote device.
+   lines                           The ordered set of configuration lines to be managed and compared with the existing configuration on the remote device.
+   -
+   match            Choices:       The match argument controls the method used to match against the current active configuration. By default, the desired config is matched against the active config
+   -                • line ←       and the deltas are loaded. If the match argument is set to none the active configuration is ignored and the configuration is always loaded.
+                    • none
+   save             Choices:       The save argument controls whether or not changes made to the active configuration are saved to disk. This is independent of committing the config. When set to
+   boolean          • no ←         True, the active configuration is saved.
+                    • yes
+   src                             The src argument specifies the path to the source config file to load. The source config file can either be in bracket format or set format. The source file can
+   -                               include Jinja2 template variables.
+
+NOTES                   *edgeos_config-notes*
+
+   Note
+
+     • Tested against EdgeOS 1.9.7
+     • Setting ANSIBLE_PERSISTENT_COMMAND_TIMEOUT to 30 is recommended since the save command can take longer than the default of 10 seconds on some EdgeOS hardware.
+
+EXAMPLES                   *edgeos_config-examples*
+
+ - name: configure the remote device
+   edgeos_config:
+     lines:
+       - set system host-name {{ inventory_hostname }}
+       - set service lldp
+       - delete service dhcp-server
+
+ - name: backup and load from file
+   edgeos_config:
+     src: edgeos.cfg
+     backup: yes
+
+ - name: configurable backup path
+   edgeos_config:
+     src: edgeos.cfg
+     backup: yes
+     backup_options:
+       filename: backup.cfg
+       dir_path: /home/user
+
+RETURN VALUES                   *edgeos_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key          Returned                                                                                  Description
+   backup_path                    The full path to the backup file
+   string      when backup is yes Sample:
+                                  /playbooks/ansible/backup/[email protected]:28:34
+   commands                       The list of configuration commands sent to the device
+   list        always             Sample:
+                                  ['...', '...']
+   filtered                       The list of configuration commands removed to avoid a load failure
+   list        always             Sample:
+                                  ['...', '...']
+
+STATUS                   *edgeos_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Nathaniel Case (@Qalthos)
+     • Sam Doran (@samdoran)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *edgeos_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/edgeos_config_module.html

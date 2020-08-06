@@ -1,0 +1,103 @@
+SYNOPSIS                   *netapp_e_auditlog*
+
+     • This module allows an e-series storage system owner to set audit-log configuration parameters.
+
+PARAMETERS                   *netapp_e_auditlog-parameters*
+
+       Parameter         Choices/Defaults                                                                             Comments
+   api_password                                The password to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   api_url                                     The url to the SANtricity Web Services Proxy or Embedded Web Services API. Example https://prod-1.wahoo.acme.com/devmgr/v2
+   string / required
+   api_username                                The username to authenticate with the SANtricity Web Services Proxy or Embedded Web Services API.
+   string / required
+   force               Choices:                Forces the audit-log configuration to delete log history when log messages fullness cause immediate warning or full condition.
+   boolean             • no ←                  Warning! This will cause any existing audit-log messages to be deleted.
+                       • yes                   This is only applicable for full_policy=preventSystemAccess.
+   full_policy         Choices:
+   -                   • overWrite ←           Specifies what audit-log should do once the number of entries approach the record limit.
+                       • preventSystemAccess
+   log_level           Choices:
+   -                   • all                   Filters the log messages according to the specified log level selection.
+                       • writeOnly ←
+   log_path                                    A local path to a file to be used for debug logging.
+   -
+   max_records       Default:                  The maximum number log messages audit-log will retain.
+   -                 50000                     Max records must be between and including 100 and 50000.
+   ssid              Default:                  The ID of the array to manage. This value must be unique for each array.
+   string            1
+   threshold         Default:                  This is the memory full percent threshold that audit-log will start issuing warning messages.
+   -                 90                        Percent range must be between and including 60 and 90.
+   validate_certs      Choices:
+   boolean             • no                    Should https certificates be validated?
+                       • yes ←
+
+NOTES                   *netapp_e_auditlog-notes*
+
+   Note
+
+     • Check mode is supported.
+     • This module is currently only supported with the Embedded Web Services API v3.0 and higher.
+     • The E-Series Ansible modules require either an instance of the Web Services Proxy (WSP), to be available to manage the storage-system, or an E-Series storage-system that supports the
+       Embedded Web Services API.
+     • Embedded Web Services is currently available on the E2800, E5700, EF570, and newer hardware models.
+     • netapp_e_storage_system may be utilized for configuring the systems managed by a WSP instance.
+
+EXAMPLES                   *netapp_e_auditlog-examples*
+
+ - name: Define audit-log to prevent system access if records exceed 50000 with warnings occurring at 60% capacity.
+   netapp_e_auditlog:
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      validate_certs: no
+      max_records: 50000
+      log_level: all
+      full_policy: preventSystemAccess
+      threshold: 60
+      log_path: /path/to/log_file.log
+ - name: Define audit-log utilize the default values.
+   netapp_e_auditlog:
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+ - name: Force audit-log configuration when full or warning conditions occur while enacting preventSystemAccess policy.
+   netapp_e_auditlog:
+      api_url: "https://{{ netapp_e_api_host }}/devmgr/v2"
+      api_username: "{{ netapp_e_api_username }}"
+      api_password: "{{ netapp_e_api_password }}"
+      ssid: "{{ netapp_e_ssid }}"
+      max_records: 5000
+      log_level: all
+      full_policy: preventSystemAccess
+      threshold: 60
+      force: yes
+
+RETURN VALUES                   *netapp_e_auditlog-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key    Returned                                                                                    Description
+   msg               Success message
+   string on success Sample:
+                     The settings have been updated.
+
+STATUS                   *netapp_e_auditlog-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Nathan Swartz (@ndswartz)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netapp_e_auditlog-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netapp_e_auditlog_module.html

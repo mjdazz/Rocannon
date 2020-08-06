@@ -1,21 +1,84 @@
-SYNOPSIS                           *xattr*
+SYNOPSIS                   *xattr*
 
-New in version 1.3.
+     • Manages filesystem user defined extended attributes.
+     • Requires that extended attributes are enabled on the target filesystem and that the setfattr/getfattr utilities are present.
 
-Manages filesystem user defined extended attributes, requires that they are enabled on the target filesystem and that the setfattr/getfattr utilities are present.
+PARAMETERS                   *xattr-parameters*
 
-EXAMPLES                           *xattr-examples*
->
-    # Obtain the extended attributes  of /etc/foo.conf
-    - xattr: name=/etc/foo.conf
-   
-    # Sets the key 'foo' to value 'bar'
-    - xattr: path=/etc/foo.conf key=user.foo value=bar
-   
-    # Removes the key 'foo'
-    - xattr: name=/etc/foo.conf key=user.foo state=absent
-   
+   Parameter Choices/Defaults                                                                                Comments
+   follow      Choices:
+   boolean     • no           If yes, dereferences symlinks and sets/gets attributes on symlink target, otherwise acts on symlink itself.
+               • yes ←
+   key                        The name of a specific Extended attribute key to set/retrieve.
+   string
+   namespace
+   string    Default:         Namespace of the named name/key.
+   added in  "user"
+   2.7
+   path                       The full path of the file/object to get the facts of.
+   path /                     Before 2.3 this option was only usable as name.
+   required                   aliases: name
+               Choices:
+               • absent
+   state       • all          defines which state you want to do. read retrieves the current value for a key (default) present sets name to value, default if value is set all dumps all data keys
+   string      • keys         retrieves all keys absent deletes the key
+               • present
+               • read ←
+   value                      The value to set the named name/key to, it automatically sets the state to 'set'.
+   string
+
+NOTES                   *xattr-notes*
+
+   Note
+
+     • As of Ansible 2.3, the name option has been changed to path as default, but name still works as well.
+
+EXAMPLES                   *xattr-examples*
+
+ - name: Obtain the extended attributes  of /etc/foo.conf
+   xattr:
+     path: /etc/foo.conf
+
+ - name: Set the key 'user.foo' to value 'bar'
+   xattr:
+     path: /etc/foo.conf
+     key: foo
+     value: bar
+
+ - name: Set the key 'trusted.glusterfs.volume-id' to value '0x817b94343f164f199e5b573b4ea1f914'
+   xattr:
+     path: /mnt/bricks/brick1
+     namespace: trusted
+     key: glusterfs.volume-id
+     value: "0x817b94343f164f199e5b573b4ea1f914"
+
+ - name: Remove the key 'user.foo'
+   xattr:
+     path: /etc/foo.conf
+     key: foo
+     state: absent
+
+ - name: Remove the key 'trusted.glusterfs.volume-id'
+   xattr:
+     path: /mnt/bricks/brick1
+     namespace: trusted
+     key: glusterfs.volume-id
+     state: absent
+
+STATUS                   *xattr-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Brian Coca (@bcoca)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *xattr-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/xattr_module.html
+https://docs.ansible.com/ansible/latest/modules/xattr_module.html

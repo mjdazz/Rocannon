@@ -1,42 +1,141 @@
-SYNOPSIS                           *dnsimple*
+SYNOPSIS                   *dnsimple*
 
-New in version 1.6.
+     • Manages domains and records via the DNSimple API, see the docs: http://developer.dnsimple.com/.
 
-Manages domains and records via the DNSimple API, see the docs: http://developer.dnsimple.com/
+REQUIREMENTS                   *dnsimple-requirements*
 
-EXAMPLES                           *dnsimple-examples*
->
-    # authenticate using email and API token
-    - local_action: dnsimple account_email=[email protected] account_api_token=dummyapitoken
-   
-    # fetch all domains
-    - local_action dnsimple
-      register: domains
-   
-    # fetch my.com domain records
-    - local_action: dnsimple domain=my.com state=present
-      register: records
-   
-    # delete a domain
-    - local_action: dnsimple domain=my.com state=absent
-   
-    # create a test.my.com A record to point to 127.0.0.01
-    - local_action: dnsimple domain=my.com record=test type=A value=127.0.0.1
-      register: record
-   
-    # and then delete it
-    - local_action: dnsimple domain=my.com record_ids={{ record['id'] }}
-   
-    # create a my.com CNAME record to example.com
-    - local_action: dnsimple domain=my.com record= type=CNAME value=example.com state=present
-   
-    # change it's ttl
-    - local_action: dnsimple domain=my.com record= type=CNAME value=example.com ttl=600 state=present
-   
-    # and delete the record
-    - local_action: dnsimpledomain=my.com record= type=CNAME value=example.com state=absent
-   
+   The below requirements are needed on the host that executes this module.
+
+     • dnsimple >= 1.0.0
+
+PARAMETERS                   *dnsimple-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   account_api_token                  Account API token. See account_email for more information.
+   string
+   account_email                      Account email. If omitted, the environment variables DNSIMPLE_EMAIL and DNSIMPLE_API_TOKEN will be looked for.
+   string                             If those aren't found, a .dnsimple file will be looked for, see: https://github.com/mikemaccana/dnsimple-python#getting-started.
+   domain                             Domain to work with. Can be the domain name (e.g. "mydomain.com") or the numeric ID of the domain in DNSimple.
+   string                             If omitted, a list of domains will be returned.
+                                      If domain is present but the domain doesn't exist, it will be created.
+   priority                           Record priority.
+   integer
+   record                             Record to add, if blank a record for the domain will be created, supports the wildcard (").
+   string
+   record_ids                         List of records to ensure they either exist or do not exist.
+   list
+   solo                Choices:       Whether the record should be the only one for that record type and record name.
+   boolean             • no ←         Only use with state is set to present on a record.
+                       • yes
+   state               Choices:
+   string              • present ←    whether the record should exist or not.
+                       • absent
+   ttl               Default:         The TTL to give the new record in seconds.
+   integer           3600
+                       Choices:
+                       • A
+                       • ALIAS
+                       • CNAME
+                       • MX
+                       • SPF
+                       • URL
+   type                • TXT          The type of DNS record to create.
+   string              • NS
+                       • SRV
+                       • NAPTR
+                       • PTR
+                       • AAAA
+                       • SSHFP
+                       • HINFO
+                       • POOL
+   value                              Record value.
+   string                             Must be specified when trying to ensure a record exists.
+
+NOTES                   *dnsimple-notes*
+
+   Note
+
+     • DNSimple API v1 is deprecated. Please install dnsimple-python>=1.0.0 which uses v2 API.
+
+EXAMPLES                   *dnsimple-examples*
+
+ - name: Authenticate using email and API token and fetch all domains
+   dnsimple:
+     account_email: [email protected]
+     account_api_token: dummyapitoken
+   delegate_to: localhost
+
+ - name: Fetch my.com domain records
+   dnsimple:
+     domain: my.com
+     state: present
+   delegate_to: localhost
+   register: records
+
+ - name: Delete a domain
+   dnsimple:
+     domain: my.com
+     state: absent
+   delegate_to: localhost
+
+ - name: Create a test.my.com A record to point to 127.0.0.1
+   dnsimple:
+     domain: my.com
+     record: test
+     type: A
+     value: 127.0.0.1
+   delegate_to: localhost
+   register: record
+
+ - name: Delete record using record_ids
+   dnsimple:
+     domain: my.com
+     record_ids: '{{ record["id"] }}'
+     state: absent
+   delegate_to: localhost
+
+ - name: Create a my.com CNAME record to example.com
+   dnsimple:
+     domain: my.com
+     record: ''
+     type: CNAME
+     value: example.com
+     state: present
+   delegate_to: localhost
+
+ - name: change TTL value for a record
+   dnsimple:
+     domain: my.com
+     record: ''
+     type: CNAME
+     value: example.com
+     ttl: 600
+     state: present
+   delegate_to: localhost
+
+ - name: Delete the record
+   dnsimple:
+     domain: my.com
+     record: ''
+     type: CNAME
+     value: example.com
+     state: absent
+   delegate_to: localhost
+
+STATUS                   *dnsimple-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Alex Coomans (@drcapulet)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *dnsimple-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/dnsimple_module.html
+https://docs.ansible.com/ansible/latest/modules/dnsimple_module.html

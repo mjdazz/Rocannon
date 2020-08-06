@@ -1,32 +1,204 @@
-SYNOPSIS                           *lineinfile*
+SYNOPSIS                   *lineinfile*
 
-This module will search a file for a line, and ensure that it is present or absent. This is primarily useful when you want to change a single line in a file only. See the replace module if you
-want to change multiple, similar lines; for other cases, see the copy or template modules.
+     • This module ensures a particular line is in a file, or replace an existing line using a back-referenced regular expression.
+     • This is primarily useful when you want to change a single line in a file only.
+     • See the replace module if you want to change multiple, similar lines or check blockinfile if you want to insert/update/remove a block of lines in a file. For other cases, see the copy or
+       template modules.
 
-EXAMPLES                           *lineinfile-examples*
->
-    - lineinfile: dest=/etc/selinux/config regexp=^SELINUX= line=SELINUX=enforcing
-   
-    - lineinfile: dest=/etc/sudoers state=absent regexp="^%wheel"
-   
-    - lineinfile: dest=/etc/hosts regexp='^127\.0\.0\.1' line='127.0.0.1 localhost' owner=root group=root mode=0644
-   
-    - lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen " insertafter="^#Listen " line="Listen 8080"
-   
-    - lineinfile: dest=/etc/services regexp="^# port for http" insertbefore="^www.*80/tcp" line="# port for http by default"
-   
-    # Add a line to a file if it does not exist, without passing regexp
-    - lineinfile: dest=/tmp/testfile line="192.168.1.99 foo.lab.net foo"
-   
-    # Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
-    - lineinfile: "dest=/etc/sudoers state=present regexp='^%wheel' line='%wheel ALL=(ALL) NOPASSWD: ALL'"
-   
-    - lineinfile: dest=/opt/jboss-as/bin/standalone.conf regexp='^(.*)Xms(\d+)m(.*)$' line='\1Xms${xms}m\3' backrefs=yes
-   
-    # Validate the sudoers file before saving
-    - lineinfile: dest=/etc/sudoers state=present regexp='^%ADMIN ALL\=' line='%ADMIN ALL=(ALL) NOPASSWD:ALL' validate='visudo -cf %s'
-   
+PARAMETERS                   *lineinfile-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+                                  The attributes the resulting file or directory should have.
+   attributes                     To get supported flags look at the man page for chattr on the target system.
+   string                         This string should contain the attributes in the same order as the one displayed by lsattr.
+                                  The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                  aliases: attr
+                                  Used with state=present.
+   backrefs        Choices:       If set, line can contain backreferences (both positional and named) that will get populated if the regexp matches.
+   boolean         • no ←         This parameter changes the operation of the module slightly; insertbefore and insertafter will be ignored, and if the regexp does not match anywhere in the file,
+                   • yes          the file will be left unchanged.
+                                  If the regexp does match, the last matching line will be replaced by the expanded line parameter.
+   backup          Choices:
+   boolean         • no ←         Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                   • yes
+   create          Choices:       Used with state=present.
+   boolean         • no ←         If specified, the file will be created if it does not already exist.
+                   • yes          By default it will fail if the file is missing.
+   firstmatch      Choices:       Used with insertafter or insertbefore.
+   boolean         • no ←         If set, insertafter and insertbefore will work with the first line that matches the given regular expression.
+   added in 2.5    • yes
+   group                          Name of the group that should own the file/directory, as would be fed to chown.
+   string
+                                  Used with state=present.
+                                  If specified, the line will be inserted after the last match of specified regular expression.
+                   Choices:       If the first match is required, use(firstmatch=yes).
+   insertafter     • EOF ←        A special value is available; EOF for inserting the line at the end of the file.
+   string          • "regex"      If specified regular expression has no matches, EOF will be used instead.
+                                  If insertbefore is set, default value EOF will be ignored.
+                                  If regular expressions are passed to both regexp and insertafter, insertafter is only honored if no match for regexp is found.
+                                  May not be used with backrefs or insertbefore.
+                                  Used with state=present.
+                                  If specified, the line will be inserted before the last match of specified regular expression.
+   insertbefore    Choices:       If the first match is required, use firstmatch=yes.
+   string          • BOF          A value is available; BOF for inserting the line at the beginning of the file.
+                   • "regex"      If specified regular expression has no matches, the line will be inserted at the end of the file.
+                                  If regular expressions are passed to both regexp and insertbefore, insertbefore is only honored if no match for regexp is found.
+                                  May not be used with backrefs or insertafter.
+                                  The line to insert/replace into the file.
+   line                           Required for state=present.
+   string                         If backrefs is set, may contain backreferences that will get expanded with the regexp capture groups if the regexp matches.
+                                  aliases: value
+                                  The permissions the resulting file or directory should have.
+                                  For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                           octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                         Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                  As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                  As of Ansible 2.6, the mode may also be the special string preserve.
+                                  When set to preserve the file will be given the same permissions as the source file.
+   others                         All arguments accepted by the file module also work here.
+   string
+   owner                          Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   path                           The file to modify.
+   path /                         Before Ansible 2.3 this option was only usable as dest, destfile and name.
+   required                       aliases: dest, destfile, name
+                                  The regular expression to look for in every line of the file.
+                                  For state=present, the pattern to replace if found. Only the last line found will be replaced.
+   regexp                         For state=absent, the pattern of the line(s) to remove.
+   string                         If the regular expression is not matched, the line will be added to the file in keeping with insertbefore or insertafter settings.
+                                  When modifying a line the regexp should typically match both the initial state of the line as well as its state after replacement by line to ensure idempotence.
+                                  Uses Python regular expressions. See http://docs.python.org/2/library/re.html.
+                                  aliases: regex
+   selevel       Default:         The level part of the SELinux file context.
+   string        "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                  When set to _default, it will use the level portion of the policy if available.
+   serole                         The role part of the SELinux file context.
+   string                         When set to _default, it will use the role portion of the policy if available.
+   setype                         The type part of the SELinux file context.
+   string                         When set to _default, it will use the type portion of the policy if available.
+   seuser                         The user part of the SELinux file context.
+   string                         By default it uses the system policy, where applicable.
+                                  When set to _default, it will use the user portion of the policy if available.
+   state           Choices:
+   string          • absent       Whether the line should be there or not.
+                   • present ←
+                                  Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                  By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or just
+   unsafe_writes   Choices:       broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written in an
+   boolean         • no ←         unsafe manner.
+                   • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                  writes).
+                                  IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   validate                       The validation command to run before copying into place.
+   string                         The path to the file to validate is passed in via '%s' which must be present as in the examples below.
+                                  The command is passed securely so shell features like expansion and pipes will not work.
+
+NOTES                   *lineinfile-notes*
+
+   Note
+
+     • As of Ansible 2.3, the dest option has been changed to path as default, but dest still works as well.
+
+SEE ALSO                   *lineinfile-see also*
+
+   See also
+
+   blockinfile – Insert/update/remove a text block surrounded by marker lines
+   The official documentation on the blockinfile module.
+
+   copy – Copy files to remote locations
+   The official documentation on the copy module.
+
+   file – Manage files and file properties
+   The official documentation on the file module.
+
+   replace – Replace all instances of a particular string in a file using a back-referenced regular expression
+   The official documentation on the replace module.
+
+   template – Template a file out to a remote server
+   The official documentation on the template module.
+
+   win_lineinfile – Ensure a particular line is in a file, or replace an existing line using a back-referenced regular expression
+   The official documentation on the win_lineinfile module.
+
+EXAMPLES                   *lineinfile-examples*
+
+ # NOTE: Before 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+ - name: Ensure SELinux is set to enforcing mode
+   lineinfile:
+     path: /etc/selinux/config
+     regexp: '^SELINUX='
+     line: SELINUX=enforcing
+
+ - name: Make sure group wheel is not in the sudoers configuration
+   lineinfile:
+     path: /etc/sudoers
+     state: absent
+     regexp: '^%wheel'
+
+ - name: Replace a localhost entry with our own
+   lineinfile:
+     path: /etc/hosts
+     regexp: '^127\.0\.0\.1'
+     line: 127.0.0.1 localhost
+     owner: root
+     group: root
+     mode: '0644'
+
+ - name: Ensure the default Apache port is 8080
+   lineinfile:
+     path: /etc/httpd/conf/httpd.conf
+     regexp: '^Listen '
+     insertafter: '^#Listen '
+     line: Listen 8080
+
+ - name: Ensure we have our own comment added to /etc/services
+   lineinfile:
+     path: /etc/services
+     regexp: '^# port for http'
+     insertbefore: '^www."80/tcp'
+     line: '# port for http by default'
+
+ - name: Add a line to a file if the file does not exist, without passing regexp
+   lineinfile:
+     path: /tmp/testfile
+     line: 192.168.1.99 foo.lab.net foo
+     create: yes
+
+ # NOTE: Yaml requires escaping backslashes in double quotes but not in single quotes
+ - name: Ensure the JBoss memory settings are exactly as needed
+   lineinfile:
+     path: /opt/jboss-as/bin/standalone.conf
+     regexp: '^(.")Xms(\\d+)m(.")$'
+     line: '\1Xms${xms}m\3'
+     backrefs: yes
+
+ # NOTE: Fully quoted because of the ': ' on the line. See the Gotchas in the YAML docs.
+ - name: Validate the sudoers file before saving
+   lineinfile:
+     path: /etc/sudoers
+     state: present
+     regexp: '^%ADMIN ALL='
+     line: '%ADMIN ALL=(ALL) NOPASSWD: ALL'
+     validate: /usr/sbin/visudo -cf %s
+
+STATUS                   *lineinfile-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *lineinfile-red hat support*
+
+     • Daniel Hokka Zakrissoni (@dhozac)
+     • Ahti Kitsik (@ahtik)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *lineinfile-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/lineinfile_module.html
+https://docs.ansible.com/ansible/latest/modules/lineinfile_module.html

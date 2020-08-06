@@ -1,0 +1,100 @@
+SYNOPSIS                   *zfs_delegate_admin*
+
+     • Manages ZFS file system delegated administration permissions, which allow unprivileged users to perform ZFS operations normally restricted to the superuser.
+     • See the zfs allow section of zfs(1M) for detailed explanations of options.
+     • This module attempts to adhere to the behavior of the command line tool as much as possible.
+
+REQUIREMENTS                   *zfs_delegate_admin-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A ZFS/OpenZFS implementation that supports delegation with zfs allow, including: Solaris >= 10, illumos (all versions), FreeBSD >= 8.0R, ZFS on Linux >= 0.7.0.
+
+PARAMETERS                   *zfs_delegate_admin-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   descendents         Choices:
+   boolean             • no           Apply permissions to name's descendents (zfs allow -d).
+                       • yes
+   everyone            Choices:
+   boolean             • no ←         Apply permissions to everyone.
+                       • yes
+   groups                             List of groups to whom permission(s) should be granted.
+   list
+   local               Choices:
+   boolean             • no           Apply permissions to name locally (zfs allow -l).
+                       • yes
+   name                               File system or volume name e.g. rpool/myfs.
+   string / required
+                       Choices:
+                       • allow
+                       • clone
+                       • create
+                       • destroy
+                       • diff
+                       • hold
+                       • mount
+   permissions         • promote      The list of permission(s) to delegate (required if state is present).
+   list                • readonly
+                       • receive
+                       • release
+                       • rename
+                       • rollback
+                       • send
+                       • share
+                       • snapshot
+                       • unallow
+   recursive           Choices:
+   boolean             • no ←         Unallow permissions recursively (ignored when state is present).
+                       • yes
+   state               Choices:       Whether to allow (present), or unallow (absent) a permission.
+   - / required        • absent       When set to present, at least one "entity" param of users, groups, or everyone are required.
+                       • present ←    When set to absent, removes permissions from the specified entities, or removes all permissions if no entity params are specified.
+   users                              List of users to whom permission(s) should be granted.
+   list
+
+EXAMPLES                   *zfs_delegate_admin-examples*
+
+ - name: Grant `zfs allow` and `unallow` permission to the `adm` user with the default local+descendents scope
+   zfs_delegate_admin:
+     name: rpool/myfs
+     users: adm
+     permissions: allow,unallow
+
+ - name: Grant `zfs send` to everyone, plus the group `backup`
+   zfs_delegate_admin:
+     name: rpool/myvol
+     groups: backup
+     everyone: yes
+     permissions: send
+
+ - name: Grant `zfs send,receive` to users `foo` and `bar` with local scope only
+   zfs_delegate_admin:
+     name: rpool/myfs
+     users: foo,bar
+     permissions: send,receive
+     local: yes
+
+ - name: Revoke all permissions from everyone (permissions specifically assigned to users and groups remain)
+ - zfs_delegate_admin:
+     name: rpool/myfs
+     everyone: yes
+     state: absent
+
+STATUS                   *zfs_delegate_admin-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Nate Coraor (@natefoo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *zfs_delegate_admin-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/zfs_delegate_admin_module.html

@@ -1,26 +1,166 @@
-SYNOPSIS                           *mysql_db*
+SYNOPSIS                   *mysql_db*
 
-Add or remove MySQL databases from a remote host.
+     • Add or remove MySQL databases from a remote host.
 
-EXAMPLES                           *mysql_db-examples*
->
-    # Create a new database with name 'bobdata'
-    - mysql_db: name=bobdata state=present
-   
-    # Copy database dump file to remote host and restore it to database 'my_db'
-    - copy: src=dump.sql.bz2 dest=/tmp
-    - mysql_db: name=my_db state=import target=/tmp/dump.sql.bz2
-   
-      Note
-   
-      Requires the MySQLdb Python package on the remote host. For Ubuntu, this is as easy as apt-get install python-mysqldb. (See apt.)
-   
-      Note
-   
-      Both login_password and login_user are required when you are passing credentials. If none are present, the module will attempt to read the credentials from ~/.my.cnf, and finally fall back to
-      using the MySQL default login of root with no password.
-   
+REQUIREMENTS                   *mysql_db-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • MySQLdb (Python 2.x)
+     • PyMySQL (Python 2.7 and Python 3.X), or
+     • mysql (command line binary)
+     • mysqldump (command line binary)
+
+PARAMETERS                   *mysql_db-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   ca_cert                             The path to a Certificate Authority (CA) certificate. This option, if used, must specify the same certificate as used by the server.
+   path                                aliases: ssl_ca
+   client_cert                         The path to a client public key certificate.
+   path                                aliases: ssl_cert
+   client_key                          The path to the client private key.
+   path                                aliases: ssl_key
+   collation                           Collation mode (sorting). This only applies to new table/databases and does not update existing ones, this is a limitation of MySQL.
+   -
+   config_file        Default:         Specify a config file from which user and password are to be read.
+   path               "~/.my.cnf"
+   connect_timeout    Default:         The connection timeout when connecting to the MySQL server.
+   integer            30
+   encoding                            Encoding mode to use, examples include utf8 or latin1_swedish_ci
+   -
+   ignore_tables      Default:
+   -                  []               A list of table names that will be ignored in the dump of the form database_name.table_name
+   added in 2.7
+   login_host         Default:         Host running the database.
+   string             "localhost"
+   login_password                      The password used to authenticate with.
+   string
+   login_port         Default:         Port of the MySQL server. Requires login_host be defined as other than localhost if login_port is used.
+   integer            3306
+   login_unix_socket                   The path to a Unix domain socket for local connections.
+   string
+   login_user                          The username used to authenticate with.
+   string
+   name                                name of the database to add or remove.
+   list /                              name=all May only be provided if state is dump or import.
+   elements=string /                   List of databases is provided with state=dump, state=present and state=absent.
+   required                            if name=all Works like --all-databases option for mysqldump (Added in 2.0).
+                                       aliases: db
+   quick                Choices:
+   boolean              • no           Option used for dumping large tables
+                        • yes ←
+   single_transaction   Choices:
+   boolean              • no ←         Execute the dump in a single transaction
+                        • yes
+                        Choices:
+   state                • present ←
+   -                    • absent       The database state
+                        • dump
+                        • import
+   target                              Location, on the remote host, of the dump file to read from or write to. Uncompressed SQL files (.sql) as well as bzip2 (.bz2), gzip (.gz) and xz (Added in
+   -                                   2.0) compressed files are supported.
+
+NOTES                   *mysql_db-notes*
+
+   Note
+
+     • Requires the mysql and mysqldump binaries on the remote host.
+     • This module is not idempotent when state is import, and will import the dump file each time if run more than once.
+     • Requires the PyMySQL (Python 2.7 and Python 3.X) or MySQL-python (Python 2.X) package on the remote host. The Python package may be installed with apt-get install python-pymysql (Ubuntu; see
+       apt) or yum install python2-PyMySQL (RHEL/CentOS/Fedora; see yum). You can also use dnf install python2-PyMySQL for newer versions of Fedora; see dnf.
+     • Both login_password and login_user are required when you are passing credentials. If none are present, the module will attempt to read the credentials from ~/.my.cnf, and finally fall back
+       to using the MySQL default login of ‘root’ with no password.
+
+EXAMPLES                   *mysql_db-examples*
+
+ - name: Create a new database with name 'bobdata'
+   mysql_db:
+     name: bobdata
+     state: present
+
+ - name: Create new databases with names 'foo' and 'bar'
+   mysql_db:
+     name:
+       - foo
+       - bar
+     state: present
+
+ # Copy database dump file to remote host and restore it to database 'my_db'
+ - name: Copy database dump file
+   copy:
+     src: dump.sql.bz2
+     dest: /tmp
+
+ - name: Restore database
+   mysql_db:
+     name: my_db
+     state: import
+     target: /tmp/dump.sql.bz2
+
+ - name: Dump multiple databases
+   mysql_db:
+     state: dump
+     name: db_1,db_2
+     target: /tmp/dump.sql
+
+ - name: Dump multiple databases
+   mysql_db:
+     state: dump
+     name:
+       - db_1
+       - db_2
+     target: /tmp/dump.sql
+
+ - name: Dump all databases to hostname.sql
+   mysql_db:
+     state: dump
+     name: all
+     target: /tmp/dump.sql
+
+ - name: Import file.sql similar to mysql -u <username> -p <password> < hostname.sql
+   mysql_db:
+     state: import
+     name: all
+     target: /tmp/dump.sql
+
+ - name: Delete database with name 'bobdata'
+   mysql_db:
+     name: bobdata
+     state: absent
+
+ - name: Make sure there is neither a database with name 'foo', nor one with name 'bar'
+   mysql_db:
+     name:
+       - foo
+       - bar
+     state: absent
+
+RETURN VALUES                   *mysql_db-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   db                    Database names in string format delimited by white space.
+   string       always   Sample:
+                         foo bar
+   db_list               List of database names.
+   list         always   Sample:
+   added in 2.9          ['foo', 'bar']
+
+STATUS                   *mysql_db-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ansible Core Team
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *mysql_db-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/mysql_db_module.html
+https://docs.ansible.com/ansible/latest/modules/mysql_db_module.html

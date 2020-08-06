@@ -1,0 +1,127 @@
+SYNOPSIS                   *ce_vxlan_gateway*
+
+     • Configuring Centralized All-Active Gateways or Distributed Gateway for the VXLAN Network on HUAWEI CloudEngine devices.
+
+PARAMETERS                   *ce_vxlan_gateway-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   arp_direct_route         Choices:
+   -                        • enable       Enable VLINK direct route on VBDIF interface.
+                            • disable
+   arp_distribute_gateway   Choices:
+   -                        • enable       Enable the distributed gateway function on VBDIF interface.
+                            • disable
+   dfs_all_active           Choices:
+   -                        • enable       Creates all-active gateways.
+                            • disable
+   dfs_id                                  Specifies the ID of a DFS group. The value must be 1.
+   -
+   dfs_peer_ip                             Configure the IP address of an all-active gateway peer. The value is in dotted decimal notation.
+   -
+   dfs_peer_vpn                            Specifies the name of the VPN instance that is associated with all-active gateway peer. The value is a string of 1 to 31 case-sensitive characters, spaces
+   -                                       not supported. When double quotation marks are used around the string, spaces are allowed in the string. The value _public_ is reserved and cannot be used
+                                           as the VPN instance name.
+   dfs_source_ip                           Specifies the IPv4 address bound to a DFS group. The value is in dotted decimal notation.
+   -
+   dfs_source_vpn                          Specifies the name of a VPN instance bound to a DFS group. The value is a string of 1 to 31 case-sensitive characters without spaces. If the character
+   -                                       string is quoted by double quotation marks, the character string can contain spaces. The value _public_ is reserved and cannot be used as the VPN instance
+                                           name.
+   dfs_udp_port                            Specifies the UDP port number of the DFS group. The value is an integer that ranges from 1025 to 65535.
+   -
+   state                    Choices:
+   -                        • present ←    Determines whether the config should be present or not on the device.
+                            • absent
+   vbdif_bind_vpn                          Specifies the name of the VPN instance that is associated with the interface. The value is a string of 1 to 31 case-sensitive characters, spaces not
+   -                                       supported. When double quotation marks are used around the string, spaces are allowed in the string. The value _public_ is reserved and cannot be used as
+                                           the VPN instance name.
+   vbdif_mac                               Specifies a MAC address for a VBDIF interface. The value is in the format of H-H-H. Each H is a 4-digit hexadecimal number, such as 00e0 or fc01. If an H
+   -                                       contains less than four digits, 0s are added ahead. For example, e0 is equal to 00e0. A MAC address cannot be all 0s or 1s or a multicast MAC address.
+   vbdif_name                              Full name of VBDIF interface, i.e. Vbdif100.
+   -
+   vpn_instance                            Specifies the name of a VPN instance. The value is a string of 1 to 31 case-sensitive characters, spaces not supported. When double quotation marks are
+   -                                       used around the string, spaces are allowed in the string. The value _public_ is reserved and cannot be used as the VPN instance name.
+   vpn_vni                                 Specifies a VNI ID. Binds a VXLAN network identifier (VNI) to a virtual private network (VPN) instance. The value is an integer ranging from 1 to
+   -                                       16000000.
+
+NOTES                   *ce_vxlan_gateway-notes*
+
+   Note
+
+     • Ensure All-Active Gateways or Distributed Gateway for the VXLAN Network can not configure at the same time.
+     • Recommended connection is network_cli.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_vxlan_gateway-examples*
+
+ - name: vxlan gateway module test
+   hosts: ce128
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: Configuring Centralized All-Active Gateways for the VXLAN Network
+     ce_vxlan_gateway:
+       dfs_id: 1
+       dfs_source_ip: 6.6.6.6
+       dfs_all_active: enable
+       dfs_peer_ip: 7.7.7.7
+       provider: "{{ cli }}"
+   - name: Bind the VPN instance to a Layer 3 gateway, enable distributed gateway, and configure host route advertisement.
+     ce_vxlan_gateway:
+       vbdif_name: Vbdif100
+       vbdif_bind_vpn: vpn1
+       arp_distribute_gateway: enable
+       arp_direct_route: enable
+       provider: "{{ cli }}"
+   - name: Assign a VNI to a VPN instance.
+     ce_vxlan_gateway:
+       vpn_instance: vpn1
+       vpn_vni: 100
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_vxlan_gateway-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                  Description
+   changed                 check to see if a change was made on the device
+   boolean    always       Sample:
+                           True
+   end_state               k/v pairs of configuration after module execution
+   dictionary verbose mode Sample:
+                           {'dfs_id': '1', 'evn_source_ip': '6.6.6.6', 'evn_source_vpn': None, 'evn_peers': [{'ip': '7.7.7.7', 'vpn': ''}], 'dfs_all_active': 'enable'}
+   existing                k/v pairs of existing configuration
+   dictionary verbose mode Sample:
+                           {'dfs_id': '1', 'dfs_source_ip': None, 'evn_peer_ip': [], 'dfs_all_active': 'disable'}
+   proposed                k/v pairs of parameters passed into module
+   dictionary verbose mode Sample:
+                           {'dfs_id': '1', 'dfs_source_ip': '6.6.6.6', 'dfs_all_active': 'enable', 'dfs_peer_ip': '7.7.7.7'}
+   updates                 commands sent to the device
+   list       always       Sample:
+                           ['dfs-group 1', 'source ip 6.6.6.6', 'active-active-gateway', 'peer 7.7.7.7']
+
+STATUS                   *ce_vxlan_gateway-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_vxlan_gateway-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_vxlan_gateway_module.html

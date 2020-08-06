@@ -1,22 +1,92 @@
-SYNOPSIS                           *pause*
+SYNOPSIS                   *pause*
 
-Pauses playbook execution for a set amount of time, or until a prompt is acknowledged. All parameters are optional. The default behavior is to pause with a prompt. You can use ctrl+c if you wish
-to advance a pause earlier than it is set to expire or if you need to abort a playbook run entirely. To continue early: press ctrl+c and then c. To abort a playbook: press ctrl+c and then a. The
-pause module integrates into async/parallelized playbooks without any special considerations (see also: Rolling Updates). When using pauses with the serial playbook parameter (as in rolling
-updates) you are only prompted once for the current group of hosts.
+     • Pauses playbook execution for a set amount of time, or until a prompt is acknowledged. All parameters are optional. The default behavior is to pause with a prompt.
+     • To pause/wait/sleep per host, use the wait_for module.
+     • You can use ctrl+c if you wish to advance a pause earlier than it is set to expire or if you need to abort a playbook run entirely. To continue early press ctrl+c and then c. To abort a
+       playbook press ctrl+c and then a.
+     • The pause module integrates into async/parallelized playbooks without any special considerations (see Rolling Updates). When using pauses with the serial playbook parameter (as in rolling
+       updates) you are only prompted once for the current group of hosts.
+     • This module is also supported for Windows targets.
 
-EXAMPLES                           *pause-examples*
->
-    # Pause for 5 minutes to build app cache.
-    - pause: minutes=5
-   
-    # Pause until you can verify updates to an application were successful.
-    - pause:
-   
-    # A helpful reminder of what to look out for post-update.
-    - pause: prompt="Make sure org.foo.FooOverload exception is not present"
-   
+PARAMETERS                   *pause-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   echo           Choices:       Controls whether or not keyboard input is shown when typing.
+   boolean        • no           Has no effect if 'seconds' or 'minutes' is set.
+   added in 2.5   • yes ←
+   minutes                       A positive number of minutes to pause for.
+   -
+   prompt                        Optional text to use for the prompt message.
+   -
+   seconds                       A positive number of seconds to pause for.
+   -
+
+NOTES                   *pause-notes*
+
+   Note
+
+     • Starting in 2.2, if you specify 0 or negative for minutes or seconds, it will wait for 1 second, previously it would wait indefinitely.
+     • This module is also supported for Windows targets.
+     • User input is not captured or echoed, regardless of echo setting, when minutes or seconds is specified.
+
+EXAMPLES                   *pause-examples*
+
+ # Pause for 5 minutes to build app cache.
+ - pause:
+     minutes: 5
+
+ # Pause until you can verify updates to an application were successful.
+ - pause:
+
+ # A helpful reminder of what to look out for post-update.
+ - pause:
+     prompt: "Make sure org.foo.FooOverload exception is not present"
+
+ # Pause to get some sensitive input.
+ - pause:
+     prompt: "Enter a secret"
+     echo: no
+
+RETURN VALUES                   *pause-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key            Returned                                                                                  Description
+   delta                             Time paused in seconds
+   string     always                 Sample:
+                                     2
+   echo                              Value of echo setting
+   boolean    always                 Sample:
+                                     True
+   start                             Time when started pausing
+   string     always                 Sample:
+                                     2017-02-23 14:35:07.298862
+   stdout                            Output of pause module
+   string     always                 Sample:
+                                     Paused for 0.04 minutes
+   stop                              Time when ended pausing
+   string     always                 Sample:
+                                     2017-02-23 14:35:09.552594
+   user_input                        User input from interactive console
+   string     if no waiting time set Sample:
+                                     Example user input
+
+STATUS                   *pause-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *pause-red hat support*
+
+     • Tim Bielawa (@tbielawa)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *pause-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/pause_module.html
+https://docs.ansible.com/ansible/latest/modules/pause_module.html

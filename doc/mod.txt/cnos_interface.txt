@@ -1,0 +1,169 @@
+SYNOPSIS                   *cnos_interface*
+
+     • This module provides declarative management of Interfaces on Lenovo CNOS network devices.
+
+PARAMETERS                   *cnos_interface-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   aggregate
+   -                             List of Interfaces definitions.
+   added in 2.8
+   delay        Default:         Time in seconds to wait before checking for the operational state on remote device. This wait is applicable for operational state argument which are state with
+   -            20               values up/down, tx_rate and rx_rate
+   added in 2.8
+   description
+   -                             Description of Interface.
+   added in 2.8
+   duplex         Choices:
+   -              • full         Interface link status
+   added in 2.8   • half
+                  • auto ←
+   enabled        Choices:
+   boolean        • no           Interface link status.
+   added in 2.8   • yes ←
+   mtu
+   -                             Maximum size of transmit packet.
+   added in 2.8
+   name
+   - / required                  Name of the Interface.
+   added in 2.8
+   neighbors                     Check operational state of given interface name for LLDP neighbor.
+   -                             The following suboptions are available.
+   added in 2.8
+    host                         LLDP neighbor host for given interface name.
+    -
+    port                         LLDP neighbor port to which interface name is connected.
+    -
+                                 Deprecated
+                                 Starting with Ansible 2.5 we recommend using connection: network_cli.
+   provider                      For more information please see the CNOS Platform Options guide.
+   -
+   added in 2.8                  ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                 A dict object containing connection details.
+    auth_pass                    Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value is not
+    -                            specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+    authorize     Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all commands in
+    boolean       • no ←         non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                  • yes
+    host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+    - /                          the transport.
+    required
+    password                     Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not specified
+    -                            in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+    port        Default:         Specifies the port to use when building the connection to the remote device.
+    -           22
+    ssh_keyfile                  Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+    -                            value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    timeout     Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    -           10               operation is completed, the module will error.
+    username                     Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+    -                            specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   rx_rate                       Receiver rate in bits per second (bps).
+   -                             This is state check parameter only.
+   added in 2.8                  Supports conditionals, see Conditionals in Networking Modules
+   speed
+   -                             Interface link speed.
+   added in 2.8
+                  Choices:
+   state          • present ←
+   -              • absent       State of the Interface configuration, up means present and operationally up and down means present and operationally down
+   added in 2.8   • up
+                  • down
+   tx_rate                       Transmit rate in bits per second (bps).
+   -                             This is state check parameter only.
+   added in 2.8                  Supports conditionals, see Conditionals in Networking Modules
+
+NOTES                   *cnos_interface-notes*
+
+   Note
+
+     • Tested against CNOS 10.8.1
+
+EXAMPLES                   *cnos_interface-examples*
+
+ - name: configure interface
+   cnos_interface:
+       name: Ethernet1/33
+       description: test-interface
+       speed: 100
+       duplex: half
+       mtu: 999
+
+ - name: remove interface
+   cnos_interface:
+     name: loopback3
+     state: absent
+
+ - name: make interface up
+   cnos_interface:
+     name: Ethernet1/33
+     enabled: True
+
+ - name: make interface down
+   cnos_interface:
+     name: Ethernet1/33
+     enabled: False
+
+ - name: Check intent arguments
+   cnos_interface:
+     name: Ethernet1/33
+     state: up
+     tx_rate: ge(0)
+     rx_rate: le(0)
+
+ - name: Check neighbors intent arguments
+   cnos_interface:
+     name: Ethernet1/33
+     neighbors:
+     - port: eth0
+       host: netdev
+
+ - name: Config + intent
+   cnos_interface:
+     name: Ethernet1/33
+     enabled: False
+     state: down
+
+ - name: Add interface using aggregate
+   cnos_interface:
+     aggregate:
+     - { name: Ethernet1/33, mtu: 256, description: test-interface-1 }
+     - { name: Ethernet1/44, mtu: 516, description: test-interface-2 }
+     duplex: full
+     speed: 100
+     state: present
+
+ - name: Delete interface using aggregate
+   cnos_interface:
+     aggregate:
+     - name: loopback3
+     - name: loopback6
+     state: absent
+
+RETURN VALUES                   *cnos_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key                                        Returned                                                                                    Description
+   commands                                                                                   The list of configuration mode commands to send to the device.
+   list     always, except for the platforms that use Netconf transport to manage the device. Sample:
+                                                                                              ['interface Ethernet1/33', 'description test-interface', 'duplex half', 'mtu 512']
+
+STATUS                   *cnos_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Anil Kumar Muraleedharan(@amuraleedhar)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cnos_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cnos_interface_module.html

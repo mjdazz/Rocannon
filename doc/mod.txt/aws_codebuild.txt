@@ -1,0 +1,207 @@
+SYNOPSIS                   *aws_codebuild*
+
+     • Create or delete a CodeBuild projects on AWS, used for building code artifacts from source code.
+
+REQUIREMENTS                   *aws_codebuild-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *aws_codebuild-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   artifacts                                     Information about the build output artifacts for the build project.
+   - / required
+       location                                  Information about the build output artifact location. When choosing type S3, set the bucket name here.
+       -
+       name                                      Along with path and namespace_type, the pattern that AWS CodeBuild will use to name and store the output artifact
+       -
+       namespace_type                            Along with path and name, the pattern that AWS CodeBuild will use to determine the name and location to store the output artifacts
+       -                                         Accepts BUILD_ID and NONE
+                                                 See docs here: http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html#CodeBuild.Client.create_project
+       packaging                                 The type of build output artifact to create on S3, can be NONE for creating a folder or ZIP for a ZIP file
+       -
+       path                                      Along with namespace_type and name, the pattern that AWS CodeBuild will use to name and store the output artifacts.
+       -                                         Used for path in S3 bucket when type is S3
+       type                                      The type of build output for artifacts. Can be one of the following: CODEPIPELINE, NO_ARTIFACTS, S3
+       - / required
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   cache                                         Caching params to speed up following builds.
+   -
+       location                                  Caching location on S3.
+       - / required
+       type                                      Cache type. Can be NO_CACHE or S3.
+       - / required
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   description                                   Descriptive text of the CodeBuild project
+   -
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   encryption_key                                The AWS Key Management Service (AWS KMS) customer master key (CMK) to be used for encrypting the build output artifacts.
+   -
+   environment                                   Information about the build environment for the build project.
+   - / required
+       compute_type                              Information about the compute resources the build project will use.
+       - / required                              Available values include: BUILD_GENERAL1_SMALL, BUILD_GENERAL1_MEDIUM, BUILD_GENERAL1_LARGE
+       environment_variables                     A set of environment variables to make available to builds for the build project. List of dictionaries with name and value fields.
+       -                                         Example: { name: 'MY_ENV_VARIABLE', value: 'test' }
+       image                                     The ID of the Docker image to use for this build project.
+       - / required
+       privileged_mode                           Enables running the Docker daemon inside a Docker container. Set to true only if the build project is be used to build Docker images.
+       -
+       type                                      The type of build environment to use for the project. Usually LINUX_CONTAINER
+       - / required
+   name                                          Name of the CodeBuild project
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   service_role                                  The ARN of the AWS IAM role that enables AWS CodeBuild to interact with dependent AWS services on behalf of the AWS account.
+   -
+   source                                        Configure service and location for the build input source.
+   - / required
+       buildspec                                 The build spec declaration to use for the builds in this build project. Leave empty if part of the code project.
+       -
+       git_clone_depth                           When using git you can specify the clone depth as an integer here.
+       -
+       insecure_ssl                              Enable this flag to ignore SSL warnings while connecting to the project source code.
+       -
+       location                                  Information about the location of the source code to be built. For type CODEPIPELINE location should not be specified.
+       -
+       type                                      The type of the source. Allows one of these: CODECOMMIT, CODEPIPELINE, GITHUB, S3, BITBUCKET, GITHUB_ENTERPRISE
+       - / required
+   state                          Choices:
+   -                              • present ←    Create or remove code build project.
+                                  • absent
+   tags                                          A set of tags for the build project.
+   -
+   timeout_in_minutes           Default:         How long CodeBuild should wait until timing out any build that has not been marked as completed.
+   -                            60
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   vpc_config                                    The VPC config enables AWS CodeBuild to access resources in an Amazon VPC.
+   -
+
+NOTES                   *aws_codebuild-notes*
+
+   Note
+
+     • for details of the parameters and returns see http://boto3.readthedocs.io/en/latest/reference/services/codebuild.html
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_codebuild-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - aws_codebuild:
+     name: my_project
+     description: My nice little project
+     service_role: "arn:aws:iam::123123:role/service-role/code-build-service-role"
+     source:
+         # Possible values: BITBUCKET, CODECOMMIT, CODEPIPELINE, GITHUB, S3
+         type: CODEPIPELINE
+         buildspec: ''
+     artifacts:
+         namespaceType: NONE
+         packaging: NONE
+         type: CODEPIPELINE
+         name: my_project
+     environment:
+         computeType: BUILD_GENERAL1_SMALL
+         privilegedMode: "true"
+         image: "aws/codebuild/docker:17.09.0"
+         type: LINUX_CONTAINER
+         environmentVariables:
+             - { name: 'PROFILE', value: 'staging' }
+     encryption_key: "arn:aws:kms:us-east-1:123123:alias/aws/s3"
+     region: us-east-1
+     state: present
+
+RETURN VALUES                   *aws_codebuild-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key             Returned                                                                              Description
+   project              success         Returns the dictionary describing the code project configuration.
+   complex
+     arn                                ARN of the CodeBuild project
+     string             always          Sample:
+                                        arn:aws:codebuild:us-east-1:123123123:project/vod-api-app-builder
+     artifacts          always          Information about the output of build artifacts
+     complex
+        location        when configured Output location for build artifacts
+        string
+        type                            The type of build artifact.
+        string          always          Sample:
+                                        CODEPIPELINE
+     cache              when configured Cache settings for the build project.
+     dictionary
+     created                            Timestamp of the create time of the project
+     string             always          Sample:
+                                        2018-04-17T16:56:03.245000+02:00
+     description                        A description of the build project
+     string             always          Sample:
+                                        My nice little project
+     environment        always          Environment settings for the build
+     dictionary
+     name                               Name of the CodeBuild project
+     string             always          Sample:
+                                        my_project
+     service_role                       IAM role to be used during build to access other AWS services.
+     string             always          Sample:
+                                        arn:aws:iam::123123123:role/codebuild-service-role
+     source             always          Information about the build input source code.
+     complex
+        auth            when configured Information about the authorization settings for AWS CodeBuild to access the source code to be built.
+        complex
+        build_spec      always          The build spec declaration to use for the builds in this build project.
+        string
+        git_clone_depth when configured The git clone depth
+        integer
+        insecure_ssl    when configured True if set to ignore SSL warnings.
+        boolean
+        location        when configured Location identifier, depending on the source type.
+        string
+        type                            The type of the repository
+        string          always          Sample:
+                                        CODEPIPELINE
+     tags               when configured Tags added to the project
+     list
+     timeout_in_minutes                 The timeout of a build in minutes
+     integer            always          Sample:
+                                        60
+
+STATUS                   *aws_codebuild-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Stefan Horning (@stefanhorning) <horning@mediapeers.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_codebuild-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_codebuild_module.html

@@ -1,0 +1,171 @@
+SYNOPSIS                   *postgresql_copy*
+
+     • Copy data between a file/program and a PostgreSQL table.
+
+REQUIREMENTS                   *postgresql_copy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_copy-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   ca_cert                                  Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                                   If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                            aliases: ssl_rootcert
+   columns                                  List of column names for the src/dst table to COPY FROM/TO.
+   list / elements=string                   aliases: column
+   copy_from                                Copy data from a file to a table (appending the data to whatever is in the table already).
+   path                                     Mutually exclusive with copy_to and src.
+                                            aliases: from
+                                            Copy the contents of a table to a file.
+   copy_to                                  Can also copy the results of a SELECT query.
+   path                                     Mutually exclusive with copy_from and dst.
+                                            aliases: to
+   db                                       Name of database to connect to.
+   string                                   aliases: login_db
+   dst                                      Copy data to dst=tablename from copy_from=/path/to/data.file.
+   string                                   Used with copy_from only.
+                                            aliases: destination
+   login_host                               Host running the database.
+   string
+   login_password                           The password used to authenticate with.
+   string
+   login_unix_socket                        Path to a Unix domain socket for local connections.
+   string
+   login_user             Default:          The username used to authenticate with.
+   string                 "postgres"
+   options                                  Options of COPY command.
+   dictionary                               See the full list of available options https://www.postgresql.org/docs/current/sql-copy.html.
+   port                   Default:          Database port to connect to.
+   integer                5432              aliases: login_port
+   program                  Choices:        Mark src/dst as a program. Data will be copied to/from a program.
+   boolean                  • no ←          See block Examples and PROGRAM arg description https://www.postgresql.org/docs/current/sql-copy.html.
+                            • yes
+   session_role                             Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                                   Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+   src                                      Copy data from copy_from to src=tablename.
+   string                                   Used with copy_to only.
+                                            aliases: source
+                            Choices:
+                            • allow
+   ssl_mode                 • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string                   • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                            • require       Default of prefer matches libpq default.
+                            • verify-ca
+                            • verify-full
+
+NOTES                   *postgresql_copy-notes*
+
+   Note
+
+     • Supports PostgreSQL version 9.4+.
+     • COPY command is only allowed to database superusers.
+     • if check_mode=yes, we just check the src/dst table availability and return the COPY query that actually has not been executed.
+     • If i(check_mode=yes) and the source has been passed as SQL, the module will execute it and rolled the transaction back but pay attention it can affect database performance (e.g., if SQL
+       collects a lot of data).
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_copy-see also*
+
+   See also
+
+   COPY command reference
+   Complete reference of the COPY command documentation.
+
+EXAMPLES                   *postgresql_copy-examples*
+
+ - name: Copy text TAB-separated data from file /tmp/data.txt to acme table
+   postgresql_copy:
+     copy_from: /tmp/data.txt
+     dst: acme
+
+ - name: Copy CSV (comma-separated) data from file /tmp/data.csv to columns id, name of table acme
+   postgresql_copy:
+     copy_from: /tmp/data.csv
+     dst: acme
+     columns: id,name
+     options:
+       format: csv
+
+ - name: >
+     Copy text vertical-bar-separated data from file /tmp/data.txt to bar table.
+     The NULL values are specified as N
+   postgresql_copy:
+     copy_from: /tmp/data.csv
+     dst: bar
+     options:
+       delimiter: '|'
+       null: 'N'
+
+ - name: Copy data from acme table to file /tmp/data.txt in text format, TAB-separated
+   postgresql_copy:
+     src: acme
+     copy_to: /tmp/data.txt
+
+ - name: Copy data from SELECT query to/tmp/data.csv in CSV format
+   postgresql_copy:
+     src: 'SELECT " FROM acme'
+     copy_to: /tmp/data.csv
+     options:
+       format: csv
+
+ - name: Copy CSV data from my_table to gzip
+   postgresql_copy:
+     src: my_table
+     copy_to: 'gzip > /tmp/data.csv.gz'
+     program: yes
+     options:
+       format: csv
+
+ - name: >
+     Copy data from columns id, name of table bar to /tmp/data.txt.
+     Output format is text, vertical-bar-separated, NULL as N
+   postgresql_copy:
+     src: bar
+     columns:
+     - id
+     - name
+     copy_to: /tmp/data.csv
+     options:
+       delimiter: '|'
+       null: 'N'
+
+RETURN VALUES                   *postgresql_copy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   dst              Data destination.
+   string  always   Sample:
+                    /tmp/data.csv
+   queries          List of executed queries.
+   string  always   Sample:
+                    ["COPY test_table FROM '/tmp/data_file.txt' (FORMAT csv, DELIMITER ',', NULL 'NULL')"]
+   src              Data source.
+   string  always   Sample:
+                    mytable
+
+STATUS                   *postgresql_copy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_copy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_copy_module.html

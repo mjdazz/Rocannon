@@ -1,0 +1,222 @@
+SYNOPSIS                   *bigip_snat_translation*
+
+     • Manage SNAT Translations on a BIG-IP.
+
+PARAMETERS                   *bigip_snat_translation-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   address                           Specifies the IP address of the SNAT translation. When a state of present, enabled, or disabled is provided, this parameter is required.
+   string                            This parameter cannot be updated after it is set.
+                                     aliases: ip
+   arp                Choices:
+   boolean            • no           If yes, specifies that the NAT sends ARP requests.
+                      • yes
+   connection_limit                  Specifies a limit on the number of connections a translation address must reach before it no longer initiates a connection. The default value of 0 indicates
+   integer                           that the setting is disabled.
+                                     The accepted value range is 0 - 65535.
+   description                       Description of snat-translation. none or '' will set to default description of null.
+   string
+   ip_idle_timeout                   Specifies the amount of time that connections to an IP address initiated using a SNAT address are allowed to remain idle before being automatically
+   string                            disconnected. indefinite prevents the connection from timing out.
+                                     The accepted value range is 0 - 4294967295 seconds, specifying indefinite will set it to the maximum value.
+   name
+   string /                          The name of SNAT translation.
+   required
+   partition                         Device partition to manage resources on.
+   string                            Required with state absent when partition other than Common used.
+   provider
+   dictionary                        A dict object containing connection details.
+   added in 2.5
+     auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                          This option is really used when working with BIG-IQ devices.
+     password                        The password for the user account used to connect to the BIG-IP.
+     string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+     required                        aliases: pass, pwd
+     server                          The BIG-IP host.
+     string /                        You may omit this option by setting the environment variable F5_SERVER.
+     required
+     server_port    Default:         The BIG-IP server port.
+     integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                         operation is completed, the module will error.
+     transport        Choices:
+     string           • cli          Configures the transport connection to use when connecting to the remote device.
+                      • rest ←
+     user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string /                        You may omit this option by setting the environment variable F5_USER.
+     required
+     validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                      • yes ←
+                      Choices:
+   state              • present ←    The SNAT translation state. If absent, delete the SNAT translation if it exists. present creates the SNAT translation and enable it. If enabled, enable the SNAT
+   string             • absent       translation if it exists. If disabled, create the SNAT translation if needed, and set state to disabled.
+                      • enabled
+                      • disabled
+   tcp_idle_timeout                  Specifies the amount of time that TCP connections initiated using a SNAT address are allowed to remain idle before being automatically disconnected. indefinite
+   string                            Prevents the connection from timing out.
+                                     The accepted value range is 0 - 4294967295 seconds, specifying indefinite will set it to the maximum value.
+   traffic_group                     The traffic group for the snat-translation address. When creating a new address, if this value is not specified, the default of /Common/traffic-group-1 will be
+   string                            used.
+   udp_idle_timeout                  Specifies the amount of time that UDP connections initiated using a SNAT address are allowed to remain idle before being automatically disconnected. indefinite
+   string                            Prevents the connection from timing out.
+                                     The accepted value range is 0 - 4294967295 seconds, specifying indefinite will set it to the maximum value.
+
+NOTES                   *bigip_snat_translation-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_snat_translation-examples*
+
+ - name: Create a SNAT translation 'my-snat-translation'
+   bigip_snat_translation:
+     name: my-snat-pool
+     state: present
+     address: 10.10.10.10
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Modify a SNAT translation 'my-snat-translation'
+   bigip_snat_translation:
+     name: my-snat-pool
+     state: present
+     address: 10.10.10.10
+     arp: no
+     connection_limit: 300
+     ip_idle_timeout: 1800
+     tcp_idle_timeout: 1800
+     udp_idle_timeout: 1800
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Disable a SNAT translation 'my-snat-translation'
+   bigip_snat_translation:
+     name: my-snat-pool
+     state: disabled
+     address: 10.10.10.10
+     arp: no
+     connection_limit: 300
+     ip_idle_timeout: 1800
+     tcp_idle_timeout: 1800
+     udp_idle_timeout: 1800
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Enable a SNAT translation 'my-snat-translation'
+   bigip_snat_translation:
+     name: my-snat-pool
+     state: enabled
+     address: 10.10.10.10
+     arp: no
+     connection_limit: 300
+     ip_idle_timeout: 1800
+     tcp_idle_timeout: 1800
+     udp_idle_timeout: 1800
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Create using partition other then /Common on a SNAT translation 'my-new-snat-translation'
+   bigip_snat_translation:
+     name: my-new-snat-pool
+     state: enabled
+     address: 10.10.10.10
+     arp: no
+     connection_limit: 300
+     ip_idle_timeout: 1800
+     partition: ansible
+     tcp_idle_timeout: 1800
+     udp_idle_timeout: 1800
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Modify using traffic group other then /Common/traffic-group-1 on a SNAT translation 'my-new-snat-translation'
+   bigip_snat_translation:
+     name: my-new-snat-pool
+     state: enabled
+     address: 10.10.10.10
+     arp: no
+     connection_limit: 300
+     ip_idle_timeout: 1800
+     partition: ansible
+     tcp_idle_timeout: 1800
+     traffic_group: /Common/ansible
+     udp_idle_timeout: 1800
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_snat_translation-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key             Returned                                                                                Description
+   address                              ip address used for SNAT translation.
+   string           changed and success Sample:
+                                        10.10.10.10
+   arp                                  Whether snat-translation send arp requests.
+   boolean          changed             Sample:
+                                        True
+   connection_limit                     The new connection limit of the virtual address.
+   integer          changed             Sample:
+                                        1000
+   description                          Description of the snat-translaiton.
+   string           changed             Sample:
+                                        My snat-translation
+   ip_idle_timeout                      IP idle timeout value for snat-translation.
+   string           changed             Sample:
+                                        300
+   state                                The new state of the snat-translation.
+   string           changed             Sample:
+                                        disabled
+   tcp_idle_timeout                     TCP idle timeout value for snat-translation.
+   string           changed             Sample:
+                                        1800
+   traffic_group                        Assigned traffic group.
+   string           changed             Sample:
+                                        /Common/traffic-group-1
+   udp_idle_timeout                     UDP idle timeout value for snat-translation.
+   string           changed             Sample:
+                                        indifinite
+
+STATUS                   *bigip_snat_translation-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Greg Crosby (@crosbygw)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_snat_translation-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_snat_translation_module.html

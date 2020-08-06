@@ -1,0 +1,109 @@
+SYNOPSIS                   *ce_vlan*
+
+     • Manages VLAN configurations on Huawei CloudEngine switches.
+
+PARAMETERS                   *ce_vlan-parameters*
+
+    Parameter  Choices/Defaults                                                                               Comments
+   description                  Specify VLAN description, minimum of 1 character, maximum of 80 characters.
+   -
+   name                         Name of VLAN, minimum of 1 character, maximum of 31 characters.
+   -
+   state         Choices:
+   -             • present ←    Manage the state of the resource.
+                 • absent
+   vlan_id                      Single VLAN ID, in the range from 1 to 4094.
+   -
+   vlan_range                   Range of VLANs such as 2-10 or 2,5,10-15, etc.
+   -
+
+NOTES                   *ce_vlan-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_vlan-examples*
+
+ - name: vlan module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: Ensure a range of VLANs are not present on the switch
+     ce_vlan:
+       vlan_range: "2-10,20,50,55-60,100-150"
+       state: absent
+       provider: "{{ cli }}"
+
+   - name: Ensure VLAN 50 exists with the name WEB
+     ce_vlan:
+       vlan_id: 50
+       name: WEB
+       state: absent
+       provider: "{{ cli }}"
+
+   - name: Ensure VLAN is NOT on the device
+     ce_vlan:
+       vlan_id: 50
+       state: absent
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_vlan-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   changed                       check to see if a change was made on the device
+   boolean              always   Sample:
+                                 True
+   end_state                     k/v pairs of the VLAN after executing module or null when using vlan_range
+   dictionary           always   Sample:
+                                 {'vlan_id': '20', 'name': 'VLAN_APP', 'description': 'vlan for app'}
+   end_state_vlans_list          list of VLANs after the module is executed
+   list                 always   Sample:
+                                 ['1', '2', '3', '4', '5', '20', '100']
+   existing                      k/v pairs of existing vlan or null when using vlan_range
+   dictionary           always   Sample:
+                                 {'vlan_id': '20', 'name': 'VLAN_APP', 'description': ''}
+   existing_vlans_list           list of existing VLANs on the switch prior to making changes
+   list                 always   Sample:
+                                 ['1', '2', '3', '4', '5', '20']
+   proposed                      k/v pairs of parameters passed into module (does not include vlan_id or vlan_range)
+   dictionary           always   Sample:
+                                 {'vlan_id': '20', 'name': 'VLAN_APP', 'description': 'vlan for app'}
+   proposed_vlans_list           list of VLANs being proposed
+   list                 always   Sample:
+                                 ['100']
+   updates                       command string sent to the device
+   list                 always   Sample:
+                                 ['vlan 20', 'name VLAN20']
+
+STATUS                   *ce_vlan-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_vlan-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_vlan_module.html

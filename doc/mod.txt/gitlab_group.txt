@@ -1,0 +1,116 @@
+SYNOPSIS                   *gitlab_group*
+
+     • When the group does not exist in GitLab, it will be created.
+     • When the group does exist and state=absent, the group will be deleted.
+
+REQUIREMENTS                   *gitlab_group-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • python-gitlab python module <= 1.12.1
+
+PARAMETERS                   *gitlab_group-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_password                       The password to use for authentication against the API
+   string
+   api_token                          GitLab token for logging in.
+   string                             aliases: login_token
+   api_url                            The resolvable endpoint for the API
+   string
+   api_username                       The username to use for authentication against the API
+   string
+   description
+   string                             A description for the group.
+   added in 2.7
+   login_password                     GitLab password for login_user
+   string
+   login_user                         GitLab user name.
+   string
+   name                               Name of the group you want to create.
+   string / required
+   parent                             Allow to create subgroups
+   string                             Id or Full path of parent group in the form of group/name
+   added in 2.8
+   path                               The path of the group you want to create, this will be server_url/group_path
+   string                             If not supplied, the group_name will be used.
+   server_url                         The URL of the GitLab server, with protocol (i.e. http or https).
+   string
+   state               Choices:       create or delete group.
+   string              • present ←    Possible values are present and absent.
+                       • absent
+   validate_certs      Choices:
+   boolean             • no           Whether or not to validate SSL certs when supplying a https endpoint.
+                       • yes ←
+   visibility          Choices:
+   string              • private ←    Default visibility of the group
+   added in 2.8        • internal
+                       • public
+
+EXAMPLES                   *gitlab_group-examples*
+
+ - name: "Delete GitLab Group"
+   gitlab_group:
+     server_url: https://gitlab.example.com/
+     api_token: "{{ access_token }}"
+     validate_certs: False
+     name: my_first_group
+     state: absent
+
+ - name: "Create GitLab Group"
+   gitlab_group:
+     server_url: https://gitlab.example.com/
+     validate_certs: True
+     api_username: dj-wasabi
+     api_password: "MySecretPassword"
+     name: my_first_group
+     path: my_first_group
+     state: present
+
+ # The group will by created at https://gitlab.dj-wasabi.local/super_parent/parent/my_first_group
+ - name: "Create GitLab SubGroup"
+   gitlab_group:
+     server_url: https://gitlab.example.com/
+     validate_certs: True
+     api_username: dj-wasabi
+     api_password: "MySecretPassword"
+     name: my_first_group
+     path: my_first_group
+     state: present
+     parent: "super_parent/parent"
+
+RETURN VALUES                   *gitlab_group-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   error               the error message returned by the GitLab API
+   string     failed   Sample:
+                       400: path is already in use
+   group      always   API object
+   dictionary
+   msg                 Success or failure message
+   string     always   Sample:
+                       Success
+   result     always   json parsed response from the server
+   dictionary
+
+STATUS                   *gitlab_group-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Werner Dijkerman (@dj-wasabi)
+     • Guillaume Martinez (@Lunik)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gitlab_group-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gitlab_group_module.html

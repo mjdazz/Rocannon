@@ -1,0 +1,242 @@
+SYNOPSIS                   *bigip_firewall_dos_vector*
+
+     • Manage attack vector configuration in an AFM DoS profile. In addition to the normal AFM DoS profile vectors, this module can manage the device-configuration vectors. See the module
+       documentation for details about this method.
+
+REQUIREMENTS                   *bigip_firewall_dos_vector-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • BIG-IP >= v13.0.0
+
+PARAMETERS                   *bigip_firewall_dos_vector-parameters*
+
+               Parameter                      Choices/Defaults                                                                    Comments
+   allow_advertisement                  Choices:
+   boolean                              • no                           Specifies that addresses that are identified for blacklisting are advertised to BGP routers
+                                        • yes
+   attack_ceiling                                                      Specifies the absolute maximum allowable for packets of this type.
+   string                                                              This setting rate limits packets to the packets per second setting, when specified.
+                                                                       To set no hard limit and allow automatic thresholds to manage all rate limiting, set this to infinite.
+                                                                       Specifies packets per second to identify an attack.
+   attack_floor                                                        These settings provide an absolute minimum of packets to allow before the attack is identified.
+   string                                                              As the automatic detection thresholds adjust to traffic and CPU usage on the system over time, this attack floor becomes less
+                                                                       relevant.
+                                                                       This value may not exceed the value in attack_floor.
+                                        Choices:                       Automatically blacklists detected bad actors.
+   auto_blacklist                       • no                           To enable this parameter, the bad_actor_detection must also be enabled.
+   boolean                              • yes                          This parameter is not supported by the dns-malformed vector.
+                                                                       This parameter is not supported by the qdcount vector.
+                                        Choices:                       Whether Bad Actor detection is enabled or disabled for a vector, if available.
+   bad_actor_detection                  • no                           This parameter must be enabled to enable the auto_blacklist parameter.
+   boolean                              • yes                          This parameter is not supported by the dns-malformed vector.
+                                                                       This parameter is not supported by the qdcount vector.
+   blacklist_detection_seconds                                         Detection, in seconds, before blacklisting occurs.
+   integer
+   blacklist_duration                                                  Duration, in seconds, that the blacklist will last.
+   integer
+   detection_threshold_eps                                             Lists how many packets per second the system must discover in traffic in order to detect this attack.
+   string                                                              aliases: rate_threshold
+   detection_threshold_percent                                         Lists the threshold percent increase over time that the system must detect in traffic in order to detect this attack.
+   string                                                              The tcp-half-open vector does not support this parameter.
+                                                                       aliases: rate_increase
+   mitigation_threshold_eps                                            Specify the maximum number of this type of packet per second the system allows for a vector.
+   string                                                              The system drops packets once the traffic level exceeds the rate limit.
+                                                                       aliases: rate_limit
+                                                                       Specifies the name of the vector to modify.
+                                        Choices:                       Vectors that ship with the device are "hard-coded" so-to-speak in that the list of vectors is known to the system and users
+                                        • ext-hdr-too-large            cannot add new vectors. Users only manipulate the existing vectors; all of which are disabled by default.
+                                        • hop-cnt-low                  When ext-hdr-too-large, configures the "IPv6 extension header too large" Network Security vector.
+                                        • host-unreachable             When hop-cnt-low, configures the "IPv6 hop count <= <tunable>" Network Security vector.
+                                        • icmp-frag                    When host-unreachable, configures the "Host Unreachable" Network Security vector.
+                                        • icmpv4-flood                 When icmp-frag, configures the "ICMP Fragment" Network Security vector.
+                                        • icmpv6-flood                 When icmpv4-flood, configures the "ICMPv4 flood" Network Security vector.
+                                        • ip-frag-flood                When icmpv6-flood, configures the "ICMPv6 flood" Network Security vector.
+                                        • ip-low-ttl                   When ip-frag-flood, configures the "IP Fragment Flood" Network Security vector.
+                                        • ip-opt-frames                When ip-low-ttl, configures the "TTL <= <tunable>" Network Security vector.
+                                        • ipv6-frag-flood              When ip-opt-frames, configures the "IP Option Frames" Network Security vector.
+                                        • opt-present-with-illegal-len When ipv6-ext-hdr-frames, configures the "IPv6 Extended Header Frames" Network Security vector.
+                                        • sweep                        When ipv6-frag-flood, configures the "IPv6 Fragment Flood" Network Security vector.
+                                        • tcp-bad-urg                  When opt-present-with-illegal-len, configures the "Option Present With Illegal Length" Network Security vector.
+                                        • tcp-half-open                When sweep, configures the "Sweep" Network Security vector.
+                                        • tcp-opt-overruns-tcp-hdr     When tcp-bad-urg, configures the "TCP Flags-Bad URG" Network Security vector.
+                                        • tcp-psh-flood                When tcp-half-open, configures the "TCP Half Open" Network Security vector.
+                                        • tcp-rst-flood                When tcp-opt-overruns-tcp-hdr, configures the "TCP Option Overruns TCP Header" Network Security vector.
+                                        • tcp-syn-flood                When tcp-psh-flood, configures the "TCP PUSH Flood" Network Security vector.
+                                        • tcp-syn-oversize             When tcp-rst-flood, configures the "TCP RST Flood" Network Security vector.
+                                        • tcp-synack-flood             When tcp-syn-flood, configures the "TCP SYN Flood" Network Security vector.
+                                        • tcp-window-size              When tcp-syn-oversize, configures the "TCP SYN Oversize" Network Security vector.
+                                        • tidcmp                       When tcp-synack-flood, configures the "TCP SYN ACK Flood" Network Security vector.
+                                        • too-many-ext-hdrs            When tcp-window-size, configures the "TCP Window Size" Network Security vector.
+                                        • udp-flood                    When tidcmp, configures the "TIDCMP" Network Security vector.
+                                        • unk-tcp-opt-type             When too-many-ext-hdrs, configures the "Too Many Extension Headers" Network Security vector.
+                                        • a                            When udp-flood, configures the "UDP Flood" Network Security vector.
+   name                                 • aaaa                         When unk-tcp-opt-type, configures the "Unknown TCP Option Type" Network Security vector.
+   string                               • any                          When a, configures the "DNS A Query" DNS Protocol Security vector.
+                                        • axfr                         When aaaa, configures the "DNS AAAA Query" DNS Protocol Security vector.
+                                        • cname                        When any, configures the "DNS ANY Query" DNS Protocol Security vector.
+                                        • dns-malformed                When axfr, configures the "DNS AXFR Query" DNS Protocol Security vector.
+                                        • ixfr                         When cname, configures the "DNS CNAME Query" DNS Protocol Security vector.
+                                        • mx                           When dns-malformed, configures the "dns-malformed" DNS Protocol Security vector.
+                                        • ns                           When ixfr, configures the "DNS IXFR Query" DNS Protocol Security vector.
+                                        • other                        When mx, configures the "DNS MX Query" DNS Protocol Security vector.
+                                        • ptr                          When ns, configures the "DNS NS Query" DNS Protocol Security vector.
+                                        • qdcount                      When other, configures the "DNS OTHER Query" DNS Protocol Security vector.
+                                        • soa                          When ptr, configures the "DNS PTR Query" DNS Protocol Security vector.
+                                        • srv                          When qdcount, configures the "DNS QDCOUNT Query" DNS Protocol Security vector.
+                                        • txt                          When soa, configures the "DNS SOA Query" DNS Protocol Security vector.
+                                        • ack                          When srv, configures the "DNS SRV Query" DNS Protocol Security vector.
+                                        • bye                          When txt, configures the "DNS TXT Query" DNS Protocol Security vector.
+                                        • cancel                       When ack, configures the "SIP ACK Method" SIP Protocol Security vector.
+                                        • invite                       When bye, configures the "SIP BYE Method" SIP Protocol Security vector.
+                                        • message                      When cancel, configures the "SIP CANCEL Method" SIP Protocol Security vector.
+                                        • notify                       When invite, configures the "SIP INVITE Method" SIP Protocol Security vector.
+                                        • options                      When message, configures the "SIP MESSAGE Method" SIP Protocol Security vector.
+                                        • other                        When notify, configures the "SIP NOTIFY Method" SIP Protocol Security vector.
+                                        • prack                        When options, configures the "SIP OPTIONS Method" SIP Protocol Security vector.
+                                        • publish                      When other, configures the "SIP OTHER Method" SIP Protocol Security vector.
+                                        • register                     When prack, configures the "SIP PRACK Method" SIP Protocol Security vector.
+                                        • sip-malformed                When publish, configures the "SIP PUBLISH Method" SIP Protocol Security vector.
+                                        • subscribe                    When register, configures the "SIP REGISTER Method" SIP Protocol Security vector.
+                                        • uri-limit                    When sip-malformed, configures the "sip-malformed" SIP Protocol Security vector.
+                                                                       When subscribe, configures the "SIP SUBSCRIBE Method" SIP Protocol Security vector.
+                                                                       When uri-limit, configures the "uri-limit" SIP Protocol Security vector.
+   partition                          Default:                         Device partition to manage resources on.
+   string                             "Common"
+   per_source_ip_detection_threshold                                   Specifies the number of packets per second to identify an IP address as a bad actor.
+   string
+   per_source_ip_mitigation_threshold                                  Specifies the rate limit applied to a source IP that is identified as a bad actor.
+   string
+                                                                       Specifies the name of the profile to manage vectors in.
+   profile                                                             The name device-config is reserved for use by this module.
+   string / required                                                   Vectors can be managed in either DoS Profiles, or Device Configuration. By specifying a profile of 'device-config', this
+                                                                       module will specifically tailor configuration of the provided vectors to the Device Configuration.
+   provider
+   dictionary                                                          A dict object containing connection details.
+   added in 2.5
+             auth_provider                                             Configures the auth provider for to obtain authentication tokens from the remote device.
+             string                                                    This option is really used when working with BIG-IQ devices.
+             password                                                  The password for the user account used to connect to the BIG-IP.
+             string / required                                         You may omit this option by setting the environment variable F5_PASSWORD.
+                                                                       aliases: pass, pwd
+             server                                                    The BIG-IP host.
+             string / required                                         You may omit this option by setting the environment variable F5_SERVER.
+             server_port              Default:                         The BIG-IP server port.
+             integer                  443                              You may omit this option by setting the environment variable F5_SERVER_PORT.
+             ssh_keyfile                                               Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli
+             path                                                      transports.
+                                                                       You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+             timeout                                                   Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the
+             integer                                                   timeout is exceeded before the operation is completed, the module will error.
+             transport                  Choices:
+             string                     • cli                          Configures the transport connection to use when connecting to the remote device.
+                                        • rest ←
+             user                                                      The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+             string / required                                         You may omit this option by setting the environment variable F5_USER.
+             validate_certs             Choices:                       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+             boolean                    • no                           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                                        • yes ←
+   simulate_auto_threshold              Choices:                       Specifies that results of the current automatic thresholds are logged, though manual thresholds are enforced, and no action is
+   boolean                              • no                           taken on automatic thresholds.
+                                        • yes                          The sweep vector does not support this parameter.
+                                                                       When state is mitigate, ensures that the vector enforces limits and thresholds.
+                                        Choices:                       When state is detect-only, ensures that the vector does not enforce limits and thresholds (rate limiting, dopping, etc), but
+   state                                • mitigate                     is still tracked in logs and statistics.
+   string / required                    • detect-only                  When state is disabled, ensures that the vector does not enforce limits and thresholds, but is still tracked in logs and
+                                        • learn-only                   statistics.
+                                        • disabled                     When state is learn-only, ensures that the vector does not "detect" any attacks. Only learning and stat collecting is
+                                                                       performed.
+                                        Choices:                       The dns-malformed vector does not support fully-automatic, or stress-based-mitigation for this parameter.
+   threshold_mode                       • manual                       The qdcount vector does not support fully-automatic, or stress-based-mitigation for this parameter.
+   string                               • stress-based-mitigation      The sip-malformed vector does not support fully-automatic, or stress-based-mitigation for this parameter.
+                                        • fully-automatic
+
+NOTES                   *bigip_firewall_dos_vector-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_firewall_dos_vector-examples*
+
+ - name: Enable DNS AAAA vector mitigation
+   bigip_firewall_dos_vector:
+     name: aaaa
+     state: mitigate
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_firewall_dos_vector-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                  Key                 Returned                                                                      Description
+   allow_advertisement                         The new Allow External Advertisement setting.
+   boolean                            changed  Sample:
+                                               True
+   attack_ceiling                              The new Attack Ceiling EPS setting.
+   string                             changed  Sample:
+                                               infinite
+   attack_floor                                The new Attack Floor EPS setting.
+   string                             changed  Sample:
+                                               infinite
+   auto_blacklist                     changed  The new Auto Blacklist setting.
+   boolean
+   bad_actor_detection                changed  The new Bad Actor Detection setting.
+   boolean
+   blacklist_category                          The new Category Name setting.
+   string                             changed  Sample:
+                                               /Common/cloud_provider_networks
+   blacklist_detection_seconds                 The new Sustained Attack Detection Time setting.
+   integer                            changed  Sample:
+                                               60
+   blacklist_duration                          The new Category Duration Time setting.
+   integer                            changed  Sample:
+                                               14400
+   detection_threshold_eps                     The new Detection Threshold EPS setting.
+   string                             changed  Sample:
+                                               infinite
+   detection_threshold_percent                 The new Detection Threshold Percent setting.
+   string                             changed  Sample:
+                                               infinite
+   mitigation_threshold_eps                    The new Mitigation Threshold EPS setting.
+   string                             changed  Sample:
+                                               infinite
+   per_source_ip_detection_threshold           The new Per Source IP Detection Threshold EPS setting.
+   string                             changed  Sample:
+                                               23
+   per_source_ip_mitigation_threshold          The new Per Source IP Mitigation Threshold EPS setting.
+   string                             changed  Sample:
+                                               infinite
+   simulate_auto_threshold            changed  The new Simulate Auto Threshold setting.
+   boolean
+   state                                       The new state of the vector.
+   string                             changed  Sample:
+                                               mitigate
+   threshold_mode                              The new Mitigation Threshold EPS setting.
+   string                             changed  Sample:
+                                               infinite
+
+STATUS                   *bigip_firewall_dos_vector-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_firewall_dos_vector-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_firewall_dos_vector_module.html

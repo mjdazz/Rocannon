@@ -1,0 +1,166 @@
+SYNOPSIS                   *clc_loadbalancer*
+
+     • An Ansible module to Create, Delete shared loadbalancers in CenturyLink Cloud.
+
+REQUIREMENTS                   *clc_loadbalancer-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python = 2.7
+     • requests >= 2.5.0
+     • clc-sdk
+
+PARAMETERS                   *clc_loadbalancer-parameters*
+
+    Parameter     Choices/Defaults                                                                               Comments
+   alias                              The alias of your CLC Account
+   - / required
+   description                        A description for the loadbalancer
+   -
+   location                           The location of the datacenter where the load balancer resides in
+   - / required
+   method         Choices:
+   -              • leastConnection   -The balancing method for the load balancer pool
+                  • roundRobin
+   name                               The name of the loadbalancer
+   - / required
+   nodes        Default:              A list of nodes that needs to be added to the load balancer pool
+   -            []
+   persistence    Choices:
+   -              • standard          The persistence method for the load balancer
+                  • sticky
+   port           Choices:
+   -              • 80                Port to configure on the public-facing side of the load balancer pool
+                  • 443
+                  Choices:
+                  • present ←
+   state          • absent            Whether to create or delete the load balancer pool
+   -              • port_absent
+                  • nodes_present
+                  • nodes_absent
+   status         Choices:
+   -              • enabled ←         The status of the loadbalancer
+                  • disabled
+
+NOTES                   *clc_loadbalancer-notes*
+
+   Note
+
+     • To use this module, it is required to set the below environment variables which enables access to the Centurylink Cloud - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
+       - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
+     • Alternatively, the module accepts the API token and account alias. The API token can be generated using the CLC account login and password via the HTTP api call @
+       https://api.ctl.io/v2/authentication/login - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login - CLC_ACCT_ALIAS, the account alias associated with the
+       centurylink cloud
+     • Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
+
+EXAMPLES                   *clc_loadbalancer-examples*
+
+ # Note - You must set the CLC_V2_API_USERNAME And CLC_V2_API_PASSWD Environment variables before running these examples
+ - name: Create Loadbalancer
+   hosts: localhost
+   connection: local
+   tasks:
+     - name: Actually Create things
+       clc_loadbalancer:
+         name: test
+         description: test
+         alias: TEST
+         location: WA1
+         port: 443
+         nodes:
+           - ipAddress: 10.11.22.123
+             privatePort: 80
+         state: present
+
+ - name: Add node to an existing loadbalancer pool
+   hosts: localhost
+   connection: local
+   tasks:
+     - name: Actually Create things
+       clc_loadbalancer:
+         name: test
+         description: test
+         alias: TEST
+         location: WA1
+         port: 443
+         nodes:
+           - ipAddress: 10.11.22.234
+             privatePort: 80
+         state: nodes_present
+
+ - name: Remove node from an existing loadbalancer pool
+   hosts: localhost
+   connection: local
+   tasks:
+     - name: Actually Create things
+       clc_loadbalancer:
+         name: test
+         description: test
+         alias: TEST
+         location: WA1
+         port: 443
+         nodes:
+           - ipAddress: 10.11.22.234
+             privatePort: 80
+         state: nodes_absent
+
+ - name: Delete LoadbalancerPool
+   hosts: localhost
+   connection: local
+   tasks:
+     - name: Actually Delete things
+       clc_loadbalancer:
+         name: test
+         description: test
+         alias: TEST
+         location: WA1
+         port: 443
+         nodes:
+           - ipAddress: 10.11.22.123
+             privatePort: 80
+         state: port_absent
+
+ - name: Delete Loadbalancer
+   hosts: localhost
+   connection: local
+   tasks:
+     - name: Actually Delete things
+       clc_loadbalancer:
+         name: test
+         description: test
+         alias: TEST
+         location: WA1
+         port: 443
+         nodes:
+           - ipAddress: 10.11.22.123
+             privatePort: 80
+         state: absent
+
+RETURN VALUES                   *clc_loadbalancer-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+                         The load balancer result object from CLC
+   loadbalancer          Sample:
+   dictionary   success  {'description': 'test-lb', 'id': 'ab5b18cb81e94ab9925b61d1ca043fb5', 'ipAddress': '66.150.174.197', 'links': [{'href':
+                         '/v2/sharedLoadBalancers/wfad/wa1/ab5b18cb81e94ab9925b61d1ca043fb5', 'rel': 'self', 'verbs': ['GET', 'PUT', 'DELETE']}, {'href':
+                         '/v2/sharedLoadBalancers/wfad/wa1/ab5b18cb81e94ab9925b61d1ca043fb5/pools', 'rel': 'pools', 'verbs': ['GET', 'POST']}], 'name': 'test-lb', 'pools': [], 'status': 'enabled'}
+
+STATUS                   *clc_loadbalancer-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • CLC Runner (@clc-runner)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *clc_loadbalancer-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/clc_loadbalancer_module.html

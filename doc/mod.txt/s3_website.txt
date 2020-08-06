@@ -1,0 +1,125 @@
+SYNOPSIS                   *s3_website*
+
+     • Configure an s3 bucket as a website
+
+REQUIREMENTS                   *s3_website-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *s3_website-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   error_key                                     The object key name to use when a 4XX class error occurs. To remove an error key, set to None.
+   -
+   name                                          Name of the s3 bucket
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   redirect_all_requests                         Describes the redirect behavior for every request to this s3 bucket website endpoint
+   -
+   region                                        AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the
+   string                                        aws_region and ec2_region settings in the Boto config file. If none of those are set the region defaults to the S3 Location: US Standard.
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Add or remove s3 website configuration
+                                  • absent
+   suffix                       Default:         Suffix that is appended to a request that is for a directory on the website endpoint (e.g. if the suffix is index.html and you make a request to
+   -                            "index.html"     samplebucket/images/ the data that is returned will be for the object with the key name images/index.html). The suffix must not include a slash
+                                                 character.
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *s3_website-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *s3_website-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Configure an s3 bucket to redirect all requests to example.com
+ - s3_website:
+     name: mybucket.com
+     redirect_all_requests: example.com
+     state: present
+
+ # Remove website configuration from an s3 bucket
+ - s3_website:
+     name: mybucket.com
+     state: absent
+
+ # Configure an s3 bucket as a website with index and error pages
+ - s3_website:
+     name: mybucket.com
+     suffix: home.htm
+     error_key: errors/404.htm
+     state: present
+
+RETURN VALUES                   *s3_website-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key                  Returned                                                                           Description
+   error_document           always               error document
+   complex
+          key               when error_document  object key name to use when a 4XX class error occurs
+          string            parameter set        Sample:
+                                                 error.html
+   index_document           always               index document
+   complex
+          suffix                                 suffix that is appended to a request that is for a directory on the website endpoint
+          string            success              Sample:
+                                                 index.html
+   redirect_all_requests_to always               where to redirect requests
+   complex
+          host_name         when redirect all    name of the host where requests will be redirected.
+          string            requests parameter   Sample:
+                            set                  ansible.com
+   routing_rules            always               routing rules
+   complex
+          condition         when routing rule    object key name prefix when the redirect is applied. For example, to redirect requests for ExamplePage.html, the key prefix will be ExamplePage.html
+          string            present              Sample:
+                                                 docs/
+          redirect
+          -
+          routing_rule
+          -
+
+STATUS                   *s3_website-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *s3_website-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/s3_website_module.html

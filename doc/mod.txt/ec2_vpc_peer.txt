@@ -1,0 +1,239 @@
+SYNOPSIS                   *ec2_vpc_peer*
+
+     • Read the AWS documentation for VPC Peering Connections https://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/vpc-peering.html.
+
+REQUIREMENTS                   *ec2_vpc_peer-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • json
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_peer-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   peer_owner_id                                 The AWS account number for cross account peering.
+   -
+   peer_region
+   -                                             Region of the accepting VPC.
+   added in 2.5
+   peer_vpc_id                                   VPC id of the accepting VPC.
+   -
+   peering_id                                    Peering connection id.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+                                  Choices:
+   state                          • present ←
+   -                              • absent       Create, delete, accept, reject a peering connection.
+                                  • accept
+                                  • reject
+   tags                                          Dictionary of tags to look for and apply when creating a Peering Connection.
+   -
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   vpc_id                                        VPC id of the requesting VPC.
+   -
+
+NOTES                   *ec2_vpc_peer-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_peer-examples*
+
+ # Complete example to create and accept a local peering connection.
+ - name: Create local account VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     vpc_id: vpc-12345678
+     peer_vpc_id: vpc-87654321
+     state: present
+     tags:
+       Name: Peering connection for VPC 21 to VPC 22
+       CostCode: CC1234
+       Project: phoenix
+   register: vpc_peer
+
+ - name: Accept local VPC peering request
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     peering_id: "{{ vpc_peer.peering_id }}"
+     state: accept
+   register: action_peer
+
+ # Complete example to delete a local peering connection.
+ - name: Create local account VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     vpc_id: vpc-12345678
+     peer_vpc_id: vpc-87654321
+     state: present
+     tags:
+       Name: Peering connection for VPC 21 to VPC 22
+       CostCode: CC1234
+       Project: phoenix
+   register: vpc_peer
+
+ - name: delete a local VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     peering_id: "{{ vpc_peer.peering_id }}"
+     state: absent
+   register: vpc_peer
+
+   # Complete example to create and accept a cross account peering connection.
+ - name: Create cross account VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     vpc_id: vpc-12345678
+     peer_vpc_id: vpc-12345678
+     peer_owner_id: 123456789102
+     state: present
+     tags:
+       Name: Peering connection for VPC 21 to VPC 22
+       CostCode: CC1234
+       Project: phoenix
+   register: vpc_peer
+
+ - name: Accept peering connection from remote account
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     peering_id: "{{ vpc_peer.peering_id }}"
+     profile: bot03_profile_for_cross_account
+     state: accept
+   register: vpc_peer
+
+ # Complete example to create and accept an intra-region peering connection.
+ - name: Create intra-region VPC peering Connection
+   ec2_vpc_peer:
+     region: us-east-1
+     vpc_id: vpc-12345678
+     peer_vpc_id: vpc-87654321
+     peer_region: us-west-2
+     state: present
+     tags:
+       Name: Peering connection for us-east-1 VPC to us-west-2 VPC
+       CostCode: CC1234
+       Project: phoenix
+   register: vpc_peer
+
+ - name: Accept peering connection from peer region
+   ec2_vpc_peer:
+     region: us-west-2
+     peering_id: "{{ vpc_peer.peering_id }}"
+     state: accept
+   register: vpc_peer
+
+ # Complete example to create and reject a local peering connection.
+ - name: Create local account VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     vpc_id: vpc-12345678
+     peer_vpc_id: vpc-87654321
+     state: present
+     tags:
+       Name: Peering connection for VPC 21 to VPC 22
+       CostCode: CC1234
+       Project: phoenix
+   register: vpc_peer
+
+ - name: Reject a local VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     peering_id: "{{ vpc_peer.peering_id }}"
+     state: reject
+
+ # Complete example to create and accept a cross account peering connection.
+ - name: Create cross account VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     vpc_id: vpc-12345678
+     peer_vpc_id: vpc-12345678
+     peer_owner_id: 123456789102
+     state: present
+     tags:
+       Name: Peering connection for VPC 21 to VPC 22
+       CostCode: CC1234
+       Project: phoenix
+   register: vpc_peer
+
+ - name: Accept a cross account VPC peering connection request
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     peering_id: "{{ vpc_peer.peering_id }}"
+     profile: bot03_profile_for_cross_account
+     state: accept
+     tags:
+       Name: Peering connection for VPC 21 to VPC 22
+       CostCode: CC1234
+       Project: phoenix
+
+ # Complete example to create and reject a cross account peering connection.
+ - name: Create cross account VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     vpc_id: vpc-12345678
+     peer_vpc_id: vpc-12345678
+     peer_owner_id: 123456789102
+     state: present
+     tags:
+       Name: Peering connection for VPC 21 to VPC 22
+       CostCode: CC1234
+       Project: phoenix
+   register: vpc_peer
+
+ - name: Reject a cross account VPC peering Connection
+   ec2_vpc_peer:
+     region: ap-southeast-2
+     peering_id: "{{ vpc_peer.peering_id }}"
+     profile: bot03_profile_for_cross_account
+     state: reject
+
+RETURN VALUES                   *ec2_vpc_peer-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   task       success  The result of the create, accept, reject or delete action.
+   dictionary
+
+STATUS                   *ec2_vpc_peer-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mike Mochan (@mmochan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_peer-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_peer_module.html

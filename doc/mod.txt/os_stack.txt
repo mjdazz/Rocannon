@@ -1,0 +1,158 @@
+SYNOPSIS                   *os_stack*
+
+     • Add or Remove a Stack to an OpenStack Heat
+
+REQUIREMENTS                   *os_stack-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_stack-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_timeout                        How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                      Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url, username,
+   auth                               password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports them. For other
+   dictionary                         plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud is provided or OpenStack
+                                      OS_" environment variables are present.
+   auth_type                          Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and the
+   string                             contents of the auth parameter should be updated accordingly.
+   availability_zone                  Ignored. Present for backwards compatibility
+   -
+   ca_cert                            A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                             aliases: cacert
+   client_cert                        A path to a client certificate to use as part of the SSL transaction.
+   string                             aliases: cert
+   client_key                         A path to a client key to use as part of the SSL transaction.
+   string                             aliases: key
+   cloud                              Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file. Provides
+   raw                                default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are present. If cloud is a
+                                      dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   environment                        List of environment files that should be used for the stack creation
+   -
+                       Choices:
+   interface           • admin        Endpoint URL type to fetch from the service catalog.
+   string              • internal     aliases: endpoint_type
+                       • public ←
+   name                               Name of the stack that should be created, name could be char and digit, no space
+   - / required
+   parameters                         Dictionary of parameters for the stack creation
+   -
+   region_name                        Name of the region.
+   string
+   rollback            Choices:
+   boolean             • no           Rollback stack creation
+                       • yes ←
+   state               Choices:
+   -                   • present ←    Indicate desired state of the resource
+                       • absent
+   tag
+   -                                  Tag for the stack that should be created, name could be char and digit, no space
+   added in 2.5
+   template                           Path of the template file to use for the stack creation
+   -
+   timeout           Default:         Maximum number of seconds to wait for the stack creation
+   integer           3600
+   validate_certs      Choices:       Whether or not SSL API requests should be verified.
+   boolean             • no ←         Before Ansible 2.3 this defaulted to yes.
+                       • yes          aliases: verify
+   wait                Choices:
+   boolean             • no           Should ansible wait until the requested resource is complete.
+                       • yes ←
+
+NOTES                   *os_stack-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_stack-examples*
+
+ ---
+ - name: create stack
+   ignore_errors: True
+   register: stack_create
+   os_stack:
+     name: "{{ stack_name }}"
+     tag: "{{ tag_name }}"
+     state: present
+     template: "/path/to/my_stack.yaml"
+     environment:
+     - /path/to/resource-registry.yaml
+     - /path/to/environment.yaml
+     parameters:
+         bmc_flavor: m1.medium
+         bmc_image: CentOS
+         key_name: default
+         private_net: "{{ private_net_param }}"
+         node_count: 2
+         name: undercloud
+         image: CentOS
+         my_flavor: m1.large
+         external_net: "{{ external_net_param }}"
+
+RETURN VALUES                   *os_stack-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   id                       Stack ID.
+   string          always   Sample:
+                            97a3f543-8136-4570-920e-fd7605c989d6
+   stack           always   stack info
+   complex
+     action                 Action, could be Create or Update.
+     string                 Sample:
+                            CREATE
+     creation_time          Time when the action has been made.
+     string                 Sample:
+                            2016-07-05T17:38:12Z
+     description            Description of the Stack provided in the heat template.
+     string                 Sample:
+                            HOT template to create a new instance and networks
+     id                     Stack ID.
+     string                 Sample:
+                            97a3f543-8136-4570-920e-fd7605c989d6
+     identifier             Identifier of the current Stack action.
+     string                 Sample:
+                            test-stack/97a3f543-8136-4570-920e-fd7605c989d6
+     links                  Links to the current Stack.
+     list of dict           Sample:
+                            [{'href': 'http://foo:8004/v1/7f6a/stacks/test-stack/97a3f543-8136-4570-920e-fd7605c989d6']
+     name                   Name of the Stack
+     string                 Sample:
+                            test-stack
+     outputs                Output returned by the Stack.
+     list of dict           Sample:
+                            {'description': 'IP address of server1 in private network', 'output_key': 'server1_private_ip', 'output_value': '10.1.10.103'}
+                            Parameters of the current Stack
+     parameters             Sample:
+     dictionary             {'OS::project_id': '7f6a3a3e01164a4eb4eecb2ab7742101', 'OS::stack_id': '97a3f543-8136-4570-920e-fd7605c989d6', 'OS::stack_name': 'test-stack', 'stack_status':
+                            'CREATE_COMPLETE', 'stack_status_reason': 'Stack CREATE completed successfully', 'status': 'COMPLETE', 'template_description': 'HOT template to create a new instance and
+                            networks', 'timeout_mins': 60, 'updated_time': null}
+
+STATUS                   *os_stack-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mathieu Bultel (@matbu)
+     • Steve Baker (@steveb)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_stack-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_stack_module.html

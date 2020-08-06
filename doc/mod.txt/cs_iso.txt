@@ -1,0 +1,205 @@
+SYNOPSIS                   *cs_iso*
+
+     • Register and remove ISO images.
+
+REQUIREMENTS                   *cs_iso-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_iso-parameters*
+
+          Parameter          Choices/Defaults                                                                         Comments
+   account                                      Account the ISO is related to.
+   string
+                             Choices:           HTTP method used to query the API endpoint.
+   api_http_method           • get              If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                    • post             As the last option, the value is taken from the ini config file, also see the notes.
+                                                Fallback value is get if not specified.
+   api_key                                      API key of the CloudStack API.
+   string                                       If not given, the CLOUDSTACK_KEY env variable is considered.
+                                                As the last option, the value is taken from the ini config file, also see the notes.
+   api_region              Default:             Name of the ini section in the cloustack.ini file.
+   string                  "cloudstack"         If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                                   Secret key of the CloudStack API.
+   string                                       If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                                As the last option, the value is taken from the ini config file, also see the notes.
+                                                HTTP timeout in seconds.
+   api_timeout                                  If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                                      As the last option, the value is taken from the ini config file, also see the notes.
+                                                Fallback value is 10 seconds if not specified.
+   api_url                                      URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                                       If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                                As the last option, the value is taken from the ini config file, also see the notes.
+   bootable                  Choices:
+   boolean                   • no               Register the ISO to be bootable. Only used if state is present.
+                             • yes
+   checksum                                     The MD5 checksum value of this ISO. If set, we search by checksum instead of name.
+   string
+   cross_zones               Choices:           Whether the ISO should be synced or removed across zones.
+   boolean                   • no ←             Mutually exclusive with zone.
+   added in 2.4              • yes
+   display_text                                 Display text of the ISO.
+   string                                       If not specified, name will be used.
+   added in 2.4
+   domain                                       Domain the ISO is related to.
+   string
+   is_dynamically_scalable   Choices:
+   boolean                   • no               Register the ISO having XS/VMware tools installed inorder to support dynamic scaling of VM cpu/memory. Only used if state is present.
+                             • yes
+   is_featured               Choices:
+   boolean                   • no               Register the ISO to be featured. Only used if state is present.
+                             • yes
+   is_public                 Choices:
+   boolean                   • no               Register the ISO to be publicly available to all users. Only used if state is present.
+                             • yes
+   is_ready                  Choices:           This flag is used for searching existing ISOs. If set to yes, it will only list ISO ready for deployment e.g. successfully downloaded and installed.
+   boolean                   • no ←             Recommended to set it to no.
+                             • yes
+                             Choices:
+                             • featured
+   iso_filter                • self ←
+   string                    • selfexecutable   Name of the filter used to search for the ISO.
+                             • sharedexecutable
+                             • executable
+                             • community
+   name                                         Name of the ISO.
+   string / required
+   os_type                                      Name of the OS that best represents the OS of this ISO. If the iso is bootable this parameter needs to be passed. Required if state is present.
+   string
+   poll_async                Choices:
+   boolean                   • no               Poll async jobs until job has finished.
+                             • yes ←
+   project                                      Name of the project the ISO to be registered in.
+   string
+   state                     Choices:
+   string                    • present ←        State of the ISO.
+                             • absent
+   tags                                         List of tags. Tags are a list of dictionaries having keys key and value.
+   list                                         To delete all tags, set a empty list e.g. tags: [].
+   added in 2.4                                 aliases: tag
+   url                                          URL where the ISO can be downloaded from. Required if state is present.
+   string
+   zone                                         Name of the zone you wish the ISO to be registered or deleted from.
+   string                                       If not specified, first zone found will be used.
+
+NOTES                   *cs_iso-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_iso-examples*
+
+ - name: Register an ISO if ISO name does not already exist
+   cs_iso:
+     name: Debian 7 64-bit
+     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
+     os_type: Debian GNU/Linux 7(64-bit)
+   delegate_to: localhost
+
+ - name: Register an ISO with given name if ISO md5 checksum does not already exist
+   cs_iso:
+     name: Debian 7 64-bit
+     url: http://mirror.switch.ch/ftp/mirror/debian-cd/current/amd64/iso-cd/debian-7.7.0-amd64-netinst.iso
+     os_type: Debian GNU/Linux 7(64-bit)
+     checksum: 0b31bccccb048d20b551f70830bb7ad0
+   delegate_to: localhost
+
+ - name: Remove an ISO by name
+   cs_iso:
+     name: Debian 7 64-bit
+     state: absent
+   delegate_to: localhost
+
+ - name: Remove an ISO by checksum
+   cs_iso:
+     name: Debian 7 64-bit
+     checksum: 0b31bccccb048d20b551f70830bb7ad0
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_iso-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   account               Account the ISO is related to.
+   string       success  Sample:
+                         example account
+   bootable              True if the ISO is bootable.
+   boolean      success  Sample:
+   added in 2.4          True
+   checksum              MD5 checksum of the ISO.
+   string       success  Sample:
+                         0b31bccccb048d20b551f70830bb7ad0
+   created               Date of registering.
+   string       success  Sample:
+                         2015-03-29T14:57:06+0200
+   cross_zones
+   boolean      success  true if the ISO is managed across all zones, false otherwise.
+   added in 2.4
+   display_text          Text to be displayed of the ISO.
+   string       success  Sample:
+                         Debian 7.7 64-bit minimal 2015-03-19
+   domain                Domain the ISO is related to.
+   string       success  Sample:
+                         example domain
+   format                Format of the ISO.
+   string       success  Sample:
+   added in 2.4          ISO
+   id                    UUID of the ISO.
+   string       success  Sample:
+                         a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   is_featured           True if the ISO is featured.
+   boolean      success  Sample:
+   added in 2.4          True
+   is_public             True if the ISO is public.
+   boolean      success  Sample:
+   added in 2.4          True
+   is_ready              True if the ISO is ready to be deployed from.
+   boolean      success  Sample:
+                         True
+   name                  Name of the ISO.
+   string       success  Sample:
+                         Debian 7 64-bit
+   os_type               Typo of the OS.
+   string       success  Sample:
+   added in 2.4          CentOS 6.5 (64-bit)
+   project               Project the ISO is related to.
+   string       success  Sample:
+                         example project
+   status                Status of the ISO.
+   string       success  Sample:
+                         Successfully Installed
+   tags                  List of resource tags associated with the ISO.
+   dictionary   success  Sample:
+   added in 2.4          [ { "key": "foo", "value": "bar" } ]
+   zone                  Name of zone the ISO is registered in.
+   string       success  Sample:
+                         zuerich
+
+STATUS                   *cs_iso-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_iso-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_iso_module.html

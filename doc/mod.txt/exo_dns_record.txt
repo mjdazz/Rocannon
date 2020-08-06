@@ -1,0 +1,179 @@
+SYNOPSIS                   *exo_dns_record*
+
+     • Create, update and delete records.
+
+REQUIREMENTS                   *exo_dns_record-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+
+PARAMETERS                   *exo_dns_record-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_key                            API key of the Exoscale DNS API.
+   string                             Since 2.4, the ENV variable CLOUDSTACK_KEY is used as default, when defined.
+   api_region        Default:         Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"     Since 2.4, the ENV variable CLOUDSTACK_REGION is used as default, when defined.
+   api_secret                         Secret key of the Exoscale DNS API.
+   string                             Since 2.4, the ENV variable CLOUDSTACK_SECRET is used as default, when defined.
+   api_timeout       Default:         HTTP timeout to Exoscale DNS API.
+   integer           10               Since 2.4, the ENV variable CLOUDSTACK_TIMEOUT is used as default, when defined.
+   content                            Content of the record.
+   string                             Required if state=present or multiple=yes.
+                                      aliases: value, address
+   domain                             Domain the record is related to.
+   string / required
+   multiple            Choices:       Whether there are more than one records with similar name and record_type.
+   boolean             • no ←         Only allowed for a few record types, e.g. record_type=A, record_type=NS or record_type=MX.
+                       • yes          content will not be updated, instead it is used as a key to find existing records.
+   name              Default:         Name of the record.
+   string            ""
+   prio                               Priority of the record.
+   integer                            aliases: priority
+                       Choices:
+                       • A ←
+                       • ALIAS
+                       • CNAME
+                       • MX
+                       • SPF
+                       • URL
+   record_type         • TXT          Type of the record.
+   string              • NS           aliases: rtype, type
+                       • SRV
+                       • NAPTR
+                       • PTR
+                       • AAAA
+                       • SSHFP
+                       • HINFO
+                       • POOL
+   state               Choices:
+   string              • present ←    State of the record.
+                       • absent
+   ttl               Default:         TTL of the record in seconds.
+   integer           3600
+   validate_certs      Choices:
+   boolean             • no           Validate SSL certs of the Exoscale DNS API.
+                       • yes ←
+
+NOTES                   *exo_dns_record-notes*
+
+   Note
+
+     • As Exoscale DNS uses the same API key and secret for all services, we reuse the config used for Exscale Compute based on CloudStack. The config is read from several locations, in the
+       following order. The CLOUDSTACK_KEY, CLOUDSTACK_SECRET environment variables. A CLOUDSTACK_CONFIG environment variable pointing to an .ini file, A cloudstack.ini file in the current working
+       directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified using ini sections in cloudstack.ini. Use the argument
+       api_region to select the section name, default section is cloudstack.
+     • This module does not support multiple A records and will complain properly if you try.
+     • More information Exoscale DNS can be found on https://community.exoscale.ch/documentation/dns/.
+     • This module supports check mode and diff.
+
+EXAMPLES                   *exo_dns_record-examples*
+
+ - name: Create or update an A record
+   exo_dns_record:
+     name: web-vm-1
+     domain: example.com
+     content: 1.2.3.4
+
+ - name: Update an existing A record with a new IP
+   exo_dns_record:
+     name: web-vm-1
+     domain: example.com
+     content: 1.2.3.5
+
+ - name: Create another A record with same name
+   exo_dns_record:
+     name: web-vm-1
+     domain: example.com
+     content: 1.2.3.6
+     multiple: yes
+
+ - name: Create or update a CNAME record
+   exo_dns_record:
+     name: www
+     domain: example.com
+     record_type: CNAME
+     content: web-vm-1
+
+ - name: Create another MX record
+   exo_dns_record:
+     domain: example.com
+     record_type: MX
+     content: mx1.example.com
+     prio: 10
+     multiple: yes
+
+ - name: Delete one MX record out of multiple
+   exo_dns_record:
+     domain: example.com
+     record_type: MX
+     content: mx1.example.com
+     multiple: yes
+     state: absent
+
+ - name: Remove a single A record
+   exo_dns_record:
+     name: www
+     domain: example.com
+     state: absent
+
+RETURN VALUES                   *exo_dns_record-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   exo_dns_record  success  API record results
+   complex
+     content                value of the record
+     string        success  Sample:
+                            1.2.3.4
+     created_at             When the record was created
+     string        success  Sample:
+                            2016-08-12T15:24:23.989Z
+     domain                 Name of the domain
+     string        success  Sample:
+                            example.com
+     domain_id              ID of the domain
+     integer       success  Sample:
+                            254324
+     id                     ID of the record
+     integer       success  Sample:
+                            254324
+     name                   name of the record
+     string        success  Sample:
+                            www
+     parent_id     success  ID of the parent
+     integer
+     prio                   Priority of the record
+     integer       success  Sample:
+                            10
+     record_type            Priority of the record
+     string        success  Sample:
+                            A
+     system_record success  Whether the record is a system record or not
+     boolean
+     ttl                    Time to live of the record
+     integer       success  Sample:
+                            3600
+     updated_at             When the record was updated
+     string        success  Sample:
+                            2016-08-12T15:24:23.989Z
+
+STATUS                   *exo_dns_record-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *exo_dns_record-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/exo_dns_record_module.html

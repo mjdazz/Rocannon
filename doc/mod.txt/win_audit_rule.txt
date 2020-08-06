@@ -1,0 +1,110 @@
+SYNOPSIS                   *win_audit_rule*
+
+     • Used to apply audit rules to files, folders or registry keys.
+     • Once applied, it will begin recording the user who performed the operation defined into the Security Log in the Event viewer.
+     • The behavior is designed to ignore inherited rules since those cannot be adjusted without first disabling the inheritance behavior. It will still print inherited rules in the output though
+       for debugging purposes.
+
+PARAMETERS                   *win_audit_rule-parameters*
+
+       Parameter             Choices/Defaults                                                                            Comments
+   audit_flags         Choices:                       Defines whether to log on failure, success, or both.
+   list / required     • Failure                      To log both define as comma separated list "Success, Failure".
+                       • Success
+                       Choices:
+                       • ContainerInherit             Defines what objects inside of a folder or registry key will inherit the settings.
+   inheritance_flags   • ObjectInherit                If you are setting a rule on a file, this value has to be changed to none.
+   list                                               For more information on the choices see MSDN PropagationFlags enumeration at
+                     Default:                         https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.inheritanceflags.aspx.
+                     "ContainerInherit,ObjectInherit"
+   path                                               Path to the file, folder, or registry key.
+   path / required                                    Registry paths should be in Powershell format, beginning with an abbreviation for the root such as, HKLM:\Software.
+                                                      aliases: dest, destination
+                       Choices:                       Propagation flag on the audit rules.
+   propagation_flags   • None ←                       This value is ignored when the path type is a file.
+   -                   • InherityOnly                 For more information on the choices see MSDN PropagationFlags enumeration at
+                       • NoPropagateInherit           https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.propagationflags.aspx.
+                                                      Comma separated list of the rights desired. Only required for adding a rule.
+   rights                                             If path is a file or directory, rights can be any right under MSDN FileSystemRights
+   list / required                                    https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.filesystemrights.aspx.
+                                                      If path is a registry key, rights can be any right under MSDN RegistryRights
+                                                      https://msdn.microsoft.com/en-us/library/system.security.accesscontrol.registryrights.aspx.
+   state               Choices:                       Whether the rule should be present or absent.
+   string              • absent                       For absent, only path, user, and state are required.
+                       • present ←                    Specifying absent will remove all rules matching the defined user.
+   user                                               The user or group to adjust rules for.
+   string / required
+
+SEE ALSO                   *win_audit_rule-see also*
+
+   See also
+
+   win_audit_policy_system – Used to make changes to the system wide Audit Policy
+   The official documentation on the win_audit_policy_system module.
+
+EXAMPLES                   *win_audit_rule-examples*
+
+ - name: Add filesystem audit rule for a folder
+   win_audit_rule:
+     path: C:\inetpub\wwwroot\website
+     user: BUILTIN\Users
+     rights: write,delete,changepermissions
+     audit_flags: success,failure
+     inheritance_flags: ContainerInherit,ObjectInherit
+
+ - name: Add filesystem audit rule for a file
+   win_audit_rule:
+     path: C:\inetpub\wwwroot\website\web.config
+     user: BUILTIN\Users
+     rights: write,delete,changepermissions
+     audit_flags: success,failure
+     inheritance_flags: None
+
+ - name: Add registry audit rule
+   win_audit_rule:
+     path: HKLM:\software
+     user: BUILTIN\Users
+     rights: delete
+     audit_flags: 'success'
+
+ - name: Remove filesystem audit rule
+   win_audit_rule:
+     path: C:\inetpub\wwwroot\website
+     user: BUILTIN\Users
+     state: absent
+
+ - name: Remove registry audit rule
+   win_audit_rule:
+     path: HKLM:\software
+     user: BUILTIN\Users
+     state: absent
+
+RETURN VALUES                   *win_audit_rule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+                                The current rules on the defined path
+   current_audit_rules always   Will return "No audit rules defined on path"
+   dictionary                   Sample:
+                                { "audit_flags": "Success", "user": "Everyone", "inheritance_flags": "False", "is_inherited": "False", "propagation_flags": "None", "rights": "Delete" }
+   path_type           always   The type of path being targetted.
+   string                       Will be one of file, directory, registry.
+
+STATUS                   *win_audit_rule-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Noah Sparks (@nwsparks)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_audit_rule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_audit_rule_module.html

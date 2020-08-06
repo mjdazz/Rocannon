@@ -1,0 +1,151 @@
+SYNOPSIS                   *s3_sync*
+
+     • The S3 module is great, but it is very slow for a large volume of files- even a dozen will be noticeable. In addition to speed, it handles globbing, inclusions/exclusions, mime types,
+       expiration mapping, recursion, cache control and smart directory mapping.
+
+REQUIREMENTS                   *s3_sync-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3 >= 1.4.4
+     • botocore
+     • python >= 2.6
+     • python-dateutil
+
+PARAMETERS                   *s3_sync-parameters*
+
+            Parameter                 Choices/Defaults                                                                       Comments
+   aws_access_key                                             AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                                     aliases: ec2_access_key, access_key
+   aws_secret_key                                             AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                                     aliases: ec2_secret_key, secret_key
+   bucket                                                     Bucket name.
+   - / required
+   cache_control                                              This is a string.
+   -                                                          Cache-Control header set on uploaded objects.
+   added in 2.4                                               Directives are separated by commas.
+   debug_botocore_endpoint_logs   Choices:                    Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the
+   boolean                        • no ←                      set to the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a
+   added in 2.8                   • yes                       playbook. The ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   delete                         Choices:
+   boolean                        • no ←                      Remove remote files that exist in bucket but are not present in the file root.
+   added in 2.4                   • yes
+   ec2_url                                                    Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region
+   string                                                     is required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment
+                                                              variable, if any, is used.
+   exclude                      Default:                      Shell pattern-style file matching.
+   -                            ".""                          Used after include to remove files (for instance, skip "".txt")
+                                                              For multiple patterns, comma-separate them.
+                                  Choices:                    Difference determination method to allow changes-only syncing. Unlike rsync, files are not patched- they are fully skipped or fully
+   file_change_strategy           • force                     uploaded.
+   -                              • checksum                  date_size will upload if file sizes don't match or if local file modified date is newer than s3's version
+                                  • date_size ←               checksum will compare etag values based on s3's implementation of chunked md5s.
+                                                              force will always upload all files.
+   file_root                                                  File/directory path for synchronization. This is a local path.
+   - / required                                               This root path is scrubbed from the key name, so subdirectories will remain as keys.
+   include                      Default:                      Shell pattern-style file matching.
+   -                            """                           Used before exclude to determine eligible files (for instance, only "".gif")
+                                                              For multiple patterns, comma-separate them.
+   key_prefix                                                 In addition to file path, prepend s3 path with this prefix. Module will add slash at end of prefix if necessary.
+   -
+   mime_map                                                   Dict entry from extension to MIME type. This will override any default/sniffed MIME type. For example {".txt": "application/text",
+   -                                                          ".yml": "application/text"}
+   mode                           Choices:                    sync direction.
+   -                              • push ←
+                                  Choices:
+                                  • 
+
+                                  • private
+   permission                     • public-read               Canned ACL to apply to synced files.
+   -                              • public-read-write         Changing this ACL only changes newly synced files, it does not trigger a full reupload.
+                                  • authenticated-read
+                                  • aws-exec-read
+                                  • bucket-owner-read
+                                  • bucket-owner-full-control
+   profile                                                    Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                                     The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                                     http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                              aliases: aws_region, ec2_region
+   security_token                                             AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                                     aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no                        When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *s3_sync-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *s3_sync-examples*
+
+ - name: basic upload
+   s3_sync:
+     bucket: tedder
+     file_root: roles/s3/files/
+
+ - name: all the options
+   s3_sync:
+     bucket: tedder
+     file_root: roles/s3/files
+     mime_map:
+       .yml: application/text
+       .json: application/text
+     key_prefix: config_files/web
+     file_change_strategy: force
+     permission: public-read
+     cache_control: "public, max-age=31536000"
+     include: """
+     exclude: "".txt,.""
+
+RETURN VALUES                   *s3_sync-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+                                file listing (dicts) of files that will be uploaded after the strategy decision
+   filelist_actionable always   Sample:
+   list                         [{'bytes': 151, 'chopped_path': 'policy.json', 'fullpath': 'roles/cf/files/policy.json', 'mime_type': 'application/json', 'modified_epoch': 1477931256, 's3_path':
+                                's3sync/policy.json', 'whysize': '151 / 151', 'whytime': '1477931256 / 1477929260'}]
+   filelist_initial             file listing (dicts) from initial globbing
+   list                always   Sample:
+                                [{'bytes': 151, 'chopped_path': 'policy.json', 'fullpath': 'roles/cf/files/policy.json', 'modified_epoch': 1477416706}]
+                                file listing (dicts) including calculated local etag
+   filelist_local_etag always   Sample:
+   list                         [{'bytes': 151, 'chopped_path': 'policy.json', 'fullpath': 'roles/cf/files/policy.json', 'mime_type': 'application/json', 'modified_epoch': 1477416706, 's3_path':
+                                's3sync/policy.json'}]
+                                file listing (dicts) including information about previously-uploaded versions
+   filelist_s3         always   Sample:
+   list                         [{'bytes': 151, 'chopped_path': 'policy.json', 'fullpath': 'roles/cf/files/policy.json', 'mime_type': 'application/json', 'modified_epoch': 1477416706, 's3_path':
+                                's3sync/policy.json'}]
+   filelist_typed               file listing (dicts) with calculated or overridden mime types
+   list                always   Sample:
+                                [{'bytes': 151, 'chopped_path': 'policy.json', 'fullpath': 'roles/cf/files/policy.json', 'mime_type': 'application/json', 'modified_epoch': 1477416706}]
+                                file listing (dicts) of files that were actually uploaded
+   uploaded            always   Sample:
+   list                         [{'bytes': 151, 'chopped_path': 'policy.json', 'fullpath': 'roles/cf/files/policy.json', 's3_path': 's3sync/policy.json', 'whysize': '151 / 151', 'whytime':
+                                '1477931637 / 1477931489'}]
+
+STATUS                   *s3_sync-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ted Timmons (@tedder)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *s3_sync-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/s3_sync_module.html

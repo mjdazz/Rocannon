@@ -1,0 +1,466 @@
+SYNOPSIS                   *spotinst_aws_elastigroup*
+
+     • Can create, update, or delete Spotinst AWS Elastigroups Launch configuration is part of the elastigroup configuration, so no additional modules are necessary for handling the launch
+       configuration. You will have to have a credentials file in this location - <home>/.spotinst/credentials The credentials file must contain a row that looks like this token = <YOUR TOKEN> Full
+       documentation available at https://help.spotinst.com/hc/en-us/articles/115003530285-Ansible-
+
+REQUIREMENTS                   *spotinst_aws_elastigroup-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • spotinst_sdk >= 1.0.38
+
+PARAMETERS                   *spotinst_aws_elastigroup-parameters*
+
+                       Parameter                          Choices/Defaults                                                            Comments
+   account_id                                                                  (String) Optional parameter that allows to set an account-id inside the module configuration By default this is
+   -                                                                           retrieved from the credentials path
+                                                        Choices:
+   availability_vs_cost                                 • availabilityOriented (String) The strategy orientation.
+   - / required                                         • costOriented
+                                                        • balanced
+   availability_zones                                                          (List of Objects) a list of hash/dictionaries of Availability Zones that are configured in the elastigroup;
+   - / required                                                                '[{"key":"value", "key":"value"}]'; keys allowed are name (String), subnet_id (String), placement_group_name (String),
+                                                                               (List of Objects) a list of hash/dictionaries of Block Device Mappings for elastigroup instances; You can specify
+   block_device_mappings                                                       virtual devices and EBS volumes.; '[{"key":"value", "key":"value"}]'; keys allowed are device_name (List of Strings),
+   -                                                                           virtual_name (String), no_device (String), ebs (Object, expects the following keys- delete_on_termination(Boolean),
+                                                                               encrypted(Boolean), iops (Integer), snapshot_id(Integer), volume_type(String), volume_size(Integer))
+   chef                                                                        (Object) The Chef integration configuration.; Expects the following keys - chef_server (String), organization
+   -                                                                           (String), user (String), pem_key (String), chef_version (String)
+   credentials_path                                                            (String) Optional parameter that allows to set a non-default credentials path. Default is ~/.spotinst/credentials
+   -
+                                                                               (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value",
+                                                                               "key":"value"}]'; keys allowed are - policy_name (String, required), namespace (String, required), metric_name
+   down_scaling_policies                                                       (String, required), dimensions ((List of Objects), Keys allowed are name (String, required) and value (String)),
+   -                                                                           statistic (String, required), evaluation_periods (String, required), period (String, required), threshold (String,
+                                                                               required), cooldown (String, required), unit (String, required), operator (String, required), action_type (String,
+                                                                               required), adjustment (String), max_target_capacity (String), target (String), maximum (String), minimum (String)
+   draining_timeout                                                            (Integer) Time for instance to be drained from incoming requests and deregistered from ELB before termination.
+   -
+   ebs_optimized                                        Choices:               (Boolean) Enable EBS optimization for supported instances which are not enabled by default.; Note - additional charges
+   boolean                                              • no                   will be applied.
+                                                        • yes
+   ebs_volume_pool                                                             (List of Objects) a list of hash/dictionaries of EBS devices to reattach to the elastigroup when available;
+   -                                                                           '[{"key":"value", "key":"value"}]'; keys allowed are - volume_ids (List of Strings), device_name (String)
+   ecs                                                                         (Object) The ECS integration configuration.; Expects the following key - cluster_name (String)
+   -
+   elastic_ips                                                                 (List of Strings) List of ElasticIps Allocation Ids (Example eipalloc-9d4e16f8) to associate to the group instances
+   -
+   fallback_to_od                                       Choices:
+   boolean                                              • no                   (Boolean) In case of no spots available, Elastigroup will launch an On-demand instance instead
+                                                        • yes
+   health_check_grace_period                          Default:                 (Integer) The amount of time, in seconds, after the instance has launched to start and check its health.
+   -                                                  300
+                                                        Choices:
+                                                        • ELB
+   health_check_type                                    • HCS                  (String) The service to use for the health check.
+   -                                                    • TARGET_GROUP
+                                                        • MLB
+                                                        • EC2
+   health_check_unhealthy_duration_before_replacement                          (Integer) Minimal mount of time instance should be unhealthy for us to consider it unhealthy.
+   -
+   iam_role_arn                                                                (String) The instance profile iamRole arn
+   -                                                                           Only use iam_role_arn, or iam_role_name
+   iam_role_name                                                               (String) The instance profile iamRole name
+   -                                                                           Only use iam_role_arn, or iam_role_name
+   id                                                                          (String) The group id if it already exists and you want to update, or delete it. This will not work unless the
+   -                                                                           uniqueness_by field is set to id. When this is set, and the uniqueness_by field is set, the group will either be
+                                                                               updated or deleted, but not created.
+   ignore_changes                                       Choices:
+   -                                                    • image_id             (List of Strings) list of fields on which changes should be ignored when updating
+                                                        • target
+   image_id                                                                    (String) The image Id used to launch the instance.; In case of conflict between Instance type and image type, an error
+   - / required                                                                will be returned
+   key_pair                                                                    (String) Specify a Key Pair to attach to the instances
+   - / required
+   kubernetes                                                                  (Object) The Kubernetes integration configuration. Expects the following keys - api_server (String), token (String)
+   -
+   lifetime_period                                                             (String) lifetime period
+   -
+   load_balancers                                                              (List of Strings) List of classic ELB names
+   -
+   max_size                                                                    (Integer) The upper limit number of instances that you can scale up to
+   - / required
+   mesosphere                                                                  (Object) The Mesosphere integration configuration. Expects the following key - api_server (String)
+   -
+   min_size                                                                    (Integer) The lower limit number of instances that you can scale down to
+   - / required
+   monitoring                                                                  (Boolean) Describes whether instance Enhanced Monitoring is enabled
+   - / required
+   name                                                                        (String) Unique name for elastigroup to be created, updated or deleted
+   - / required
+                                                                               (List of Objects) a list of hash/dictionaries of network interfaces to add to the elastigroup; '[{"key":"value",
+   network_interfaces                                                          "key":"value"}]'; keys allowed are - description (String), device_index (Integer), secondary_private_ip_address_count
+   -                                                                           (Integer), associate_public_ip_address (Boolean), delete_on_termination (Boolean), groups (List of Strings),
+                                                                               network_interface_id (String), private_ip_address (String), subnet_id (String), associate_ipv6_address (Boolean),
+                                                                               private_ip_addresses (List of Objects, Keys are privateIpAddress (String, required) and primary (Boolean))
+   on_demand_count                                                             (Integer) Required if risk is not set
+   -                                                                           Number of on demand instances to launch. All other instances will be spot instances.; Either set this parameter or the
+                                                                               risk parameter
+   on_demand_instance_type                                                     (String) On-demand instance type that will be provisioned
+   - / required
+   opsworks                                                                    (Object) The elastigroup OpsWorks integration configration.; Expects the following key - layer_id (String)
+   -
+   persistence                                                                 (Object) The Stateful elastigroup configration.; Accepts the following keys - should_persist_root_device (Boolean),
+   -                                                                           should_persist_block_devices (Boolean), should_persist_private_ip (Boolean)
+                                                        Choices:
+                                                        • Linux/UNIX
+                                                        • SUSE Linux
+   product                                              • Windows
+   - / required                                         • Linux/UNIX (Amazon   (String) Operation system type._
+                                                          VPC)
+                                                        • SUSE Linux (Amazon
+                                                          VPC)
+                                                        • Windows
+   rancher                                                                     (Object) The Rancher integration configuration.; Expects the following keys - version (String), access_key (String),
+   -                                                                           secret_key (String), master_host (String)
+   right_scale                                                                 (Object) The Rightscale integration configuration.; Expects the following keys - account_id (String), refresh_token
+   -                                                                           (String)
+   risk                                                                        (Integer) required if on demand is not set. The percentage of Spot instances to launch (0 - 100).
+   -
+   roll_config                                                                 (Object) Roll configuration.; If you would like the group to roll after updating, please use this feature. Accepts the
+   -                                                                           following keys - batch_size_percentage(Integer, Required), grace_period - (Integer, Required),
+                                                                               health_check_type(String, Optional)
+                                                                               (List of Objects) a list of hash/dictionaries of scheduled tasks to configure in the elastigroup; '[{"key":"value",
+   scheduled_tasks                                                             "key":"value"}]'; keys allowed are - adjustment (Integer), scale_target_capacity (Integer), scale_min_capacity
+   -                                                                           (Integer), scale_max_capacity (Integer), adjustment_percentage (Integer), batch_size_percentage (Integer),
+                                                                               cron_expression (String), frequency (String), grace_period (Integer), task_type (String, required), is_enabled
+                                                                               (Boolean)
+   security_group_ids                                                          (List of Strings) One or more security group IDs. ; In case of update it will override the existing Security Group
+   - / required                                                                with the new given array
+   shutdown_script                                                             (String) The Base64-encoded shutdown script that executes prior to instance termination. Encode before setting.
+   -
+   signals                                                                     (List of Objects) a list of hash/dictionaries of signals to configure in the elastigroup; keys allowed are - name
+   -                                                                           (String, required), timeout (Integer)
+   spin_up_time                                                                (Integer) spin up time, in seconds, for the instance
+   -
+   spot_instance_types                                                         (List of Strings) Spot instance type that will be provisioned.
+   - / required
+   state                                                Choices:
+   -                                                    • present              (String) create or delete the elastigroup
+                                                        • absent
+   tags                                                                        (List of tagKey:tagValue paris) a list of tags to configure in the elastigroup. Please specify list of keys and values
+   -                                                                           (key colon value);
+   target                                                                      (Integer) The number of instances to launch
+   - / required
+   target_group_arns                                                           (List of Strings) List of target group arns instances should be registered to
+   -
+                                                                               (List of Objects) a list of hash/dictionaries of target tracking policies to configure in the elastigroup;
+   target_tracking_policies                                                    '[{"key":"value", "key":"value"}]'; keys allowed are - policy_name (String, required), namespace (String, required),
+   -                                                                           source (String, required), metric_name (String, required), statistic (String, required), unit (String, required),
+                                                                               cooldown (String, required), target (String, required)
+   tenancy                                              Choices:
+   -                                                    • default              (String) dedicated vs shared tenancy
+                                                        • dedicated
+   terminate_at_end_of_billing_hour                     Choices:
+   boolean                                              • no                   (Boolean) terminate at the end of billing hour
+                                                        • yes
+   uniqueness_by                                        Choices:               (String) If your group names are not unique, you may use this feature to update or delete a specific group. Whenever
+   -                                                    • id                   this property is set, you must set a group_id in order to update or delete a group, otherwise a group will be created.
+                                                        • name
+   unit                                                 Choices:
+   - / required                                         • instance             (String) The capacity unit to launch instances by.
+                                                        • weight
+                                                                               (List of Objects) a list of hash/dictionaries of scaling policies to configure in the elastigroup; '[{"key":"value",
+                                                                               "key":"value"}]'; keys allowed are - policy_name (String, required), namespace (String, required), metric_name
+   up_scaling_policies                                                         (String, required), dimensions (List of Objects, Keys allowed are name (String, required) and value (String)),
+   -                                                                           statistic (String, required) evaluation_periods (String, required), period (String, required), threshold (String,
+                                                                               required), cooldown (String, required), unit (String, required), operator (String, required), action_type (String,
+                                                                               required), adjustment (String), min_target_capacity (String), target (String), maximum (String), minimum (String)
+   user_data                                                                   (String) Base64-encoded MIME user data. Encode before setting the value.
+   -
+   utilize_reserved_instances                           Choices:               (Boolean) In case of any available Reserved Instances, Elastigroup will utilize your reservations before purchasing
+   boolean                                              • no                   Spot instances.
+                                                        • yes
+   wait_for_instances                                   Choices:
+   boolean                                              • no                   (Boolean) Whether or not the elastigroup creation / update actions should wait for the instances to spin
+                                                        • yes
+   wait_timeout                                                                (Integer) How long the module should wait for instances before failing the action.; Only works if wait_for_instances
+   -                                                                           is True.
+
+EXAMPLES                   *spotinst_aws_elastigroup-examples*
+
+ # Basic configuration YAML example
+
+ - hosts: localhost
+   tasks:
+     - name: create elastigroup
+       spotinst_aws_elastigroup:
+           state: present
+           risk: 100
+           availability_vs_cost: balanced
+           availability_zones:
+             - name: us-west-2a
+               subnet_id: subnet-2b68a15c
+           image_id: ami-f173cc91
+           key_pair: spotinst-oregon
+           max_size: 15
+           min_size: 0
+           target: 0
+           unit: instance
+           monitoring: True
+           name: ansible-group
+           on_demand_instance_type: c3.large
+           product: Linux/UNIX
+           load_balancers:
+             - test-lb-1
+           security_group_ids:
+             - sg-8f4b8fe9
+           spot_instance_types:
+             - c3.large
+           do_not_update:
+             - image_id
+             - target
+       register: result
+     - debug: var=result
+
+ # In this example, we create an elastigroup and wait 600 seconds to retrieve the instances, and use their private ips
+
+ - hosts: localhost
+   tasks:
+     - name: create elastigroup
+       spotinst_aws_elastigroup:
+           state: present
+           account_id: act-1a9dd2b
+           risk: 100
+           availability_vs_cost: balanced
+           availability_zones:
+             - name: us-west-2a
+               subnet_id: subnet-2b68a15c
+           tags:
+             - Environment: someEnvValue
+             - OtherTagKey: otherValue
+           image_id: ami-f173cc91
+           key_pair: spotinst-oregon
+           max_size: 5
+           min_size: 0
+           target: 0
+           unit: instance
+           monitoring: True
+           name: ansible-group-tal
+           on_demand_instance_type: c3.large
+           product: Linux/UNIX
+           security_group_ids:
+             - sg-8f4b8fe9
+           block_device_mappings:
+             - device_name: '/dev/sda1'
+               ebs:
+                 volume_size: 100
+                 volume_type: gp2
+           spot_instance_types:
+             - c3.large
+           do_not_update:
+             - image_id
+           wait_for_instances: True
+           wait_timeout: 600
+       register: result
+
+     - name: Store private ips to file
+       shell: echo {{ item.private_ip }}\n >> list-of-private-ips
+       with_items: "{{ result.instances }}"
+     - debug: var=result
+
+ # In this example, we create an elastigroup with multiple block device mappings, tags, and also an account id
+ # In organizations with more than one account, it is required to specify an account_id
+
+ - hosts: localhost
+   tasks:
+     - name: create elastigroup
+       spotinst_aws_elastigroup:
+           state: present
+           account_id: act-1a9dd2b
+           risk: 100
+           availability_vs_cost: balanced
+           availability_zones:
+             - name: us-west-2a
+               subnet_id: subnet-2b68a15c
+           tags:
+             - Environment: someEnvValue
+             - OtherTagKey: otherValue
+           image_id: ami-f173cc91
+           key_pair: spotinst-oregon
+           max_size: 5
+           min_size: 0
+           target: 0
+           unit: instance
+           monitoring: True
+           name: ansible-group-tal
+           on_demand_instance_type: c3.large
+           product: Linux/UNIX
+           security_group_ids:
+             - sg-8f4b8fe9
+           block_device_mappings:
+             - device_name: '/dev/xvda'
+               ebs:
+                 volume_size: 60
+                 volume_type: gp2
+             - device_name: '/dev/xvdb'
+               ebs:
+                 volume_size: 120
+                 volume_type: gp2
+           spot_instance_types:
+             - c3.large
+           do_not_update:
+             - image_id
+           wait_for_instances: True
+           wait_timeout: 600
+       register: result
+
+     - name: Store private ips to file
+       shell: echo {{ item.private_ip }}\n >> list-of-private-ips
+       with_items: "{{ result.instances }}"
+     - debug: var=result
+
+ # In this example we have set up block device mapping with ephemeral devices
+
+ - hosts: localhost
+   tasks:
+     - name: create elastigroup
+       spotinst_aws_elastigroup:
+           state: present
+           risk: 100
+           availability_vs_cost: balanced
+           availability_zones:
+             - name: us-west-2a
+               subnet_id: subnet-2b68a15c
+           image_id: ami-f173cc91
+           key_pair: spotinst-oregon
+           max_size: 15
+           min_size: 0
+           target: 0
+           unit: instance
+           block_device_mappings:
+             - device_name: '/dev/xvda'
+               virtual_name: ephemeral0
+             - device_name: '/dev/xvdb/'
+               virtual_name: ephemeral1
+           monitoring: True
+           name: ansible-group
+           on_demand_instance_type: c3.large
+           product: Linux/UNIX
+           load_balancers:
+             - test-lb-1
+           security_group_ids:
+             - sg-8f4b8fe9
+           spot_instance_types:
+             - c3.large
+           do_not_update:
+             - image_id
+             - target
+       register: result
+     - debug: var=result
+
+ # In this example we create a basic group configuration with a network interface defined.
+ # Each network interface must have a device index
+
+ - hosts: localhost
+   tasks:
+     - name: create elastigroup
+       spotinst_aws_elastigroup:
+           state: present
+           risk: 100
+           availability_vs_cost: balanced
+           network_interfaces:
+             - associate_public_ip_address: true
+               device_index: 0
+           availability_zones:
+             - name: us-west-2a
+               subnet_id: subnet-2b68a15c
+           image_id: ami-f173cc91
+           key_pair: spotinst-oregon
+           max_size: 15
+           min_size: 0
+           target: 0
+           unit: instance
+           monitoring: True
+           name: ansible-group
+           on_demand_instance_type: c3.large
+           product: Linux/UNIX
+           load_balancers:
+             - test-lb-1
+           security_group_ids:
+             - sg-8f4b8fe9
+           spot_instance_types:
+             - c3.large
+           do_not_update:
+             - image_id
+             - target
+       register: result
+     - debug: var=result
+
+
+ # In this example we create a basic group configuration with a target tracking scaling policy defined
+
+ - hosts: localhost
+   tasks:
+     - name: create elastigroup
+       spotinst_aws_elastigroup:
+           account_id: act-92d45673
+           state: present
+           risk: 100
+           availability_vs_cost: balanced
+           availability_zones:
+             - name: us-west-2a
+               subnet_id: subnet-79da021e
+           image_id: ami-f173cc91
+           fallback_to_od: true
+           tags:
+             - Creator: ValueOfCreatorTag
+             - Environment: ValueOfEnvironmentTag
+           key_pair: spotinst-labs-oregon
+           max_size: 10
+           min_size: 0
+           target: 2
+           unit: instance
+           monitoring: True
+           name: ansible-group-1
+           on_demand_instance_type: c3.large
+           product: Linux/UNIX
+           security_group_ids:
+             - sg-46cdc13d
+           spot_instance_types:
+             - c3.large
+           target_tracking_policies:
+             - policy_name: target-tracking-1
+               namespace: AWS/EC2
+               metric_name: CPUUtilization
+               statistic: average
+               unit: percent
+               target: 50
+               cooldown: 120
+           do_not_update:
+             - image_id
+       register: result
+     - debug: var=result
+
+RETURN VALUES                   *spotinst_aws_elastigroup-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   group_id            Created / Updated group's ID.
+   string     success  Sample:
+                       sig-12345
+                       List of active elastigroup instances and their details.
+   instances  success  Sample:
+   dictionary          [{'spotInstanceRequestId': 'sir-regs25zp', 'instanceId': 'i-09640ad8678234c', 'instanceType': 'm4.large', 'product': 'Linux/UNIX', 'availabilityZone': 'us-west-2b',
+                       'privateIp': '180.0.2.244', 'createdAt': '2017-07-17T12:46:18.000Z', 'status': 'fulfilled'}]
+
+STATUS                   *spotinst_aws_elastigroup-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Spotinst (@talzur)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *spotinst_aws_elastigroup-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/spotinst_aws_elastigroup_module.html

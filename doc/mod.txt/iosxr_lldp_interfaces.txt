@@ -1,0 +1,524 @@
+SYNOPSIS                   *iosxr_lldp_interfaces*
+
+     • This module manages Link Layer Discovery Protocol (LLDP) attributes of interfaces on IOS-XR devices.
+
+PARAMETERS                   *iosxr_lldp_interfaces-parameters*
+
+           Parameter                   Choices/Defaults                                                                        Comments
+   config                                                        A dictionary of LLDP interfaces options.
+   list / elements=dictionary
+         destination                                             Specifies LLDP destination configuration on the interface.
+         dictionary
+              mac_address       Choices:
+              string            • ieee-nearest-bridge            Specifies the LLDP destination mac address on the interface.
+                                • ieee-nearest-non-tmpr-bridge
+         name                                                    Name/Identifier of the interface or Ether-Bundle.
+         string
+         receive                Choices:
+         boolean                • no                             Enable/disable LLDP RX on an interface.
+                                • yes
+         transmit               Choices:
+         boolean                • no                             Enable/disable LLDP TX on an interface.
+                                • yes
+                                Choices:
+   state                        • merged ←
+   string                       • replaced                       The state of the configuration after module completion.
+                                • overridden
+                                • deleted
+
+NOTES                   *iosxr_lldp_interfaces-notes*
+
+   Note
+
+     • Tested against IOS-XR 6.1.3.
+     • This module works with connection network_cli. See the IOS-XR Platform Options.
+
+EXAMPLES                   *iosxr_lldp_interfaces-examples*
+
+ # Using merged
+ #
+ #
+ # ------------
+ # Before state
+ # ------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 12:40:23.104 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ # !
+ #
+ #
+
+ - name: Merge provided configuration with running configuration
+   iosxr_lldp_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/1
+         destination:
+           mac_address: ieee-nearest-non-tmpr-bridge
+         transmit: False
+
+       - name: GigabitEthernet0/0/0/2
+         destination:
+           mac_address: ieee-nearest-bridge
+         receive: False
+     state: merged
+
+ #
+ #
+ # ------------------------
+ # Module Execution Result
+ # ------------------------
+ #
+ #
+ # "before": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "name": "GigabitEthernet0/0/0/1"
+ #        },
+ #        {
+ #            "name": "GigabitEthernet0/0/0/2"
+ #        }
+ # ]
+ #
+ # "commands": [
+ #        "interface GigabitEthernet0/0/0/2",
+ #        "lldp destination mac-address ieee-nearest-non-tmpr-bridge",
+ #        "lldp transmit disable",
+ #        "interface GigabitEthernet0/0/0/1",
+ #        "lldp receive disable",
+ #        "lldp destination mac-address ieee-nearest-bridge"
+ # ]
+ #
+ # "after": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/1",
+ #            "receive": false
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-non-tmpr-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/2",
+ #            "transmit": false
+ #        }
+ # ]
+ #
+ #
+ # ------------
+ # After state
+ # ------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 12:49:51.517 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ #  lldp
+ #   receive disable
+ #   destination mac-address
+ #    ieee-nearest-bridge
+ #   !
+ #  !
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ #  lldp
+ #   transmit disable
+ #   destination mac-address
+ #    ieee-nearest-non-tmpr-bridge
+ #   !
+ #  !
+ # !
+ #
+ #
+
+
+ # Using replaced
+ #
+ #
+ # -------------
+ # Before state
+ # -------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 12:49:51.517 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ #  lldp
+ #   receive disable
+ #   destination mac-address
+ #    ieee-nearest-bridge
+ #   !
+ #  !
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ #  lldp
+ #   transmit disable
+ #   destination mac-address
+ #    ieee-nearest-non-tmpr-bridge
+ #   !
+ #  !
+ # !
+ #
+ #
+
+ - name: Replace existing LLDP configurations of specified interfaces with provided configuration
+   iosxr_lldp_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/1
+         destination:
+           mac_address: ieee-nearest-non-tmpr-bridge
+     state: replaced
+
+ #
+ #
+ # ------------------------
+ # Module Execution Result
+ # ------------------------
+ #
+ # "before": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/1",
+ #            "receive": false
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-non-tmpr-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/2",
+ #            "transmit": false
+ #        }
+ # ]
+ #
+ #
+ # "commands": [
+ #        "interface GigabitEthernet0/0/0/1",
+ #        "no lldp receive disable",
+ #        "lldp destination mac-address ieee-nearest-non-tmpr-bridge"
+ # ]
+ #
+ #
+ # "after": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-non-tmpr-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/1"
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-non-tmpr-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/2",
+ #            "transmit": false
+ #        }
+ # ]
+ #
+ #
+ # ------------
+ # After state
+ # ------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 13:02:57.062 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ #  lldp
+ #   destination mac-address
+ #    ieee-nearest-non-tmpr-bridge
+ #   !
+ #  !
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ #  lldp
+ #   transmit disable
+ #   destination mac-address
+ #    ieee-nearest-non-tmpr-bridge
+ #   !
+ #  !
+ # !
+ #
+ #
+
+
+ # Using overridden
+ #
+ #
+ # -------------
+ # Before state
+ # -------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 13:15:40.465 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ #  lldp
+ #   receive disable
+ #   destination mac-address
+ #    ieee-nearest-bridge
+ #   !
+ #  !
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ #  lldp
+ #   transmit disable
+ #   destination mac-address
+ #    ieee-nearest-non-tmpr-bridge
+ #   !
+ #  !
+ # !
+ #
+ #
+
+ - name: Override the LLDP configurations of all the interfaces with provided configurations
+   iosxr_lldp_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/1
+         transmit: False
+     state: overridden
+
+ #
+ #
+ # ------------------------
+ # Module Execution Result
+ # ------------------------
+ #
+ #
+ # "before": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/1",
+ #            "receive": false
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-non-tmpr-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/2",
+ #            "transmit": false
+ #        }
+ # ]
+ #
+ # "commands": [
+ #        "interface GigabitEthernet0/0/0/2",
+ #        "no lldp destination mac-address ieee-nearest-non-tmpr-bridge",
+ #        "no lldp transmit disable",
+ #        "interface GigabitEthernet0/0/0/1",
+ #        "no lldp destination mac-address ieee-nearest-bridge",
+ #        "no lldp receive disable",
+ #        "lldp transmit disable"
+ # ]
+ #
+ #
+ # "after": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "name": "GigabitEthernet0/0/0/1",
+ #            "transmit": false
+ #        },
+ #        {
+ #            "name": "GigabitEthernet0/0/0/2"
+ #        }
+ # ]
+ #
+ #
+ # ------------
+ # After state
+ # ------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 13:22:25.604 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ #  lldp
+ #   transmit disable
+ #  !
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ # !
+ #
+ #
+
+
+ # Using deleted
+ #
+ #
+ # -------------
+ # Before state
+ # -------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 13:26:21.498 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ #  lldp
+ #   receive disable
+ #   destination mac-address
+ #    ieee-nearest-bridge
+ #   !
+ #  !
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ #  lldp
+ #   transmit disable
+ #   destination mac-address
+ #    ieee-nearest-non-tmpr-bridge
+ #   !
+ #  !
+ # !
+ #
+ #
+
+ - name: Delete LLDP configurations of all interfaces (Note - This won't delete the interfaces themselves)
+   iosxr_lldp_interfaces:
+     state: deleted
+
+ #
+ #
+ #
+ # ------------------------
+ # Module Execution Result
+ # ------------------------
+ #
+ #
+ # "before": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/1",
+ #            "receive": false
+ #        },
+ #        {
+ #            "destination": {
+ #                "mac_address": "ieee-nearest-non-tmpr-bridge"
+ #            },
+ #            "name": "GigabitEthernet0/0/0/2",
+ #            "transmit": false
+ #        }
+ # ]
+ #
+ #
+ # "commands": [
+ #        "interface GigabitEthernet0/0/0/1",
+ #        "no lldp destination mac-address ieee-nearest-bridge",
+ #        "no lldp receive disable",
+ #        "interface GigabitEthernet0/0/0/2",
+ #        "no lldp destination mac-address ieee-nearest-non-tmpr-bridge",
+ #        "no lldp transmit disable"
+ # ]
+ #
+ #
+ # "after": [
+ #        {
+ #            "name": "TenGigE0/0/0/0"
+ #        },
+ #        {
+ #            "name": "GigabitEthernet0/0/0/1"
+ #        },
+ #        {
+ #            "name": "GigabitEthernet0/0/0/2"
+ #        }
+ # ]
+ #
+ #
+ # ------------
+ # After state
+ # ------------
+ #
+ #
+ # RP/0/RP0/CPU0:ios#sh run int
+ # Mon Aug 12 13:30:14.618 UTC
+ # interface TenGigE0/0/0/0
+ #  ipv4 address 192.0.2.11 255.255.255.192
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/1
+ # !
+ # interface preconfigure GigabitEthernet0/0/0/2
+ # !
+ #
+ #
+
+RETURN VALUES                   *iosxr_lldp_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['interface GigabitEthernet0/0/0/1', 'lldp destination mac-address ieee-nearest-non-tmpr-bridge', 'no lldp transmit disable']
+
+STATUS                   *iosxr_lldp_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *iosxr_lldp_interfaces-red hat support*
+
+     • Nilashish Chakraborty (@nilashishc)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iosxr_lldp_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iosxr_lldp_interfaces_module.html

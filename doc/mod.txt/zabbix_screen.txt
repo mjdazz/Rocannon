@@ -1,0 +1,141 @@
+SYNOPSIS                   *zabbix_screen*
+
+     • This module allows you to create, modify and delete Zabbix screens and associated graph data.
+
+REQUIREMENTS                   *zabbix_screen-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • zabbix-api >= 0.5.4
+
+PARAMETERS                   *zabbix_screen-parameters*
+
+              Parameter             Choices/Defaults                                                                     Comments
+   http_login_password                               Basic Auth password
+   string
+   http_login_user                                   Basic Auth login
+   string / required
+   login_password                                    Zabbix user password.
+   string / required
+   login_user                                        Zabbix user name.
+   string / required
+   screens
+   list / elements=dictionary /                      List of screens to be created/updated/deleted (see example).
+   required
+           graph_height                              Graph height will be set in graph settings.
+           integer
+           graph_names                               Graph names will be added to a screen. Case insensitive.
+           list / elements=string                    Required if state=present.
+           graph_width                               Graph width will be set in graph settings.
+           integer
+           graphs_in_row            Default:         Limit columns of a screen and make multiple rows.
+           integer                  3
+           host_group                                Host group will be used for searching hosts.
+           string                                    Required if state=present.
+           screen_name                               Screen name will be used.
+           string / required                         If a screen has already been added, the screen name won't be updated.
+           sort                       Choices:       Sort hosts alphabetically.
+           boolean                    • no ←         If there are numbers in hostnames, leading zero should be used.
+                                      • yes
+           state                      Choices:       present - Create a screen if it doesn't exist. If the screen already exists, the screen will be updated as needed.
+           string                     • absent       absent - If a screen exists, the screen will be deleted.
+                                      • present ←
+   server_url                                        URL of Zabbix server, with protocol (http or https). url is an alias for server_url.
+   string / required                                 aliases: url
+   timeout                          Default:         The timeout of API request (seconds).
+   integer                          10
+   validate_certs                     Choices:
+   boolean                            • no           If set to False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+   added in 2.5                       • yes ←
+
+NOTES                   *zabbix_screen-notes*
+
+   Note
+
+     • Too many concurrent updates to the same screen may cause Zabbix to return errors, see examples for a workaround if needed.
+     • If you use login_password=zabbix, the word “zabbix” is replaced by “""""” in all module output, because login_password uses no_log. See this FAQ for more information.
+
+EXAMPLES                   *zabbix_screen-examples*
+
+ # Create/update a screen.
+ - name: Create a new screen or update an existing screen's items 5 in a row
+   local_action:
+     module: zabbix_screen
+     server_url: http://monitor.example.com
+     login_user: username
+     login_password: password
+     screens:
+       - screen_name: ExampleScreen1
+         host_group: Example group1
+         state: present
+         graph_names:
+           - Example graph1
+           - Example graph2
+         graph_width: 200
+         graph_height: 100
+         graphs_in_row: 5
+
+ # Create/update multi-screen
+ - name: Create two of new screens or update the existing screens' items
+   local_action:
+     module: zabbix_screen
+     server_url: http://monitor.example.com
+     login_user: username
+     login_password: password
+     screens:
+       - screen_name: ExampleScreen1
+         host_group: Example group1
+         state: present
+         graph_names:
+           - Example graph1
+           - Example graph2
+         graph_width: 200
+         graph_height: 100
+       - screen_name: ExampleScreen2
+         host_group: Example group2
+         state: present
+         graph_names:
+           - Example graph1
+           - Example graph2
+         graph_width: 200
+         graph_height: 100
+
+ # Limit the Zabbix screen creations to one host since Zabbix can return an error when doing concurrent updates
+ - name: Create a new screen or update an existing screen's items
+   local_action:
+     module: zabbix_screen
+     server_url: http://monitor.example.com
+     login_user: username
+     login_password: password
+     state: present
+     screens:
+       - screen_name: ExampleScreen
+         host_group: Example group
+         state: present
+         graph_names:
+           - Example graph1
+           - Example graph2
+         graph_width: 200
+         graph_height: 100
+   when: inventory_hostname==groups['group_name'][0]
+
+STATUS                   *zabbix_screen-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Cove (@cove)
+     • Tony Minfei Ding (!UNKNOWN)
+     • Harrison Gu (@harrisongu)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *zabbix_screen-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/zabbix_screen_module.html

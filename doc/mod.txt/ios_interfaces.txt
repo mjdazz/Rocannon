@@ -1,0 +1,339 @@
+SYNOPSIS                   *ios_interfaces*
+
+     • This module manages the interface attributes of Cisco IOS network devices.
+
+PARAMETERS                   *ios_interfaces-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+   config                         A dictionary of interface options
+   list
+    description                   Interface description.
+    string
+                   Choices:
+    duplex         • full         Interface link status. Applicable for Ethernet interfaces only, either in half duplex, full duplex or in automatic state which negotiates the duplex automatically.
+    string         • half
+                   • auto
+    enabled        Choices:       Administrative state of the interface.
+    boolean        • no           Set the value to true to administratively enable the interface or false to disable it.
+                   • yes ←
+    mtu                           MTU for a specific interface. Applicable for Ethernet interfaces only.
+    integer                       Refer to vendor documentation for valid values.
+    name
+    string /                      Full name of interface, e.g. GigabitEthernet0/2, loopback999.
+    required
+    speed                         Interface link speed. Applicable for Ethernet interfaces only.
+    string
+                   Choices:
+   state           • merged ←
+   string          • replaced     The state of the configuration after module completion
+                   • overridden
+                   • deleted
+
+NOTES                   *ios_interfaces-notes*
+
+   Note
+
+     • Tested against Cisco IOSv Version 15.2 on VIRL
+     • This module works with connection network_cli. See IOS Platform Options.
+
+EXAMPLES                   *ios_interfaces-examples*
+
+ ---
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+
+ - name: Merge provided configuration with device configuration
+   ios_interfaces:
+     config:
+       - name: GigabitEthernet0/2
+         description: 'Configured and Merged by Ansible Network'
+         enabled: True
+       - name: GigabitEthernet0/3
+         description: 'Configured and Merged by Ansible Network'
+         mtu: 2800
+         enabled: False
+         speed: 100
+         duplex: full
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description Configured and Merged by Ansible Network
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  description Configured and Merged by Ansible Network
+ #  mtu 2800
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 100
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description Configured by Ansible Network
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  mtu 2000
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 100
+
+ - name: Replaces device configuration of listed interfaces with provided configuration
+   ios_interfaces:
+     config:
+       - name: GigabitEthernet0/3
+         description: 'Configured and Replaced by Ansible Network'
+         enabled: False
+         duplex: auto
+         mtu: 2500
+         speed: 1000
+     state: replaced
+
+ # After state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description Configured by Ansible Network
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  description Configured and Replaced by Ansible Network
+ #  mtu 2500
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 1000
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface#
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  description Configured by Ansible
+ #  mtu 2800
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 100
+
+ - name: Override device configuration of all interfaces with provided configuration
+   ios_interfaces:
+     config:
+       - name: GigabitEthernet0/2
+         description: 'Configured and Overridden by Ansible Network'
+         speed: 1000
+       - name: GigabitEthernet0/3
+         description: 'Configured and Overridden by Ansible Network'
+         enabled: False
+         duplex: full
+         mtu: 2000
+     state: overridden
+
+ # After state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description Configured and Overridden by Ansible Network
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  description Configured and Overridden by Ansible Network
+ #  mtu 2000
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 100
+
+ # Using Deleted
+
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description Configured by Ansible Network
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  description Configured by Ansible Network
+ #  mtu 2500
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 1000
+
+ - name: "Delete module attributes of given interfaces (Note: This won't delete the interface itself)"
+   ios_interfaces:
+     config:
+       - name: GigabitEthernet0/2
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/3
+ #  description Configured by Ansible Network
+ #  mtu 2500
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 1000
+
+ # Using Deleted without any config passed
+ #"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
+
+ # Before state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  description Configured by Ansible Network
+ #  no ip address
+ #  duplex auto
+ #  speed 1000
+ # interface GigabitEthernet0/3
+ #  description Configured by Ansible Network
+ #  mtu 2500
+ #  no ip address
+ #  shutdown
+ #  duplex full
+ #  speed 1000
+
+ - name: "Delete module attributes of all interfaces (Note: This won't delete the interface itself)"
+   ios_interfaces:
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # vios#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/2
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+ # interface GigabitEthernet0/3
+ #  no ip address
+ #  duplex auto
+ #  speed auto
+
+RETURN VALUES                   *ios_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device
+   list     always       Sample:
+                         ['interface GigabitEthernet 0/1', 'description This is test', 'speed 100']
+
+STATUS                   *ios_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *ios_interfaces-red hat support*
+
+     • Sumit Jaiswal (@justjais)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_interfaces_module.html

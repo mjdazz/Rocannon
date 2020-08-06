@@ -1,0 +1,146 @@
+SYNOPSIS                   *iam_role*
+
+     • Manage AWS IAM roles
+
+REQUIREMENTS                   *iam_role-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *iam_role-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   assume_role_policy_document                   The trust relationship policy document that grants an entity permission to assume the role.
+   -                                             This parameter is required when state=present.
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+                                                 Add the ARN of an IAM managed policy to restrict the permissions this role can pass on to IAM roles/users that it creates.
+   boundary                                      Boundaries cannot be set on Instance Profiles, so if this option is specified then create_instance_profile must be false.
+   -                                             This is intended for roles/users that have permissions to create new IAM objects.
+   added in 2.7                                  For more information on boundaries, see https://docs.aws.amazon.com/IAM/latest/UserGuide/access_policies_boundaries.html
+                                                 aliases: boundary_policy_arn
+   create_instance_profile        Choices:
+   boolean                        • no           Creates an IAM instance profile along with the role
+   added in 2.5                   • yes ←
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   description
+   -                                             Provide a description of the new role
+   added in 2.5
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   managed_policy                                A list of managed policy ARNs or, since Ansible 2.4, a list of either managed policy ARNs or friendly names. To embed an inline policy, use
+   -                                             iam_policy. To remove existing policies, use an empty list item.
+                                                 aliases: managed_policies
+   name                                          The name of the role to create.
+   - / required
+   path                         Default:         The path to the role. For more information about paths, see https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_identifiers.html.
+   -                            "/"
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_policies                 Choices:
+   boolean                        • no           Detaches any managed policies not listed in the "managed_policy" option. Set to false if you want to attach policies elsewhere.
+   added in 2.5                   • yes ←
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Create or remove the IAM role
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *iam_role-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *iam_role-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - name: Create a role with description
+   iam_role:
+     name: mynewrole
+     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+     description: This is My New Role
+
+ - name: "Create a role and attach a managed policy called 'PowerUserAccess'"
+   iam_role:
+     name: mynewrole
+     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+     managed_policy:
+       - arn:aws:iam::aws:policy/PowerUserAccess
+
+ - name: Keep the role created above but remove all managed policies
+   iam_role:
+     name: mynewrole
+     assume_role_policy_document: "{{ lookup('file','policy.json') }}"
+     managed_policy: []
+
+ - name: Delete the role
+   iam_role:
+     name: mynewrole
+     assume_role_policy_document: "{{ lookup('file', 'policy.json') }}"
+     state: absent
+
+RETURN VALUES                   *iam_role-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key              Returned                                                                         Description
+   iam_role                      success  dictionary containing the IAM Role data
+   complex
+     arn                                  the Amazon Resource Name (ARN) specifying the role
+     string                      always   Sample:
+                                          arn:aws:iam::1234567890:role/mynewrole
+     assume_role_policy_document          the policy that grants an entity permission to assume the role
+     string                      always   Sample:
+                                          {'statement': [{'action': 'sts:AssumeRole', 'effect': 'Allow', 'principal': {'service': 'ec2.amazonaws.com'}, 'sid': ''}], 'version': '2012-10-17'}
+     attached_policies                    a list of dicts containing the name and ARN of the managed IAM policies attached to the role
+     list                        always   Sample:
+                                          [{'policy_arn': 'arn:aws:iam::aws:policy/PowerUserAccess', 'policy_name': 'PowerUserAccess'}]
+     create_date                          the date and time, in ISO 8601 date-time format, when the role was created
+     string                      always   Sample:
+                                          2016-08-14T04:36:28+00:00
+     path                                 the path to the role
+     string                      always   Sample:
+                                          /
+     role_id                              the stable and unique string identifying the role
+     string                      always   Sample:
+                                          ABCDEFF4EZ4ABCDEFV4ZC
+     role_name                            the friendly name that identifies the role
+     string                      always   Sample:
+                                          myrole
+
+STATUS                   *iam_role-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iam_role-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iam_role_module.html

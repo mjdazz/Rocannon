@@ -1,0 +1,84 @@
+SYNOPSIS                   *cnos_user*
+
+     • This module provides declarative management of the local usernames configured on Lenovo CNOS devices. It allows playbooks to manage either individual usernames or the collection of usernames
+       in the current running config. It also supports purging usernames from the configuration that are not explicitly defined.
+
+PARAMETERS                   *cnos_user-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   aggregate                            The set of username objects to be configured on the remote Lenovo CNOS device. The list entries can either be the username or a hash of username and
+   -                                    properties. This argument is mutually exclusive with the name argument.
+                                        aliases: users, collection
+   configured_password                  The password to be configured on the network device. The password needs to be provided in cleartext and it will be encrypted on the device. Please note that
+   -                                    this option is not same as provider password.
+   name                                 The username to be configured on the remote Lenovo CNOS device. This argument accepts a string value and is mutually exclusive with the aggregate argument.
+   -
+   purge                 Choices:       The purge argument instructs the module to consider the resource definition absolute. It will remove any previously configured usernames on the device with
+   boolean               • no ←         the exception of the `admin` user which cannot be deleted per cnos constraints.
+                         • yes
+   role                                 The role argument configures the role for the username in the device running configuration. The argument accepts a string value defining the role name. This
+   -                                    argument does not check if the role has been configured on the device.
+                                        aliases: roles
+   sshkey                               The sshkey argument defines the SSH public key to configure for the username. This argument accepts a valid SSH key value.
+   -
+   state                 Choices:       The state argument configures the state of the username definition as it relates to the device operational configuration. When set to present, the
+   -                     • present ←    username(s) should be configured in the device active configuration and when set to absent the username(s) should not be in the device active configuration
+                         • absent
+   update_password       Choices:       Since passwords are encrypted in the device running config, this argument will instruct the module when to change the password. When set to always, the
+   -                     • on_create    password will always be updated in the device and when set to on_create the password will be updated only if the username is created.
+                         • always ←
+
+EXAMPLES                   *cnos_user-examples*
+
+ - name: create a new user
+   cnos_user:
+     name: ansible
+     sshkey: "{{ lookup('file', '~/.ssh/id_rsa.pub') }}"
+     state: present
+
+ - name: remove all users except admin
+   cnos_user:
+     purge: yes
+
+ - name: set multiple users role
+   aggregate:
+     - name: netop
+     - name: netend
+   role: network-operator
+   state: present
+
+RETURN VALUES                   *cnos_user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+   commands          The list of configuration mode commands to send to the device
+   list     always   Sample:
+                     ['name ansible', 'name ansible password password']
+   delta             The time elapsed to perform all operations
+   string   always   Sample:
+                     0:00:10.469466
+   end               The time the job ended
+   string   always   Sample:
+                     2016-11-16 10:38:25.595612
+   start             The time the job started
+   string   always   Sample:
+                     2016-11-16 10:38:15.126146
+
+STATUS                   *cnos_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Anil Kumar Muraleedharan (@amuraleedhar)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cnos_user-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cnos_user_module.html

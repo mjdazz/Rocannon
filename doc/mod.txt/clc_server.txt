@@ -1,0 +1,200 @@
+SYNOPSIS                   *clc_server*
+
+     • An Ansible module to Create, Delete, Start and Stop servers in CenturyLink Cloud.
+
+REQUIREMENTS                   *clc_server-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python = 2.7
+     • requests >= 2.5.0
+     • clc-sdk
+
+PARAMETERS                   *clc_server-parameters*
+
+           Parameter                Choices/Defaults                                                                         Comments
+   add_public_ip               Choices:
+   boolean                     • no ←                        Whether to add a public ip to the server
+                               • yes
+   additional_disks          Default:                        The list of additional disks for the server
+   -                         []
+   alert_policy_id                                           The alert policy to assign to the server. This is mutually exclusive with 'alert_policy_name'.
+   -
+   alert_policy_name                                         The alert policy to assign to the server. This is mutually exclusive with 'alert_policy_id'.
+   -
+   alias                                                     The account alias to provision the servers under.
+   -
+   anti_affinity_policy_id                                   The anti-affinity policy to assign to the server. This is mutually exclusive with 'anti_affinity_policy_name'.
+   -
+   anti_affinity_policy_name                                 The anti-affinity policy to assign to the server. This is mutually exclusive with 'anti_affinity_policy_id'.
+   -
+   configuration_id                                          Only required for bare metal servers. Specifies the identifier for the specific configuration type of bare metal server to deploy.
+   -
+   count                     Default:                        The number of servers to build (mutually exclusive with exact_count)
+   -                         1
+   count_group                                               Required when exact_count is specified. The Server Group use to determine how many servers to deploy.
+   -
+   cpu                       Default:                        How many CPUs to provision on the server
+   -                         1
+   cpu_autoscale_policy_id                                   The autoscale policy to assign to the server.
+   -
+   custom_fields             Default:                        The list of custom fields to set on the server.
+   -                         []
+   description                                               The description to set for the server.
+   -
+   exact_count                                               Run in idempotent mode. Will insure that this exact number of servers are running in the provided group, creating and deleting them to
+   -                                                         reach that count. Requires count_group to be set.
+   group                     Default:                        The Server Group to create servers under.
+   -                         "Default Group"
+   ip_address                                                The IP Address for the server. One is assigned if not provided.
+   -
+   location                                                  The Datacenter to create servers in.
+   -
+   managed_os                  Choices:
+   boolean                     • no ←                        Whether to create the server as 'Managed' or not.
+                               • yes
+   memory                    Default:                        Memory in GB.
+   -                         1
+   name                                                      A 1 to 6 character identifier to use for the server. This is required when state is 'present'
+   -
+   network_id                                                The network UUID on which to create servers.
+   -
+                               Choices:
+   os_type                     • redHat6_64Bit
+   -                           • centOS6_64Bit               Only required for bare metal servers. Specifies the OS to provision with the bare metal server.
+                               • windows2012R2Standard_64Bit
+                               • ubuntu14_64Bit
+   packages                  Default:                        The list of blue print packages to run on the server after its created.
+   -                         []
+   password                                                  Password for the administrator / root user
+   -
+   primary_dns                                               Primary DNS used by the server.
+   -
+   public_ip_ports           Default:                        A list of ports to allow on the firewall to the servers public ip, if add_public_ip is set to True.
+   -                         []
+                               Choices:
+   public_ip_protocol          • TCP ←                       The protocol to use for the public ip if add_public_ip is set to True.
+   -                           • UDP
+                               • ICMP
+   secondary_dns                                             Secondary DNS used by the server.
+   -
+   server_ids                Default:                        Required for started, stopped, and absent states. A list of server Ids to insure are started, stopped, or absent.
+   -                         []
+   source_server_password                                    The password for the source server if a clone is specified.
+   -
+                               Choices:
+   state                       • present ←
+   -                           • absent                      The state to insure that the provided resources are in.
+                               • started
+                               • stopped
+   storage_type                Choices:
+   -                           • standard ←                  The type of storage to attach to the server.
+                               • hyperscale
+   template                                                  The template to use for server creation. Will search for a template if a partial string is provided. This is required when state is
+   -                                                         'present'
+   ttl                                                       The time to live for the server in seconds. The server will be deleted when this time expires.
+   -
+                               Choices:
+   type                        • standard ←                  The type of server to create.
+   -                           • hyperscale
+                               • bareMetal
+   wait                        Choices:
+   boolean                     • no                          Whether to wait for the provisioning tasks to finish before returning.
+                               • yes ←
+
+NOTES                   *clc_server-notes*
+
+   Note
+
+     • To use this module, it is required to set the below environment variables which enables access to the Centurylink Cloud - CLC_V2_API_USERNAME, the account login id for the centurylink cloud
+       - CLC_V2_API_PASSWORD, the account password for the centurylink cloud
+     • Alternatively, the module accepts the API token and account alias. The API token can be generated using the CLC account login and password via the HTTP api call @
+       https://api.ctl.io/v2/authentication/login - CLC_V2_API_TOKEN, the API token generated from https://api.ctl.io/v2/authentication/login - CLC_ACCT_ALIAS, the account alias associated with the
+       centurylink cloud
+     • Users can set CLC_V2_API_URL to specify an endpoint for pointing to a different CLC environment.
+
+EXAMPLES                   *clc_server-examples*
+
+ # Note - You must set the CLC_V2_API_USERNAME And CLC_V2_API_PASSWD Environment variables before running these examples
+
+ - name: Provision a single Ubuntu Server
+   clc_server:
+     name: test
+     template: ubuntu-14-64
+     count: 1
+     group: Default Group
+     state: present
+
+ - name: Ensure 'Default Group' has exactly 5 servers
+   clc_server:
+     name: test
+     template: ubuntu-14-64
+     exact_count: 5
+     count_group: Default Group
+     group: Default Group
+
+ - name: Stop a Server
+   clc_server:
+     server_ids:
+       - UC1ACCT-TEST01
+     state: stopped
+
+ - name: Start a Server
+   clc_server:
+     server_ids:
+       - UC1ACCT-TEST01
+     state: started
+
+ - name: Delete a Server
+   clc_server:
+     server_ids:
+       - UC1ACCT-TEST01
+     state: absent
+
+RETURN VALUES                   *clc_server-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key              Returned                                                                         Description
+   partially_created_server_ids          The list of server ids that are partially created
+   list                         success  Sample:
+                                         ['UC1TEST-SVR01', 'UC1TEST-SVR02']
+   server_ids                            The list of server ids that are created
+   list                         success  Sample:
+                                         ['UC1TEST-SVR01', 'UC1TEST-SVR02']
+                                         The list of server objects returned from CLC
+                                         Sample:
+                                         [{'changeInfo': {'createdBy': 'service.wfad', 'createdDate': 1438196820, 'modifiedBy': 'service.wfad', 'modifiedDate': 1438196820}, 'description':
+                                         'test-server', 'details': {'alertPolicies': [], 'cpu': 1, 'customFields': [], 'diskCount': 3, 'disks': [{'id': '0:0', 'partitionPaths': [], 'sizeGB': 1},
+                                         {'id': '0:1', 'partitionPaths': [], 'sizeGB': 2}, {'id': '0:2', 'partitionPaths': [], 'sizeGB': 14}], 'hostName': '', 'inMaintenanceMode': False,
+                                         'ipAddresses': [{'internal': '10.1.1.1'}], 'memoryGB': 1, 'memoryMB': 1024, 'partitions': [], 'powerState': 'started', 'snapshots': [], 'storageGB': 17},
+                                         'groupId': '086ac1dfe0b6411989e8d1b77c4065f0', 'id': 'test-server', 'ipaddress': '10.120.45.23', 'isTemplate': False, 'links': [{'href':
+                                         '/v2/servers/wfad/test-server', 'id': 'test-server', 'rel': 'self', 'verbs': ['GET', 'PATCH', 'DELETE']}, {'href':
+   servers                      success  '/v2/groups/wfad/086ac1dfe0b6411989e8d1b77c4065f0', 'id': '086ac1dfe0b6411989e8d1b77c4065f0', 'rel': 'group'}, {'href': '/v2/accounts/wfad', 'id': 'wfad',
+   list                                  'rel': 'account'}, {'href': '/v2/billing/wfad/serverPricing/test-server', 'rel': 'billing'}, {'href': '/v2/servers/wfad/test-server/publicIPAddresses',
+                                         'rel': 'publicIPAddresses', 'verbs': ['POST']}, {'href': '/v2/servers/wfad/test-server/credentials', 'rel': 'credentials'}, {'href':
+                                         '/v2/servers/wfad/test-server/statistics', 'rel': 'statistics'}, {'href': '/v2/servers/wfad/510ec21ae82d4dc89d28479753bf736a/upcomingScheduledActivities',
+                                         'rel': 'upcomingScheduledActivities'}, {'href': '/v2/servers/wfad/510ec21ae82d4dc89d28479753bf736a/scheduledActivities', 'rel': 'scheduledActivities',
+                                         'verbs': ['GET', 'POST']}, {'href': '/v2/servers/wfad/test-server/capabilities', 'rel': 'capabilities'}, {'href':
+                                         '/v2/servers/wfad/test-server/alertPolicies', 'rel': 'alertPolicyMappings', 'verbs': ['POST']}, {'href': '/v2/servers/wfad/test-server/antiAffinityPolicy',
+                                         'rel': 'antiAffinityPolicyMapping', 'verbs': ['PUT', 'DELETE']}, {'href': '/v2/servers/wfad/test-server/cpuAutoscalePolicy', 'rel':
+                                         'cpuAutoscalePolicyMapping', 'verbs': ['PUT', 'DELETE']}], 'locationId': 'UC1', 'name': 'test-server', 'os': 'ubuntu14_64Bit', 'osType': 'Ubuntu 14 64-bit',
+                                         'status': 'active', 'storageType': 'standard', 'type': 'standard'}]
+
+STATUS                   *clc_server-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • CLC Runner (@clc-runner)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *clc_server-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/clc_server_module.html

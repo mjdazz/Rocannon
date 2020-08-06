@@ -1,0 +1,118 @@
+SYNOPSIS                   *lambda_event*
+
+     • This module allows the management of AWS Lambda function event source mappings such as DynamoDB and Kinesis stream events via the Ansible framework. These event source mappings are relevant
+       only in the AWS Lambda pull model, where AWS Lambda invokes the function. It is idempotent and supports “Check” mode. Use module lambda to manage the lambda function itself and lambda_alias
+       to manage function aliases.
+
+REQUIREMENTS                   *lambda_event-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *lambda_event-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   alias                                         Name of the function alias. Mutually exclusive with version.
+   - / required
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   event_source                   Choices:       Source of the event that triggers the lambda function.
+   -                              • stream ←     For DynamoDB and Kinesis events, select 'stream'
+                                  • sqs          For SQS queues, select 'sqs'
+   lambda_function_arn                           The name or ARN of the lambda function.
+   - / required                                  aliases: function_name, function_arn
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+                                                 Sub-parameters required for event source.
+                                                 == stream event source ==
+                                                 source_arn The Amazon Resource Name (ARN) of the Kinesis or DynamoDB stream that is the event source.
+                                                 enabled Indicates whether AWS Lambda should begin polling the event source. Default is True.
+   source_params                                 batch_size The largest number of records that AWS Lambda will retrieve from your event source at the time of invoking your function. Default is 100.
+   - / required                                  starting_position The position in the stream where AWS Lambda should start reading. Choices are TRIM_HORIZON or LATEST.
+                                                 == sqs event source ==
+                                                 source_arn The Amazon Resource Name (ARN) of the SQS queue to read events from.
+                                                 enabled Indicates whether AWS Lambda should begin reading from the event source. Default is True.
+                                                 batch_size The largest number of records that AWS Lambda will retrieve from your event source at the time of invoking your function. Default is 100.
+   state                          Choices:
+   - / required                   • present ←    Describes the desired state.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   version                                       Version of the Lambda function. Mutually exclusive with alias.
+   -
+
+NOTES                   *lambda_event-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *lambda_event-examples*
+
+ ---
+ # Example that creates a lambda event notification for a DynamoDB stream
+ - hosts: localhost
+   gather_facts: no
+   vars:
+     state: present
+   tasks:
+   - name: DynamoDB stream event mapping
+     lambda_event:
+       state: "{{ state | default('present') }}"
+       event_source: stream
+       function_name: "{{ function_name }}"
+       alias: Dev
+       source_params:
+         source_arn: arn:aws:dynamodb:us-east-1:123456789012:table/tableName/stream/2016-03-19T19:51:37.457
+         enabled: True
+         batch_size: 100
+         starting_position: TRIM_HORIZON
+
+   - name: Show source event
+     debug:
+       var: lambda_stream_events
+
+RETURN VALUES                   *lambda_event-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   lambda_stream_events success  list of dictionaries returned by the API describing stream event mappings
+   list
+
+STATUS                   *lambda_event-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Pierre Jodouin (@pjodouin), Ryan Brown (@ryansb)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *lambda_event-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/lambda_event_module.html

@@ -1,0 +1,115 @@
+SYNOPSIS                   *proxysql_scheduler*
+
+     • The proxysql_scheduler module adds or removes schedules using the proxysql admin interface.
+
+REQUIREMENTS                   *proxysql_scheduler-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyMySQL (Python 2.7 and Python 3.X), or
+     • MySQLdb (Python 2.x)
+
+PARAMETERS                   *proxysql_scheduler-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   active            Choices:
+   boolean           • no           A schedule with active set to False will be tracked in the database, but will be never loaded in the in-memory data structures.
+                     • yes ←
+   arg1                             Argument that can be passed to the job.
+   -
+   arg2                             Argument that can be passed to the job.
+   -
+   arg3                             Argument that can be passed to the job.
+   -
+   arg4                             Argument that can be passed to the job.
+   -
+   arg5                             Argument that can be passed to the job.
+   -
+   comment                          Text field that can be used for any purposed defined by the user.
+   -
+   config_file     Default:         Specify a config file from which login_user and login_password are to be read.
+   path            ""
+   filename                         Full path of the executable to be executed.
+   - / required
+   force_delete      Choices:       By default we avoid deleting more than one schedule in a single batch, however if you need this behaviour and you're not concerned about the schedules deleted,
+   boolean           • no ←         you can set force_delete to True.
+                     • yes
+   interval_ms     Default:         How often (in millisecond) the job will be started. The minimum value for interval_ms is 100 milliseconds.
+   -               10000
+   load_to_runtime   Choices:
+   boolean           • no           Dynamically load config to runtime memory.
+                     • yes ←
+   login_host      Default:         The host used to connect to ProxySQL admin interface.
+   string          "127.0.0.1"
+   login_password                   The password used to authenticate to ProxySQL admin interface.
+   string
+   login_port      Default:         The port used to connect to ProxySQL admin interface.
+   integer         6032
+   login_user                       The username used to authenticate to ProxySQL admin interface.
+   string
+   save_to_disk      Choices:
+   boolean           • no           Save config to sqlite db on disk to persist the configuration.
+                     • yes ←
+   state             Choices:
+   -                 • present ←    When present - adds the schedule, when absent - removes the schedule.
+                     • absent
+
+EXAMPLES                   *proxysql_scheduler-examples*
+
+ ---
+ # This example adds a schedule, it saves the scheduler config to disk, but
+ # avoids loading the scheduler config to runtime (this might be because
+ # several servers are being added and the user wants to push the config to
+ # runtime in a single batch using the M(proxysql_manage_config) module).  It
+ # uses supplied credentials to connect to the proxysql admin interface.
+
+ - proxysql_scheduler:
+     login_user: 'admin'
+     login_password: 'admin'
+     interval_ms: 1000
+     filename: "/opt/maintenance.py"
+     state: present
+     load_to_runtime: False
+
+ # This example removes a schedule, saves the scheduler config to disk, and
+ # dynamically loads the scheduler config to runtime.  It uses credentials
+ # in a supplied config file to connect to the proxysql admin interface.
+
+ - proxysql_scheduler:
+     config_file: '~/proxysql.cnf'
+     filename: "/opt/old_script.py"
+     state: absent
+
+RETURN VALUES                   *proxysql_scheduler-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                   Description
+              On
+              create/update
+              will return
+              the newly     The schedule modified or removed from proxysql
+   stdout     modified      Sample:
+   dictionary schedule, on  {'changed': True, 'filename': '/opt/test.py', 'msg': 'Added schedule to scheduler', 'schedules': [{'active': '1', 'arg1': None, 'arg2': None, 'arg3': None, 'arg4': None,
+              delete it     'arg5': None, 'comment': '', 'filename': '/opt/test.py', 'id': '1', 'interval_ms': '10000'}], 'state': 'present'}
+              will return
+              the deleted
+              record.
+
+STATUS                   *proxysql_scheduler-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ben Mildren (@bmildren)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *proxysql_scheduler-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/proxysql_scheduler_module.html

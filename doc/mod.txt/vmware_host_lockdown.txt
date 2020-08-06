@@ -1,0 +1,137 @@
+SYNOPSIS                   *vmware_host_lockdown*
+
+     • This module can be used to manage administrator permission for the local administrative account for the host when ESXi hostname is given.
+     • All parameters and VMware objects values are case sensitive.
+     • This module is destructive as administrator permission are managed using APIs used, please read options carefully and proceed.
+     • Please specify hostname as vCenter IP or hostname only, as lockdown operations are not possible from standalone ESXi server.
+
+REQUIREMENTS                   *vmware_host_lockdown-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_host_lockdown-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   cluster_name                    Name of cluster.
+   string                          All host systems from given cluster used to manage lockdown.
+                                   Required parameter, if esxi_hostname is not set.
+   esxi_hostname                   List of ESXi hostname to manage lockdown.
+   list                            Required parameter, if cluster_name is not set.
+                                   See examples for specifications.
+   hostname                        The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                   Environment variable support added in Ansible 2.6.
+                                   The password of the vSphere vCenter or ESXi server.
+   password                        If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: pass, pwd
+   port           Default:         The port number of the vSphere vCenter or ESXi server.
+   integer        443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                    Environment variable support added in Ansible 2.6.
+   proxy_host                      Address of a proxy that will receive all HTTPS requests and relay them.
+   string                          The format is a hostname or a IP.
+   added in 2.9                    If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                   This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                      Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+                                   State of hosts system
+   state            Choices:       If set to present, all host systems will be set in lockdown mode.
+   string           • present ←    If host system is already in lockdown mode and set to present, no action will be taken.
+   added in 2.5     • absent       If set to absent, all host systems will be removed from lockdown mode.
+                                   If host system is already out of lockdown mode and set to absent, no action will be taken.
+                                   The username of the vSphere vCenter or ESXi server.
+   username                        If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: admin, user
+                    Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs   • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean          • yes ←        Environment variable support added in Ansible 2.6.
+                                   If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_host_lockdown-notes*
+
+   Note
+
+     • Tested on vSphere 6.5
+
+EXAMPLES                   *vmware_host_lockdown-examples*
+
+ - name: Enter host system into lockdown mode
+   vmware_host_lockdown:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     esxi_hostname: '{{ esxi_hostname }}'
+     state: present
+   delegate_to: localhost
+
+ - name: Exit host systems from lockdown mode
+   vmware_host_lockdown:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     esxi_hostname: '{{ esxi_hostname }}'
+     state: absent
+   delegate_to: localhost
+
+ - name: Enter host systems into lockdown mode
+   vmware_host_lockdown:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     esxi_hostname:
+         - '{{ esxi_hostname_1 }}'
+         - '{{ esxi_hostname_2 }}'
+     state: present
+   delegate_to: localhost
+
+ - name: Exit host systems from lockdown mode
+   vmware_host_lockdown:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     esxi_hostname:
+         - '{{ esxi_hostname_1 }}'
+         - '{{ esxi_hostname_2 }}'
+     state: absent
+   delegate_to: localhost
+
+ - name: Enter all host system from cluster into lockdown mode
+   vmware_host_lockdown:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     cluster_name: '{{ cluster_name }}'
+     state: present
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_host_lockdown-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   results             metadata about state of Host system lock down
+   dictionary always   Sample:
+                       {'host_lockdown_state': {'DC0_C0': {'current_state': 'present', 'previous_state': 'absent', 'desired_state': 'present'}}}
+
+STATUS                   *vmware_host_lockdown-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_host_lockdown-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_host_lockdown_module.html

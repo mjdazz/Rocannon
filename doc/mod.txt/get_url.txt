@@ -1,21 +1,254 @@
-SYNOPSIS                           *get_url*
+SYNOPSIS                   *get_url*
 
-Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote server must have direct access to the remote resource. By default, if an environment variable <protocol>_proxy is set on
-the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this task (see setting the environment), or by using the use_proxy option.
+     • Downloads files from HTTP, HTTPS, or FTP to the remote server. The remote server must have direct access to the remote resource.
+     • By default, if an environment variable <protocol>_proxy is set on the target host, requests will be sent through that proxy. This behaviour can be overridden by setting a variable for this
+       task (see setting the environment), or by using the use_proxy option.
+     • HTTP redirects can redirect from HTTP to HTTPS so you should be sure that your proxy environment for both protocols is correct.
+     • From Ansible 2.4 when run with --check, it will do a HEAD request to validate the URL but will not download the entire file or verify it against hashes.
+     • For Windows targets, use the win_get_url module instead.
 
-EXAMPLES                           *get_url-examples*
->
-    - name: download foo.conf
-      get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf mode=0440
-   
-    - name: download file with sha256 check
-      get_url: url=http://example.com/path/file.conf dest=/etc/foo.conf sha256sum=b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
-   
-      Note
-   
-      This module doesn’t yet support configuration for proxies.
-   
+PARAMETERS                   *get_url-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+                                      The attributes the resulting file or directory should have.
+   attributes                         To get supported flags look at the man page for chattr on the target system.
+   string                             This string should contain the attributes in the same order as the one displayed by lsattr.
+                                      The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                      aliases: attr
+   backup             Choices:
+   boolean            • no ←          Create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                      • yes
+                                      If a checksum is passed to this parameter, the digest of the destination file will be calculated after it is downloaded to ensure its integrity and verify that
+                                      the transfer completed successfully. Format: <algorithm>:<checksum|url>, e.g. checksum="sha256:D98291AC[...]B6DC7B97",
+                                      checksum="sha256:http://example.com/path/sha256sum.txt"
+   checksum         Default:          If you worry about portability, only the sha1 algorithm is available on all platforms and python versions.
+   string           ""                The third party hashlib library can be installed for access to additional algorithms.
+                                      Additionally, if a checksum is passed to this parameter, and the file exist under the dest location, the destination_checksum would be calculated, and if
+                                      checksum equals destination_checksum, the file download would be skipped (unless force is true). If the checksum does not equal destination_checksum, the
+                                      destination file is deleted.
+   client_cert                        PEM formatted certificate chain file to be used for SSL client authentication.
+   path                               This file can also include the key as well, and if the key is included, client_key is not required.
+   added in 2.4
+   client_key                         PEM formatted file that contains your private key to be used for SSL client authentication.
+   path                               If client_cert contains both the certificate and key, this option is not required.
+   added in 2.4
+                                      Absolute path of where to download the file to.
+   dest                               If dest is a directory, either the server provided filename or, if none provided, the base name of the URL on the remote server will be used. If a directory,
+   path / required                    force has no effect.
+                                      If dest is a directory, the file will always be downloaded (regardless of the force option), but replaced only if the contents changed..
+                                      If yes and dest is not a directory, will download the file every time and replace the file if the contents change. If no, the file will only be downloaded if
+   force              Choices:        the destination does not exist. Generally should be yes only for small local files.
+   boolean            • no ←          Prior to 0.6, this module behaved as if yes was the default.
+                      • yes           Alias thirsty has been deprecated and will be removed in 2.13.
+                                      aliases: thirsty
+   force_basic_auth   Choices:        Force the sending of the Basic authentication header upon initial request.
+   boolean            • no ←          httplib2, the library used by the uri module only sends authentication information when a webservice responds to an initial request with a 401 status. Since
+                      • yes           some basic auth services do not properly send a 401, logins will fail.
+   group                              Name of the group that should own the file/directory, as would be fed to chown.
+   string
+                                      Add custom HTTP headers to a request in hash/dict format.
+   headers                            The hash/dict format was added in Ansible 2.6.
+   raw                                Previous versions used a "key:value,key:value" string format.
+                                      The "key:value,key:value" string format is deprecated and will be removed in version 2.10.
+   http_agent       Default:          Header to identify as, generally appears in web server logs.
+   string           "ansible-httpget"
+                                      The permissions the resulting file or directory should have.
+                                      For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is
+   mode                               an octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                             Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                      As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                      As of Ansible 2.6, the mode may also be the special string preserve.
+                                      When set to preserve the file will be given the same permissions as the source file.
+   owner                              Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   selevel          Default:          The level part of the SELinux file context.
+   string           "s0"              This is the MLS/MCS attribute, sometimes known as the range.
+                                      When set to _default, it will use the level portion of the policy if available.
+   serole                             The role part of the SELinux file context.
+   string                             When set to _default, it will use the role portion of the policy if available.
+   setype                             The type part of the SELinux file context.
+   string                             When set to _default, it will use the type portion of the policy if available.
+   seuser                             The user part of the SELinux file context.
+   string                             By default it uses the system policy, where applicable.
+                                      When set to _default, it will use the user portion of the policy if available.
+   sha256sum        Default:          If a SHA-256 checksum is passed to this parameter, the digest of the destination file will be calculated after it is downloaded to ensure its integrity and
+   -                ""                verify that the transfer completed successfully. This option is deprecated. Use checksum instead.
+   timeout          Default:          Timeout in seconds for URL request.
+   integer          10
+                                      Absolute path of where temporary file is downloaded to.
+   tmp_dest                           When run on Ansible 2.5 or greater, path defaults to ansible's remote_tmp setting
+   path                               When run on Ansible prior to 2.5, it defaults to TMPDIR, TEMP or TMP env variables or a platform specific value.
+                                      https://docs.python.org/2/library/tempfile.html#tempfile.tempdir
+                                      Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                      By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or
+   unsafe_writes      Choices:        just broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be
+   boolean            • no ←          written in an unsafe manner.
+                      • yes           This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                      writes).
+                                      IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   url
+   string /                           HTTP, HTTPS, or FTP URL in the form (http|https|ftp)://[user[:pass]]@host.domain[:port]/path
+   required
+                                      The password for use in HTTP basic authentication.
+   url_password                       If the url_username parameter is not specified, the url_password parameter will not be used.
+   string                             Since version 2.8 you can also use the 'password' alias for this option.
+                                      aliases: password
+                                      The username for use in HTTP basic authentication.
+   url_username                       This parameter can be used without url_password for sites that allow empty passwords.
+   string                             Since version 2.8 you can also use the username alias for this option.
+                                      aliases: username
+   use_proxy          Choices:
+   boolean            • no            if no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                      • yes ←
+   validate_certs     Choices:        If no, SSL certificates will not be validated.
+   boolean            • no            This should only be used on personally controlled sites using self-signed certificates.
+                      • yes ←
+
+NOTES                   *get_url-notes*
+
+   Note
+
+     • For Windows targets, use the win_get_url module instead.
+
+SEE ALSO                   *get_url-see also*
+
+   See also
+
+   uri – Interacts with webservices
+   The official documentation on the uri module.
+
+   win_get_url – Downloads file from HTTP, HTTPS, or FTP to node
+   The official documentation on the win_get_url module.
+
+EXAMPLES                   *get_url-examples*
+
+ - name: Download foo.conf
+   get_url:
+     url: http://example.com/path/file.conf
+     dest: /etc/foo.conf
+     mode: '0440'
+
+ - name: Download file and force basic auth
+   get_url:
+     url: http://example.com/path/file.conf
+     dest: /etc/foo.conf
+     force_basic_auth: yes
+
+ - name: Download file with custom HTTP headers
+   get_url:
+     url: http://example.com/path/file.conf
+     dest: /etc/foo.conf
+     headers:
+       key1: one
+       key2: two
+
+ - name: Download file with check (sha256)
+   get_url:
+     url: http://example.com/path/file.conf
+     dest: /etc/foo.conf
+     checksum: sha256:b5bb9d8014a0f9b1d61e21e796d78dccdf1352f23cd32812f4850b878ae4944c
+
+ - name: Download file with check (md5)
+   get_url:
+     url: http://example.com/path/file.conf
+     dest: /etc/foo.conf
+     checksum: md5:66dffb5228a211e61d6d7ef4a86f5758
+
+ - name: Download file with checksum url (sha256)
+   get_url:
+     url: http://example.com/path/file.conf
+     dest: /etc/foo.conf
+     checksum: sha256:http://example.com/path/sha256sum.txt
+
+ - name: Download file from a file path
+   get_url:
+     url: file:///tmp/afile.txt
+     dest: /tmp/afilecopy.txt
+
+ - name: < Fetch file that requires authentication.
+         username/password only available since 2.8, in older versions you need to use url_username/url_password
+   get_url:
+     url: http://example.com/path/file.conf
+     dest: /etc/foo.conf
+     username: bar
+     password: '{{ mysecret }}'
+
+RETURN VALUES                   *get_url-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key              Returned                                                                                 Description
+   backup_file                             name of backup file created after download
+   string        changed and if backup=yes Sample:
+                                           /path/to/[email protected]:09~
+   checksum_dest                           sha1 checksum of the file after copy
+   string        success                   Sample:
+                                           6e642bb8dd5c2e027bf21dd923337cbb4214f827
+   checksum_src                            sha1 checksum of the file
+   string        success                   Sample:
+                                           6e642bb8dd5c2e027bf21dd923337cbb4214f827
+   dest                                    destination file/path
+   string        success                   Sample:
+                                           /path/to/file.txt
+   elapsed                                 The number of seconds that elapsed while performing the download
+   integer       always                    Sample:
+                                           23
+   gid                                     group id of the file
+   integer       success                   Sample:
+                                           100
+   group                                   group of the file
+   string        success                   Sample:
+                                           httpd
+   md5sum                                  md5 checksum of the file after download
+   string        when supported            Sample:
+                                           2a5aeecc61dc98c4d780b14b330e3282
+   mode                                    permissions of the target
+   string        success                   Sample:
+                                           0644
+   msg                                     the HTTP message from the request
+   string        always                    Sample:
+                                           OK (unknown bytes)
+   owner                                   owner of the file
+   string        success                   Sample:
+                                           httpd
+   secontext                               the SELinux security context of the file
+   string        success                   Sample:
+                                           unconfined_u:object_r:user_tmp_t:s0
+   size                                    size of the target
+   integer       success                   Sample:
+                                           1220
+   src                                     source file used after download
+   string        always                    Sample:
+                                           /tmp/tmpAdFLdV
+   state                                   state of the target
+   string        success                   Sample:
+                                           file
+   status_code                             the HTTP status code from the request
+   integer       always                    Sample:
+                                           200
+   uid                                     owner id of the file, after execution
+   integer       success                   Sample:
+                                           100
+   url                                     the actual URL used for the request
+   string        always                    Sample:
+                                           https://www.ansible.com/
+
+STATUS                   *get_url-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *get_url-red hat support*
+
+     • Jan-Piet Mens (@jpmens)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *get_url-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/get_url_module.html
+https://docs.ansible.com/ansible/latest/modules/get_url_module.html

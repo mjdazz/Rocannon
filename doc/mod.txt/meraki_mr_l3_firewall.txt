@@ -1,0 +1,132 @@
+SYNOPSIS                   *meraki_mr_l3_firewall*
+
+     • Allows for creation, management, and visibility into layer 3 firewalls implemented on Meraki MR access points.
+     • Module is not idempotent as of current release.
+
+PARAMETERS                   *meraki_mr_l3_firewall-parameters*
+
+           Parameter         Choices/Defaults                                                                         Comments
+   allow_lan_access            Choices:
+   boolean                     • no            Sets whether devices can talk to other devices on the same LAN.
+                               • yes ←
+   auth_key                                    Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   host                      Default:          Hostname for Meraki dashboard.
+   string                    "api.meraki.com"  Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:          Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   net_id                                      ID of network containing access points.
+   string
+   net_name                                    Name of network containing access points.
+   string
+   number                                      Number of SSID to apply firewall rule to.
+   integer                                     aliases: ssid_number
+   org_id                                      ID of organization.
+   string
+   org_name                                    Name of organization.
+   string                                      aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←   Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug         Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:          Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   rules                                       List of firewall rules.
+   list
+            comment                            Optional comment describing the firewall rule.
+            string
+            dest_cidr                          Comma-separated list of CIDR notation networks to match.
+            string
+            dest_port                          Comma-seperated list of destination ports to match.
+            string
+            policy             Choices:
+            string             • allow         Specifies the action that should be taken when rule is hit.
+                               • deny
+                               Choices:
+            protocol           • any
+            string             • icmp          Specifies protocol to match against.
+                               • tcp
+                               • udp
+   ssid_name                                   Name of SSID to apply firewall rule to.
+   string                                      aliases: ssid
+   state                       Choices:
+   string                      • present ←     Create or modify an organization.
+                               • query
+   timeout                   Default:          Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:        If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no            Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no            Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_mr_l3_firewall-notes*
+
+   Note
+
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_mr_l3_firewall-examples*
+
+ - name: Create single firewall rule
+   meraki_mr_l3_firewall:
+     auth_key: abc123
+     state: present
+     org_name: YourOrg
+     net_id: 12345
+     number: 1
+     rules:
+       - comment: Integration test rule
+         policy: allow
+         protocol: tcp
+         dest_port: 80
+         dest_cidr: 192.0.2.0/24
+     allow_lan_access: no
+   delegate_to: localhost
+
+ - name: Enable local LAN access
+   meraki_mr_l3_firewall:
+     auth_key: abc123
+     state: present
+     org_name: YourOrg
+     net_id: 123
+     number: 1
+     rules:
+     allow_lan_access: yes
+   delegate_to: localhost
+
+ - name: Query firewall rules
+   meraki_mr_l3_firewall:
+     auth_key: abc123
+     state: query
+     org_name: YourOrg
+     net_name: YourNet
+     number: 1
+   delegate_to: localhost
+
+STATUS                   *meraki_mr_l3_firewall-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_mr_l3_firewall-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_mr_l3_firewall_module.html

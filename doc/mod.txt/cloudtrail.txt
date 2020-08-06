@@ -1,0 +1,216 @@
+SYNOPSIS                   *cloudtrail*
+
+     • Creates, deletes, or updates CloudTrail configuration. Ensures logging is also enabled.
+
+REQUIREMENTS                   *cloudtrail-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *cloudtrail-parameters*
+
+             Parameter           Choices/Defaults                                                                      Comments
+   aws_access_key                                 AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                         aliases: ec2_access_key, access_key
+   aws_secret_key                                 AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                         aliases: ec2_secret_key, secret_key
+   cloudwatch_logs_log_group_arn                  A full ARN specifying a valid CloudWatch log group to which CloudTrail logs will be delivered. The log group should already exist.
+   -                                              See https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html.
+   added in 2.4                                   Required when cloudwatch_logs_role_arn.
+   cloudwatch_logs_role_arn                       Specifies a full ARN for an IAM role that assigns the proper permissions for CloudTrail to create and write to the log group.
+   -                                              See https://docs.aws.amazon.com/awscloudtrail/latest/userguide/send-cloudtrail-events-to-cloudwatch-logs.html.
+   added in 2.4                                   Required when cloudwatch_logs_log_group_arn.
+   debug_botocore_endpoint_logs    Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                         • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                    • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                        Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                         Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   enable_log_file_validation      Choices:       Specifies whether log file integrity validation is enabled.
+   boolean                         • no           CloudTrail will create a hash for every log file delivered and produce a signed digest file that can be used to ensure log files have not been
+   added in 2.4                    • yes          tampered.
+                                                  aliases: log_file_validation_enabled
+   enable_logging                  Choices:
+   boolean                         • no           Start or stop the CloudTrail logging. If stopped the trail will be paused and will not record events or deliver log files.
+   added in 2.4                    • yes ←
+   include_global_events           Choices:       Record API calls from global services such as IAM and STS.
+   boolean                         • no           aliases: include_global_service_events
+                                   • yes ←
+   is_multi_region_trail           Choices:
+   boolean                         • no ←         Specify whether the trail belongs only to one region or exists in all regions.
+   added in 2.4                    • yes
+   kms_key_id                                     Specifies the KMS key ID to use to encrypt the logs delivered by CloudTrail. This also has the effect of enabling log file encryption.
+   -                                              The value can be an alias name prefixed by "alias/", a fully specified ARN to an alias, a fully specified ARN to a key, or a globally unique
+   added in 2.4                                   identifier.
+                                                  See https://docs.aws.amazon.com/awscloudtrail/latest/userguide/encrypting-cloudtrail-log-files-with-aws-kms.html.
+   name                                           Name for the CloudTrail.
+   - / required                                   Names are unique per-region unless the CloudTrail is a multi-region trail, in which case it is unique per-account.
+   profile                                        Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                         The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                         http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                  aliases: aws_region, ec2_region
+   s3_bucket_name                                 An existing S3 bucket where CloudTrail will deliver log files.
+   -                                              This bucket should exist and have the proper policy.
+   added in 2.4                                   See https://docs.aws.amazon.com/awscloudtrail/latest/userguide/aggregating_logs_regions_bucket_policy.html.
+                                                  Required when state=present.
+   s3_key_prefix                                  S3 Key prefix for delivered log files. A trailing slash is not necessary and will be removed.
+   -
+   security_token                                 AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                         aliases: access_token
+   sns_topic_name
+   -                                              SNS Topic name to send notifications to when a log file is delivered.
+   added in 2.4
+                                   Choices:
+   state                           • present      Add or remove CloudTrail configuration.
+   - / required                    • absent       The following states have been preserved for backwards compatibility. state=enabled and state=disabled.
+                                   • enabled      enabled=present and disabled=absent.
+                                   • disabled
+   tags                          Default:         A hash/dictionary of tags to be applied to the CloudTrail resource.
+   -                             {}               Remove completely or specify an empty dictionary to remove all tags.
+   added in 2.4
+   validate_certs                  Choices:
+   boolean                         • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                   • yes ←
+
+NOTES                   *cloudtrail-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *cloudtrail-examples*
+
+ - name: create single region cloudtrail
+   cloudtrail:
+     state: present
+     name: default
+     s3_bucket_name: mylogbucket
+     s3_key_prefix: cloudtrail
+     region: us-east-1
+
+ - name: create multi-region trail with validation and tags
+   cloudtrail:
+     state: present
+     name: default
+     s3_bucket_name: mylogbucket
+     region: us-east-1
+     is_multi_region_trail: true
+     enable_log_file_validation: true
+     cloudwatch_logs_role_arn: "arn:aws:iam::123456789012:role/CloudTrail_CloudWatchLogs_Role"
+     cloudwatch_logs_log_group_arn: "arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail/DefaultLogGroup:""
+     kms_key_id: "alias/MyAliasName"
+     tags:
+       environment: dev
+       Name: default
+
+ - name: show another valid kms_key_id
+   cloudtrail:
+     state: present
+     name: default
+     s3_bucket_name: mylogbucket
+     kms_key_id: "arn:aws:kms:us-east-1:123456789012:key/12345678-1234-1234-1234-123456789012"
+     # simply "12345678-1234-1234-1234-123456789012" would be valid too.
+
+ - name: pause logging the trail we just created
+   cloudtrail:
+     state: present
+     name: default
+     enable_logging: false
+     s3_bucket_name: mylogbucket
+     region: us-east-1
+     is_multi_region_trail: true
+     enable_log_file_validation: true
+     tags:
+       environment: dev
+       Name: default
+
+ - name: delete a trail
+   cloudtrail:
+     state: absent
+     name: default
+
+RETURN VALUES                   *cloudtrail-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                 Key                      Returned                                                                       Description
+   exists                                                whether the resource exists
+   boolean                          always               Sample:
+                                                         True
+   trail                                                 CloudTrail resource details
+   complex                          always               Sample:
+                                                         hash/dictionary of values
+     cloud_watch_logs_log_group_arn                      Full ARN of the CloudWatch Logs log group where events are delivered.
+     string                         success when present Sample:
+                                                         arn:aws:logs:us-east-1:123456789012:log-group:CloudTrail/DefaultLogGroup:"
+     cloud_watch_logs_role_arn                           Full ARN of the IAM role that CloudTrail assumes to deliver events.
+     string                         success when present Sample:
+                                                         arn:aws:iam::123456789012:role/CloudTrail_CloudWatchLogs_Role
+     has_custom_event_selectors     success              Whether any custom event selectors are used for this trail.
+     boolean
+     home_region                                         The home region where the trail was originally created and must be edited.
+     string                         success              Sample:
+                                                         us-east-1
+     include_global_service_events                       Whether global services (IAM, STS) are logged with this trail
+     boolean                        success              Sample:
+                                                         True
+     is_logging                                          Whether logging is turned on or paused for the Trail
+     boolean                        success              Sample:
+                                                         True
+     is_multi_region_trail                               Whether the trail applies to all regions or just one
+     boolean                        success              Sample:
+                                                         True
+     kms_key_id                                          Full ARN of the KMS Key used to encrypt log files.
+     string                         success when present Sample:
+                                                         arn:aws:kms::123456789012:key/12345678-1234-1234-1234-123456789012
+     log_file_validation_enabled                         Whether log file validation is enabled on the trail
+     boolean                        success              Sample:
+                                                         True
+     name                                                Name of the CloudTrail resource
+     string                         success              Sample:
+                                                         default
+     s3_bucket_name                                      S3 bucket name where log files are delivered
+     string                         success              Sample:
+                                                         myBucket
+     s3_key_prefix                                       Key prefix in bucket where log files are delivered (if any)
+     string                         success when present Sample:
+                                                         myKeyPrefix
+     sns_topic_arn                                       Full ARN of the SNS topic where log delivery notifications are sent.
+     string                         success when present Sample:
+                                                         arn:aws:sns:us-east-1:123456789012:topic/myTopic
+     sns_topic_name                                      The SNS topic name where log delivery notifications are sent.
+     string                         success when present Sample:
+                                                         myTopic
+     tags                                                hash/dictionary of tags applied to this resource
+     dictionary                     success              Sample:
+                                                         {'environment': 'dev', 'Name': 'default'}
+     trail_arn                                           Full ARN of the CloudTrail resource
+     string                         success              Sample:
+                                                         arn:aws:cloudtrail:us-east-1:123456789012:trail/default
+
+STATUS                   *cloudtrail-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ansible Core Team
+     • Ted Timmons (@tedder)
+     • Daniel Shepherd (@shepdelacreme)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cloudtrail-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cloudtrail_module.html

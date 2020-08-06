@@ -1,0 +1,122 @@
+SYNOPSIS                   *iam_policy*
+
+     • Allows uploading or removing IAM policies for IAM users, groups or roles.
+
+REQUIREMENTS                   *iam_policy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *iam_policy-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   iam_name                                      Name of IAM resource you wish to target for policy actions. In other words, the user name, group name or role name.
+   - / required
+                                  Choices:
+   iam_type                       • user         Type of IAM resource
+   - / required                   • group
+                                  • role
+   policy_document                               The path to the properly json formatted policy file (mutually exclusive with policy_json)
+   -
+   policy_json                                   A properly json formatted policy as string (mutually exclusive with policy_document, see
+   -                                             https://github.com/ansible/ansible/issues/7005#issuecomment-42894813 on how to use it properly)
+   policy_name                                   The name label for the policy to create or remove.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   skip_duplicates              Default:         By default the module looks for any policies that match the document you pass in, if there is a match it will not make a new policy object with the
+   -                            "/"              same rules. You can override this by specifying false which would allow for two policy objects with different names but same rules.
+   state                          Choices:
+   - / required                   • present      Whether to create or delete the IAM policy.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *iam_policy-notes*
+
+   Note
+
+     • Currently boto does not support the removal of Managed Policies, the module will not work removing/adding managed policies.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *iam_policy-examples*
+
+ # Create a policy with the name of 'Admin' to the group 'administrators'
+ - name: Assign a policy called Admin to the administrators group
+   iam_policy:
+     iam_type: group
+     iam_name: administrators
+     policy_name: Admin
+     state: present
+     policy_document: admin_policy.json
+
+ # Advanced example, create two new groups and add a READ-ONLY policy to both
+ # groups.
+ - name: Create Two Groups, Mario and Luigi
+   iam:
+     iam_type: group
+     name: "{{ item }}"
+     state: present
+   loop:
+      - Mario
+      - Luigi
+   register: new_groups
+
+ - name: Apply READ-ONLY policy to new groups that have been recently created
+   iam_policy:
+     iam_type: group
+     iam_name: "{{ item.created_group.group_name }}"
+     policy_name: "READ-ONLY"
+     policy_document: readonlypolicy.json
+     state: present
+   loop: "{{ new_groups.results }}"
+
+ # Create a new S3 policy with prefix per user
+ - name: Create S3 policy from template
+   iam_policy:
+     iam_type: user
+     iam_name: "{{ item.user }}"
+     policy_name: "s3_limited_access_{{ item.prefix }}"
+     state: present
+     policy_json: " {{ lookup( 'template', 's3_policy.json.j2') }} "
+     loop:
+       - user: s3_user
+         prefix: s3_user_prefix
+
+STATUS                   *iam_policy-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jonathan I. Davila (@defionscode)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iam_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iam_policy_module.html

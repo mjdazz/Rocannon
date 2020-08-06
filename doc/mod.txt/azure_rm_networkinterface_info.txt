@@ -1,0 +1,179 @@
+SYNOPSIS                   *azure_rm_networkinterface_info*
+
+     • Get facts for a specific network interface or all network interfaces within a resource group.
+
+   Aliases: azure_rm_networkinterface_facts
+
+REQUIREMENTS                   *azure_rm_networkinterface_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • azure >= 2.0.0
+
+PARAMETERS                   *azure_rm_networkinterface_info-parameters*
+
+        Parameter        Choices/Defaults                                                                           Comments
+   ad_user                                  Active Directory username. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   adfs_authority_url
+   string                                   Azure AD authority url. Use when authenticating with Username/password, and has your own ADFS authority.
+   added in 2.6
+   api_profile          Default:            Selects an API profile to use when communicating with Azure services. Default value of latest is appropriate for public clouds; future values will allow
+   string               "latest"            use with Azure Stack.
+   added in 2.5
+                                            Controls the source of the credentials to use for authentication.
+                          Choices:          If not specified, ANSIBLE_AZURE_AUTH_SOURCE environment variable will be used and default to auto if variable is not defined.
+                          • auto            auto will follow the default precedence of module parameters -> environment variables -> default profile in credential file ~/.azure/credentials.
+   auth_source            • cli             When set to cli, the credentials will be sources from the default Azure CLI profile.
+   string                 • credential_file Can also be set via the ANSIBLE_AZURE_AUTH_SOURCE environment variable.
+   added in 2.5           • env             When set to msi, the host machine must be an azure resource with an enabled MSI extension. subscription_id or the environment variable
+                          • msi             AZURE_SUBSCRIPTION_ID can be used to identify the subscription ID if the resource is granted access to more than one subscription, otherwise the first
+                                            subscription is chosen.
+                                            The msi was added in Ansible 2.6.
+   cert_validation_mode   Choices:          Controls the certificate validation behavior for Azure endpoints. By default, all modules will validate the server certificate, but when an HTTPS proxy
+   string                 • ignore          is in use, or against Azure Stack, it may be necessary to disable this behavior by passing ignore. Can also be set via credential file profile or the
+   added in 2.5           • validate        AZURE_CERT_VALIDATION environment variable.
+   client_id                                Azure client ID. Use when authenticating with a Service Principal.
+   string
+   cloud_environment    Default:            For cloud environments other than the US public cloud, the environment name (as defined by Azure Python SDK, eg, AzureChinaCloud, AzureUSGovernment), or
+   string               "AzureCloud"        a metadata discovery endpoint URL (required for Azure Stack). Can also be set via credential file profile or the AZURE_CLOUD_ENVIRONMENT environment
+   added in 2.4                             variable.
+   name                                     Only show results for a specific network interface.
+   -
+   password                                 Active Directory user password. Use when authenticating with an Active Directory user rather than service principal.
+   string
+   profile                                  Security profile found in ~/.azure/credentials file.
+   string
+   resource_group                           Name of the resource group containing the network interface(s). Required when searching by name.
+   -
+   secret                                   Azure client secret. Use when authenticating with a Service Principal.
+   string
+   subscription_id                          Your Azure subscription Id.
+   string
+   tags                                     Limit results by providing a list of tags. Format tags as 'key' or 'key:value'.
+   -
+   tenant                                   Azure tenant ID. Use when authenticating with a Service Principal.
+   string
+
+NOTES                   *azure_rm_networkinterface_info-notes*
+
+   Note
+
+     • For authentication with Azure you can pass parameters, set environment variables, use a profile stored in ~/.azure/credentials, or log in before you run your tasks or playbook with az login.
+     • Authentication is also possible using a service principal or Active Directory user.
+     • To authenticate via service principal, pass subscription_id, client_id, secret and tenant or set environment variables AZURE_SUBSCRIPTION_ID, AZURE_CLIENT_ID, AZURE_SECRET and AZURE_TENANT.
+     • To authenticate via Active Directory user, pass ad_user and password, or set AZURE_AD_USER and AZURE_PASSWORD in the environment.
+     • Alternatively, credentials can be stored in ~/.azure/credentials. This is an ini file containing a [default] section and the following keys: subscription_id, client_id, secret and tenant or
+       subscription_id, ad_user and password. It is also possible to add additional profiles. Specify the profile by passing profile or setting AZURE_PROFILE in the environment.
+
+SEE ALSO                   *azure_rm_networkinterface_info-see also*
+
+   See also
+
+   Sign in with Azure CLI
+   How to authenticate using the az login command.
+
+EXAMPLES                   *azure_rm_networkinterface_info-examples*
+
+ - name: Get facts for one network interface
+   azure_rm_networkinterface_info:
+     resource_group: myResourceGroup
+     name: nic001
+
+ - name: Get network interfaces within a resource group
+   azure_rm_networkinterface_info:
+     resource_group: myResourceGroup
+
+ - name: Get network interfaces by tag
+   azure_rm_networkinterface_info:
+     resource_group: myResourceGroup
+     tags:
+       - testing
+       - foo:bar
+
+RETURN VALUES                   *azure_rm_networkinterface_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                     Key                   Returned                                                                    Description
+   azure_networkinterfaces                 always   List of network interface dicts.
+   list
+   networkinterfaces                       always   List of network interface dicts. Each dict contains parameters can be passed to azure_rm_networkinterface module.
+   list
+     create_with_security_group                     Specifies whether a default security group should be be created with the NIC. Only applies when creating a new NIC.
+     boolean
+     dns_servers                                    Which DNS servers should the NIC lookup.
+     -                                              List of IP addresses.
+     dns_settings                                   The DNS settings in network interface.
+     -
+       applied_dns_servers                          If the VM that uses this NIC is part of an Availability Set, then this list will have the union of all DNS servers from all NICs that are part of
+       -                                            the Availability Set. This property is what is configured on each of those VMs.
+       dns_servers                                  List of DNS servers IP addresses.
+       -
+       internal_dns_name_label                      Relative DNS name for this NIC used for internal communications between VMs in the same virtual network.
+       -
+       internal_fqdn                                Fully qualified DNS name supporting internal communications between VMs in the same virtual network.
+       -
+     enable_accelerated_networking                  Specifies whether the network interface should be created with the accelerated networking feature or not.
+     -
+     enable_ip_forwarding                           Whether to enable IP forwarding
+     -
+     id                                             Id of the network interface.
+     -
+     ip_configurations                              List of IP configurations, if contains multiple configurations.
+     -
+       application_security_groups                  List of Application security groups.
+       -                                            Sample:
+                                                    /subscriptions/<subsid>/resourceGroups/<rg>/providers/Microsoft.Network/applicationSecurityGroups/myASG
+       load_balancer_backend_address_pools          List of existing load-balancer backend address pools to associate with the network interface.
+       -
+       name                                         Name of the IP configuration.
+       -
+       primary                                      Whether the IP configuration is the primary one in the list.
+       -
+       private_ip_address                           Private IP address for the IP configuration.
+       -
+       private_ip_allocation_method                 Private IP allocation method.
+       -
+       public_ip_address                            Name of the public IP address. None for disable IP address.
+       -
+       public_ip_allocation_method                  Public IP allocation method.
+       -
+     location                                       Azure location.
+     -
+     mac_address                                    The MAC address of the network interface.
+     -
+     name                                           Name of the network interface.
+     -
+     provisioning_state                             The provisioning state of the network interface.
+     -
+     resource_group                                 Name of a resource group where the network interface exists.
+     -
+     security_group                                 A security group resource ID with which to associate the network interface.
+     -
+     subnet                                         Name of an existing subnet within the specified virtual network.
+     -
+     tags                                           Tags of the network interface.
+     -
+     virtual_network                                An existing virtual network with which the network interface will be associated.
+     -                                              It is a dict which contains name and resource_group of the virtual network.
+
+STATUS                   *azure_rm_networkinterface_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Houseknecht (@chouseknecht)
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *azure_rm_networkinterface_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/azure_rm_networkinterface_info_module.html

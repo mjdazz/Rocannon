@@ -1,0 +1,179 @@
+SYNOPSIS                   *nios_host_record*
+
+     • Adds and/or removes instances of host record objects from Infoblox NIOS servers. This module manages NIOS record:host objects using the Infoblox WAPI interface over REST.
+     • Updates instances of host record object from Infoblox NIOS servers.
+
+REQUIREMENTS                   *nios_host_record-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • infoblox-client
+
+PARAMETERS                   *nios_host_record-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   aliases                                Configures an optional list of additional aliases to add to the host record. These are equivalent to CNAMEs but held within a host record. Must be in list
+   -                                      format.
+   added in 2.6
+   comment                                Configures a text string comment to be associated with the instance of this object. The provided text string will be configured on the object instance.
+   -
+   configure_for_dns       Choices:       Sets the DNS to particular parent. If user needs to bypass DNS user can make the value to false.
+   boolean                 • no           aliases: dns
+   added in 2.7            • yes ←
+   extattrs                               Allows for the configuration of Extensible Attributes on the instance of the object. This argument accepts a set of key / value pairs for configuration.
+   -
+   ipv4addrs                              Configures the IPv4 addresses for this host record. This argument accepts a list of values (see suboptions)
+   -                                      aliases: ipv4
+    configure_for_dhcp                    Configure the host_record over DHCP instead of DNS, if user changes it to true, user need to mention MAC address to configure
+    -                                     aliases: dhcp
+    ipv4addr                              Configures the IPv4 address for the host record. Users can dynamically allocate ipv4 address to host record by passing dictionary containing, nios_next_ip
+    - / required                          and CIDR network range. See example
+                                          aliases: address
+    mac                                   Configures the hardware MAC address for the host record. If user makes DHCP to true, user need to mention MAC address.
+    -                                     aliases: mac
+   ipv6addrs                              Configures the IPv6 addresses for the host record. This argument accepts a list of values (see options)
+   -                                      aliases: ipv6
+    configure_for_dhcp                    Configure the host_record over DHCP instead of DNS, if user changes it to true, user need to mention MAC address to configure
+    -                                     aliases: dhcp
+    ipv6addr                              Configures the IPv6 address for the host record
+    - / required                          aliases: address
+   name                                   Specifies the fully qualified hostname to add or remove from the system. User can also update the hostname as it is possible to pass a dict containing
+   - / required                           new_name, old_name. See examples.
+   provider                               A dict object containing connection details.
+   dictionary
+    host                                  Specifies the DNS host name or address for connecting to the remote instance of NIOS WAPI over REST
+    string / required                     Value can also be specified using INFOBLOX_HOST environment variable.
+    http_request_timeout Default:         The amount of time before to wait before receiving a response
+    integer              10               Value can also be specified using INFOBLOX_HTTP_REQUEST_TIMEOUT environment variable.
+    max_results          Default:         Specifies the maximum number of objects to be returned, if set to a negative number the appliance will return an error when the number of returned objects
+    integer              1000             would exceed the setting.
+                                          Value can also be specified using INFOBLOX_MAX_RESULTS environment variable.
+    max_retries          Default:         Configures the number of attempted retries before the connection is declared usable
+    integer              3                Value can also be specified using INFOBLOX_MAX_RETRIES environment variable.
+    password                              Specifies the password to use to authenticate the connection to the remote instance of NIOS.
+    string                                Value can also be specified using INFOBLOX_PASSWORD environment variable.
+    username                              Configures the username to use to authenticate the connection to the remote instance of NIOS.
+    string                                Value can also be specified using INFOBLOX_USERNAME environment variable.
+    validate_certs         Choices:       Boolean value to enable or disable verifying SSL certificates
+    boolean                • no ←         Value can also be specified using INFOBLOX_SSL_VERIFY environment variable.
+                           • yes          aliases: ssl_verify
+    wapi_version         Default:         Specifies the version of WAPI to use
+    string               "2.1"            Value can also be specified using INFOBLOX_WAP_VERSION environment variable.
+                                          Until ansible 2.8 the default WAPI was 1.4
+   state                   Choices:       Configures the intended state of the instance of the object on the NIOS server. When this value is set to present, the object is configured on the device
+   -                       • present ←    and when this value is set to absent the value is removed (if necessary) from the device.
+                           • absent
+   ttl                                    Configures the TTL to be associated with this host record
+   -
+   view                  Default:         Sets the DNS view to associate this host record with. The DNS view must already be configured on the system
+   - / required          "default"        aliases: dns_view
+
+NOTES                   *nios_host_record-notes*
+
+   Note
+
+     • This module must be run locally, which can be achieved by specifying connection: local.
+     • Please read the Infoblox Guide for more detailed information on how to use Infoblox with Ansible.
+
+EXAMPLES                   *nios_host_record-examples*
+
+ - name: configure an ipv4 host record
+   nios_host_record:
+     name: host.ansible.com
+     ipv4:
+       - address: 192.168.10.1
+     aliases:
+       - cname.ansible.com
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: add a comment to an existing host record
+   nios_host_record:
+     name: host.ansible.com
+     ipv4:
+       - address: 192.168.10.1
+     comment: this is a test comment
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: remove a host record from the system
+   nios_host_record:
+     name: host.ansible.com
+     state: absent
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: update an ipv4 host record
+   nios_host_record:
+     name: {new_name: host-new.ansible.com, old_name: host.ansible.com}
+     ipv4:
+       - address: 192.168.10.1
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: create an ipv4 host record bypassing DNS
+   nios_host_record:
+     name: new_host
+     ipv4:
+       - address: 192.168.10.1
+     dns: false
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: create an ipv4 host record over DHCP
+   nios_host_record:
+     name: host.ansible.com
+     ipv4:
+       - address: 192.168.10.1
+         dhcp: true
+         mac: 00-80-C8-E3-4C-BD
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+ - name: dynamically add host record to next available ip
+   nios_host_record:
+     name: host.ansible.com
+     ipv4:
+       - address: {nios_next_ip: 192.168.10.0/24}
+     comment: this is a test comment
+     state: present
+     provider:
+       host: "{{ inventory_hostname_short }}"
+       username: admin
+       password: admin
+   connection: local
+
+STATUS                   *nios_host_record-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Peter Sprygada (@privateip)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nios_host_record-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nios_host_record_module.html

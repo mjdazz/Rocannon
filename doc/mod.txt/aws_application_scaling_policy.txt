@@ -1,0 +1,234 @@
+SYNOPSIS                   *aws_application_scaling_policy*
+
+     • Creates, updates or removes a Scaling Policy
+
+REQUIREMENTS                   *aws_application_scaling_policy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • json
+     • python >= 2.6
+
+PARAMETERS                   *aws_application_scaling_policy-parameters*
+
+                    Parameter                                   Choices/Defaults                                                               Comments
+   aws_access_key                                                                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY
+   string                                                                                        environment variable is used.
+                                                                                                 aliases: ec2_access_key, access_key
+   aws_secret_key                                                                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or
+   string                                                                                        EC2_SECRET_KEY environment variable is used.
+                                                                                                 aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs                   Choices:                                       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls
+   boolean                                        • no ←                                         made during a task, outputing the set to the resource_actions key in the task results. Use the
+   added in 2.8                                   • yes                                          aws_resource_action callback to output to total list made during a playbook. The
+                                                                                                 ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                                                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2
+   string                                                                                        endpoints). Ignored for modules where region is required. Must be specified for all other modules if
+                                                                                                 region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   maximum_tasks                                                                                 The maximum value to scale to in response to a scale out event. This parameter is required if you
+   -                                                                                             are creating a first new policy for the specified service.
+   added in 2.6
+   minimum_tasks                                                                                 The minimum value to scale to in response to a scale in event. This parameter is required if you are
+   -                                                                                             creating a first new policy for the specified service.
+   added in 2.6
+   override_task_capacity                         Choices:
+   boolean                                        • no ←                                         Whether or not to override values of minimum and/or maximum tasks if it's already set.
+   added in 2.6                                   • yes
+   policy_name                                                                                   The name of the scaling policy.
+   - / required
+   policy_type                                    Choices:
+   - / required                                   • StepScaling                                  The policy type.
+                                                  • TargetTrackingScaling
+   profile                                                                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                                                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment
+   string                                                                                        variable, if any, is used. See http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                                                                 aliases: aws_region, ec2_region
+   resource_id                                                                                   The identifier of the resource associated with the scalable target.
+   - / required
+                                                  Choices:
+                                                  • ecs:service:DesiredCount
+                                                  • ec2:spot-fleet-request:TargetCapacity
+   scalable_dimension                             • elasticmapreduce:instancegroup:InstanceCount
+   - / required                                   • appstream:fleet:DesiredCapacity              The scalable dimension associated with the scalable target.
+                                                  • dynamodb:table:ReadCapacityUnits
+                                                  • dynamodb:table:WriteCapacityUnits
+                                                  • dynamodb:index:ReadCapacityUnits
+                                                  • dynamodb:index:WriteCapacityUnits
+   security_token                                                                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN
+   string                                                                                        environment variable is used.
+                                                                                                 aliases: access_token
+                                                  Choices:
+                                                  • ecs
+   service_namespace                              • elasticmapreduce                             The namespace of the AWS service.
+   - / required                                   • ec2
+                                                  • appstream
+                                                  • dynamodb
+   step_scaling_policy_configuration                                                             A step scaling policy. This parameter is required if you are creating a policy and the policy type
+   -                                                                                             is StepScaling.
+   target_tracking_scaling_policy_configuration                                                  A target tracking policy. This parameter is required if you are creating a new policy and the policy
+   -                                                                                             type is TargetTrackingScaling.
+   validate_certs                                 Choices:
+   boolean                                        • no                                           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                                  • yes ←
+
+NOTES                   *aws_application_scaling_policy-notes*
+
+   Note
+
+     • for details of the parameters and returns see http://boto3.readthedocs.io/en/latest/reference/services/application-autoscaling.html#ApplicationAutoScaling.Client.put_scaling_policy
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_application_scaling_policy-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Create step scaling policy for ECS Service
+ - name: scaling_policy
+   aws_application_scaling_policy:
+     state: present
+     policy_name: test_policy
+     service_namespace: ecs
+     resource_id: service/poc-pricing/test-as
+     scalable_dimension: ecs:service:DesiredCount
+     policy_type: StepScaling
+     minimum_tasks: 1
+     maximum_tasks: 6
+     step_scaling_policy_configuration:
+       AdjustmentType: ChangeInCapacity
+       StepAdjustments:
+         - MetricIntervalUpperBound: 123
+           ScalingAdjustment: 2
+         - MetricIntervalLowerBound: 123
+           ScalingAdjustment: -2
+       Cooldown: 123
+       MetricAggregationType: Average
+
+ # Create target tracking scaling policy for ECS Service
+ - name: scaling_policy
+   aws_application_scaling_policy:
+     state: present
+     policy_name: test_policy
+     service_namespace: ecs
+     resource_id: service/poc-pricing/test-as
+     scalable_dimension: ecs:service:DesiredCount
+     policy_type: TargetTrackingScaling
+     minimum_tasks: 1
+     maximum_tasks: 6
+     target_tracking_scaling_policy_configuration:
+       TargetValue: 60
+       PredefinedMetricSpecification:
+         PredefinedMetricType: ECSServiceAverageCPUUtilization
+       ScaleOutCooldown: 60
+       ScaleInCooldown: 60
+
+ # Remove scalable target for ECS Service
+ - name: scaling_policy
+   aws_application_scaling_policy:
+     state: absent
+     policy_name: test_policy
+     policy_type: StepScaling
+     service_namespace: ecs
+     resource_id: service/cluster-name/service-name
+     scalable_dimension: ecs:service:DesiredCount
+
+RETURN VALUES                   *aws_application_scaling_policy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                       Key                              Returned                                                                 Description
+   alarms                                       when state present       List of the CloudWatch alarms associated with the scaling policy
+   complex
+          alarm_arn                             when state present       The Amazon Resource Name (ARN) of the alarm
+          string
+          alarm_name                            when state present       The name of the alarm
+          string
+   creation_time                                                         The Unix timestamp for when the scalable target was created.
+   string                                       when state present       Sample:
+                                                                         2017-09-28T08:22:51.881000-03:00
+   max_capacity                                                          The maximum value to scale to in response to a scale out event. Required if state is present.
+   integer                                      when state present       Sample:
+                                                                         2
+   min_capacity                                                          The minimum value to scale to in response to a scale in event. Required if state is present.
+   integer                                      when state present       Sample:
+                                                                         1
+   policy_arn                                   when state present       The Amazon Resource Name (ARN) of the scaling policy..
+   string
+   policy_name                                  when state present       The name of the scaling policy.
+   string
+   policy_type                                  when state present       The policy type.
+   string
+   resource_id                                                           The identifier of the resource associated with the scalable target.
+   string                                       when state present       Sample:
+                                                                         service/cluster-name/service-name
+                                                                         The ARN of an IAM role that allows Application Auto Scaling to modify the scalable target on your behalf. Required if state
+   role_arn                                     when state present       is present.
+   string                                                                Sample:
+                                                                         arn:aws:iam::123456789123:role/roleName
+   scalable_dimension                                                    The scalable dimension associated with the scalable target.
+   string                                       when state present       Sample:
+                                                                         ecs:service:DesiredCount
+   service_namespace                                                     The namespace of the AWS service.
+   string                                       when state present       Sample:
+                                                                         ecs
+   step_scaling_policy_configuration            when state present and
+   complex                                      the policy type is       The step scaling policy.
+                                                StepScaling
+          adjustment_type                       when state present and   The adjustment type
+          string                                the policy type is       Sample:
+                                                StepScaling              ChangeInCapacity, PercentChangeInCapacity, ExactCapacity
+                                                when state present and   The amount of time, in seconds, after a scaling activity completes where previous trigger-related scaling activities can
+          cooldown                              the policy type is       influence future scaling events
+          integer                               StepScaling              Sample:
+                                                                         60
+          metric_aggregation_type               when state present and   The aggregation type for the CloudWatch metrics
+          string                                the policy type is       Sample:
+                                                StepScaling              Average, Minimum, Maximum
+          step_adjustments                      when state present and
+          list of complex                       the policy type is       A set of adjustments that enable you to scale based on the size of the alarm breach
+                                                StepScaling
+   target_tracking_scaling_policy_configuration when state present and
+   complex                                      the policy type is       The target tracking policy.
+                                                TargetTrackingScaling
+          predefined_metric_specification       when state present and
+          complex                               the policy type is       A predefined metric
+                                                TargetTrackingScaling
+                   predefined_metric_type       when state present and   The metric type
+                   string                       the policy type is       Sample:
+                                                TargetTrackingScaling    ECSServiceAverageCPUUtilization, ECSServiceAverageMemoryUtilization
+                   resource_label               when metric type is      Identifies the resource associated with the metric type
+                   string                       ALBRequestCountPerTarget
+          scale_in_cooldown                     when state present and   The amount of time, in seconds, after a scale in activity completes before another scale in activity can start
+          integer                               the policy type is       Sample:
+                                                TargetTrackingScaling    60
+          scale_out_cooldown                    when state present and   The amount of time, in seconds, after a scale out activity completes before another scale out activity can start
+          integer                               the policy type is       Sample:
+                                                TargetTrackingScaling    60
+          target_value                          when state present and   The target value for the metric
+          integer                               the policy type is       Sample:
+                                                TargetTrackingScaling    70
+
+STATUS                   *aws_application_scaling_policy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Gustavo Maia (@gurumaia)
+     • Chen Leibovich (@chenl87)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_application_scaling_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_application_scaling_policy_module.html

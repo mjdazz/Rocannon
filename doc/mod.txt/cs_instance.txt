@@ -1,0 +1,335 @@
+SYNOPSIS                   *cs_instance*
+
+     • Deploy, start, update, scale, restart, restore, stop and destroy instances.
+
+REQUIREMENTS                   *cs_instance-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_instance-parameters*
+
+         Parameter          Choices/Defaults                                                                          Comments
+   account                                     Account the instance is related to.
+   string
+   affinity_groups                             Affinity groups names to be applied to the new instance.
+   list                                        aliases: affinity_group
+   allow_root_disk_shrink   Choices:
+   boolean                  • no ←             Enables a volume shrinkage when the new size is smaller than the old one.
+   added in 2.7             • yes
+                            Choices:           HTTP method used to query the API endpoint.
+   api_http_method          • get              If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                   • post             As the last option, the value is taken from the ini config file, also see the notes.
+                                               Fallback value is get if not specified.
+   api_key                                     API key of the CloudStack API.
+   string                                      If not given, the CLOUDSTACK_KEY env variable is considered.
+                                               As the last option, the value is taken from the ini config file, also see the notes.
+   api_region             Default:             Name of the ini section in the cloustack.ini file.
+   string                 "cloudstack"         If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                                  Secret key of the CloudStack API.
+   string                                      If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                               As the last option, the value is taken from the ini config file, also see the notes.
+                                               HTTP timeout in seconds.
+   api_timeout                                 If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                                     As the last option, the value is taken from the ini config file, also see the notes.
+                                               Fallback value is 10 seconds if not specified.
+   api_url                                     URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                                      If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                               As the last option, the value is taken from the ini config file, also see the notes.
+   cpu                                         The number of CPUs to allocate to the instance, used with custom service offerings
+   integer
+   cpu_speed                                   The clock speed/shares allocated to the instance, used with custom service offerings
+   integer
+   details
+   dictionary                                  Map to specify custom parameters.
+   added in 2.6
+   disk_offering                               Name of the disk offering to be used.
+   string
+   disk_size                                   Disk size in GByte required if deploying instance from ISO.
+   integer
+   display_name                                Custom display name of the instances.
+   string                                      Display name will be set to name if not specified.
+                                               Either name or display_name is required.
+   domain                                      Domain the instance is related to.
+   string
+   force                    Choices:
+   boolean                  • no ←             Force stop/start the instance if required to apply changes, otherwise a running instance will not be changed.
+                            • yes
+   group                                       Group in where the new instance should be in.
+   string
+   host                                        Host on which an instance should be deployed or started on.
+   string                                      Only considered when state=started or instance is running.
+   added in 2.6                                Requires root admin privileges.
+                                               Name the hypervisor to be used for creating the new instance.
+   hypervisor                                  Relevant when using state=present, but only considered if not set on ISO/template.
+   string                                      If not set or found on ISO/template, first found hypervisor will be used.
+                                               Possible values are KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator.
+   ip6_address                                 IPv6 address for default instance's network.
+   string
+   ip_address                                  IPv4 address for default instance's network during creation.
+   string
+   ip_to_networks                              List of mappings in the form {'network': NetworkName, 'ip': 1.2.3.4}
+   list                                        Mutually exclusive with networks option.
+                                               aliases: ip_to_network
+   iso                                         Name or id of the ISO to be used for creating the new instance.
+   string                                      Required when using state=present.
+                                               Mutually exclusive with template option.
+                            Choices:
+                            • de
+                            • de-ch
+                            • es
+                            • fi
+                            • fr
+                            • fr-be
+   keyboard                 • fr-ch            Keyboard device type for the instance.
+   string                   • is
+                            • it
+                            • jp
+                            • nl-be
+                            • no
+                            • pt
+                            • uk
+                            • us
+   memory                                      The memory allocated to the instance, used with custom service offerings
+   integer
+   name                                        Host name of the instance. name can only contain ASCII letters.
+   string                                      Name will be generated (UUID) by CloudStack if not specified and can not be changed afterwards.
+                                               Either name or display_name is required.
+   networks                                    List of networks to use for the new instance.
+   list                                        aliases: network
+   poll_async               Choices:
+   boolean                  • no               Poll async jobs until job has finished.
+                            • yes ←
+   project                                     Name of the project the instance to be deployed in.
+   string
+   root_disk_size                              Root disk size in GByte required if deploying instance with KVM hypervisor and want resize the root disk size at startup (need CloudStack >= 4.4,
+   integer                                     cloud-initramfs-growroot installed and enabled in the template)
+   security_groups                             List of security groups the instance to be applied to.
+   list                                        aliases: security_group
+   service_offering                            Name or id of the service offering of the new instance.
+   string                                      If not set, first found service offering is used.
+   ssh_key                                     Name of the SSH key to be deployed on the new instance.
+   string
+                            Choices:
+                            • deployed
+                            • started
+                            • stopped
+   state                    • restarted        State of the instance.
+   string                   • restored
+                            • destroyed
+                            • expunged
+                            • present ←
+                            • absent
+   tags                                        List of tags. Tags are a list of dictionaries having keys key and value.
+   list                                        If you want to delete all tags, set a empty list e.g. tags: [].
+                                               aliases: tag
+   template                                    Name, display text or id of the template to be used for creating the new instance.
+   string                                      Required when using state=present.
+                                               Mutually exclusive with iso option.
+                            Choices:
+                            • all
+                            • featured         Name of the filter used to search for the template or iso.
+   template_filter          • self             Used for params iso or template on state=present.
+   string                   • selfexecutable   The filter all was added in 2.6.
+                            • sharedexecutable aliases: iso_filter
+                            • executable ←
+                            • community
+   user_data                                   Optional data (ASCII) that can be sent to the instance upon a successful deployment.
+   string                                      The data will be automatically base64 encoded.
+                                               Consider switching to HTTP_POST by using CLOUDSTACK_METHOD=post to increase the HTTP_GET size limit of 2KB to 32 KB.
+   zone                                        Name of the zone in which the instance should be deployed.
+   string                                      If not set, default zone is used.
+
+NOTES                   *cs_instance-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_instance-examples*
+
+ # NOTE: Names of offerings and ISOs depending on the CloudStack configuration.
+ - name: create a instance from an ISO
+   cs_instance:
+     name: web-vm-1
+     iso: Linux Debian 7 64-bit
+     hypervisor: VMware
+     project: Integration
+     zone: ch-zrh-ix-01
+     service_offering: 1cpu_1gb
+     disk_offering: PerfPlus Storage
+     disk_size: 20
+     networks:
+       - Server Integration
+       - Sync Integration
+       - Storage Integration
+   delegate_to: localhost
+
+ - name: for changing a running instance, use the 'force' parameter
+   cs_instance:
+     name: web-vm-1
+     display_name: web-vm-01.example.com
+     iso: Linux Debian 7 64-bit
+     service_offering: 2cpu_2gb
+     force: yes
+   delegate_to: localhost
+
+ # NOTE: user_data can be used to kickstart the instance using cloud-init yaml config.
+ - name: create or update a instance on Exoscale's public cloud using display_name.
+   cs_instance:
+     display_name: web-vm-1
+     template: Linux Debian 7 64-bit
+     service_offering: Tiny
+     ssh_key: [email protected]
+     tags:
+       - key: admin
+         value: john
+       - key: foo
+         value: bar
+     user_data: |
+         #cloud-config
+         packages:
+           - nginx
+   delegate_to: localhost
+
+ - name: create an instance with multiple interfaces specifying the IP addresses
+   cs_instance:
+     name: web-vm-1
+     template: Linux Debian 7 64-bit
+     service_offering: Tiny
+     ip_to_networks:
+       - network: NetworkA
+         ip: 10.1.1.1
+       - network: NetworkB
+         ip: 192.0.2.1
+   delegate_to: localhost
+
+ - name: ensure an instance is stopped
+   cs_instance:
+     name: web-vm-1
+     state: stopped
+   delegate_to: localhost
+
+ - name: ensure an instance is running
+   cs_instance:
+     name: web-vm-1
+     state: started
+   delegate_to: localhost
+
+ - name: remove an instance
+   cs_instance:
+     name: web-vm-1
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_instance-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                     Returned                                                                             Description
+   account                                               Account the instance is related to.
+   string                success                         Sample:
+                                                         example account
+   affinity_groups                                       Affinity groups the instance is in.
+   list                  success                         Sample:
+                                                         [ "webservers" ]
+   created                                               Date of the instance was created.
+   string                success                         Sample:
+                                                         2014-12-01T14:57:57+0100
+   default_ip                                            Default IP address of the instance.
+   string                success                         Sample:
+                                                         10.23.37.42
+   default_ip6                                           Default IPv6 address of the instance.
+   string                if available                    Sample:
+   added in 2.6                                          2a04:c43:c00:a07:4b4:beff:fe00:74
+   display_name                                          Display name of the instance.
+   string                success                         Sample:
+                                                         web-01
+   domain                                                Domain the instance is related to.
+   string                success                         Sample:
+                                                         example domain
+   group                                                 Group name of the instance is related.
+   string                success                         Sample:
+                                                         web
+   host                                                  Hostname of hypervisor an instance is running on.
+   string                success and instance is running Sample:
+   added in 2.6                                          host-01.example.com
+   hypervisor                                            Hypervisor related to this instance.
+   string                success                         Sample:
+                                                         KVM
+   id                                                    UUID of the instance.
+   string                success                         Sample:
+                                                         04589590-ac63-4ffc-93f5-b698b8ac38b6
+   instance_name                                         Internal name of the instance (ROOT admin only).
+   string                success                         Sample:
+                                                         i-44-3992-VM
+   iso                                                   Name of ISO the instance was deployed with.
+   string                if available                    Sample:
+                                                         Debian-8-64bit
+   name                                                  Name of the instance.
+   string                success                         Sample:
+                                                         web-01
+   password                                              The password of the instance if exists.
+   string                if available                    Sample:
+                                                         Ge2oe7Do
+   password_enabled                                      True if password setting is enabled.
+   boolean               success                         Sample:
+                                                         True
+   project                                               Name of project the instance is related to.
+   string                success                         Sample:
+                                                         Production
+   public_ip                                             Public IP address with instance via static NAT rule.
+   string                if available                    Sample:
+                                                         1.2.3.4
+   security_groups                                       Security groups the instance is in.
+   list                  success                         Sample:
+                                                         [ "default" ]
+   service_offering                                      Name of the service offering the instance has.
+   string                success                         Sample:
+                                                         2cpu_2gb
+   ssh_key                                               Name of SSH key deployed to instance.
+   string                if available                    Sample:
+                                                         [email protected]
+   state                                                 State of the instance.
+   string                success                         Sample:
+                                                         Running
+   tags                                                  List of resource tags associated with the instance.
+   list                  success                         Sample:
+                                                         [ { "key": "foo", "value": "bar" } ]
+   template                                              Name of template the instance was deployed with.
+   string                success                         Sample:
+                                                         Linux Debian 9 64-bit
+   template_display_text                                 Display text of template the instance was deployed with.
+   string                success                         Sample:
+   added in 2.6                                          Linux Debian 9 64-bit 200G Disk (2017-10-08-622866)
+   user-data                                             Optional data sent to the instance.
+   string                success                         Sample:
+                                                         VXNlciBkYXRhIGV4YW1wbGUK
+   zone                                                  Name of zone the instance is in.
+   string                success                         Sample:
+                                                         ch-gva-2
+
+STATUS                   *cs_instance-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_instance-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_instance_module.html

@@ -1,0 +1,155 @@
+SYNOPSIS                   *vmware_vspan_session*
+
+     • This module can be used to create, delete or edit different kind of port mirroring sessions.
+
+REQUIREMENTS                   *vmware_vspan_session-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python > = 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_vspan_session-parameters*
+
+          Parameter                 Choices/Defaults                                                                         Comments
+   description                                                The description for the session.
+   string
+   destination_port                                           Destination port that received the mirrored packets. Also any port designated in the value of this property can not match the source
+   string                                                     port in any of the Distributed Port Mirroring session.
+                                                              With this parameter it is possible, to add a NIC of a VM to a port mirroring session.
+   destination_vm                                             Valid attributes are:
+   dictionary                                                 - name (str): Name of the VM
+                                                              - nic_label (bool): Label of the Network Interface Card to use.
+   enabled                   Choices:
+   boolean                   • no                             Whether the session is enabled.
+                             • yes ←
+   encapsulation_vlan_id                                      VLAN ID used to encapsulate the mirrored traffic.
+   integer
+   hostname                                                   The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                                     If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                                              Environment variable support added in Ansible 2.6.
+   mirrored_packet_length                                     An integer that describes how much of each frame to mirror. If unset, all of the frame would be mirrored. Setting this property to a
+   integer                                                    smaller value is useful when the consumer will look only at the headers. The value cannot be less than 60.
+   name                                                       Name of the session.
+   string / required
+   normal_traffic_allowed    Choices:                         Whether or not destination ports can send and receive "normal" traffic. Setting this to false will make mirror ports be used solely for
+   boolean                   • no                             mirroring and not double as normal access ports.
+                             • yes
+                                                              The password of the vSphere vCenter or ESXi server.
+   password                                                   If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                                     Environment variable support added in Ansible 2.6.
+                                                              aliases: pass, pwd
+   port                    Default:                           The port number of the vSphere vCenter or ESXi server.
+   integer                 443                                If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                                               Environment variable support added in Ansible 2.6.
+   proxy_host                                                 Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                                     The format is a hostname or a IP.
+   added in 2.9                                               If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                                              This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                                                 Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                                    If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   sampling_rate                                              Sampling rate of the session. If its value is n, one of every n packets is mirrored. Valid values are between 1 to 65535, and default
+   integer                                                    value is 1.
+                                                              Select the mirroring type.
+                             Choices:                         - encapsulatedRemoteMirrorSource (str): In encapsulatedRemoteMirrorSource session, Distributed Ports can be used as source entities,
+                             • encapsulatedRemoteMirrorSource and Ip address can be used as destination entities.
+   session_type              • remoteMirrorDest               - remoteMirrorDest (str): In remoteMirrorDest session, vlan Ids can be used as source entities, and Distributed Ports can be used as
+   string                    • remoteMirrorSource             destination entities.
+                             • dvPortMirror ←                 - remoteMirrorSource (str): In remoteMirrorSource session, Distributed Ports can be used as source entities, and uplink ports name can
+                                                              be used as destination entities.
+                                                              - dvPortMirror (str): In dvPortMirror session, Distributed Ports can be used as both source and destination entities.
+   source_port_received                                       Source port for which received packets are mirrored.
+   string
+   source_port_transmitted                                    Source port for which transmitted packets are mirrored.
+   string
+                                                              With this parameter it is possible, to add a NIC of a VM to a port mirroring session.
+   source_vm_received                                         Valid attributes are:
+   dictionary                                                 - name (str): Name of the VM
+                                                              - nic_label (bool): Label of the Network Interface Card to use.
+                                                              With this parameter it is possible, to add a NIC of a VM to a port mirroring session.
+   source_vm_transmitted                                      Valid attributes are:
+   dictionary                                                 - name (str): Name of the VM
+                                                              - nic_label (bool): Label of the Network Interface Card to use.
+   state                     Choices:
+   string / required         • present                        Create or remove the session.
+                             • absent
+   strip_original_vlan       Choices:                         Whether to strip the original VLAN tag. if false, the original VLAN tag will be preserved on the mirrored traffic. If
+   boolean                   • no                             encapsulationVlanId has been set and this property is false, the frames will be double tagged with the original VLAN ID as the inner
+                             • yes                            tag.
+   switch                                                     The name of the distributed vSwitch on which to add or remove the mirroring session.
+   string / required                                          aliases: switch_name
+                                                              The username of the vSphere vCenter or ESXi server.
+   username                                                   If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                                     Environment variable support added in Ansible 2.6.
+                                                              aliases: admin, user
+                             Choices:                         Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs            • no                             If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                   • yes ←                          Environment variable support added in Ansible 2.6.
+                                                              If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_vspan_session-notes*
+
+   Note
+
+     • Tested on vSphere 6.7
+
+EXAMPLES                   *vmware_vspan_session-examples*
+
+ - name: Create distributed mirroring session.
+   vmware_vspan_session:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     switch_name: dvSwitch
+     state: present
+     name: Basic Session
+     enabled: True
+     description: "Example description"
+     source_port_transmitted: 817
+     source_port_received: 817
+     destination_port: 815
+   delegate_to: localhost
+
+ - name: Create remote destination mirroring session.
+   vmware_vspan_session:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     switch_name: dvSwitch
+     state: present
+     name: Remote Session
+     enabled: True
+     description: "Example description"
+     source_port_received: 105
+     destination_port: 815
+     session_type: "remoteMirrorDest"
+   delegate_to: localhost
+
+ - name: Create remote destination mirroring session.
+   vmware_vspan_session:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     switch_name: dvSwitch
+     state: absent
+     name: Remote Session
+   delegate_to: localhost
+
+STATUS                   *vmware_vspan_session-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Peter Gyorgy (@gyorgypeter)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_vspan_session-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_vspan_session_module.html

@@ -1,17 +1,196 @@
-SYNOPSIS                           *win_updates*
+SYNOPSIS                   *win_updates*
 
-New in version 1.9.
+     • Searches, downloads, and installs Windows updates synchronously by automating the Windows Update client.
 
-Installs windows updates using PSWindowsUpdate (http://gallery.technet.microsoft.com/scriptcenter/2d191bcd-3308-4edd-9de2-88dff796b0bc). PSWindowsUpdate needs to be installed first - use
-win_chocolatey.
+PARAMETERS                   *win_updates-parameters*
 
-EXAMPLES                           *win_updates-examples*
->
-    # Install updates from security category
-    win_updates:
-      category: security
-   
+       Parameter       Choices/Defaults                                                                            Comments
+   blacklist                              A list of update titles or KB numbers that can be used to specify which updates are to be excluded from installation.
+   list                                   If an available update does match one of the entries, then it is skipped and not installed.
+   added in 2.5                           Each entry can either be the KB article or Update title as a regex according to the PowerShell regex rules.
+                      Default:            A scalar or list of categories to install updates from. To get the list of categories, run the module with state=searched. The category must be the full
+   category_names     ["CriticalUpdates", category string, but is case insensitive.
+   list               "SecurityUpdates",  Some possible categories are Application, Connectors, Critical Updates, Definition Updates, Developer Kits, Feature Packs, Guidance, Security Updates,
+                      "UpdateRollups"]    Service Packs, Tools, Update Rollups and Updates.
+   log_path                               If set, win_updates will append update progress to the specified file. The directory must already exist.
+   path
+   reboot               Choices:          Ansible will automatically reboot the remote host if it is required and continue to install updates after the reboot.
+   boolean              • no ←            This can be used instead of using a win_reboot task after this one and ensures all updates for that category is installed in one go.
+   added in 2.5         • yes             Async does not work when reboot=yes.
+   reboot_timeout     Default:            The time in seconds to wait until the host is back online from a reboot.
+   -                  1200                This is only used if reboot=yes and a reboot is required.
+   added in 2.5
+                                          Defines the Windows Update source catalog.
+                        Choices:          default Use the default search source. For many systems default is set to the Microsoft Windows Update catalog. Systems participating in Windows Server
+   server_selection     • default ←       Update Services (WSUS), Systems Center Configuration Manager (SCCM), or similar corporate update server environments may default to those managed update
+   string               • managed_server  sources instead of the Windows Update catalog.
+   added in 2.8         • windows_update  managed_server Use a managed server catalog. For environments utilizing Windows Server Update Services (WSUS), Systems Center Configuration Manager (SCCM),
+                                          or similar corporate update servers, this option selects the defined corporate update source.
+                                          windows_update Use the Microsoft Windows Update catalog.
+                        Choices:
+   state                • installed ←     Controls whether found updates are downloaded or installed or listed
+   string               • searched        This module also supports Ansible check mode, which has the same effect as setting state=searched
+                        • downloaded
+   use_scheduled_task   Choices:          Will not auto elevate the remote process with become and use a scheduled task instead.
+   boolean              • no ←            Set this to yes when using this module with async on Server 2008, 2008 R2, or Windows 7, or on Server 2008 that is not authenticated with basic or credssp.
+   added in 2.6         • yes             Can also be set to yes on newer hosts where become does not work due to further privilege restrictions from the OS defaults.
+                                          A list of update titles or KB numbers that can be used to specify which updates are to be searched or installed.
+   whitelist                              If an available update does not match one of the entries, then it is skipped and not installed.
+   list                                   Each entry can either be the KB article or Update title as a regex according to the PowerShell regex rules.
+   added in 2.5                           The whitelist is only validated on updates that were found based on category_names. It will not force the module to install an update if it was not in the
+                                          category specified.
+
+NOTES                   *win_updates-notes*
+
+   Note
+
+     • win_updates must be run by a user with membership in the local Administrators group.
+     • win_updates will use the default update service configured for the machine (Windows Update, Microsoft Update, WSUS, etc).
+     • win_updates will become SYSTEM using runas unless use_scheduled_task is yes
+     • By default win_updates does not manage reboots, but will signal when a reboot is required with the reboot_required return value, as of Ansible v2.5 reboot can be used to reboot the host if
+       required in the one task.
+     • win_updates can take a significant amount of time to complete (hours, in some cases). Performance depends on many factors, including OS version, number of updates, system load, and update
+       server load.
+     • Beware that just after win_updates reboots the system, the Windows system may not have settled yet and some base services could be in limbo. This can result in unexpected behavior. Check the
+       examples for ways to mitigate this.
+     • More information about PowerShell and how it handles RegEx strings can be found at https://technet.microsoft.com/en-us/library/2007.11.powershell.aspx.
+
+SEE ALSO                   *win_updates-see also*
+
+   See also
+
+   win_chocolatey – Manage packages using chocolatey
+   The official documentation on the win_chocolatey module.
+
+   win_feature – Installs and uninstalls Windows Features on Windows Server
+   The official documentation on the win_feature module.
+
+   win_hotfix – Install and uninstalls Windows hotfixes
+   The official documentation on the win_hotfix module.
+
+   win_package – Installs/uninstalls an installable package
+   The official documentation on the win_package module.
+
+EXAMPLES                   *win_updates-examples*
+
+ - name: Install all security, critical, and rollup updates without a scheduled task
+   win_updates:
+     category_names:
+       - SecurityUpdates
+       - CriticalUpdates
+       - UpdateRollups
+
+ - name: Install only security updates as a scheduled task for Server 2008
+   win_updates:
+     category_names: SecurityUpdates
+     use_scheduled_task: yes
+
+ - name: Search-only, return list of found updates (if any), log to C:\ansible_wu.txt
+   win_updates:
+     category_names: SecurityUpdates
+     state: searched
+     log_path: C:\ansible_wu.txt
+
+ - name: Install all security updates with automatic reboots
+   win_updates:
+     category_names:
+     - SecurityUpdates
+     reboot: yes
+
+ - name: Install only particular updates based on the KB numbers
+   win_updates:
+     category_name:
+     - SecurityUpdates
+     whitelist:
+     - KB4056892
+     - KB4073117
+
+ - name: Exclude updates based on the update title
+   win_updates:
+     category_name:
+     - SecurityUpdates
+     - CriticalUpdates
+     blacklist:
+     - Windows Malicious Software Removal Tool for Windows
+     - \d{4}-\d{2} Cumulative Update for Windows Server 2016
+
+ # One way to ensure the system is reliable just after a reboot, is to set WinRM to a delayed startup
+ - name: Ensure WinRM starts when the system has settled and is ready to work reliably
+   win_service:
+     name: WinRM
+     start_mode: delayed
+
+ # Optionally, you can increase the reboot_timeout to survive long updates during reboot
+ - name: Ensure we wait long enough for the updates to be applied during reboot
+   win_updates:
+     reboot: yes
+     reboot_timeout: 3600
+
+ # Search and download Windows updates
+ - name: Search and download Windows updates without installing them
+   win_updates:
+     state: downloaded
+
+RETURN VALUES                   *win_updates-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   failed_update_count    always   The number of updates that failed to install.
+   integer
+                                   List of updates that were found but were filtered based on blacklist, whitelist or category_names. The return value is in the same form as updates, along with
+   filtered_updates       success  filtered_reason.
+   complex                         Sample:
+                                   see the updates return value
+     filtered_reason               The reason why this update was filtered.
+     string               always   Sample:
+                                   skip_hidden
+   found_update_count              The number of updates found needing to be applied.
+   integer                success  Sample:
+                                   3
+   installed_update_count          The number of updates successfully installed or downloaded.
+   integer                success  Sample:
+                                   2
+   reboot_required                 True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot).
+   boolean                success  Sample:
+                                   True
+   updates                success  List of updates that were found/installed.
+   complex
+     categories                    A list of category strings for this update.
+     list of strings      always   Sample:
+                                   ['Critical Updates', 'Windows Server 2012 R2']
+     failure_hresult_code on       The HRESULT code from a failed update.
+     boolean              install  Sample:
+                          failure  2147942402
+     id                            Internal Windows Update GUID.
+     string               always   Sample:
+                                   fb95c1c8-de23-4089-ae29-fd3351d55421
+     installed                     Was the update successfully installed.
+     boolean              always   Sample:
+                                   True
+     kb                            A list of KB article IDs that apply to the update.
+     list of strings      always   Sample:
+                                   ['3004365']
+     title                         Display name.
+     string               always   Sample:
+                                   Security Update for Windows Server 2012 R2 (KB3004365)
+
+STATUS                   *win_updates-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_updates-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *win_updates-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/win_updates_module.html
+https://docs.ansible.com/ansible/latest/modules/win_updates_module.html

@@ -1,0 +1,133 @@
+SYNOPSIS                   *ce_interface_ospf*
+
+     • Manages configuration of an OSPF interface instanceon HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_interface_ospf-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   area                               Ospf area associated with this ospf process. Valid values are a string, formatted as an IP address (i.e. "0.0.0.0") or as an integer between 1 and 4294967295.
+   - / required
+   auth_key_id                        Authentication key id when auth_mode is 'hmac-sha256', 'md5' or 'hmac-md5. Valid value is an integer is in the range from 1 to 255.
+   -
+                      Choices:
+                      • none
+   auth_mode          • null
+   -                  • hmac-sha256   Specifies the authentication type.
+                      • md5
+                      • hmac-md5
+                      • simple
+   auth_text_md5                      Specifies a password for MD5, HMAC-MD5, or HMAC-SHA256 authentication. The value is a string of 1 to 255 case-sensitive characters, spaces not supported.
+   -
+   auth_text_simple                   Specifies a password for simple authentication. The value is a string of 1 to 8 characters.
+   -
+   cost                               The cost associated with this interface. Valid values are an integer in the range from 1 to 65535.
+   -
+   dead_interval                      Time interval an ospf neighbor waits for a hello packet before tearing down adjacencies. Valid values are an integer in the range from 1 to 235926000.
+   -
+   hello_interval                     Time between sending successive hello packets. Valid values are an integer in the range from 1 to 65535.
+   -
+   interface                          Full name of interface, i.e. 40GE1/0/10.
+   - / required
+   process_id                         Specifies a process ID. The value is an integer ranging from 1 to 4294967295.
+   - / required
+   silent_interface   Choices:
+   boolean            • no ←          Setting to true will prevent this interface from receiving HELLO packets. Valid values are 'true' and 'false'.
+                      • yes
+   state              Choices:
+   -                  • present ←     Determines whether the config should be present or not on the device.
+                      • absent
+
+NOTES                   *ce_interface_ospf-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_interface_ospf-examples*
+
+ - name: eth_trunk module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+   - name: Enables OSPF and sets the cost on an interface
+     ce_interface_ospf:
+       interface: 10GE1/0/30
+       process_id: 1
+       area: 100
+       cost: 100
+       provider: '{{ cli }}'
+
+   - name: Sets the dead interval of the OSPF neighbor
+     ce_interface_ospf:
+       interface: 10GE1/0/30
+       process_id: 1
+       area: 100
+       dead_interval: 100
+       provider: '{{ cli }}'
+
+   - name: Sets the interval for sending Hello packets on an interface
+     ce_interface_ospf:
+       interface: 10GE1/0/30
+       process_id: 1
+       area: 100
+       hello_interval: 2
+       provider: '{{ cli }}'
+
+   - name: Disables an interface from receiving and sending OSPF packets
+     ce_interface_ospf:
+       interface: 10GE1/0/30
+       process_id: 1
+       area: 100
+       silent_interface: true
+       provider: '{{ cli }}'
+
+RETURN VALUES                   *ce_interface_ospf-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+                       k/v pairs of configuration after module execution
+   end_state  verbose  Sample:
+   dictionary mode     {'process_id': '1', 'area': '0.0.0.100', 'interface': '10GE1/0/30', 'cost': '100', 'dead_interval': '40', 'hello_interval': '10', 'silent_interface': 'false', 'auth_mode':
+                       'none'}
+   existing   verbose  k/v pairs of existing configuration
+   dictionary mode     Sample:
+                       {'process_id': '1', 'area': '0.0.0.100'}
+   proposed   verbose  k/v pairs of parameters passed into module
+   dictionary mode     Sample:
+                       {'process_id': '1', 'area': '0.0.0.100', 'interface': '10GE1/0/30', 'cost': '100'}
+   updates             commands sent to the device
+   list       always   Sample:
+                       ['interface 10GE1/0/30', 'ospf enable 1 area 0.0.0.100', 'ospf cost 100']
+
+STATUS                   *ce_interface_ospf-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_interface_ospf-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_interface_ospf_module.html

@@ -1,0 +1,89 @@
+SYNOPSIS                   *sysvinit*
+
+     • Controls services on target hosts that use the SysV init system.
+
+REQUIREMENTS                   *sysvinit-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • That the service managed has a corresponding init script.
+
+PARAMETERS                   *sysvinit-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   arguments                  Additional arguments provided on the command line that some init scripts accept.
+   -                          aliases: args
+   daemonize   Choices:       Have the module daemonize as the service itself might not do so properly.
+   boolean     • no ←         This is useful with badly written init scripts or daemons, which commonly manifests as the task hanging as it is still holding the tty or the service dying when the
+               • yes          task is over as the connection closes the session.
+   enabled     Choices:
+   boolean     • no           Whether the service should start on boot. At least one of state and enabled are required.
+               • yes
+   name                       Name of the service.
+   - /                        aliases: service
+   required
+   pattern                    A substring to look for as would be found in the output of the ps command as a stand-in for a status result.
+   -                          If the string is found, the service will be assumed to be running.
+                              This option is mainly for use with init scripts that don't support the 'status' option.
+   runlevels                  The runlevels this script should be enabled/disabled from.
+   -                          Use this to override the defaults set by the package or init script itself.
+   sleep     Default:         If the service is being restarted or reloaded then sleep this many seconds between the stop and start command. This helps to workaround badly behaving services.
+   -         1
+               Choices:
+   state       • started      started/stopped are idempotent actions that will not run commands unless necessary. Not all init scripts support restarted nor reloaded natively, so these will both
+   -           • stopped      trigger a stop and start as needed.
+               • restarted
+               • reloaded
+
+NOTES                   *sysvinit-notes*
+
+   Note
+
+     • One option other than name is required.
+
+EXAMPLES                   *sysvinit-examples*
+
+ - name: make sure apache2 is started
+   sysvinit:
+       name: apache2
+       state: started
+       enabled: yes
+
+ - name: make sure apache2 is started on runlevels 3 and 5
+   sysvinit:
+       name: apache2
+       state: started
+       enabled: yes
+       runlevels:
+         - 3
+         - 5
+
+RETURN VALUES                   *sysvinit-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+                    results from actions taken
+   results always   Sample:
+   complex          {'attempts': 1, 'changed': True, 'name': 'apache2', 'status': {'enabled': {'changed': True, 'rc': 0, 'stderr': '', 'stdout': ''}, 'stopped': {'changed': True, 'rc': 0, 'stderr':
+                    '', 'stdout': 'Stopping web server: apache2.\n'}}}
+
+STATUS                   *sysvinit-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *sysvinit-red hat support*
+
+     • Ansible Core Team
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sysvinit-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sysvinit_module.html

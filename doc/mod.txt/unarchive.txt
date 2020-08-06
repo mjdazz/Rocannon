@@ -1,46 +1,147 @@
-SYNOPSIS                           *unarchive*
+SYNOPSIS                   *unarchive*
 
-New in version 1.4.
+     • The unarchive module unpacks an archive. It will not unpack a compressed file that does not contain an archive.
+     • By default, it will copy the source file from the local system to the target before unpacking.
+     • Set remote_src=yes to unpack an archive which already exists on the target.
+     • If checksum validation is desired, use get_url or uri instead to fetch the file and set remote_src=yes.
+     • For Windows targets, use the win_unzip module instead.
 
-The unarchive module copies an archive file from the local machine to a remote and unpacks it.
+PARAMETERS                   *unarchive-parameters*
 
-EXAMPLES                           *unarchive-examples*
->
-    # Example from Ansible Playbooks
-    - unarchive: src=foo.tgz dest=/var/lib/foo
-   
-    # Unarchive a file that is already on the remote machine
-    - unarchive: src=/tmp/foo.zip dest=/usr/local/bin copy=no
-   
-      Note
-   
-      requires tar/unzip command on target host
-   
-      Note
-   
-      can handle gzip, bzip2 and xz compressed as well as uncompressed tar files
-   
-      Note
-   
-      detects type of archive automatically
-   
-      Note
-   
-      uses tar’s --diff arg to calculate if changed or not. If this arg is not supported, it will always unpack the archive
-   
-      Note
-   
-      does not detect if a .zip file is different from destination - always unzips
-   
-      Note
-   
-      existing files/directories in the destination which are not in the archive are not touched. This is the same behavior as a normal archive extraction
-   
-      Note
-   
-      existing files/directories in the destination which are not in the archive are ignored for purposes of deciding if the archive should be unpacked or not
-   
+     Parameter    Choices/Defaults                                                                              Comments
+                                   The attributes the resulting file or directory should have.
+   attributes                      To get supported flags look at the man page for chattr on the target system.
+   string                          This string should contain the attributes in the same order as the one displayed by lsattr.
+                                   The = operator is assumed as default, otherwise + or - operators need to be included in the string.
+                                   aliases: attr
+   copy             Choices:       If true, the file is copied from local 'master' to the target machine, otherwise, the plugin will look for src archive at the target machine.
+   boolean          • no           This option has been deprecated in favor of remote_src.
+                    • yes ←        This option is mutually exclusive with remote_src.
+   creates                         If the specified absolute path (file or directory) already exists, this step will not be run.
+   path
+   decrypt          Choices:
+   boolean          • no           This option controls the autodecryption of source files using vault.
+   added in 2.4     • yes ←
+   dest
+   path /                          Remote absolute path where the archive should be unpacked.
+   required
+   exclude                         List the directory and file entries that you would like to exclude from the unarchive action.
+   list
+   extra_opts     Default:         Specify additional options by passing in an array.
+   list           ""               Each space-separated command-line option should be a new element of the array. See examples.
+                                   Command-line options with multiple elements must use multiple lines in the array, one for each element.
+   group                           Name of the group that should own the file/directory, as would be fed to chown.
+   string
+   keep_newer       Choices:
+   boolean          • no ←         Do not replace existing files that are newer than files from the archive.
+                    • yes
+   list_files       Choices:
+   boolean          • no ←         If set to True, return the list of files that are contained in the tarball.
+                    • yes
+                                   The permissions the resulting file or directory should have.
+                                   For those used to /usr/bin/chmod remember that modes are actually octal numbers. You must either add a leading zero so that Ansible's YAML parser knows it is an
+   mode                            octal number (like 0644 or 01777) or quote it (like '644' or '1777') so Ansible receives a string and can do its own conversion from string into number.
+   string                          Giving Ansible a number without following one of these rules will end up with a decimal number which will have unexpected results.
+                                   As of Ansible 1.8, the mode may be specified as a symbolic mode (for example, u+rwx or u=rw,g=r,o=r).
+                                   As of Ansible 2.6, the mode may also be the special string preserve.
+                                   When set to preserve the file will be given the same permissions as the source file.
+   owner                           Name of the user that should own the file/directory, as would be fed to chown.
+   string
+   remote_src       Choices:       Set to yes to indicate the archived file is already on the remote system and not local to the Ansible controller.
+   boolean          • no ←         This option is mutually exclusive with copy.
+                    • yes
+   selevel        Default:         The level part of the SELinux file context.
+   string         "s0"             This is the MLS/MCS attribute, sometimes known as the range.
+                                   When set to _default, it will use the level portion of the policy if available.
+   serole                          The role part of the SELinux file context.
+   string                          When set to _default, it will use the role portion of the policy if available.
+   setype                          The type part of the SELinux file context.
+   string                          When set to _default, it will use the type portion of the policy if available.
+   seuser                          The user part of the SELinux file context.
+   string                          By default it uses the system policy, where applicable.
+                                   When set to _default, it will use the user portion of the policy if available.
+   src                             If remote_src=no (default), local path to archive file to copy to the target server; can be absolute or relative. If remote_src=yes, path on the target server to
+   path /                          existing archive file to unpack.
+   required                        If remote_src=yes and src contains ://, the remote machine will download the file from the URL first. (version_added 2.0). This is only for simple cases, for full
+                                   download support use the get_url module.
+                                   Influence when to use atomic operation to prevent data corruption or inconsistent reads from the target file.
+                                   By default this module uses atomic operations to prevent data corruption or inconsistent reads from the target files, but sometimes systems are configured or just
+   unsafe_writes    Choices:       broken in ways that prevent this. One example is docker mounted files, which cannot be updated atomically from inside the container and can only be written in an
+   boolean          • no ←         unsafe manner.
+                    • yes          This option allows Ansible to fall back to unsafe methods of updating files when atomic operations fail (however, it doesn't force Ansible to perform unsafe
+                                   writes).
+                                   IMPORTANT! Unsafe writes are subject to race conditions and can lead to data corruption.
+   validate_certs   Choices:       This only applies if using a https URL as the source of the file.
+   boolean          • no           This should only set to no used on personally controlled sites using self-signed certificate.
+                    • yes ←        Prior to 2.2 the code worked as if this was set to yes.
+
+NOTES                   *unarchive-notes*
+
+   Note
+
+     • Requires zipinfo and gtar/unzip command on target host.
+     • Can handle .zip files using unzip as well as .tar, .tar.gz, .tar.bz2 and .tar.xz files using gtar.
+     • Does not handle .gz files, .bz2 files or .xz files that do not contain a .tar archive.
+     • Uses gtar’s --diff arg to calculate if changed or not. If this arg is not supported, it will always unpack the archive.
+     • Existing files/directories in the destination which are not in the archive are not touched. This is the same behavior as a normal archive extraction.
+     • Existing files/directories in the destination which are not in the archive are ignored for purposes of deciding if the archive should be unpacked or not.
+
+SEE ALSO                   *unarchive-see also*
+
+   See also
+
+   archive – Creates a compressed archive of one or more files or trees
+   The official documentation on the archive module.
+
+   iso_extract – Extract files from an ISO image
+   The official documentation on the iso_extract module.
+
+   win_unzip – Unzips compressed files and archives on the Windows node
+   The official documentation on the win_unzip module.
+
+EXAMPLES                   *unarchive-examples*
+
+ - name: Extract foo.tgz into /var/lib/foo
+   unarchive:
+     src: foo.tgz
+     dest: /var/lib/foo
+
+ - name: Unarchive a file that is already on the remote machine
+   unarchive:
+     src: /tmp/foo.zip
+     dest: /usr/local/bin
+     remote_src: yes
+
+ - name: Unarchive a file that needs to be downloaded (added in 2.0)
+   unarchive:
+     src: https://example.com/example.zip
+     dest: /usr/local/bin
+     remote_src: yes
+
+ - name: Unarchive a file with extra options
+   unarchive:
+     src: /tmp/foo.zip
+     dest: /usr/local/bin
+     extra_opts:
+     - --transform
+     - s/^xxx/yyy/
+
+STATUS                   *unarchive-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *unarchive-red hat support*
+
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *unarchive-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/unarchive_module.html
+https://docs.ansible.com/ansible/latest/modules/unarchive_module.html

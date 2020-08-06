@@ -1,0 +1,181 @@
+SYNOPSIS                   *aws_codepipeline*
+
+     • Create or delete a CodePipeline on AWS.
+
+REQUIREMENTS                   *aws_codepipeline-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *aws_codepipeline-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   artifact_store                                Location information where artifacts are stored (on S3). Dictionary with fields type and location.
+   - / required
+              location                           Bucket name for artifacts.
+              -
+              type                               Type of the artifacts storage (only 'S3' is currently supported).
+              -
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   name                                          Name of the pipeline
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   role_arn                                      ARN of the IAM role to use when executing the pipeline
+   - / required
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   stages                                        List of stages to perform in the CodePipeline. List of dictionaries containing name and actions for each stage.
+   - / required
+              actions                            List of action configurations for that stage.
+              -
+              name                               Name of the stage (step) in the codepipeline
+              -
+   state                          Choices:
+   -                              • present ←    Create or remove code pipeline
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   version                                       Version number of the pipeline. This number is automatically incremented when a pipeline is updated.
+   -
+
+NOTES                   *aws_codepipeline-notes*
+
+   Note
+
+     • for details of the parameters and returns see http://boto3.readthedocs.io/en/latest/reference/services/codepipeline.html
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_codepipeline-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Example for creating a pipeline for continuous deploy of Github code to an ECS cluster (container)
+ - aws_codepipeline:
+     name: my_deploy_pipeline
+     role_arn: arn:aws:iam::123456:role/AWS-CodePipeline-Service
+     artifact_store:
+       type: S3
+       location: my_s3_codepipline_bucket
+     stages:
+       - name: Get_source
+         actions:
+           -
+             name: Git_pull
+             actionTypeId:
+               category: Source
+               owner: ThirdParty
+               provider: GitHub
+               version: '1'
+             outputArtifacts:
+               - { name: my-app-source }
+             configuration:
+               Owner: mediapeers
+               Repo: my_gh_repo
+               PollForSourceChanges: 'true'
+               Branch: master
+               # Generate token like this:
+               # https://docs.aws.amazon.com/codepipeline/latest/userguide/GitHub-rotate-personal-token-CLI.html
+               # GH Link: https://github.com/settings/tokens
+               OAuthToken: 'abc123def456'
+             runOrder: 1
+       - name: Build
+         actions:
+           -
+             name: CodeBuild
+             actionTypeId:
+               category: Build
+               owner: AWS
+               provider: CodeBuild
+               version: '1'
+             inputArtifacts:
+               - { name: my-app-source }
+             outputArtifacts:
+               - { name: my-app-build }
+             configuration:
+               # A project with that name needs to be setup on AWS CodeBuild already (use code_build module).
+               ProjectName: codebuild-project-name
+             runOrder: 1
+       - name: ECS_deploy
+         actions:
+           -
+             name: ECS_deploy
+             actionTypeId:
+               category: Deploy
+               owner: AWS
+               provider: ECS
+               version: '1'
+             inputArtifacts:
+               - { name: vod-api-app-build }
+             configuration:
+               # an ECS cluster with that name needs to be setup on AWS ECS already (use ecs_cluster and ecs_service module)
+               ClusterName: ecs-cluster-name
+               ServiceName: ecs-cluster-service-name
+               FileName: imagedefinitions.json
+     region: us-east-1
+     state: present
+
+RETURN VALUES                   *aws_codepipeline-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key            Returned                                                                               Description
+   pipeline           success         Returns the dictionary describing the code pipeline configuration.
+   complex
+     artifact_store   always          Information about where the build artifacts are stored
+     complex
+       encryption_key when configured The encryption key used to encrypt the artifacts store, such as an AWS KMS key.
+       string
+       location                       The location of the artifacts storage (s3 bucket name)
+       string         always          Sample:
+                                      my_s3_codepipline_bucket
+       type                           The type of the artifacts store, such as S3
+       string         always          Sample:
+                                      S3
+     name                             Name of the CodePipeline
+     string           always          Sample:
+                                      my_deploy_pipeline
+     role_arn                         ARN of the IAM role attached to the code pipeline
+     string           always          Sample:
+                                      arn:aws:iam::123123123:role/codepipeline-service-role
+     stages           always          List of stages configured for this pipeline
+     list
+     version          always          The version number of the pipeline. This number is auto incremented when pipeline params are changed.
+     integer
+
+STATUS                   *aws_codepipeline-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Stefan Horning (@stefanhorning) <horning@mediapeers.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_codepipeline-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_codepipeline_module.html

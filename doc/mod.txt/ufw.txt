@@ -1,63 +1,238 @@
-SYNOPSIS                           *ufw*
+SYNOPSIS                   *ufw*
 
-New in version 1.6.
+     • Manage firewall with UFW.
 
-Manage firewall with UFW.
+REQUIREMENTS                   *ufw-requirements*
 
-EXAMPLES                           *ufw-examples*
->
-    # Allow everything and enable UFW
-    ufw: state=enabled policy=allow
-   
-    # Set logging
-    ufw: logging=on
-   
-    # Sometimes it is desirable to let the sender know when traffic is
-    # being denied, rather than simply ignoring it. In these cases, use
-    # reject instead of deny. In addition, log rejected connections:
-    ufw: rule=reject port=auth log=yes
-   
-    # ufw supports connection rate limiting, which is useful for protecting
-    # against brute-force login attacks. ufw will deny connections if an IP
-    # address has attempted to initiate 6 or more connections in the last
-    # 30 seconds. See  http://www.debian-administration.org/articles/187
-    # for details. Typical usage is:
-    ufw: rule=limit port=ssh proto=tcp
-   
-    # Allow OpenSSH
-    ufw: rule=allow name=OpenSSH
-   
-    # Delete OpenSSH rule
-    ufw: rule=allow name=OpenSSH delete=yes
-   
-    # Deny all access to port 53:
-    ufw: rule=deny port=53
-   
-    # Allow all access to tcp port 80:
-    ufw: rule=allow port=80 proto=tcp
-   
-    # Allow all access from RFC1918 networks to this host:
-    ufw: rule=allow src={{ item }}
-    with_items:
-    - 10.0.0.0/8
-    - 172.16.0.0/12
-    - 192.168.0.0/16
-   
-    # Deny access to udp port 514 from host 1.2.3.4:
-    ufw: rule=deny proto=udp src=1.2.3.4 port=514
-   
-    # Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
-    ufw: rule=allow interface=eth0 direction=in proto=udp src=1.2.3.5 from_port=5469 dest=1.2.3.4 to_port=5469
-   
-    # Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host.
-    # Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
-    ufw: rule=deny proto=tcp src=2001:db8::/32 port=25
-   
-      Note
-   
-      See man ufw for more examples.
-   
+   The below requirements are needed on the host that executes this module.
+
+     • ufw package
+
+PARAMETERS                   *ufw-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   comment
+   string                              Add a comment to the rule. Requires UFW version >=0.35.
+   added in 2.4
+                        Choices:
+   default              • allow        Change the default policy for incoming or outgoing traffic.
+   string               • deny         aliases: policy
+                        • reject
+   delete               Choices:
+   boolean              • no           Delete rule.
+                        • yes
+                        Choices:
+                        • in
+   direction            • incoming     Select direction for a rule or default policy command.
+   string               • out
+                        • outgoing
+                        • routed
+   from_ip            Default:         Source IP address.
+   string             "any"            aliases: from, src
+   from_port                           Source port.
+   string
+   insert                              Insert the corresponding rule as rule number NUM.
+   integer                             Note that ufw numbers rules starting with 1.
+                                       Allows to interpret the index in insert relative to a position.
+                                       zero interprets the rule number as an absolute index (i.e. 1 is the first rule).
+                        Choices:       first-ipv4 interprets the rule number relative to the index of the first IPv4 rule, or relative to the position where the first IPv4 rule would be if there is
+   insert_relative_to   • first-ipv4   currently none.
+   string               • first-ipv6   last-ipv4 interprets the rule number relative to the index of the last IPv4 rule, or relative to the position where the last IPv4 rule would be if there is
+   added in 2.8         • last-ipv4    currently none.
+                        • last-ipv6    first-ipv6 interprets the rule number relative to the index of the first IPv6 rule, or relative to the position where the first IPv6 rule would be if there is
+                        • zero ←       currently none.
+                                       last-ipv6 interprets the rule number relative to the index of the last IPv6 rule, or relative to the position where the last IPv6 rule would be if there is
+                                       currently none.
+   interface                           Specify interface for rule.
+   string                              aliases: if
+   log                  Choices:
+   boolean              • no           Log new connections matched to this rule
+                        • yes
+                        Choices:
+                        • on
+   logging              • off
+   string               • low          Toggles logging. Logged packets use the LOG_KERN syslog facility.
+                        • medium
+                        • high
+                        • full
+   name                                Use profile located in /etc/ufw/applications.d.
+   string                              aliases: app
+                        Choices:
+                        • any
+                        • tcp
+   proto                • udp          TCP/IP protocol.
+   string               • ipv6         aliases: protocol
+                        • esp
+                        • ah
+                        • gre
+                        • igmp
+   route                Choices:
+   boolean              • no           Apply the rule to routed/forwarded packets.
+                        • yes
+                        Choices:
+   rule                 • allow
+   string               • deny         Add firewall rule
+                        • limit
+                        • reject
+                        Choices:       enabled reloads firewall and enables firewall on boot.
+   state                • disabled     disabled unloads firewall and disables firewall on boot.
+   string               • enabled      reloaded reloads firewall.
+                        • reloaded     reset disables and resets firewall to installation defaults.
+                        • reset
+   to_ip              Default:         Destination IP address.
+   string             "any"            aliases: dest, to
+   to_port                             Destination port.
+   string                              aliases: port
+
+NOTES                   *ufw-notes*
+
+   Note
+
+     • See man ufw for more examples.
+
+EXAMPLES                   *ufw-examples*
+
+ - name: Allow everything and enable UFW
+   ufw:
+     state: enabled
+     policy: allow
+
+ - name: Set logging
+   ufw:
+     logging: 'on'
+
+ # Sometimes it is desirable to let the sender know when traffic is
+ # being denied, rather than simply ignoring it. In these cases, use
+ # reject instead of deny. In addition, log rejected connections:
+ - ufw:
+     rule: reject
+     port: auth
+     log: yes
+
+ # ufw supports connection rate limiting, which is useful for protecting
+ # against brute-force login attacks. ufw will deny connections if an IP
+ # address has attempted to initiate 6 or more connections in the last
+ # 30 seconds. See  http://www.debian-administration.org/articles/187
+ # for details. Typical usage is:
+ - ufw:
+     rule: limit
+     port: ssh
+     proto: tcp
+
+ # Allow OpenSSH. (Note that as ufw manages its own state, simply removing
+ # a rule=allow task can leave those ports exposed. Either use delete=yes
+ # or a separate state=reset task)
+ - ufw:
+     rule: allow
+     name: OpenSSH
+
+ - name: Delete OpenSSH rule
+   ufw:
+     rule: allow
+     name: OpenSSH
+     delete: yes
+
+ - name: Deny all access to port 53
+   ufw:
+     rule: deny
+     port: '53'
+
+ - name: Allow port range 60000-61000
+   ufw:
+     rule: allow
+     port: 60000:61000
+     proto: tcp
+
+ - name: Allow all access to tcp port 80
+   ufw:
+     rule: allow
+     port: '80'
+     proto: tcp
+
+ - name: Allow all access from RFC1918 networks to this host
+   ufw:
+     rule: allow
+     src: '{{ item }}'
+   loop:
+     - 10.0.0.0/8
+     - 172.16.0.0/12
+     - 192.168.0.0/16
+
+ - name: Deny access to udp port 514 from host 1.2.3.4 and include a comment
+   ufw:
+     rule: deny
+     proto: udp
+     src: 1.2.3.4
+     port: '514'
+     comment: Block syslog
+
+ - name: Allow incoming access to eth0 from 1.2.3.5 port 5469 to 1.2.3.4 port 5469
+   ufw:
+     rule: allow
+     interface: eth0
+     direction: in
+     proto: udp
+     src: 1.2.3.5
+     from_port: '5469'
+     dest: 1.2.3.4
+     to_port: '5469'
+
+ # Note that IPv6 must be enabled in /etc/default/ufw for IPv6 firewalling to work.
+ - name: Deny all traffic from the IPv6 2001:db8::/32 to tcp port 25 on this host
+   ufw:
+     rule: deny
+     proto: tcp
+     src: 2001:db8::/32
+     port: '25'
+
+ - name: Deny all IPv6 traffic to tcp port 20 on this host
+   # this should be the first IPv6 rule
+   ufw:
+     rule: deny
+     proto: tcp
+     port: '20'
+     to_ip: "::"
+     insert: 0
+     insert_relative_to: first-ipv6
+
+ - name: Deny all IPv4 traffic to tcp port 20 on this host
+   # This should be the third to last IPv4 rule
+   # (insert: -1 addresses the second to last IPv4 rule;
+   #  so the new rule will be inserted before the second
+   #  to last IPv4 rule, and will be come the third to last
+   #  IPv4 rule.)
+   ufw:
+     rule: deny
+     proto: tcp
+     port: '20'
+     to_ip: "::"
+     insert: -1
+     insert_relative_to: last-ipv4
+
+ # Can be used to further restrict a global FORWARD policy set to allow
+ - name: Deny forwarded/routed traffic from subnet 1.2.3.0/24 to subnet 4.5.6.0/24
+   ufw:
+     rule: deny
+     route: yes
+     src: 1.2.3.0/24
+     dest: 4.5.6.0/24
+
+STATUS                   *ufw-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Aleksey Ovcharenko (@ovcharenko)
+     • Jarno Keskikangas (@pyykkis)
+     • Ahti Kitsik (@ahtik)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ufw-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ufw_module.html
+https://docs.ansible.com/ansible/latest/modules/ufw_module.html

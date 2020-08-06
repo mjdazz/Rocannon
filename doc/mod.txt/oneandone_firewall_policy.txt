@@ -1,0 +1,161 @@
+SYNOPSIS                   *oneandone_firewall_policy*
+
+     • Create, remove, reconfigure, update firewall policies. This module has a dependency on 1and1 >= 1.0
+
+REQUIREMENTS                   *oneandone_firewall_policy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • 1and1
+     • python >= 2.6
+
+PARAMETERS                   *oneandone_firewall_policy-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   add_rules                          A list of rules that will be added to an existing firewall policy. It is syntax is the same as the one used for rules parameter. Used in combination with
+   -                                  update state.
+   add_server_ips                     A list of server identifiers (id or name) to be assigned to a firewall policy. Used in combination with update state.
+   -
+   api_url                            Custom API URL. Overrides the ONEANDONE_API_URL environment variable.
+   -
+   auth_token                         Authenticating API token provided by 1&1.
+   - / required
+   description                        Firewall policy description. maxLength=256
+   -
+   firewall_policy                    The identifier (id or name) of the firewall policy used with update state.
+   - / required
+   name                               Firewall policy name used with present state. Used as identifier (id or name) when used with absent state. maxLength=128
+   - / required
+   remove_rules                       A list of rule ids that will be removed from an existing firewall policy. Used in combination with update state.
+   -
+   remove_server_ips                  A list of server IP ids to be unassigned from a firewall policy. Used in combination with update state.
+   -
+   rules                              A list of rules that will be set for the firewall policy. Each rule must contain protocol parameter, in addition to three optional parameters (port_from,
+   -                                  port_to, and source)
+                       Choices:
+   state               • present ←    Define a firewall policy state to create, remove, or update.
+   -                   • absent
+                       • update
+   wait                Choices:
+   boolean             • no           wait for the instance to be in state 'running' before returning
+                       • yes ←
+   wait_interval     Default:         Defines the number of seconds to wait when using the _wait_for methods
+   -                 5
+   wait_timeout      Default:         how long before wait gives up, in seconds
+   -                 600
+
+EXAMPLES                   *oneandone_firewall_policy-examples*
+
+ # Provisioning example. Create and destroy a firewall policy.
+
+ - oneandone_firewall_policy:
+     auth_token: oneandone_private_api_key
+     name: ansible-firewall-policy
+     description: Testing creation of firewall policies with ansible
+     rules:
+      -
+        protocol: TCP
+        port_from: 80
+        port_to: 80
+        source: 0.0.0.0
+     wait: true
+     wait_timeout: 500
+
+ - oneandone_firewall_policy:
+     auth_token: oneandone_private_api_key
+     state: absent
+     name: ansible-firewall-policy
+
+ # Update a firewall policy.
+
+ - oneandone_firewall_policy:
+     auth_token: oneandone_private_api_key
+     state: update
+     firewall_policy: ansible-firewall-policy
+     name: ansible-firewall-policy-updated
+     description: Testing creation of firewall policies with ansible - updated
+
+ # Add server to a firewall policy.
+
+ - oneandone_firewall_policy:
+     auth_token: oneandone_private_api_key
+     firewall_policy: ansible-firewall-policy-updated
+     add_server_ips:
+      - server_identifier (id or name)
+      - server_identifier #2 (id or name)
+     wait: true
+     wait_timeout: 500
+     state: update
+
+ # Remove server from a firewall policy.
+
+ - oneandone_firewall_policy:
+     auth_token: oneandone_private_api_key
+     firewall_policy: ansible-firewall-policy-updated
+     remove_server_ips:
+      - B2504878540DBC5F7634EB00A07C1EBD (server's IP id)
+     wait: true
+     wait_timeout: 500
+     state: update
+
+ # Add rules to a firewall policy.
+
+ - oneandone_firewall_policy:
+     auth_token: oneandone_private_api_key
+     firewall_policy: ansible-firewall-policy-updated
+     description: Adding rules to an existing firewall policy
+     add_rules:
+      -
+        protocol: TCP
+        port_from: 70
+        port_to: 70
+        source: 0.0.0.0
+      -
+        protocol: TCP
+        port_from: 60
+        port_to: 60
+        source: 0.0.0.0
+     wait: true
+     wait_timeout: 500
+     state: update
+
+ # Remove rules from a firewall policy.
+
+ - oneandone_firewall_policy:
+     auth_token: oneandone_private_api_key
+     firewall_policy: ansible-firewall-policy-updated
+     remove_rules:
+      - rule_id #1
+      - rule_id #2
+      - ...
+     wait: true
+     wait_timeout: 500
+     state: update
+
+RETURN VALUES                   *oneandone_firewall_policy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   firewall_policy          Information about the firewall policy that was processed
+   dictionary      always   Sample:
+                            {"id": "92B74394A397ECC3359825C1656D67A6", "name": "Default Policy"}
+
+STATUS                   *oneandone_firewall_policy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Amel Ajdinovic (@aajdinov)
+     • Ethan Devenport (@edevenport)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *oneandone_firewall_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/oneandone_firewall_policy_module.html

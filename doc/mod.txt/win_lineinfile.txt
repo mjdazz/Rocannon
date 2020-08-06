@@ -1,0 +1,151 @@
+SYNOPSIS                   *win_lineinfile*
+
+     • This module will search a file for a line, and ensure that it is present or absent.
+     • This is primarily useful when you want to change a single line in a file only.
+
+PARAMETERS                   *win_lineinfile-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+                  Choices:       Used with state=present. If set, line can contain backreferences (both positional and named) that will get populated if the regexp matches. This flag changes the
+   backrefs       • no ←         operation of the module slightly; insertbefore and insertafter will be ignored, and if the regexp doesn't match anywhere in the file, the file will be left
+   boolean        • yes          unchanged.
+                                 If the regexp does match, the last matching line will be replaced by the expanded line parameter.
+   backup         Choices:       Determine whether a backup should be created.
+   boolean        • no ←         When set to yes, create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+                  • yes
+   create         Choices:
+   boolean        • no ←         Used with state=present. If specified, the file will be created if it does not already exist. By default it will fail if the file is missing.
+                  • yes
+                                 Specifies the encoding of the source text file to operate on (and thus what the output encoding will be). The default of auto will cause the module to auto-detect
+                                 the encoding of the source file and ensure that the modified file is written with the same encoding.
+   encoding     Default:         An explicit encoding can be passed as a string that is a valid value to pass to the .NET framework System.Text.Encoding.GetEncoding() method - see
+   string       "auto"           https://msdn.microsoft.com/en-us/library/system.text.encoding%28v=vs.110%29.aspx.
+                                 This is mostly useful with create=yes if you want to create a new file with a specific encoding. If create=yes is specified without a specific encoding, the default
+                                 encoding (UTF-8, no BOM) will be used.
+   insertafter    Choices:       Used with state=present. If specified, the line will be inserted after the last match of specified regular expression. A special value is available; EOF for
+   string         • EOF ←        inserting the line at the end of the file.
+                  • "regex"      If specified regular expression has no matches, EOF will be used instead. May not be used with backrefs.
+   insertbefore   Choices:       Used with state=present. If specified, the line will be inserted before the last match of specified regular expression. A value is available; BOF for inserting the
+   string         • BOF          line at the beginning of the file.
+                  • "regex"      If specified regular expression has no matches, the line will be inserted at the end of the file. May not be used with backrefs.
+                                 Required for state=present. The line to insert/replace into the file. If backrefs is set, may contain backreferences that will get expanded with the regexp capture
+   line                          groups if the regexp matches.
+   string                        Be aware that the line is processed first on the controller and thus is dependent on yaml quoting rules. Any double quoted line will have control characters, such
+                                 as '\r\n', expanded. To print such characters literally, use single or no quotes.
+   newline        Choices:       Specifies the line separator style to use for the modified file. This defaults to the windows line separator (\r\n). Note that the indicated line separator will be
+   string         • unix         used for file output regardless of the original line separator that appears in the input file.
+                  • windows ←
+   path                          The path of the file to modify.
+   path /                        Note that the Windows path delimiter \ must be escaped as \\ when the line is double quoted.
+   required                      Before Ansible 2.3 this option was only usable as dest, destfile and name.
+                                 aliases: dest, destfile, name
+   regex                         The regular expression to look for in every line of the file. For state=present, the pattern to replace if found; only the last line found will be replaced. For
+   -                             state=absent, the pattern of the line to remove. Uses .NET compatible regular expressions; see https://msdn.microsoft.com/en-us/library/hs600312%28v=vs.110%29.aspx.
+                                 aliases: regexp
+   state          Choices:
+   string         • absent       Whether the line should be there or not.
+                  • present ←
+   validate                      Validation to run before copying into place. Use %s in the command to indicate the current file to validate.
+   string                        The command is passed securely so shell features like expansion and pipes won't work.
+
+NOTES                   *win_lineinfile-notes*
+
+   Note
+
+     • As of Ansible 2.3, the dest option has been changed to path as default, but dest still works as well.
+
+SEE ALSO                   *win_lineinfile-see also*
+
+   See also
+
+   assemble – Assemble configuration files from fragments
+   The official documentation on the assemble module.
+
+   lineinfile – Manage lines in text files
+   The official documentation on the lineinfile module.
+
+EXAMPLES                   *win_lineinfile-examples*
+
+ # Before Ansible 2.3, option 'dest', 'destfile' or 'name' was used instead of 'path'
+ - name: Insert path without converting \r\n
+   win_lineinfile:
+     path: c:\file.txt
+     line: c:\return\new
+
+ - win_lineinfile:
+     path: C:\Temp\example.conf
+     regex: '^name='
+     line: 'name=JohnDoe'
+
+ - win_lineinfile:
+     path: C:\Temp\example.conf
+     regex: '^name='
+     state: absent
+
+ - win_lineinfile:
+     path: C:\Temp\example.conf
+     regex: '^127\.0\.0\.1'
+     line: '127.0.0.1 localhost'
+
+ - win_lineinfile:
+     path: C:\Temp\httpd.conf
+     regex: '^Listen '
+     insertafter: '^#Listen '
+     line: Listen 8080
+
+ - win_lineinfile:
+     path: C:\Temp\services
+     regex: '^# port for http'
+     insertbefore: '^www."80/tcp'
+     line: '# port for http by default'
+
+ - name: Create file if it doesn't exist with a specific encoding
+   win_lineinfile:
+     path: C:\Temp\utf16.txt
+     create: yes
+     encoding: utf-16
+     line: This is a utf-16 encoded file
+
+ - name: Add a line to a file and ensure the resulting file uses unix line separators
+   win_lineinfile:
+     path: C:\Temp\testfile.txt
+     line: Line added to file
+     newline: unix
+
+ - name: Update a line using backrefs
+   win_lineinfile:
+     path: C:\Temp\example.conf
+     backrefs: yes
+     regex: '(^name=)'
+     line: '$1JohnDoe'
+
+RETURN VALUES                   *win_lineinfile-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key       Returned                                                                                  Description
+                             Name of the backup file that was created.
+   backup      if backup=yes This is now deprecated, use backup_file instead.
+   string                    Sample:
+                             C:\Path\To\File.txt.11540.20150212-220915.bak
+   backup_file               Name of the backup file that was created.
+   string      if backup=yes Sample:
+                             C:\Path\To\File.txt.11540.20150212-220915.bak
+
+STATUS                   *win_lineinfile-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Brian Lloyd (@brianlloyd)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_lineinfile-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_lineinfile_module.html

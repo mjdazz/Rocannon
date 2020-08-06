@@ -1,0 +1,80 @@
+SYNOPSIS                   *win_regmerge*
+
+     • Wraps the reg.exe command to import the contents of a registry file.
+     • Suitable for use with registry files created using win_template.
+     • Windows registry files have a specific format and must be constructed correctly with carriage return and line feed line endings otherwise they will not be merged.
+     • Exported registry files often start with a Byte Order Mark which must be removed if the file is to templated using win_template.
+     • Registry file format is described at https://support.microsoft.com/en-us/kb/310516
+     • See also win_template, win_regedit
+
+PARAMETERS                   *win_regmerge-parameters*
+
+    Parameter  Choices/Defaults                                                                               Comments
+   compare_key                  The parent key to use when comparing the contents of the registry to the contents of the file. Needs to be in HKLM or HKCU part of registry. Use a PS-Drive style
+   string                       path for example HKLM:\SOFTWARE not HKEY_LOCAL_MACHINE\SOFTWARE If not supplied, or the registry key is not found, no comparison will be made, and the module will
+                                report changed.
+   path
+   path /                       The full path including file name to the registry file on the remote machine to be merged
+   required
+
+NOTES                   *win_regmerge-notes*
+
+   Note
+
+     • Organise your registry files so that they contain a single root registry key if you want to use the compare_to functionality.
+     • This module does not force registry settings to be in the state described in the file. If registry settings have been modified externally the module will merge the contents of the file but
+       continue to report differences on subsequent runs.
+     • To force registry change, use win_regedit with state=absent before using win_regmerge.
+
+SEE ALSO                   *win_regmerge-see also*
+
+   See also
+
+   win_reg_stat – Get information about Windows registry keys
+   The official documentation on the win_reg_stat module.
+
+   win_regedit – Add, change, or remove registry keys and values
+   The official documentation on the win_regedit module.
+
+EXAMPLES                   *win_regmerge-examples*
+
+ - name: Merge in a registry file without comparing to current registry
+   win_regmerge:
+     path: C:\autodeploy\myCompany-settings.reg
+
+ - name: Compare and merge registry file
+   win_regmerge:
+     path: C:\autodeploy\myCompany-settings.reg
+     compare_to: HKLM:\SOFTWARE\myCompany
+
+RETURN VALUES                   *win_regmerge-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key                                          Returned                                                                              Description
+   compare_to_key_found when comparison key not found in registry                                 whether the parent registry key has been found for comparison
+   boolean
+   compared                                                                                       whether a comparison has taken place between the registry and the file
+   boolean              when a comparison key has been supplied and comparison has been attempted Sample:
+                                                                                                  True
+   difference_count                                                                               number of differences between the registry and the file
+   integer              changed                                                                   Sample:
+                                                                                                  1
+
+STATUS                   *win_regmerge-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jon Hawkesworth (@jhawkesworth)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_regmerge-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_regmerge_module.html

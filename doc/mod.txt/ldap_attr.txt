@@ -1,0 +1,153 @@
+SYNOPSIS                   *ldap_attr*
+
+     • Add or remove LDAP attribute values.
+
+REQUIREMENTS                   *ldap_attr-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-ldap
+
+PARAMETERS                   *ldap_attr-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   bind_dn                         A DN to bind with. If this is omitted, we'll try a SASL bind with the EXTERNAL mechanism.
+   string                          If this is blank, we'll use an anonymous bind.
+   bind_pw                         The password to use with bind_dn.
+   string
+   dn
+   string /                        The DN of the entry to add or remove.
+   required
+   name
+   string /                        The name of the attribute to modify.
+   required
+   server_uri     Default:         A URI to the LDAP server.
+   string         "ldapi:///"      The default value lets the underlying LDAP client library look for a UNIX domain socket in its default location.
+   start_tls        Choices:
+   boolean          • no ←         If true, we'll use the START_TLS LDAP extension.
+                    • yes
+                    Choices:       The state of the attribute values.
+   state            • absent       If present, all given values will be added if they're missing.
+   -                • exact        If absent, all given values will be removed if present.
+                    • present ←    If exact, the set of values will be forced to exactly those provided and no others.
+                                   If state=exact and value is an empty list, all values for this attribute will be removed.
+   validate_certs   Choices:       If set to no, SSL certificates will not be validated.
+   boolean          • no           This should only be used on sites using self-signed certificates.
+   added in 2.4     • yes ←
+   values                          The value(s) to add or remove. This can be a string or a list of strings. The complex argument format is required in order to pass a list of strings (see
+   raw / required                  examples).
+
+NOTES                   *ldap_attr-notes*
+
+   Note
+
+     • This only deals with attributes on existing entries. To add or remove whole entries, see ldap_entry.
+     • The default authentication settings will attempt to use a SASL EXTERNAL bind over a UNIX domain socket. This works well with the default Ubuntu install for example, which includes a
+       cn=peercred,cn=external,cn=auth ACL rule allowing root to modify the server configuration. If you need to use a simple bind to access your server, pass the credentials in bind_dn and
+       bind_pw.
+     • For state=present and state=absent, all value comparisons are performed on the server for maximum accuracy. For state=exact, values have to be compared in Python, which obviously ignores
+       LDAP matching rules. This should work out in most cases, but it is theoretically possible to see spurious changes when target and actual values are semantically identical but lexically
+       distinct.
+     • The params parameter is deprecated in Ansible-2.7 due to circumventing Ansible’s parameter handling. The params parameter started disallowing setting the bind_pw parameter in Ansible-2.7 as
+       it was insecure to set the parameter that way.
+
+EXAMPLES                   *ldap_attr-examples*
+
+ - name: Configure directory number 1 for example.com
+   ldap_attr:
+     dn: olcDatabase={1}hdb,cn=config
+     name: olcSuffix
+     values: dc=example,dc=com
+     state: exact
+
+ # The complex argument format is required here to pass a list of ACL strings.
+ - name: Set up the ACL
+   ldap_attr:
+     dn: olcDatabase={1}hdb,cn=config
+     name: olcAccess
+     values:
+       - >-
+         {0}to attrs=userPassword,shadowLastChange
+         by self write
+         by anonymous auth
+         by dn="cn=admin,dc=example,dc=com" write
+         by " none'
+       - >-
+         {1}to dn.base="dc=example,dc=com"
+         by dn="cn=admin,dc=example,dc=com" write
+         by " read
+     state: exact
+
+ - name: Declare some indexes
+   ldap_attr:
+     dn: olcDatabase={1}hdb,cn=config
+     name: olcDbIndex
+     values: "{{ item }}"
+   with_items:
+     - objectClass eq
+     - uid eq
+
+ - name: Set up a root user, which we can use later to bootstrap the directory
+   ldap_attr:
+     dn: olcDatabase={1}hdb,cn=config
+     name: "{{ item.key }}"
+     values: "{{ item.value }}"
+     state: exact
+   with_dict:
+     olcRootDN: cn=root,dc=example,dc=com
+     olcRootPW: "{SSHA}tabyipcHzhwESzRaGA7oQ/SDoBZQOGND"
+
+ - name: Get rid of an unneeded attribute
+   ldap_attr:
+     dn: uid=jdoe,ou=people,dc=example,dc=com
+     name: shadowExpire
+     values: []
+     state: exact
+     server_uri: ldap://localhost/
+     bind_dn: cn=admin,dc=example,dc=com
+     bind_pw: password
+
+ #
+ # The same as in the previous example but with the authentication details
+ # stored in the ldap_auth variable:
+ #
+ # ldap_auth:
+ #   server_uri: ldap://localhost/
+ #   bind_dn: cn=admin,dc=example,dc=com
+ #   bind_pw: password
+ #
+ # In the example below, 'args' is a task keyword, passed at the same level as the module
+ - name: Get rid of an unneeded attribute
+   ldap_attr:
+     dn: uid=jdoe,ou=people,dc=example,dc=com
+     name: shadowExpire
+     values: []
+     state: exact
+   args: "{{ ldap_auth }}"
+
+RETURN VALUES                   *ldap_attr-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   modlist          list of modified parameters
+   list    success  Sample:
+                    [[2, "olcRootDN", ["cn=root,dc=example,dc=com"]]]
+
+STATUS                   *ldap_attr-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jiri Tyr (@jtyr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ldap_attr-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ldap_attr_module.html

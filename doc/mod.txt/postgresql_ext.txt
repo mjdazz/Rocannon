@@ -1,0 +1,157 @@
+SYNOPSIS                   *postgresql_ext*
+
+     • Add or remove PostgreSQL extensions from a database.
+
+REQUIREMENTS                   *postgresql_ext-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_ext-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+   ca_cert                             Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                              If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+   added in 2.8                        aliases: ssl_rootcert
+   cascade             Choices:
+   boolean             • no ←          Automatically install/remove any extensions that this extension depends on that are not already installed/removed (supported since PostgreSQL 9.6).
+   added in 2.8        • yes
+   db                                  Name of the database to add or remove the extension to/from.
+   string / required                   aliases: login_db
+   login_host                          Host running the database.
+   string
+   login_password                      The password used to authenticate with.
+   string
+   login_unix_socket
+   string                              Path to a Unix domain socket for local connections.
+   added in 2.8
+   login_user        Default:          The username used to authenticate with.
+   string            "postgres"
+   name                                Name of the extension to add or remove.
+   string / required                   aliases: ext
+   port              Default:          Database port to connect to.
+   integer           5432              aliases: login_port
+   schema
+   string                              Name of the schema to add the extension to.
+   added in 2.8
+   session_role                        Switch to session_role after connecting.
+   string                              The specified session_role must be a role that the current login_user is a member of.
+   added in 2.8                        Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                       Choices:
+                       • allow
+   ssl_mode            • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+   added in 2.8        • require       Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+   state               Choices:
+   string              • absent        The database extension state.
+                       • present ←
+   version                             Extension version to add or update to. Has effect with state=present only.
+   string                              If not specified, the latest extension version will be created.
+   added in 2.9                        It can't downgrade an extension version. When version downgrade is needed, remove the extension and create new one with appropriate version.
+                                       Set version=latest to update the extension to the latest available version.
+
+NOTES                   *postgresql_ext-notes*
+
+   Note
+
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • This module uses psycopg2, a Python PostgreSQL database adapter.
+     • You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_ext-see also*
+
+   See also
+
+   PostgreSQL extensions
+   General information about PostgreSQL extensions.
+
+   CREATE EXTENSION reference
+   Complete reference of the CREATE EXTENSION command documentation.
+
+   ALTER EXTENSION reference
+   Complete reference of the ALTER EXTENSION command documentation.
+
+   DROP EXTENSION reference
+   Complete reference of the DROP EXTENSION command documentation.
+
+EXAMPLES                   *postgresql_ext-examples*
+
+ - name: Adds postgis extension to the database acme in the schema foo
+   postgresql_ext:
+     name: postgis
+     db: acme
+     schema: foo
+
+ - name: Removes postgis extension to the database acme
+   postgresql_ext:
+     name: postgis
+     db: acme
+     state: absent
+
+ - name: Adds earthdistance extension to the database template1 cascade
+   postgresql_ext:
+     name: earthdistance
+     db: template1
+     cascade: true
+
+ # In the example below, if earthdistance extension is installed,
+ # it will be removed too because it depends on cube:
+ - name: Removes cube extension from the database acme cascade
+   postgresql_ext:
+     name: cube
+     db: acme
+     cascade: yes
+     state: absent
+
+ - name: Create extension foo of version 1.2 or update it if it's already created
+   postgresql_ext:
+     db: acme
+     name: foo
+     version: 1.2
+
+ - name: Assuming extension foo is created, update it to the latest version
+   postgresql_ext:
+     db: acme
+     name: foo
+     version: latest
+
+RETURN VALUES                   *postgresql_ext-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key  Returned                                                                                     Description
+   query          List of executed queries.
+   list  always   Sample:
+                  ['DROP EXTENSION "acme"']
+
+STATUS                   *postgresql_ext-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Daniel Schep (@dschep)
+     • Thomas O’Donnell (@andytom)
+     • Sandro Santilli (@strk)
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_ext-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_ext_module.html

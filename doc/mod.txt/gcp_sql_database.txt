@@ -1,0 +1,118 @@
+SYNOPSIS                   *gcp_sql_database*
+
+     • Represents a SQL database inside the Cloud SQL instance, hosted in Google’s cloud.
+
+REQUIREMENTS                   *gcp_sql_database-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_sql_database-parameters*
+
+          Parameter          Choices/Defaults                                                                         Comments
+                              Choices:
+   auth_kind                  • application    The type of credential used.
+   string / required          • machineaccount
+                              • serviceaccount
+   charset                                     The charset value. See MySQL's [Supported Character Sets and Collations](https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html) and Postgres'
+   string                                      [Character Set Support](https://www.postgresql.org/docs/9.6/static/multibyte.html) for more details and supported values. Postgres databases only
+                                               support a value of `UTF8` at creation time.
+   collation                                   The collation value. See MySQL's [Supported Character Sets and Collations](https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html) and
+   string                                      Postgres' [Collation Support](https://www.postgresql.org/docs/9.6/static/collation.html) for more details and supported values. Postgres databases
+                                               only support a value of `en_US.UTF8` at creation time.
+   env_type                                    Specifies which Ansible environment you're running this module within.
+   string                                      This should not be set unless you know what you're doing.
+                                               This only alters the User Agent string for any API requests.
+   instance                                    The name of the Cloud SQL instance. This does not include the project ID.
+   string / required
+   name                                        The name of the database in the Cloud SQL instance.
+   string / required                           This does not include the project ID or instance name.
+   project                                     The Google Cloud Platform project to use.
+   string
+   scopes                                      Array of scopes to be used.
+   list
+   service_account_contents                    The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                       An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                        The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+   state                      Choices:
+   string                     • present ←      Whether the given object should exist in GCP
+                              • absent
+
+NOTES                   *gcp_sql_database-notes*
+
+   Note
+
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_sql_database-examples*
+
+ - name: create a instance
+   gcp_sql_instance:
+     name: "{{resource_name}}-3"
+     settings:
+       ip_configuration:
+         authorized_networks:
+         - name: google dns server
+           value: 8.8.8.8/32
+       tier: db-n1-standard-1
+     region: us-central1
+     project: "{{ gcp_project }}"
+     auth_kind: "{{ gcp_cred_kind }}"
+     service_account_file: "{{ gcp_cred_file }}"
+     state: present
+   register: instance
+
+ - name: create a database
+   gcp_sql_database:
+     name: test_object
+     charset: utf8
+     instance: "{{ instance.name }}"
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+     state: present
+
+RETURN VALUES                   *gcp_sql_database-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key    Returned                                                                                   Description
+   charset   success  The charset value. See MySQL's [Supported Character Sets and Collations](https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html) and Postgres' [Character Set
+   string             Support](https://www.postgresql.org/docs/9.6/static/multibyte.html) for more details and supported values. Postgres databases only support a value of `UTF8` at creation time.
+   collation          The collation value. See MySQL's [Supported Character Sets and Collations](https://dev.mysql.com/doc/refman/5.7/en/charset-charsets.html) and Postgres' [Collation
+   string    success  Support](https://www.postgresql.org/docs/9.6/static/collation.html) for more details and supported values. Postgres databases only support a value of `en_US.UTF8` at creation
+                      time.
+   instance  success  The name of the Cloud SQL instance. This does not include the project ID.
+   string
+   name      success  The name of the database in the Cloud SQL instance.
+   string             This does not include the project ID or instance name.
+
+STATUS                   *gcp_sql_database-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_sql_database-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_sql_database_module.html

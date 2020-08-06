@@ -1,0 +1,129 @@
+SYNOPSIS                   *iam_managed_policy*
+
+     • Allows creating and removing managed IAM policies
+
+REQUIREMENTS                   *iam_managed_policy-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *iam_managed_policy-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   fail_on_delete                 Choices:
+   boolean                        • no           The fail_on_delete option does nothing.
+                                  • yes
+   make_default                   Choices:
+   boolean                        • no           Make this revision the default revision.
+                                  • yes ←
+   only_version                   Choices:
+   boolean                        • no ←         Remove all other non default revisions, if this is used with make_default it will result in all other versions of this policy being deleted.
+                                  • yes
+   policy                                        A properly json formatted policy
+   json
+   policy_description           Default:         A helpful description of this policy, this value is immutable and only set when creating a new policy.
+   string                       ""
+   policy_name                                   The name of the managed policy.
+   string / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   string                         • present ←    Should this managed policy be present or absent. Set to absent to detach all entities from this policy and remove it if found.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *iam_managed_policy-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *iam_managed_policy-examples*
+
+ # Create Policy ex nihilo
+ - name: Create IAM Managed Policy
+   iam_managed_policy:
+     policy_name: "ManagedPolicy"
+     policy_description: "A Helpful managed policy"
+     policy: "{{ lookup('template', 'managed_policy.json.j2') }}"
+     state: present
+
+ # Update a policy with a new default version
+ - name: Create IAM Managed Policy
+   iam_managed_policy:
+     policy_name: "ManagedPolicy"
+     policy: "{{ lookup('file', 'managed_policy_update.json') }}"
+     state: present
+
+ # Update a policy with a new non default version
+ - name: Create IAM Managed Policy
+   iam_managed_policy:
+     policy_name: "ManagedPolicy"
+     policy: "{{ lookup('file', 'managed_policy_update.json') }}"
+     make_default: false
+     state: present
+
+ # Update a policy and make it the only version and the default version
+ - name: Create IAM Managed Policy
+   iam_managed_policy:
+     policy_name: "ManagedPolicy"
+     policy: "{ 'Version': '2012-10-17', 'Statement':[{'Effect': 'Allow','Action': '"','Resource': '"'}]}"
+     only_version: true
+     state: present
+
+ # Remove a policy
+ - name: Create IAM Managed Policy
+   iam_managed_policy:
+     policy_name: "ManagedPolicy"
+     state: absent
+
+RETURN VALUES                   *iam_managed_policy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+                   Returns the policy json structure, when state == absent this will return the value of the removed policy.
+   policy success  Sample:
+   string          { "arn": "arn:aws:iam::aws:policy/AdministratorAccess " "attachment_count": 0, "create_date": "2017-03-01T15:42:55.981000+00:00", "default_version_id": "v1", "is_attachable":
+                   true, "path": "/", "policy_id": "ANPALM4KLDMTFXGOOJIHL", "policy_name": "AdministratorAccess", "update_date": "2017-03-01T15:42:55.981000+00:00" }
+
+STATUS                   *iam_managed_policy-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dan Kozlowski (@dkhenry)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iam_managed_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iam_managed_policy_module.html

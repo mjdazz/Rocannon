@@ -1,0 +1,106 @@
+SYNOPSIS                   *read_csv*
+
+     • Read a CSV file and return a list or a dictionary, containing one dictionary per row.
+
+PARAMETERS                   *read_csv-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   delimiter                         A one-character string used to separate fields.
+   string                            When using this parameter, you change the default value used by dialect.
+                                     The default value depends on the dialect used.
+   dialect          Default:         The CSV dialect to use when parsing the CSV file.
+   string           "excel"          Possible values include excel, excel-tab or unix.
+   fieldnames                        A list of field names for every column.
+   list                              This is needed if the CSV does not have a header.
+   key                               The column name used as a key for the resulting dictionary.
+   string                            If key is unset, the module returns a list of dictionaries, where each dictionary is a row in the CSV file.
+   path                              The CSV filename to read data from.
+   path / required                   aliases: filename
+   skipinitialspace   Choices:       Whether to ignore any whitespaces immediately following the delimiter.
+   boolean            • no           When using this parameter, you change the default value used by dialect.
+                      • yes          The default value depends on the dialect used.
+   strict             Choices:       Whether to raise an exception on bad CSV input.
+   boolean            • no           When using this parameter, you change the default value used by dialect.
+                      • yes          The default value depends on the dialect used.
+   unique             Choices:
+   boolean            • no           Whether the key used is expected to be unique.
+                      • yes ←
+
+NOTES                   *read_csv-notes*
+
+   Note
+
+     • Ansible also ships with the csvfile lookup plugin, which can be used to do selective lookups in CSV files from Jinja.
+
+EXAMPLES                   *read_csv-examples*
+
+ # Example CSV file with header
+ #
+ #   name,uid,gid
+ #   dag,500,500
+ #   jeroen,501,500
+
+ # Read a CSV file and access user 'dag'
+ - name: Read users from CSV file and return a dictionary
+   read_csv:
+     path: users.csv
+     key: name
+   register: users
+   delegate_to: localhost
+
+ - debug:
+     msg: 'User {{ users.dict.dag.name }} has UID {{ users.dict.dag.uid }} and GID {{ users.dict.dag.gid }}'
+
+ # Read a CSV file and access the first item
+ - name: Read users from CSV file and return a list
+   read_csv:
+     path: users.csv
+   register: users
+   delegate_to: localhost
+
+ - debug:
+     msg: 'User {{ users.list.1.name }} has UID {{ users.list.1.uid }} and GID {{ users.list.1.gid }}'
+
+ # Example CSV file without header and semi-colon delimiter
+ #
+ #   dag;500;500
+ #   jeroen;501;500
+
+ # Read a CSV file without headers
+ - name: Read users from CSV file and return a list
+   read_csv:
+     path: users.csv
+     fieldnames: name,uid,gid
+     delimiter: ';'
+   register: users
+   delegate_to: localhost
+
+RETURN VALUES                   *read_csv-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   dict                The CSV content as a dictionary.
+   dictionary success  Sample:
+                       {'dag': {'name': 'dag', 'uid': 500, 'gid': 500}, 'jeroen': {'name': 'jeroen', 'uid': 501, 'gid': 500}}
+   list                The CSV content as a list.
+   list       success  Sample:
+                       [{'name': 'dag', 'uid': 500, 'gid': 500}, {'name': 'jeroen', 'uid': 501, 'gid': 500}]
+
+STATUS                   *read_csv-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *read_csv-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/read_csv_module.html

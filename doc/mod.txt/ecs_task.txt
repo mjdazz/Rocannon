@@ -1,0 +1,177 @@
+SYNOPSIS                   *ecs_task*
+
+     • Creates or deletes instances of task definitions.
+
+REQUIREMENTS                   *ecs_task-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • json
+     • python >= 2.6
+
+PARAMETERS                   *ecs_task-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   cluster                                       The name of the cluster to run the task on
+   -
+   container_instances                           The list of container instances on which to deploy the task
+   -
+   count                                         How many new instances to start
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   launch_type                    Choices:
+   -                              • EC2          The launch type on which to run your service
+   added in 2.8                   • FARGATE
+   network_configuration                         network configuration of the service. Only applicable for task definitions created with awsvpc network_mode.
+   -                                             network_configuration has two keys, subnets, a list of subnet IDs to which the task is attached and security_groups, a list of group names or group
+   added in 2.6                                  IDs for the task
+                                  Choices:
+   operation                      • run          Which task operation to execute
+   - / required                   • start
+                                  • stop
+   overrides                                     A dictionary of values to pass to the new instances
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   started_by                                    A value showing who or what started the task (for informational purposes)
+   -
+   task                                          The task to stop
+   -
+   task_definition                               The task definition to start or run
+   -
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ecs_task-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ecs_task-examples*
+
+ # Simple example of run task
+ - name: Run task
+   ecs_task:
+     operation: run
+     cluster: console-sample-app-static-cluster
+     task_definition: console-sample-app-static-taskdef
+     count: 1
+     started_by: ansible_user
+   register: task_output
+
+ # Simple example of start task
+
+ - name: Start a task
+   ecs_task:
+       operation: start
+       cluster: console-sample-app-static-cluster
+       task_definition: console-sample-app-static-taskdef
+       task: "arn:aws:ecs:us-west-2:172139249013:task/3f8353d1-29a8-4689-bbf6-ad79937ffe8a"
+       container_instances:
+       - arn:aws:ecs:us-west-2:172139249013:container-instance/79c23f22-876c-438a-bddf-55c98a3538a8
+       started_by: ansible_user
+       network_configuration:
+         subnets:
+         - subnet-abcd1234
+         security_groups:
+         - sg-aaaa1111
+         - my_security_group
+   register: task_output
+
+ - name: RUN a task on Fargate
+   ecs_task:
+       operation: run
+       cluster: console-sample-app-static-cluster
+       task_definition: console-sample-app-static-taskdef
+       task: "arn:aws:ecs:us-west-2:172139249013:task/3f8353d1-29a8-4689-bbf6-ad79937ffe8a"
+       started_by: ansible_user
+       launch_type: FARGATE
+       network_configuration:
+         subnets:
+         - subnet-abcd1234
+         security_groups:
+         - sg-aaaa1111
+         - my_security_group
+   register: task_output
+
+ - name: Stop a task
+   ecs_task:
+       operation: stop
+       cluster: console-sample-app-static-cluster
+       task_definition: console-sample-app-static-taskdef
+       task: "arn:aws:ecs:us-west-2:172139249013:task/3f8353d1-29a8-4689-bbf6-ad79937ffe8a"
+
+RETURN VALUES                   *ecs_task-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                   Returned                                                                             Description
+   task                   success                   details about the task that was started
+   complex
+     clusterArn           only when details is true The Amazon Resource Name (ARN) of the of the cluster that hosts the task.
+     string
+     containerInstanceArn only when details is true The Amazon Resource Name (ARN) of the container running the task.
+     string
+     containers           only when details is true The container details.
+     list of complex
+     createdAt            only when details is true The timestamp of when the task was created.
+     string
+     desiredStatus        only when details is true The desired status of the task.
+     string
+     lastStatus           only when details is true The last recorded status of the task.
+     string
+     launchType           always                    The launch type on which to run your task.
+     string
+     overrides            only when details is true The container overrides set for this task.
+     list of complex
+     startedAt            only when details is true The timestamp of when the task was started.
+     string
+     startedBy            only when details is true The used who started the task.
+     string
+     stoppedAt            only when details is true The timestamp of when the task was stopped.
+     string
+     stoppedReason        only when details is true The reason why the task was stopped.
+     string
+     taskArn              always                    The Amazon Resource Name (ARN) that identifies the task.
+     string
+     taskDefinitionArn    only when details is true The Amazon Resource Name (ARN) of the task definition.
+     string
+
+STATUS                   *ecs_task-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mark Chance (@Java1Guy)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ecs_task-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ecs_task_module.html

@@ -1,0 +1,188 @@
+SYNOPSIS                   *meraki_static_route*
+
+     • Allows for creation, management, and visibility into static routes within Meraki.
+
+PARAMETERS                   *meraki_static_route-parameters*
+
+           Parameter         Choices/Defaults                                                                         Comments
+   auth_key                                    Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   enabled                     Choices:
+   boolean                     • no            Indicates whether static route is enabled within a network.
+                               • yes
+   fixed_ip_assignments                        List of fixed MAC to IP bindings for DHCP.
+   list
+              ip                               IP address of endpoint.
+              string
+              mac                              MAC address of endpoint.
+              string
+              name                             Hostname of endpoint.
+              string
+   gateway_ip                                  IP address of the gateway for the subnet.
+   string
+   host                      Default:          Hostname for Meraki dashboard.
+   string                    "api.meraki.com"  Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:          Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   name                                        Descriptive name of the static route.
+   string
+   net_id                                      ID number of a network.
+   string
+   net_name                                    Name of a network.
+   string
+   org_id                                      ID of organization.
+   string
+   org_name                                    Name of organization.
+   string                                      aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←   Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug         Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:          Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   reserved_ip_ranges                          List of IP ranges reserved for static IP assignments.
+   list
+              comment                          Human readable description of reservation range.
+              string
+              end                              Last IP address of reserved range.
+              string
+              start                            First IP address of reserved range.
+              string
+   route_id                                    Unique ID of static route.
+   string
+                               Choices:
+   state                       • absent        Create or modify an organization.
+   string                      • query
+                               • present ←
+   subnet                                      CIDR notation based subnet for static route.
+   string
+   timeout                   Default:          Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:        If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no            Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no            Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_static_route-notes*
+
+   Note
+
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_static_route-examples*
+
+ - name: Create static_route
+   meraki_static_route:
+     auth_key: abc123
+     state: present
+     org_name: YourOrg
+     net_name: YourNet
+     name: Test Route
+     subnet: 192.0.1.0/24
+     gateway_ip: 192.168.128.1
+   delegate_to: localhost
+
+ - name: Update static route with fixed IP assignment
+   meraki_static_route:
+     auth_key: abc123
+     state: present
+     org_name: YourOrg
+     net_name: YourNet
+     route_id: d6fa4821-1234-4dfa-af6b-ae8b16c20c39
+     fixed_ip_assignments:
+       - mac: aa:bb:cc:dd:ee:ff
+         ip: 192.0.1.11
+         comment: Server
+   delegate_to: localhost
+
+ - name: Query static routes
+   meraki_static_route:
+     auth_key: abc123
+     state: query
+     org_name: YourOrg
+     net_name: YourNet
+   delegate_to: localhost
+
+ - name: Delete static routes
+   meraki_static_route:
+     auth_key: abc123
+     state: absent
+     org_name: YourOrg
+     net_name: YourNet
+     route_id: '{{item}}'
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_static_route-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key             Returned                                                                              Description
+   data                 info            Information about the created or manipulated object.
+   complex
+     enabled                            Enabled state of static route.
+     boolean            query or update Sample:
+                                        True
+     fixedIpAssignments query or update List of static MAC to IP address bindings.
+     complex
+          mac           query or update Key is MAC address of endpoint.
+          complex
+               ip                       IP address to be bound to the endpoint.
+               string   query or update Sample:
+                                        192.0.1.11
+               name                     Hostname given to the endpoint.
+               string   query or update Sample:
+                                        JimLaptop
+     gatewayIp                          Next hop IP address.
+     string             success         Sample:
+                                        192.1.1.1
+     id                                 Unique identification string assigned to each static route.
+     string             success         Sample:
+                                        d6fa4821-1234-4dfa-af6b-ae8b16c20c39
+     name                               Name of static route.
+     string             success         Sample:
+                                        Data Center static route
+     net_id                             Identification string of network.
+     string             query or update Sample:
+                                        N_12345
+     reservedIpRanges   query or update List of IP address ranges which are reserved for static assignment.
+     complex
+          comment                       Human readable description of range.
+          string        query or update Sample:
+                                        Server range
+          end                           Last address in reservation range, inclusive.
+          string        query or update Sample:
+                                        192.0.1.10
+          start                         First address in reservation range, inclusive.
+          string        query or update Sample:
+                                        192.0.1.2
+     subnet                             CIDR notation subnet for static route.
+     string             success         Sample:
+                                        192.0.1.0/24
+
+STATUS                   *meraki_static_route-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_static_route-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_static_route_module.html

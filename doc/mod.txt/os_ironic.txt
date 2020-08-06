@@ -1,0 +1,145 @@
+SYNOPSIS                   *os_ironic*
+
+     • Create or Remove Ironic nodes from OpenStack.
+
+REQUIREMENTS                   *os_ironic-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • jsonpatch
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_ironic-parameters*
+
+             Parameter            Choices/Defaults                                                                      Comments
+   api_timeout                                     How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                                   Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain
+   auth                                            auth_url, username, password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the
+   dictionary                                      cloud supports them. For other plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not
+                                                   needed if a named cloud is provided or OpenStack OS_" environment variables are present.
+   auth_type                                       Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here
+   string                                          and the contents of the auth parameter should be updated accordingly.
+   availability_zone                               Ignored. Present for backwards compatibility
+   -
+   ca_cert                                         A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                                          aliases: cacert
+   chassis_uuid                                    Associate the node with a pre-defined chassis.
+   -
+   client_cert                                     A path to a client certificate to use as part of the SSL transaction.
+   string                                          aliases: cert
+   client_key                                      A path to a client key to use as part of the SSL transaction.
+   string                                          aliases: key
+   cloud                                           Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml
+   raw                                             file. Provides default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables
+                                                   are present. If cloud is a dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   driver                                          The name of the Ironic Driver to use with this node.
+   - / required
+   driver_info                                     Information for this server's driver. Will vary based on which driver is in use. Any sub-field which is populated will be validated during
+   -                                               creation.
+             console                               Information necessary to connect to this server's serial console. Not all drivers support this.
+             -
+             deploy                                Information necessary to deploy this server directly, without using Nova. THIS IS NOT RECOMMENDED.
+             -
+             management                            Information necessary to interact with this server's management interface. May be shared by power_info in some cases.
+             - / required
+             power                                 Information necessary to turn this server on / off. This often includes such things as IPMI username, password, and IP address.
+             - / required
+                                    Choices:
+   interface                        • admin        Endpoint URL type to fetch from the service catalog.
+   string                           • internal     aliases: endpoint_type
+                                    • public ←
+   ironic_url                                      If noauth mode is utilized, this is required to be set to the endpoint URL for the Ironic API. Use with "auth" and "auth_type" settings set to
+   -                                               None.
+   name                                            unique name identifier to be given to the resource.
+   -
+   nics                                            A list of network interface cards, eg, " - mac: aa:bb:cc:aa:bb:cc"
+   - / required
+   properties                                      Definition of the physical characteristics of this server, used for scheduling purposes
+   -
+             capabilities         Default:         special capabilities for the node, such as boot_option, node_role etc (see https://docs.openstack.org/ironic/latest/install/advanced.html for more
+             -                    ""               information)
+             added in 2.8
+             cpu_arch             Default:         CPU architecture (x86_64, i686, ...)
+             -                    "x86_64"
+             cpus                 Default:         Number of CPU cores this machine has
+             -                    1
+             disk_size            Default:         size of first storage device in this machine (typically /dev/sda), in GB
+             -                    1
+             ram                  Default:         amount of RAM this machine has, in MB
+             -                    1
+             root_device          Default:
+             -                    ""               Root disk device hints for deployment. (see https://docs.openstack.org/ironic/latest/install/include/root-device-hints.html for allowed hints)
+             added in 2.8
+   region_name                                     Name of the region.
+   string
+   skip_update_of_driver_password   Choices:       Allows the code that would assert changes to nodes to skip the update if the change is a single line consisting of the password field. As of Kilo,
+   boolean                          • no ←         by default, passwords are always masked to API requests, which means the logic as a result always attempts to re-assert the password field.
+                                    • yes
+   state                            Choices:
+   -                                • present ←    Indicates desired state of the resource
+                                    • absent
+   timeout                        Default:         How long should ansible wait for the requested resource.
+   integer                        180
+   uuid                                            globally unique identifier (UUID) to be given to the resource. Will be auto-generated if not specified, and name is specified.
+   -                                               Definition of a UUID will always take precedence to a name value.
+   validate_certs                   Choices:       Whether or not SSL API requests should be verified.
+   boolean                          • no ←         Before Ansible 2.3 this defaulted to yes.
+                                    • yes          aliases: verify
+   wait                             Choices:
+   boolean                          • no           Should ansible wait until the requested resource is complete.
+                                    • yes ←
+
+NOTES                   *os_ironic-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_ironic-examples*
+
+ # Enroll a node with some basic properties and driver info
+ - os_ironic:
+     cloud: "devstack"
+     driver: "pxe_ipmitool"
+     uuid: "00000000-0000-0000-0000-000000000002"
+     properties:
+       cpus: 2
+       cpu_arch: "x86_64"
+       ram: 8192
+       disk_size: 64
+       capabilities: "boot_option:local"
+       root_device:
+         wwn: "0x4000cca77fc4dba1"
+     nics:
+       - mac: "aa:bb:cc:aa:bb:cc"
+       - mac: "dd:ee:ff:dd:ee:ff"
+     driver_info:
+       power:
+         ipmi_address: "1.2.3.4"
+         ipmi_username: "admin"
+         ipmi_password: "adminpass"
+     chassis_uuid: "00000000-0000-0000-0000-000000000001"
+
+STATUS                   *os_ironic-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Monty Taylor (@emonty)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_ironic-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_ironic_module.html

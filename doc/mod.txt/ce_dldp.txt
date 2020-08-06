@@ -1,0 +1,123 @@
+SYNOPSIS                   *ce_dldp*
+
+     • Manages global DLDP configuration on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_dldp-parameters*
+
+     Parameter   Choices/Defaults                                                                              Comments
+                   Choices:
+                   • md5
+   auth_mode       • simple       Specifies authentication algorithm of DLDP.
+   -               • sha
+                   • hmac-sha256
+                   • none
+   auth_pwd                       Specifies authentication password. The value is a string of 1 to 16 case-sensitive plaintexts or 24/32/48/108/128 case-sensitive encrypted characters. The string
+   -                              excludes a question mark (?).
+   enable          Choices:
+   -               • enable       Set global DLDP enable state.
+                   • disable
+   reset           Choices:
+   -               • enable       Specify whether reset DLDP state of disabled interfaces.
+                   • disable
+   time_internal                  Specifies the interval for sending Advertisement packets. The value is an integer ranging from 1 to 100, in seconds. The default interval for sending Advertisement
+   -                              packets is 5 seconds.
+   work_mode       Choices:
+   -               • enhance      Set global DLDP work-mode.
+                   • normal
+
+NOTES                   *ce_dldp-notes*
+
+   Note
+
+     • The relevant configurations will be deleted if DLDP is disabled using enable=disable.
+     • When using auth_mode=none, it will restore the default DLDP authentication mode. By default, DLDP packets are not authenticated.
+     • By default, the working mode of DLDP is enhance, so you are advised to use work_mode=enhance to restore default DLDP working mode.
+     • The default interval for sending Advertisement packets is 5 seconds, so you are advised to use time_interval=5 to restore default DLDP interval.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_dldp-examples*
+
+ - name: DLDP test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Configure global DLDP enable state"
+     ce_dldp:
+       enable: enable
+       provider: "{{ cli }}"
+
+   - name: "Configure DLDP work-mode and ensure global DLDP state is already enabled"
+     ce_dldp:
+       enable: enable
+       work_mode: normal
+       provider: "{{ cli }}"
+
+   - name: "Configure advertisement message time interval in seconds and ensure global DLDP state is already enabled"
+     ce_dldp:
+       enable: enable
+       time_interval: 6
+       provider: "{{ cli }}"
+
+   - name: "Configure a DLDP authentication mode and ensure global DLDP state is already enabled"
+     ce_dldp:
+       enable: enable
+       auth_mode: md5
+       auth_pwd: abc
+       provider: "{{ cli }}"
+
+   - name: "Reset DLDP state of disabled interfaces and ensure global DLDP state is already enabled"
+     ce_dldp:
+       enable: enable
+       reset: enable
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_dldp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of global DLDP configuration after module execution
+   dictionary always   Sample:
+                       {'enable': 'enable', 'reset': 'enable', 'time_internal': '12', 'work_mode': 'normal'}
+   existing            k/v pairs of existing global DLDP configuration
+   dictionary always   Sample:
+                       {'enable': 'disable', 'reset': 'disable', 'time_internal': '5', 'work_mode': 'enhance'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'enable': 'enable', 'reset': 'enable', 'time_internal': '12', 'work_mode': 'normal'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['dldp enable', 'dldp work-mode normal', 'dldp interval 12', 'dldp reset']
+
+STATUS                   *ce_dldp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Zhijin Zhou (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_dldp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_dldp_module.html

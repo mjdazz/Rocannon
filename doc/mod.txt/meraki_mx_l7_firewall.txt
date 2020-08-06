@@ -1,0 +1,215 @@
+SYNOPSIS                   *meraki_mx_l7_firewall*
+
+     • Allows for creation, management, and visibility into layer 7 firewalls implemented on Meraki MX firewalls.
+
+PARAMETERS                   *meraki_mx_l7_firewall-parameters*
+
+           Parameter              Choices/Defaults                                                                         Comments
+   auth_key                                              Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   categories                  Choices:
+   boolean                     • no                      When True, specifies that applications and application categories should be queried instead of firewall rules.
+                               • yes
+   host                      Default:                    Hostname for Meraki dashboard.
+   string                    "api.meraki.com"            Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:                    Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   net_id                                                ID of network which MX firewall is in.
+   string
+   net_name                                              Name of network which MX firewall is in.
+   string
+   org_id                                                ID of organization.
+   string
+   org_name                                              Name of organization.
+   string                                                aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←             Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug                   Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:                    Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   rules                                                 List of layer 7 firewall rules.
+   list
+      application                                        Application to filter.
+      -
+               id                                        URI of application as defined by Meraki.
+               string
+               name                                      Name of application to filter as defined by Meraki.
+               string
+      application_category                               Category of applications to filter.
+      -
+               id                                        URI of application category as defined by Meraki.
+               string
+               name                                      Name of application category to filter as defined by Meraki.
+               string
+      countries                                          List of countries to whitelist or blacklist.
+      list                                               The countries follow the two-letter ISO 3166-1 alpha-2 format.
+      host                                               FQDN of host to filter.
+      string
+      ip_range                                           CIDR notation range of IP addresses to apply rule to.
+      string                                             Port can be appended to range with a ":".
+      policy                   Choices:                  Policy to apply if rule is hit.
+      string                   • deny ←
+      port                                               TCP or UDP based port to filter.
+      string
+                               Choices:
+                               • application
+                               • application_category
+      type                     • blacklisted_countries   Type of policy to apply.
+      string                   • host
+                               • ip_range
+                               • port
+                               • whitelisted_countries
+   state                       Choices:
+   string                      • present ←               Query or modify a firewall rule.
+                               • query
+   timeout                   Default:                    Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:                  If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no                      Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no                      If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no                      Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_mx_l7_firewall-notes*
+
+   Note
+
+     • Module assumes a complete list of firewall rules are passed as a parameter.
+     • If there is interest in this module allowing manipulation of a single firewall rule, please submit an issue against this module.
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_mx_l7_firewall-examples*
+
+ - name: Query firewall rules
+   meraki_mx_l7_firewall:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: query
+   delegate_to: localhost
+
+ - name: Query applications and application categories
+   meraki_mx_l7_firewall:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     categories: yes
+     state: query
+   delegate_to: localhost
+
+ - name: Set firewall rules
+   meraki_mx_l7_firewall:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     rules:
+       - type: whitelisted_countries
+         countries:
+           - US
+           - FR
+       - type: blacklisted_countries
+         countries:
+           - CN
+       - policy: deny
+         type: port
+         port: 8080
+       - type: port
+         port: 1234
+       - type: host
+         host: asdf.com
+       - type: application
+         application:
+           id: meraki:layer7/application/205
+       - type: application_category
+         application:
+           id: meraki:layer7/category/24
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_mx_l7_firewall-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key                           Returned                                                                            Description
+   data                     success                                 Firewall rules associated to network.
+   complex
+     application_categories success, when querying applications     List of application categories and applications.
+     list
+       applications                                                 List of applications within a category.
+       list
+                id                                                  URI of application.
+                string      success                                 Sample:
+                                                                    Gmail
+                name                                                Descriptive name of application.
+                string      success                                 Sample:
+                                                                    meraki:layer7/application/4
+       id                                                           URI of application category.
+       string               success                                 Sample:
+                                                                    Email
+       name                                                         Descriptive name of application category.
+       string               success                                 Sample:
+                                                                    layer7/category/1
+     rules                  success, when not querying applications Ordered list of firewall rules.
+     list
+       applicationCategory                                          List of application categories within a category.
+       list
+                id                                                  URI of application.
+                string      success                                 Sample:
+                                                                    Gmail
+                name                                                Descriptive name of application.
+                string      success                                 Sample:
+                                                                    meraki:layer7/application/4
+       applications                                                 List of applications within a category.
+       list
+                id                                                  URI of application.
+                string      success                                 Sample:
+                                                                    Gmail
+                name                                                Descriptive name of application.
+                string      success                                 Sample:
+                                                                    meraki:layer7/application/4
+       blacklistedCountries                                         Countries to be blacklisted.
+       string               success                                 Sample:
+                                                                    RU
+       ipRange                                                      Range of IP addresses in rule.
+       string               success                                 Sample:
+                                                                    1.1.1.0/23
+       policy                                                       Action to apply when rule is hit.
+       string               success                                 Sample:
+                                                                    deny
+       port                                                         Port number in rule.
+       string               success                                 Sample:
+                                                                    23
+       type                                                         Type of rule category.
+       string               success                                 Sample:
+                                                                    applications
+       whitelistedCountries                                         Countries to be whitelisted.
+       string               success                                 Sample:
+                                                                    CA
+
+STATUS                   *meraki_mx_l7_firewall-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_mx_l7_firewall-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_mx_l7_firewall_module.html

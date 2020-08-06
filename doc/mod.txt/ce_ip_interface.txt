@@ -1,0 +1,123 @@
+SYNOPSIS                   *ce_ip_interface*
+
+     • Manages Layer 3 attributes for IPv4 and IPv6 interfaces on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_ip_interface-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   addr                          IPv4 or IPv6 Address.
+   -
+   interface                     Full name of interface, i.e. 40GE1/0/22, vlanif10.
+   - / required
+   ipv4_type      Choices:
+   -              • main ←       Specifies an address type. The value is an enumerated type. main, primary IP address. sub, secondary IP address.
+                  • sub
+   mask                          Subnet mask for IPv4 or IPv6 Address in decimal format.
+   -
+   state          Choices:
+   -              • present ←    Specify desired state of the resource.
+                  • absent
+   version        Choices:
+   -              • v4 ←         IP address version.
+                  • v6
+
+NOTES                   *ce_ip_interface-notes*
+
+   Note
+
+     • Interface must already be a L3 port when using this module.
+     • Logical interfaces (loopback, vlanif) must be created first.
+     • mask must be inserted in decimal format (i.e. 24) for both IPv6 and IPv4.
+     • A single interface can have multiple IPv6 configured.
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_ip_interface-examples*
+
+ - name: ip_interface module test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+   - name: Ensure ipv4 address is configured on 10GE1/0/22
+     ce_ip_interface:
+       interface: 10GE1/0/22
+       version: v4
+       state: present
+       addr: 20.20.20.20
+       mask: 24
+       provider: '{{ cli }}'
+
+   - name: Ensure ipv4 secondary address is configured on 10GE1/0/22
+     ce_ip_interface:
+       interface: 10GE1/0/22
+       version: v4
+       state: present
+       addr: 30.30.30.30
+       mask: 24
+       ipv4_type: sub
+       provider: '{{ cli }}'
+
+   - name: Ensure ipv6 is enabled on 10GE1/0/22
+     ce_ip_interface:
+       interface: 10GE1/0/22
+       version: v6
+       state: present
+       provider: '{{ cli }}'
+
+   - name: Ensure ipv6 address is configured on 10GE1/0/22
+     ce_ip_interface:
+       interface: 10GE1/0/22
+       version: v6
+       state: present
+       addr: 2001::db8:800:200c:cccb
+       mask: 64
+       provider: '{{ cli }}'
+
+RETURN VALUES                   *ce_ip_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of IP attributes after module execution
+   dictionary always   Sample:
+                       {'ipv4': [{'ifIpAddr': '20.20.20.20', 'subnetMask': '255.255.255.0', 'addrType': 'main'}], 'interface': '10GE1/0/22'}
+   existing            k/v pairs of existing IP attributes on the interface
+   dictionary always   Sample:
+                       {'ipv4': [{'ifIpAddr': '11.11.11.11', 'subnetMask': '255.255.0.0', 'addrType': 'main'}], 'interface': '10GE1/0/22'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'addr': '20.20.20.20', 'interface': '10GE1/0/22', 'mask': '24'}
+   updates             commands sent to the device
+   list       always   Sample:
+                       ['interface 10GE1/0/22', 'ip address 20.20.20.20 24']
+
+STATUS                   *ce_ip_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_ip_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_ip_interface_module.html

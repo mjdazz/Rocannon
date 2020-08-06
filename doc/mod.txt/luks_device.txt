@@ -1,0 +1,116 @@
+SYNOPSIS                   *luks_device*
+
+     • Module manages LUKS on given device. Supports creating, destroying, opening and closing of LUKS container and adding or removing new keys.
+
+REQUIREMENTS                   *luks_device-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • cryptsetup
+     • wipefs
+     • lsblk
+
+PARAMETERS                   *luks_device-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   device                                 Device to work with (e.g. /dev/sda1). Needed in most cases. Can be omitted only when state=closed together with name is provided.
+   string
+   force_remove_last_key   Choices:       If set to yes, allows removing the last key from a container.
+   boolean                 • no ←         BEWARE that when the last key has been removed from a container, the container can no longer be opened!
+                           • yes
+   keyfile                                Used to unlock the container and needed for most of the operations. Parameter value is the path to the keyfile with the passphrase.
+   path                                   BEWARE that working with keyfiles in plaintext is dangerous. Make sure that they are protected.
+   name                                   Sets container name when state=opened. Can be used instead of device when closing the existing container (i.e. when state=closed).
+   string
+                                          Adds additional key to given container on device. Needs keyfile option for authorization. LUKS container supports up to 8 keys. Parameter value is the path
+   new_keyfile                            to the keyfile with the passphrase.
+   path                                   NOTE that adding additional keys is not idempotent. A new keyslot will be used even if another keyslot already exists for this keyfile.
+                                          BEWARE that working with keyfiles in plaintext is dangerous. Make sure that they are protected.
+                                          Removes given key from the container on device. Does not remove the keyfile from filesystem. Parameter value is the path to the keyfile with the
+   remove_keyfile                         passphrase.
+   path                                   NOTE that removing keys is not idempotent. Trying to remove a key which no longer exists results in an error.
+                                          NOTE that to remove the last key from a LUKS container, the force_remove_last_key option must be set to yes.
+                                          BEWARE that working with keyfiles in plaintext is dangerous. Make sure that they are protected.
+                                          Desired state of the LUKS container. Based on its value creates, destroys, opens or closes the LUKS container on a given device.
+                           Choices:       present will create LUKS container unless already present. Requires device and keyfile options to be provided.
+   state                   • present ←    absent will remove existing LUKS container if it exists. Requires device or name to be specified.
+   string                  • absent       opened will unlock the LUKS container. If it does not exist it will be created first. Requires device and keyfile to be specified. Use the name option to
+                           • opened       set the name of the opened container. Otherwise the name will be generated automatically and returned as a part of the result.
+                           • closed       closed will lock the LUKS container. However if the container does not exist it will be created. Requires device and keyfile options to be provided. If
+                                          container does already exist device or name will suffice.
+
+EXAMPLES                   *luks_device-examples*
+
+ - name: create LUKS container (remains unchanged if it already exists)
+   luks_device:
+     device: "/dev/loop0"
+     state: "present"
+     keyfile: "/vault/keyfile"
+
+ - name: (create and) open the LUKS container; name it "mycrypt"
+   luks_device:
+     device: "/dev/loop0"
+     state: "opened"
+     name: "mycrypt"
+     keyfile: "/vault/keyfile"
+
+ - name: close the existing LUKS container "mycrypt"
+   luks_device:
+     state: "closed"
+     name: "mycrypt"
+
+ - name: make sure LUKS container exists and is closed
+   luks_device:
+     device: "/dev/loop0"
+     state: "closed"
+     keyfile: "/vault/keyfile"
+
+ - name: create container if it does not exist and add new key to it
+   luks_device:
+     device: "/dev/loop0"
+     state: "present"
+     keyfile: "/vault/keyfile"
+     new_keyfile: "/vault/keyfile2"
+
+ - name: add new key to the LUKS container (container has to exist)
+   luks_device:
+     device: "/dev/loop0"
+     keyfile: "/vault/keyfile"
+     new_keyfile: "/vault/keyfile2"
+
+ - name: remove existing key from the LUKS container
+   luks_device:
+     device: "/dev/loop0"
+     remove_keyfile: "/vault/keyfile2"
+
+ - name: completely remove the LUKS container and its contents
+   luks_device:
+     device: "/dev/loop0"
+     state: "absent"
+
+RETURN VALUES                   *luks_device-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   name            When state=opened returns (generated or given) name of LUKS container. Returns None if no name is supplied.
+   string success  Sample:
+                   luks-c1da9a58-2fde-4256-9d9f-6ab008b4dd1b
+
+STATUS                   *luks_device-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jan Pokorny (@japokorn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *luks_device-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/luks_device_module.html

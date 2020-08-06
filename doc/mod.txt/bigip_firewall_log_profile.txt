@@ -1,0 +1,206 @@
+SYNOPSIS                   *bigip_firewall_log_profile*
+
+     • Manages AFM logging profiles configured in the system along with basic information about each profile.
+
+PARAMETERS                   *bigip_firewall_log_profile-parameters*
+
+          Parameter        Choices/Defaults                                                                         Comments
+   description                              Description of the log profile.
+   string
+   dos_protection                           Configures DoS related settings of the log profile.
+   dictionary
+    dns_publisher                           Specifies the name of the log publisher used for DNS DoS events.
+    string                                  To specify the log_publisher on a different partition from the AFM log profile, specify the name in fullpath format, e.g. /Foobar/log-publisher,
+                                            otherwise the partition for log publisher is inferred from partition module parameter.
+    network_publisher                       Specifies the name of the log publisher used for DoS Network events.
+    string                                  To specify the log_publisher on a different partition from the AFM log profile, specify the name in fullpath format, e.g. /Foobar/log-publisher,
+                                            otherwise the partition for log publisher is inferred from partition module parameter.
+    sip_publisher                           Specifies the name of the log publisher used for SIP DoS events.
+    string                                  To specify the log_publisher on a different partition from the AFM log profile, specify the name in fullpath format, e.g. /Foobar/log-publisher,
+                                            otherwise the partition for log publisher is inferred from partition module parameter.
+   ip_intelligence                          Configures IP Intelligence related settings of the log profile.
+   dictionary
+    log_publisher                           Specifies the name of the log publisher used for IP Intelligence events.
+    string                                  To specify the log_publisher on a different partition from the AFM log profile, specify the name in fullpath format, e.g. /Foobar/log-publisher,
+                                            otherwise the partition for log publisher is inferred from partition module parameter.
+    log_rtbh                 Choices:
+    boolean                  • no           Specifies, when yes, that remotely triggered blackholing events are logged.
+                             • yes
+    log_shun                 Choices:       Specifies, when yes, that IP Intelligence shun list events are logged.
+    boolean                  • no           This option can only be set on global-network built-in profile
+                             • yes
+    log_translation_fields   Choices:       This option is used to enable or disable the logging of translated (i.e server side) fields in IP Intelligence log messages.
+    boolean                  • no           Translated fields include (but are not limited to) source address/port, destination address/port, IP protocol, route domain, and VLAN.
+                             • yes
+                                            Defines a rate limit for all combined IP intelligence log messages per second. Beyond this rate limit, log messages are not logged until the threshold
+    rate_limit                              drops below the specified rate.
+    string                                  To specify an indefinite rate, use the value indefinite.
+                                            If specifying a numeric rate, the value must be between 1 and 4294967295.
+   name                                     Specifies the name of the log profile.
+   string / required
+   partition               Default:         Device partition to create log profile on.
+   string                  "Common"         Parameter also used when specifying names for log publishers, unless log publisher names are in fullpath format.
+   port_misuse                              Port Misuse log configuration.
+   dictionary
+    log_publisher                           Specifies the name of the log publisher used for Port Misuse events.
+    string                                  To specify the log_publisher on a different partition from the AFM log profile, specify the name in fullpath format, e.g. /Foobar/log-publisher,
+                                            otherwise the partition for log publisher is inferred from partition module parameter.
+                                            Defines a rate limit for all combined port misuse log messages per second. Beyond this rate limit, log messages are not logged until the threshold drops
+    rate_limit                              below the specified rate.
+    string                                  To specify an indefinite rate, use the value indefinite.
+                                            If specifying a numeric rate, the value must be between 1 and 4294967295.
+   provider
+   dictionary                               A dict object containing connection details.
+   added in 2.5
+    auth_provider                           Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                                  This option is really used when working with BIG-IQ devices.
+    password                                The password for the user account used to connect to the BIG-IP.
+    string / required                       You may omit this option by setting the environment variable F5_PASSWORD.
+                                            aliases: pass, pwd
+    server                                  The BIG-IP host.
+    string / required                       You may omit this option by setting the environment variable F5_SERVER.
+    server_port            Default:         The BIG-IP server port.
+    integer                443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                             Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                                    You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                                 Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+    integer                                 the operation is completed, the module will error.
+    transport                Choices:
+    string                   • cli          Configures the transport connection to use when connecting to the remote device.
+                             • rest ←
+    user                                    The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string / required                       You may omit this option by setting the environment variable F5_USER.
+    validate_certs           Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean                  • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                             • yes ←
+   state                     Choices:       When state is present, ensures the resource exists.
+   string                    • present ←    When state is absent, ensures that resource is removed. Attempts to remove built-in system profiles are ignored and no change is returned.
+                             • absent
+
+NOTES                   *bigip_firewall_log_profile-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_firewall_log_profile-examples*
+
+ - name: Create a basic log profile with port misuse
+   bigip_firewall_log_profile:
+     name: barbaz
+     port_misuse:
+       rate_limit: 30000
+       log_publisher: local-db-pub
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Change ip_intelligence settings, publisher on different partition, remove port misuse
+   bigip_firewall_log_profile:
+     name: barbaz
+     ip_intelligence:
+       rate_limit: 400000
+       log_translation_fields: yes
+       log_rtbh: yes
+       log_publisher: "/foobar/non-local-db"
+     port_misuse:
+       log_publisher: ""
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create a log profile with dos protection, different partition
+   bigip_firewall_log_profile:
+     name: foobar
+     partition: foobar
+     dos_protection:
+       dns_publisher: "/Common/local-db-pub"
+       sip_publisher: "non-local-db"
+       network_publisher: "/Common/local-db-pub"
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove log profile
+   bigip_firewall_log_profile:
+     name: barbaz
+     partition: Common
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_firewall_log_profile-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key            Returned                                                                           Description
+   description                       New description of the AFM log profile.
+   string                   changed  Sample:
+                                     This is my description
+   dos_protection                    Log publishers used in DoS related settings of the log profile.
+   complex                  changed  Sample:
+                                     hash/dictionary of values
+     dns_publisher                   The name of the log publisher used for DNS DoS events.
+     string                 changed  Sample:
+                                     /Common/local-db-publisher
+     network_publisher               The name of the log publisher used for DoS Network events.
+     string                 changed  Sample:
+                                     /Common/local-db-publisher
+     sip_publisher                   The name of the log publisher used for SIP DoS events.
+     string                 changed  Sample:
+                                     /Common/local-db-publisher
+   ip_intelligence                   IP Intelligence related settings of the log profile.
+   complex                  changed  Sample:
+                                     hash/dictionary of values
+     log_publisher                   The name of the log publisher used for IP Intelligence events.
+     string                 changed  Sample:
+                                     /Common/local-db-publisher
+     log_rtbh                        Logging of remotely triggered blackholing events.
+     boolean                changed  Sample:
+                                     True
+     log_shun               changed  Logging of IP Intelligence shun list events.
+     boolean
+     log_translation_fields changed  Logging of translated fields in IP Intelligence log messages.
+     boolean
+     rate_limit                      The rate limit for all combined IP intelligence log messages per second.
+     string                 changed  Sample:
+                                     indefinite
+   port_misuse                       Port Misuse related settings of the log profile.
+   complex                  changed  Sample:
+                                     hash/dictionary of values
+     log_publisher                   The name of the log publisher used for Port Misuse events.
+     string                 changed  Sample:
+                                     /Common/local-db-publisher
+     rate_limit                      The rate limit for all combined Port Misuse log messages per second.
+     string                 changed  Sample:
+                                     indefinite
+
+STATUS                   *bigip_firewall_log_profile-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_firewall_log_profile-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_firewall_log_profile_module.html

@@ -1,0 +1,112 @@
+SYNOPSIS                   *vmware_dvs_portgroup_info*
+
+     • This module can be used to gather information about DVS portgroup configurations.
+
+REQUIREMENTS                   *vmware_dvs_portgroup_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_dvs_portgroup_info-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   datacenter                           Name of the datacenter.
+   string / required
+   dvswitch
+   string                               Name of a dvswitch to look for.
+   added in 2.9
+   hostname                             The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                               If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                        Environment variable support added in Ansible 2.6.
+                                        The password of the vSphere vCenter or ESXi server.
+   password                             If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                               Environment variable support added in Ansible 2.6.
+                                        aliases: pass, pwd
+   port                Default:         The port number of the vSphere vCenter or ESXi server.
+   integer             443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                         Environment variable support added in Ansible 2.6.
+   proxy_host                           Address of a proxy that will receive all HTTPS requests and relay them.
+   string                               The format is a hostname or a IP.
+   added in 2.9                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                        This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                           Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                              If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   show_network_policy   Choices:
+   boolean               • no           Show or hide network policies of DVS portgroup.
+                         • yes ←
+   show_port_policy      Choices:
+   boolean               • no           Show or hide port policies of DVS portgroup.
+                         • yes ←
+   show_teaming_policy   Choices:
+   boolean               • no           Show or hide teaming policies of DVS portgroup.
+                         • yes ←
+   show_vlan_info        Choices:
+   boolean               • no ←         Show or hide vlan information of the DVS portgroup.
+   added in 2.9          • yes
+                                        The username of the vSphere vCenter or ESXi server.
+   username                             If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                               Environment variable support added in Ansible 2.6.
+                                        aliases: admin, user
+                         Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs        • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean               • yes ←        Environment variable support added in Ansible 2.6.
+                                        If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_dvs_portgroup_info-notes*
+
+   Note
+
+     • Tested on vSphere 6.5
+
+EXAMPLES                   *vmware_dvs_portgroup_info-examples*
+
+ - name: Get info about DVPG
+   vmware_dvs_portgroup_info:
+     hostname: "{{ vcenter_server }}"
+     username: "{{ vcenter_user }}"
+     password: "{{ vcenter_pass }}"
+     validate_certs: no
+     datacenter: "{{ datacenter_name }}"
+   register: dvpg_info
+
+ - name: Get number of ports for portgroup 'dvpg_001' in 'dvs_001'
+   debug:
+     msg: "{{ item.num_ports }}"
+   with_items:
+     - "{{ dvpg_info.dvs_portgroup_info['dvs_001'] | json_query(query) }}"
+   vars:
+     query: "[?portgroup_name=='dvpg_001']"
+
+RETURN VALUES                   *vmware_dvs_portgroup_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key         Returned                                                                              Description
+                               metadata about DVS portgroup configuration
+                               Sample:
+   dvs_portgroup_info on       {'dvs_0': [{'description': None, 'dvswitch_name': 'dvs_001', 'network_policy': {'forged_transmits': False, 'mac_changes': False, 'promiscuous': False}, 'num_ports':
+   dictionary         success  8, 'port_policy': {'block_override': True, 'ipfix_override': False, 'live_port_move': False, 'network_rp_override': False, 'port_config_reset_at_disconnect': True,
+                               'security_override': False, 'shaping_override': False, 'traffic_filter_override': False, 'uplink_teaming_override': False, 'vendor_config_override': False,
+                               'vlan_override': False}, 'portgroup_name': 'dvpg_001', 'teaming_policy': {'inbound_policy': True, 'notify_switches': True, 'policy': 'loadbalance_srcid',
+                               'rolling_order': False}, 'vlan_info': {'trunk': False, 'pvlan': False, 'vlan_id': 0}, 'type': 'earlyBinding'}]}
+
+STATUS                   *vmware_dvs_portgroup_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_dvs_portgroup_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_dvs_portgroup_info_module.html

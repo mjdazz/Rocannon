@@ -1,0 +1,217 @@
+SYNOPSIS                   *rds_snapshot_info*
+
+     • obtain information about one or more RDS snapshots. These can be for unclustered snapshots or snapshots of clustered DBs (Aurora)
+     • Aurora snapshot information may be obtained if no identifier parameters are passed or if one of the cluster parameters are passed.
+     • This module was called rds_snapshot_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: rds_snapshot_facts
+
+REQUIREMENTS                   *rds_snapshot_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *rds_snapshot_info-parameters*
+
+             Parameter            Choices/Defaults                                                                      Comments
+   aws_access_key                                  AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                          aliases: ec2_access_key, access_key
+   aws_secret_key                                  AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                          aliases: ec2_secret_key, secret_key
+   db_cluster_identifier                           RDS cluster name for which to find snapshots. Mutually exclusive with db_snapshot_identifier, db_instance_identifier,
+   -                                               db_cluster_snapshot_identifier
+   db_cluster_snapshot_identifier                  Name of an RDS cluster snapshot. Mutually exclusive with db_instance_identifier, db_snapshot_identifier, db_cluster_identifier
+   -
+   db_instance_identifier                          RDS instance name for which to find snapshots. Mutually exclusive with db_snapshot_identifier, db_cluster_identifier,
+   -                                               db_cluster_snapshot_identifier
+   db_snapshot_identifier                          Name of an RDS (unclustered) snapshot. Mutually exclusive with db_instance_identifier, db_cluster_identifier, db_cluster_snapshot_identifier
+   -                                               aliases: snapshot_name
+   debug_botocore_endpoint_logs     Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                          • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                     • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                         Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                          required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is
+                                                   used.
+   profile                                         Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                          The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                          http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                   aliases: aws_region, ec2_region
+   security_token                                  AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                          aliases: access_token
+                                    Choices:
+   snapshot_type                    • automated
+   -                                • manual       Type of snapshot to find. By default both automated and manual snapshots will be returned.
+                                    • shared
+                                    • public
+   validate_certs                   Choices:
+   boolean                          • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                    • yes ←
+
+NOTES                   *rds_snapshot_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *rds_snapshot_info-examples*
+
+ # Get information about an snapshot
+ - rds_snapshot_info:
+     db_snapshot_identifier: snapshot_name
+   register: new_database_info
+
+ # Get all RDS snapshots for an RDS instance
+ - rds_snapshot_info:
+     db_instance_identifier: helloworld-rds-master
+
+RETURN VALUES                   *rds_snapshot_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                    Key                                 Returned                                                                     Description
+   cluster_snapshots                     always                                 List of cluster snapshots
+   complex
+     allocated_storage                                                          How many gigabytes of storage are allocated
+     integer                             always                                 Sample:
+                                                                                1
+     availability_zones                                                         The availability zones of the database from which the snapshot was taken
+     list                                always                                 Sample:
+                                                                                ['ca-central-1a', 'ca-central-1b']
+     cluster_create_time                                                        Date and time the cluster was created
+     string                              always                                 Sample:
+                                                                                2018-05-17T00:13:40.223000+00:00
+     db_cluster_identifier                                                      Database cluster identifier
+     string                              always                                 Sample:
+                                                                                test-aurora-cluster
+     db_cluster_snapshot_arn                                                    ARN of the database snapshot
+     string                              always                                 Sample:
+                                                                                arn:aws:rds:ca-central-1:111111111111:cluster-snapshot:test-aurora-snapshot
+     db_cluster_snapshot_identifier                                             Snapshot identifier
+     string                              always                                 Sample:
+                                                                                test-aurora-snapshot
+     engine                                                                     Database engine
+     string                              always                                 Sample:
+                                                                                aurora
+     engine_version                                                             Database engine version
+     string                              always                                 Sample:
+                                                                                5.6.10a
+     iam_database_authentication_enabled always                                 Whether database authentication through IAM is enabled
+     boolean
+     kms_key_id                                                                 ID of the KMS Key encrypting the snapshot
+     string                              always                                 Sample:
+                                                                                arn:aws:kms:ca-central-1:111111111111:key/abcd1234-abcd-1111-aaaa-0123456789ab
+     license_model                                                              License model
+     string                              always                                 Sample:
+                                                                                aurora
+     master_username                                                            Database master username
+     string                              always                                 Sample:
+                                                                                shertel
+     percent_progress                    always                                 Percent progress of snapshot
+     integer
+     port                                always                                 Database port
+     integer
+     snapshot_create_time                                                       Date and time when the snapshot was created
+     string                              always                                 Sample:
+                                                                                2018-05-17T00:23:23.731000+00:00
+     snapshot_type                                                              Type of snapshot
+     string                              always                                 Sample:
+                                                                                manual
+     status                                                                     Status of snapshot
+     string                              always                                 Sample:
+                                                                                creating
+     storage_encrypted                                                          Whether the snapshot is encrypted
+     boolean                             always                                 Sample:
+                                                                                True
+     tags                                always                                 Tags of the snapshot
+     complex
+     vpc_id                                                                     VPC of the database
+     string                              always                                 Sample:
+                                                                                vpc-abcd1234
+   snapshots                             When cluster parameters are not passed List of non-clustered snapshots
+   complex
+     allocated_storage                                                          How many gigabytes of storage are allocated
+     integer                             always                                 Sample:
+                                                                                10
+     availability_zone                                                          The availability zone of the database from which the snapshot was taken
+     string                              always                                 Sample:
+                                                                                us-west-2b
+     db_instance_identifier                                                     Database instance identifier
+     string                              always                                 Sample:
+                                                                                hello-world-rds
+     db_snapshot_arn                                                            Snapshot ARN
+     string                              always                                 Sample:
+                                                                                arn:aws:rds:us-west-2:111111111111:snapshot:rds:hello-world-rds-us1-2018-05-16-04-03
+     db_snapshot_identifier                                                     Snapshot name
+     string                              always                                 Sample:
+                                                                                rds:hello-world-rds-us1-2018-05-16-04-03
+     encrypted                                                                  Whether the snapshot was encrypted
+     boolean                             always                                 Sample:
+                                                                                True
+     engine                                                                     Database engine
+     string                              always                                 Sample:
+                                                                                postgres
+     engine_version                                                             Database engine version
+     string                              always                                 Sample:
+                                                                                9.5.10
+     iam_database_authentication_enabled always                                 Whether database authentication through IAM is enabled
+     boolean
+     instance_create_time                                                       Time the Instance was created
+     string                              always                                 Sample:
+                                                                                2017-10-10T04:00:07.434000+00:00
+     kms_key_id                                                                 ID of the KMS Key encrypting the snapshot
+     string                              always                                 Sample:
+                                                                                arn:aws:kms:us-west-2:111111111111:key/abcd1234-1234-aaaa-0000-1234567890ab
+     license_model                                                              License model
+     string                              always                                 Sample:
+                                                                                postgresql-license
+     master_username                                                            Database master username
+     string                              always                                 Sample:
+                                                                                dbadmin
+     option_group_name                                                          Database option group name
+     string                              always                                 Sample:
+                                                                                default:postgres-9-5
+     percent_progress                                                           Percent progress of snapshot
+     integer                             always                                 Sample:
+                                                                                100
+     snapshot_create_time                                                       Time snapshot was created
+     string                              always                                 Sample:
+                                                                                2018-05-16T04:03:33.871000+00:00
+     snapshot_type                                                              Type of snapshot
+     string                              always                                 Sample:
+                                                                                automated
+     status                                                                     Status of snapshot
+     string                              always                                 Sample:
+                                                                                available
+     storage_type                                                               Storage type of underlying DB
+     string                              always                                 Sample:
+                                                                                gp2
+     tags                                always                                 Snapshot tags
+     complex
+     vpc_id                                                                     ID of VPC containing the DB
+     string                              always                                 Sample:
+                                                                                vpc-abcd1234
+
+STATUS                   *rds_snapshot_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *rds_snapshot_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/rds_snapshot_info_module.html

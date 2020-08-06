@@ -1,0 +1,144 @@
+SYNOPSIS                   *win_shell*
+
+     • The win_shell module takes the command name followed by a list of space-delimited arguments. It is similar to the win_command module, but runs the command via a shell (defaults to
+       PowerShell) on the target host.
+     • For non-Windows targets, use the shell module instead.
+
+PARAMETERS                   *win_shell-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   chdir                              Set the specified path as the current working directory before executing a command
+   path
+   creates                            A path or path filter pattern; when the referenced path exists on the target host, the task will be skipped.
+   path
+   executable                         Change the shell used to execute the command (eg, cmd).
+   path                               The target shell must accept a /c parameter followed by the raw command line to be executed.
+   free_form                          The win_shell module takes a free form command to run.
+   string / required                  There is no parameter actually named 'free form'. See the examples!
+   no_profile          Choices:
+   boolean             • no ←         Do not load the user profile before running a command. This is only valid when using PowerShell as the executable.
+   added in 2.8        • yes
+   removes                            A path or path filter pattern; when the referenced path does not exist on the target host, the task will be skipped.
+   path
+   stdin
+   string                             Set the stdin of the command directly to the specified value.
+   added in 2.5
+
+NOTES                   *win_shell-notes*
+
+   Note
+
+     • If you want to run an executable securely and predictably, it may be better to use the win_command module instead. Best practices when writing playbooks will follow the trend of using
+       win_command unless win_shell is explicitly required. When running ad-hoc commands, use your best judgement.
+     • WinRM will not return from a command execution until all child processes created have exited. Thus, it is not possible to use win_shell to spawn long-running child or background processes.
+       Consider creating a Windows service for managing background processes.
+
+SEE ALSO                   *win_shell-see also*
+
+   See also
+
+   psexec – Runs commands on a remote Windows host based on the PsExec model
+   The official documentation on the psexec module.
+
+   raw – Executes a low-down and dirty command
+   The official documentation on the raw module.
+
+   script – Runs a local script on a remote node after transferring it
+   The official documentation on the script module.
+
+   shell – Execute shell commands on targets
+   The official documentation on the shell module.
+
+   win_command – Executes a command on a remote Windows node
+   The official documentation on the win_command module.
+
+   win_psexec – Runs commands (remotely) as another (privileged) user
+   The official documentation on the win_psexec module.
+
+EXAMPLES                   *win_shell-examples*
+
+ # Execute a command in the remote shell; stdout goes to the specified
+ # file on the remote.
+ - win_shell: C:\somescript.ps1 >> C:\somelog.txt
+
+ # Change the working directory to somedir/ before executing the command.
+ - win_shell: C:\somescript.ps1 >> C:\somelog.txt chdir=C:\somedir
+
+ # You can also use the 'args' form to provide the options. This command
+ # will change the working directory to somedir/ and will only run when
+ # somedir/somelog.txt doesn't exist.
+ - win_shell: C:\somescript.ps1 >> C:\somelog.txt
+   args:
+     chdir: C:\somedir
+     creates: C:\somelog.txt
+
+ # Run a command under a non-Powershell interpreter (cmd in this case)
+ - win_shell: echo %HOMEDIR%
+   args:
+     executable: cmd
+   register: homedir_out
+
+ - name: Run multi-lined shell commands
+   win_shell: |
+     $value = Test-Path -Path C:\temp
+     if ($value) {
+         Remove-Item -Path C:\temp -Force
+     }
+     New-Item -Path C:\temp -ItemType Directory
+
+ - name: Retrieve the input based on stdin
+   win_shell: '$string = [Console]::In.ReadToEnd(); Write-Output $string.Trim()'
+   args:
+     stdin: Input message
+
+RETURN VALUES                   *win_shell-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   cmd                   The command executed by the task.
+   string       always   Sample:
+                         rabbitmqctl join_cluster [email protected]
+   delta                 The command execution delta time.
+   string       always   Sample:
+                         0:00:00.325771
+   end                   The command execution end time.
+   string       always   Sample:
+                         2016-02-25 09:18:26.755339
+   msg                   Changed.
+   boolean      always   Sample:
+                         True
+   rc           always   The command return code (0 means success).
+   integer
+   start                 The command execution start time.
+   string       always   Sample:
+                         2016-02-25 09:18:26.429568
+   stderr                The command standard error.
+   string       always   Sample:
+                         ls: cannot access foo: No such file or directory
+   stdout                The command standard output.
+   string       always   Sample:
+                         Clustering node [email protected] with [email protected] ...
+   stdout_lines          The command standard output split in lines.
+   list         always   Sample:
+                         ["u'Clustering node [email protected] with [email protected] ...'"]
+
+STATUS                   *win_shell-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_shell-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_shell-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_shell_module.html

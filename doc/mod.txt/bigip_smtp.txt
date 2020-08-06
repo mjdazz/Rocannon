@@ -1,0 +1,130 @@
+SYNOPSIS                   *bigip_smtp*
+
+     • Allows configuring of the BIG-IP to send mail via an SMTP server by configuring the parameters of an SMTP server.
+
+PARAMETERS                   *bigip_smtp-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+                          Choices:       Credentials can be set on an SMTP server's configuration even if that authentication is not used (think staging configs or emergency changes). This
+   authentication         • no           parameter acts as a switch to make the specified smtp_server_username and smtp_server_password parameters active or not.
+   boolean                • yes          When yes, the authentication parameters will be active.
+                                         When no, the authentication parameters will be inactive.
+                          Choices:
+   encryption             • none         Specifies whether the SMTP server requires an encrypted connection in order to send mail.
+   string                 • ssl
+                          • tls
+   from_address                          Email address that the email is being sent from. This is the "Reply-to" address that the recipient sees.
+   string
+   local_host_name                       Host name used in SMTP headers in the format of a fully qualified domain name. This setting does not refer to the BIG-IP system's hostname.
+   string
+   name                                  Specifies the name of the SMTP server configuration.
+   string / required
+   partition            Default:         Device partition to manage resources on.
+   string               "Common"
+   provider
+   dictionary                            A dict object containing connection details.
+   added in 2.5
+     auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                              This option is really used when working with BIG-IQ devices.
+     password                            The password for the user account used to connect to the BIG-IP.
+     string / required                   You may omit this option by setting the environment variable F5_PASSWORD.
+                                         aliases: pass, pwd
+     server                              The BIG-IP host.
+     string / required                   You may omit this option by setting the environment variable F5_SERVER.
+     server_port        Default:         The BIG-IP server port.
+     integer            443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                             operation is completed, the module will error.
+     transport            Choices:
+     string               • cli          Configures the transport connection to use when connecting to the remote device.
+                          • rest ←
+     user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string / required                   You may omit this option by setting the environment variable F5_USER.
+     validate_certs       Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean              • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                          • yes ←
+   smtp_server                           SMTP server host name in the format of a fully qualified domain name.
+   string                                This value is required when create a new SMTP configuration.
+   smtp_server_password                  Password that the SMTP server requires when validating a user.
+   string
+   smtp_server_port                      Specifies the SMTP port number.
+   integer                               When creating a new SMTP configuration, the default is 25 when encryption is none or tls. The default is 465 when ssl is selected.
+   smtp_server_username                  User name that the SMTP server requires when validating a user.
+   string
+   state                  Choices:       When present, ensures that the SMTP configuration exists.
+   string                 • present ←    When absent, ensures that the SMTP configuration does not exist.
+                          • absent
+                          Choices:       Passwords are stored encrypted, so the module cannot know if the supplied smtp_server_password is the same or different than the existing password. This
+   update_password        • always ←     parameter controls the updating of the smtp_server_password credential.
+   string                 • on_create    When always, will always update the password.
+                                         When on_create, will only set the password for newly created SMTP server configurations.
+
+NOTES                   *bigip_smtp-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_smtp-examples*
+
+ - name: Create a base SMTP server configuration
+   bigip_smtp:
+     name: my-smtp
+     smtp_server: 1.1.1.1
+     smtp_server_username: mail-admin
+     smtp_server_password: mail-secret
+     local_host_name: smtp.mydomain.com
+     from_address: [email protected]
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_smtp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   authentication            Whether the authentication parameters are active or not.
+   boolean          changed  Sample:
+                             True
+   encryption                The new encryption value of the SMTP configuration.
+   string           changed  Sample:
+                             tls
+   from_address              The new from_address value of the SMTP configuration.
+   string           changed  Sample:
+                             [email protected]
+   local_host_name           The new local_host_name value of the SMTP configuration.
+   string           changed  Sample:
+                             smtp.mydomain.com
+   smtp_server               The new smtp_server value of the SMTP configuration.
+   string           changed  Sample:
+                             mail.mydomain.com
+   smtp_server_port          The new smtp_server_port value of the SMTP configuration.
+   integer          changed  Sample:
+                             25
+
+STATUS                   *bigip_smtp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_smtp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_smtp_module.html

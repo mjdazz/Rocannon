@@ -1,85 +1,163 @@
-SYNOPSIS                           *rax_files*
+SYNOPSIS                   *rax_files*
 
-New in version 1.5.
+     • Manipulate Rackspace Cloud Files Containers
 
-Manipulate Rackspace Cloud Files Containers
+REQUIREMENTS                   *rax_files-requirements*
 
-EXAMPLES                           *rax_files-examples*
->
-    - name: "Test Cloud Files Containers"
-      hosts: local
-      gather_facts: no
-      tasks:
-        - name: "List all containers"
-          rax_files: state=list
-   
-        - name: "Create container called 'mycontainer'"
-          rax_files: container=mycontainer
-   
-        - name: "Create container 'mycontainer2' with metadata"
-          rax_files:
-            container: mycontainer2
-            meta:
-              key: value
-              file_for: [email protected]
-   
-        - name: "Set a container's web index page"
-          rax_files: container=mycontainer web_index=index.html
-   
-        - name: "Set a container's web error page"
-          rax_files: container=mycontainer web_error=error.html
-   
-        - name: "Make container public"
-          rax_files: container=mycontainer public=yes
-   
-        - name: "Make container public with a 24 hour TTL"
-          rax_files: container=mycontainer public=yes ttl=86400
-   
-        - name: "Make container private"
-          rax_files: container=mycontainer private=yes
-   
-    - name: "Test Cloud Files Containers Metadata Storage"
-      hosts: local
-      gather_facts: no
-      tasks:
-        - name: "Get mycontainer2 metadata"
-          rax_files:
-            container: mycontainer2
-            type: meta
-   
-        - name: "Set mycontainer2 metadata"
-          rax_files:
-            container: mycontainer2
-            type: meta
-            meta:
-              uploaded_by: [email protected]
-   
-        - name: "Remove mycontainer2 metadata"
-          rax_files:
-            container: "mycontainer2"
-            type: meta
-            state: absent
-            meta:
-              key: ""
-              file_for: ""
-   
-      Note
-   
-      The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
-   
-      Note
-   
-      RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
-   
-      Note
-   
-      RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
-   
-      Note
-   
-      RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
-   
+   The below requirements are needed on the host that executes this module.
+
+     • pyrax
+     • python >= 2.6
+
+PARAMETERS                   *rax_files-parameters*
+
+     Parameter                   Choices/Defaults                                                                              Comments
+   api_key                                                        Rackspace API key, overrides credentials.
+   string                                                         aliases: password
+   auth_endpoint  Default:                                        The URI of the authentication service.
+   -              "https://identity.api.rackspacecloud.com/v2.0/"
+   clear_meta       Choices:                                      Optionally clear existing metadata when applying metadata to existing containers. Selecting this option is only appropriate when
+   boolean          • no ←                                        setting type=meta
+                    • yes
+   container                                                      The container to use for container or metadata operations.
+   - / required
+   credentials                                                    File to find the Rackspace credentials in. Ignored if api_key and username are provided.
+   path                                                           aliases: creds_file
+   env                                                            Environment as configured in ~/.pyrax.cfg, see
+   string                                                         https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration.
+   identity_type  Default:                                        Authentication mechanism to use, such as rackspace or keystone.
+   -              "rackspace"
+   meta                                                           A hash of items to set as metadata values on a container
+   -
+   private          Choices:                                      Used to set a container as private, removing it from the CDN. Warning! Private containers, if previously made public, can have live
+   boolean          • no                                          objects available until the TTL on cached objects expires
+                    • yes
+   public           Choices:
+   boolean          • no                                          Used to set a container as public, available via the Cloud Files CDN
+                    • yes
+   region         Default:                                        Region to create an instance in
+   string         "DFW"
+   state            Choices:
+   -                • present ←                                   Indicate desired state of the resource
+                    • absent
+   tenant_id                                                      The tenant ID used for authentication.
+   -
+   tenant_name                                                    The tenant name used for authentication.
+   -
+   ttl                                                            In seconds, set a container-wide TTL for all objects cached on CDN edge nodes. Setting a TTL is only appropriate for containers
+   -                                                              that are public
+   type             Choices:
+   -                • file ←                                      Type of object to do work on, i.e. metadata object or a container object
+                    • meta
+   username                                                       Rackspace username, overrides credentials.
+   string
+   validate_certs   Choices:                                      Whether or not to require SSL validation of API endpoints.
+   boolean          • no                                          aliases: verify_ssl
+                    • yes
+   web_error                                                      Sets an object to be presented as the HTTP error page when accessed by the CDN URL
+   -
+   web_index                                                      Sets an object to be presented as the HTTP index page when accessed by the CDN URL
+   -
+
+NOTES                   *rax_files-notes*
+
+   Note
+
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+
+EXAMPLES                   *rax_files-examples*
+
+ - name: "Test Cloud Files Containers"
+   hosts: local
+   gather_facts: no
+   tasks:
+     - name: "List all containers"
+       rax_files:
+         state: list
+
+     - name: "Create container called 'mycontainer'"
+       rax_files:
+         container: mycontainer
+
+     - name: "Create container 'mycontainer2' with metadata"
+       rax_files:
+         container: mycontainer2
+         meta:
+           key: value
+           file_for: [email protected]
+
+     - name: "Set a container's web index page"
+       rax_files:
+         container: mycontainer
+         web_index: index.html
+
+     - name: "Set a container's web error page"
+       rax_files:
+         container: mycontainer
+         web_error: error.html
+
+     - name: "Make container public"
+       rax_files:
+         container: mycontainer
+         public: yes
+
+     - name: "Make container public with a 24 hour TTL"
+       rax_files:
+         container: mycontainer
+         public: yes
+         ttl: 86400
+
+     - name: "Make container private"
+       rax_files:
+         container: mycontainer
+         private: yes
+
+ - name: "Test Cloud Files Containers Metadata Storage"
+   hosts: local
+   gather_facts: no
+   tasks:
+     - name: "Get mycontainer2 metadata"
+       rax_files:
+         container: mycontainer2
+         type: meta
+
+     - name: "Set mycontainer2 metadata"
+       rax_files:
+         container: mycontainer2
+         type: meta
+         meta:
+           uploaded_by: [email protected]
+
+     - name: "Remove mycontainer2 metadata"
+       rax_files:
+         container: "mycontainer2"
+         type: meta
+         state: absent
+         meta:
+           key: ""
+           file_for: ""
+
+STATUS                   *rax_files-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Paul Durivage (@angstwad)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *rax_files-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/rax_files_module.html
+https://docs.ansible.com/ansible/latest/modules/rax_files_module.html

@@ -1,0 +1,138 @@
+DEPRECATED                   *ios_l2_interface*
+
+                                      Removed in Ansible:
+                  version: 2.13
+        Why:      Newer and updated modules released with more functionality in Ansible 2.9
+    Alternative:  ios_l2_interfaces
+
+SYNOPSIS                   *ios_l2_interface-synopsis*
+
+     • This module provides declarative management of Layer-2 interfaces on Cisco IOS devices.
+
+PARAMETERS                   *ios_l2_interface-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   access_vlan                          Configure given VLAN in access port. If mode=access, used as the access VLAN ID.
+   -
+   aggregate                            List of Layer-2 interface definitions.
+   -
+                                        Deprecated
+                                        Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes with become_pass.
+                                        For more information please see the IOS Platform Options guide.
+   auth_pass
+   string                               ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                        Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value
+                                        is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+                                        Deprecated
+                                        Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes.
+                         Choices:       For more information please see the IOS Platform Options guide.
+   authorize             • no ←
+   boolean               • yes          ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                        Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+                                        commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+   mode                  Choices:
+   -                     • access ←     Mode in which interface needs to be configured.
+                         • trunk
+   name                                 Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
+   - / required                         aliases: interface
+   native_vlan                          Native VLAN to be configured in trunk port. If mode=trunk, used as the trunk native VLAN ID.
+   -
+                                        Deprecated
+                                        Starting with Ansible 2.5 we recommend using connection: network_cli.
+   provider                             For more information please see the IOS Platform Options guide.
+   dictionary
+                                        ═════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                        A dict object containing connection details.
+       auth_pass                        Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value
+       string                           is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+       authorize         Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+       boolean           • no ←         commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                         • yes
+       host                             Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address
+       string /                         for the transport.
+       required
+       password                         Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+       string                           specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+       port            Default:         Specifies the port to use when building the connection to the remote device.
+       integer         22
+       ssh_keyfile                      Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If
+       path                             the value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+       timeout         Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+       integer         10               operation is completed, the module will error.
+       username                         Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+       string                           specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+                         Choices:
+   state                 • present ←    Manage the state of the Layer-2 Interface configuration.
+   -                     • absent
+                         • unconfigured
+   trunk_allowed_vlans                  List of allowed VLANs in a given trunk port. If mode=trunk, these are the only VLANs that will be configured on the trunk, i.e. "2-10,15".
+   -
+   trunk_vlans                          List of VLANs to be configured in trunk port. If mode=trunk, used as the VLAN range to ADD or REMOVE from the trunk.
+   -
+
+NOTES                   *ios_l2_interface-notes*
+
+   Note
+
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Cisco devices see the Cisco integration page.
+
+EXAMPLES                   *ios_l2_interface-examples*
+
+ - name: Ensure GigabitEthernet0/5 is in its default l2 interface state
+   ios_l2_interface:
+     name: GigabitEthernet0/5
+     state: unconfigured
+ - name: Ensure GigabitEthernet0/5 is configured for access vlan 20
+   ios_l2_interface:
+     name: GigabitEthernet0/5
+     mode: access
+     access_vlan: 20
+ - name: Ensure GigabitEthernet0/5 only has vlans 5-10 as trunk vlans
+   ios_l2_interface:
+     name: GigabitEthernet0/5
+     mode: trunk
+     native_vlan: 10
+     trunk_allowed_vlans: 5-10
+ - name: Ensure GigabitEthernet0/5 is a trunk port and ensure 2-50 are being tagged (doesn't mean others aren't also being tagged)
+   ios_l2_interface:
+     name: GigabitEthernet0/5
+     mode: trunk
+     native_vlan: 10
+     trunk_vlans: 2-50
+ - name: Ensure these VLANs are not being tagged on the trunk
+   ios_l2_interface:
+     name: GigabitEthernet0/5
+     mode: trunk
+     trunk_vlans: 51-4094
+     state: absent
+
+RETURN VALUES                   *ios_l2_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key                                        Returned                                                                                    Description
+   commands                                                                                   The list of configuration mode commands to send to the device
+   list     always, except for the platforms that use Netconf transport to manage the device. Sample:
+                                                                                              ['interface GigabitEthernet0/5', 'switchport access vlan 20']
+
+STATUS                   *ios_l2_interface-status*
+
+     • This module will be removed in version 2.13. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Nathaniel Case (@Qalthos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_l2_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_l2_interface_module.html

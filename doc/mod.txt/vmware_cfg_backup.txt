@@ -1,0 +1,106 @@
+SYNOPSIS                   *vmware_cfg_backup*
+
+     • This module can be used to perform various operations related to backup, restore and reset of ESXi host configuration.
+
+REQUIREMENTS                   *vmware_cfg_backup-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi installed
+
+PARAMETERS                   *vmware_cfg_backup-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   dest                            The destination where the ESXi configuration bundle will be saved. The dest can be a folder or a file.
+   path                            If dest is a folder, the backup file will be saved in the folder with the default filename generated from the ESXi server.
+                                   If dest is a file, the backup file will be saved with that filename. The file extension will always be .tgz.
+   esxi_hostname                   Name of ESXi server. This is required only if authentication against a vCenter is done.
+   string
+   hostname                        The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                   Environment variable support added in Ansible 2.6.
+                                   The password of the vSphere vCenter or ESXi server.
+   password                        If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: pass, pwd
+   port           Default:         The port number of the vSphere vCenter or ESXi server.
+   integer        443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                    Environment variable support added in Ansible 2.6.
+   proxy_host                      Address of a proxy that will receive all HTTPS requests and relay them.
+   string                          The format is a hostname or a IP.
+   added in 2.9                    If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                   This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                      Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   src                             The file containing the ESXi configuration that will be restored.
+   path
+                    Choices:       If saved, the .tgz backup bundle will be saved in dest.
+   state            • saved        If absent, the host configuration will be reset to default values.
+   string           • absent       If loaded, the backup file in src will be loaded to the ESXi host rewriting the hosts settings.
+                    • loaded
+                                   The username of the vSphere vCenter or ESXi server.
+   username                        If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: admin, user
+                    Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs   • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean          • yes ←        Environment variable support added in Ansible 2.6.
+                                   If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_cfg_backup-notes*
+
+   Note
+
+     • Tested on ESXi 6.0
+     • Works only for ESXi hosts
+     • For configuration load or reset, the host will be switched automatically to maintenance mode.
+
+EXAMPLES                   *vmware_cfg_backup-examples*
+
+ - name: Save the ESXi configuration locally by authenticating directly against the ESXi host
+   vmware_cfg_backup:
+     hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     state: saved
+     dest: /tmp/
+   delegate_to: localhost
+
+ - name: Save the ESXi configuration locally by authenticating against the vCenter and selecting the ESXi host
+   vmware_cfg_backup:
+     hostname: '{{ vcenter_hostname }}'
+     esxi_hostname: '{{ esxi_hostname }}'
+     username: '{{ esxi_username }}'
+     password: '{{ esxi_password }}'
+     state: saved
+     dest: /tmp/
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_cfg_backup-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key    Returned                                                                                   Description
+   dest_file          The full path of where the file holding the ESXi configurations was stored
+   string    changed  Sample:
+                      /tmp/configBundle-esxi.host.domain.tgz
+
+STATUS                   *vmware_cfg_backup-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andreas Nafpliotis (@nafpliot-ibm)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_cfg_backup-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_cfg_backup_module.html

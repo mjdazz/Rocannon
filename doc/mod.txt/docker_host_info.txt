@@ -1,0 +1,179 @@
+SYNOPSIS                   *docker_host_info*
+
+     • Retrieves facts about a docker host.
+     • Essentially returns the output of docker system info.
+     • The module also allows to list object names for containers, images, networks and volumes. It also allows to query information on disk usage.
+     • The output differs depending on API version of the docker daemon.
+     • If the docker daemon cannot be contacted or does not meet the API version requirements, the module will fail.
+
+REQUIREMENTS                   *docker_host_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.21
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 1.10.0 (use docker-py for Python 2.6)
+
+PARAMETERS                   *docker_host_info-parameters*
+
+       Parameter            Choices/Defaults                                                                            Comments
+                                                   The version of the Docker API running on the Docker Host.
+   api_version        Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string             "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment variable
+                                                   is not set, the default value will be used.
+                                                   aliases: docker_api_version
+                                                   Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                         If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified in
+   path                                            the environment variable DOCKER_CERT_PATH will be used.
+                                                   aliases: tls_ca_cert, cacert_path
+                                                   Path to the client's TLS certificate file.
+   client_cert                                     If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory specified in
+   path                                            the environment variable DOCKER_CERT_PATH will be used.
+                                                   aliases: tls_client_cert, cert_path
+                                                   Path to the client's TLS key file.
+   client_key                                      If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory specified in
+   path                                            the environment variable DOCKER_CERT_PATH will be used.
+                                                   aliases: tls_client_key, key_path
+   containers           Choices:
+   boolean              • no ←                     Whether to list containers.
+                        • yes
+   containers_filters                              A dictionary of filter values used for selecting containers to list.
+   dictionary                                      For example, until: 24h.
+                                                   See the docker documentation for more information on possible filters.
+   debug                Choices:
+   boolean              • no ←                     Debug mode
+                        • yes
+   disk_usage           Choices:                   Summary information on used disk space by all Docker layers.
+   boolean              • no ←                     The output is a sum of images, volumes, containers and build cache.
+                        • yes
+                                                   The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host        Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string             "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable is not
+                                                   set, the default value will be used.
+                                                   aliases: docker_url
+   images               Choices:
+   boolean              • no ←                     Whether to list images.
+                        • yes
+   images_filters                                  A dictionary of filter values used for selecting images to list.
+   dictionary                                      For example, dangling: true.
+                                                   See the docker documentation for more information on possible filters.
+   networks             Choices:
+   boolean              • no ←                     Whether to list networks.
+                        • yes
+   networks_filters                                A dictionary of filter values used for selecting networks to list.
+   dictionary                                      See the docker documentation for more information on possible filters.
+   ssl_version                                     Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                          If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+   timeout            Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer            60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment variable is
+                                                   not set, the default value will be used.
+                        Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is set to
+   tls                  • no ←                     yes as well, it will take precedence.
+   boolean              • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is not
+                                                   set, the default value will be used.
+   tls_hostname       Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string             "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment variable
+                                                   is not set, the default value will be used.
+                        Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs       • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment variable
+   boolean              • yes                      is not set, the default value will be used.
+                                                   aliases: tls_verify
+   verbose_output       Choices:                   When set to yes and networks, volumes, images, containers or disk_usage is set to yes then output will contain verbose information about objects
+   boolean              • no ←                     matching the full output of API method. For details see the documentation of your version of Docker API at L(https://docs.docker.com/engine/api/).
+                        • yes                      The verbose output in this module contains only subset of information returned by _info module for each type of the objects.
+   volumes              Choices:
+   boolean              • no ←                     Whether to list volumes.
+                        • yes
+   volumes_filters                                 A dictionary of filter values used for selecting volumes to list.
+   dictionary                                      See the docker documentation for more information on possible filters.
+
+NOTES                   *docker_host_info-notes*
+
+   Note
+
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_host_info-examples*
+
+ - name: Get info on docker host
+   docker_host_info:
+   register: result
+
+ - name: Get info on docker host and list images
+   docker_host_info:
+     images: yes
+   register: result
+
+ - name: Get info on docker host and list images matching the filter
+   docker_host_info:
+     images: yes
+     images_filters:
+       label: "mylabel"
+   register: result
+
+ - name: Get info on docker host and verbose list images
+   docker_host_info:
+     images: yes
+     verbose_output: yes
+   register: result
+
+ - name: Get info on docker host and used disk space
+   docker_host_info:
+     disk_usage: yes
+   register: result
+
+ - debug:
+     var: result.host_info
+
+RETURN VALUES                   *docker_host_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                              Description
+                       both on
+   can_talk_to_docker  success    Will be true if the module can talk to the docker daemon.
+   boolean             and on
+                       error
+   containers          When       List of dict objects containing the basic information about each container. Keys matches the docker container ls output unless verbose_output=yes. See description
+   list /              containers for verbose_output.
+   elements=dictionary is yes
+   disk_usage          When
+   dictionary          disk_usage Information on summary disk usage by images, containers and volumes on docker host unless verbose_output=yes. See description for verbose_output.
+                       is yes
+   host_info           always     Facts representing the basic state of the docker host. Matches the docker system info output.
+   dictionary
+   images              When       List of dict objects containing the basic information about each image. Keys matches the docker image ls output unless verbose_output=yes. See description for
+   list /              images is  verbose_output.
+   elements=dictionary yes
+   networks            When       List of dict objects containing the basic information about each network. Keys matches the docker network ls output unless verbose_output=yes. See description for
+   list /              networks   verbose_output.
+   elements=dictionary is yes
+   volumes             When       List of dict objects containing the basic information about each volume. Keys matches the docker volume ls output unless verbose_output=yes. See description for
+   list /              volumes is verbose_output.
+   elements=dictionary yes
+
+STATUS                   *docker_host_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Piotr Wojciechowski (@WojciechowskiPiotr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_host_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_host_info_module.html

@@ -1,39 +1,125 @@
-SYNOPSIS                           *elasticache*
+SYNOPSIS                   *elasticache*
 
-New in version 1.4.
+     • Manage cache clusters in Amazon Elasticache.
+     • Returns information about the specified cache cluster.
 
-Manage cache clusters in Amazon Elasticache. Returns information about the specified cache cluster.
+REQUIREMENTS                   *elasticache-requirements*
 
-EXAMPLES                           *elasticache-examples*
->
-    # Note: None of these examples set aws_access_key, aws_secret_key, or region.
-    # It is assumed that their matching environment variables are set.
-   
-    # Basic example
-    - elasticache:
-        name: "test-please-delete"
-        state: present
-        engine: memcached
-        cache_engine_version: 1.4.14
-        node_type: cache.m1.small
-        num_nodes: 1
-        cache_port: 11211
-        cache_security_groups:
-          - default
-        zone: us-east-1d
-   
-   
-    # Ensure cache cluster is gone
-    - elasticache:
-        name: "test-please-delete"
-        state: absent
-   
-    # Reboot cache cluster
-    - elasticache:
-        name: "test-please-delete"
-        state: rebooted
-   
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *elasticache-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   cache_engine_version                          The version number of the cache engine
+   -
+   cache_parameter_group                         The name of the cache parameter group to associate with this cache cluster. If this argument is omitted, the default cache parameter group for the
+   -                                             specified engine will be used.
+                                                 aliases: parameter_group
+   cache_port                                    The port number on which each of the cache nodes will accept connections
+   -
+   cache_security_groups                         A list of cache security group names to associate with this cache cluster. Must be an empty list if inside a vpc
+   -
+   cache_subnet_group                            The subnet group name to associate with. Only use if inside a vpc. Required if inside a vpc
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   engine                         Choices:
+   -                              • redis        Name of the cache engine to be used.
+                                  • memcached ←
+   hard_modify                    Choices:
+   boolean                        • no ←         Whether to destroy and recreate an existing cache cluster if necessary in order to modify its state
+                                  • yes
+   name                                          The cache cluster identifier
+   - / required
+   node_type                    Default:         The compute and memory capacity of the nodes in the cache cluster
+   -                            "cache.m1.small"
+   num_nodes                                     The initial number of cache nodes that the cache cluster will have. Required when state=present.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_group_ids                            A list of vpc security group IDs to associate with this cache cluster. Only use if inside a vpc
+   -
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+                                  Choices:
+   state                          • present      absent or present are idempotent actions that will create or destroy a cache cluster as needed. rebooted will reboot the cluster, resulting in a
+   - / required                   • absent       momentary outage.
+                                  • rebooted
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   wait                           Choices:
+   boolean                        • no           Wait for cache cluster result before returning
+                                  • yes ←
+   zone                                          The EC2 Availability Zone in which the cache cluster will be created
+   -
+
+NOTES                   *elasticache-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *elasticache-examples*
+
+ # Note: None of these examples set aws_access_key, aws_secret_key, or region.
+ # It is assumed that their matching environment variables are set.
+
+ # Basic example
+ - elasticache:
+     name: "test-please-delete"
+     state: present
+     engine: memcached
+     cache_engine_version: 1.4.14
+     node_type: cache.m1.small
+     num_nodes: 1
+     cache_port: 11211
+     cache_security_groups:
+       - default
+     zone: us-east-1d
+
+
+ # Ensure cache cluster is gone
+ - elasticache:
+     name: "test-please-delete"
+     state: absent
+
+ # Reboot cache cluster
+ - elasticache:
+     name: "test-please-delete"
+     state: rebooted
+
+STATUS                   *elasticache-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jim Dalton (@jsdalton)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *elasticache-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/elasticache_module.html
+https://docs.ansible.com/ansible/latest/modules/elasticache_module.html

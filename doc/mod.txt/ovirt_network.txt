@@ -1,0 +1,176 @@
+SYNOPSIS                   *ovirt_network*
+
+     • Module to manage logical networks in oVirt/RHV
+
+REQUIREMENTS                   *ovirt_network-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • ovirt-engine-sdk-python >= 4.3.0
+
+PARAMETERS                   *ovirt_network-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   auth                                    Dictionary with values needed to create HTTP/HTTPS connection to oVirt:
+   dictionary / required
+                                           A PEM file containing the trusted CA certificates.
+       ca_file                             The certificate presented by the server will be verified using these CA certificates.
+       string                              If ca_file parameter is not set, system wide CA certificate store is used.
+                                           Default value is set by OVIRT_CAFILE environment variable.
+       headers                             Dictionary of HTTP headers to be added to each API call.
+       dictionary
+       hostname                            A string containing the hostname of the server, usually something like `server.example.com`.
+       string                              Default value is set by OVIRT_HOSTNAME environment variable.
+                                           Either url or hostname is required.
+       insecure             Choices:
+       boolean              • no           A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                            • yes
+       kerberos             Choices:
+       boolean              • no           A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                            • yes
+       password                            The password of the user.
+       string / required                   Default value is set by OVIRT_PASSWORD environment variable.
+       token                               Token to be used instead of login with username/password.
+       string                              Default value is set by OVIRT_TOKEN environment variable.
+       url                                 A string containing the API URL of the server, usually something like `https://server.example.com/ovirt-engine/api`.
+       string                              Default value is set by OVIRT_URL environment variable.
+                                           Either url or hostname is required.
+       username                            The name of the user, something like [email protected].
+       string / required                   Default value is set by OVIRT_USERNAME environment variable.
+   clusters                                List of dictionaries describing how the network is managed in specific cluster.
+   -
+       assigned             Choices:
+       boolean              • no           true if the network should be assigned to cluster. Default is true.
+                            • yes
+       display              Choices:
+       boolean              • no           true if the network should marked as display network.
+                            • yes
+       gluster              Choices:
+       boolean              • no           true if the network should marked as gluster network.
+                            • yes
+       migration            Choices:
+       boolean              • no           true if the network should marked as migration network.
+                            • yes
+       name                                Cluster name.
+       -
+       required             Choices:
+       boolean              • no           true if the network must remain operational for all hosts associated with this network.
+                            • yes
+   comment                                 Comment of the network.
+   -
+   data_center                             Datacenter name where network reside.
+   -
+   description                             Description of the network.
+   -
+   external_provider                       Name of external network provider.
+   -                                       At first it tries to import the network when not found it will create network in external provider.
+   added in 2.8
+   fetch_nested             Choices:       If True the module will fetch additional data from the API.
+   boolean                  • no           It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other attributes of the nested entities by specifying nested_attributes.
+                            • yes
+   id
+   -                                       ID of the network to manage.
+   added in 2.8
+   label
+   -                                       Name of the label to assign to the network.
+   added in 2.5
+   mtu                                     Maximum transmission unit (MTU) of the network.
+   -
+   name                                    Name of the network to manage.
+   - / required
+   nested_attributes                       Specifies list of the attributes which should be fetched from the API.
+   list                                    This parameter apply only when fetch_nested is true.
+   poll_interval          Default:         Number of the seconds the module waits until another poll request on entity status is sent.
+   integer                3
+   state                    Choices:
+   -                        • present ←    Should the network be present or absent
+                            • absent
+   timeout                Default:         The amount of time in seconds the module should wait for the instance to get into desired state.
+   integer                180
+   vlan_tag                                Specify VLAN tag.
+   integer                                 NOTE - To remove the vlan_tag use -1.
+   vm_network               Choices:       If True network will be marked as network for VM.
+   boolean                  • no           VM network carries traffic relevant to the virtual machine.
+                            • yes
+   wait                     Choices:
+   boolean                  • no           yes if the module should wait for the entity to get into desired state.
+                            • yes ←
+
+NOTES                   *ovirt_network-notes*
+
+   Note
+
+     • In order to use this module you have to install oVirt Python SDK. To ensure it’s installed with correct version you can create the following task: pip: name=ovirt-engine-sdk-python
+       version=4.3.0
+
+EXAMPLES                   *ovirt_network-examples*
+
+ # Examples don't contain auth parameter for simplicity,
+ # look at ovirt_auth module to see how to reuse authentication:
+
+ # Create network
+ - ovirt_network:
+     data_center: mydatacenter
+     name: mynetwork
+     vlan_tag: 10
+     vm_network: true
+
+ # Remove network
+ - ovirt_network:
+     state: absent
+     name: mynetwork
+
+ # Change Network Name
+ - ovirt_network:
+     id: 00000000-0000-0000-0000-000000000000
+     name: "new_network_name"
+     data_center: mydatacenter
+
+ # Add network from external provider
+ - ovirt_network:
+     data_center: mydatacenter
+     name: mynetwork
+     external_provider: ovirt-provider-ovn
+
+ # Remove vlan_tag
+ - ovirt_network:
+     data_center: mydatacenter
+     name: mynetwork
+     vlan_tag: -1
+
+RETURN VALUES                   *ovirt_network-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+              On
+              success  ID of the managed network
+   id         if       Sample:
+   string     network  7de90f31-222c-436c-a1ca-7e655bd5b60c
+              is
+              found.
+              On
+              success
+   network    if       Dictionary of all the network attributes. Network attributes can be found on your oVirt/RHV instance at following url:
+   dictionary network  http://ovirt.github.io/ovirt-engine-api-model/master/#types/network.
+              is
+              found.
+
+STATUS                   *ovirt_network-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ondra Machacek (@machacekondra)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovirt_network-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovirt_network_module.html

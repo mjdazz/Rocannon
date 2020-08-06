@@ -1,0 +1,166 @@
+SYNOPSIS                   *manageiq_group*
+
+     • The manageiq_group module supports adding, updating and deleting groups in ManageIQ.
+
+REQUIREMENTS                   *manageiq_group-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • manageiq-client
+     • manageiq-client https://github.com/ManageIQ/manageiq-api-client-python/
+
+PARAMETERS                   *manageiq_group-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   belongsto_filters            Default:         A list of strings with a reference to the allowed host, cluster or folder
+   list                         null
+   belongsto_filters_merge_mode   Choices:       In merge mode existing settings are merged with the supplied belongsto_filters.
+   -                              • merge        In replace mode current values are replaced with the supplied belongsto_filters.
+                                  • replace ←
+   description                  Default:         The group description.
+   - / required                 null
+   managed_filters              Default:         The tag values per category
+   dictionary                   null
+   managed_filters_merge_mode     Choices:       In merge mode existing categories are kept or updated, new categories are added.
+   -                              • merge        In replace mode all categories will be replaced with the supplied managed_filters.
+                                  • replace ←
+   manageiq_connection                           ManageIQ connection configuration information.
+   dictionary / required
+          ca_cert                                The path to a CA bundle file or directory with certificates. defaults to None.
+          path                                   aliases: ca_bundle_path
+          password                               ManageIQ password. MIQ_PASSWORD env var if set. otherwise, required if no token is passed in.
+          string
+          token                                  ManageIQ token. MIQ_TOKEN env var if set. otherwise, required if no username or password is passed in.
+          string
+          url                                    ManageIQ environment url. MIQ_URL env var if set. otherwise, it is required to pass it.
+          string / required
+          username                               ManageIQ username. MIQ_USERNAME env var if set. otherwise, required if no token is passed in.
+          string
+          validate_certs          Choices:       Whether SSL certificates should be verified for HTTPS requests. defaults to True.
+          boolean                 • no           aliases: verify_ssl
+                                  • yes ←
+   role                         Default:         The the group role name
+   -                            null             The role_id has precedence over the role when supplied.
+   role_id                      Default:         The the group role id
+   -                            null
+   state                          Choices:
+   -                              • absent       absent - group should not exist, present - group should be.
+                                  • present ←
+   tenant                       Default:         The tenant for the group identified by the tenant name.
+   -                            null             The tenant_id has precedence over the tenant when supplied.
+                                                 Tenant names are case sensitive.
+   tenant_id                    Default:         The tenant for the group identified by the tenant id.
+   -                            null
+
+EXAMPLES                   *manageiq_group-examples*
+
+ - name: Create a group in ManageIQ with the role EvmRole-user and tenant 'my_tenant'
+   manageiq_group:
+     description: 'MyGroup-user'
+     role: 'EvmRole-user'
+     tenant: 'my_tenant'
+     manageiq_connection:
+       url: 'https://manageiq_server'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name: Create a group in ManageIQ with the role EvmRole-user and tenant with tenant_id 4
+   manageiq_group:
+     description: 'MyGroup-user'
+     role: 'EvmRole-user'
+     tenant_id: 4
+     manageiq_connection:
+       url: 'https://manageiq_server'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name:
+   - Create or update a group in ManageIQ with the role EvmRole-user and tenant my_tenant.
+   - Apply 3 prov_max_cpu and 2 department tags to the group.
+   - Limit access to a cluster for the group.
+   manageiq_group:
+     description: 'MyGroup-user'
+     role: 'EvmRole-user'
+     tenant: my_tenant
+     managed_filters:
+       prov_max_cpu:
+       - '1'
+       - '2'
+       - '4'
+       department:
+       - defense
+       - engineering
+     managed_filters_merge_mode: replace
+     belongsto_filters:
+     - "/belongsto/ExtManagementSystem|ProviderName/EmsFolder|Datacenters/EmsFolder|dc_name/EmsFolder|host/EmsCluster|Cluster name"
+     belongsto_filters_merge_mode: merge
+     manageiq_connection:
+       url: 'https://manageiq_server'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name: Delete a group in ManageIQ
+   manageiq_group:
+     state: 'absent'
+     description: 'MyGroup-user'
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+
+ - name: Delete a group in ManageIQ using a token
+   manageiq_group:
+     state: 'absent'
+     description: 'MyGroup-user'
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       token: 'sometoken'
+
+RETURN VALUES                   *manageiq_group-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+   group               success  The group.
+   complex
+     belongsto_filters success  A list of strings with a reference to the allowed host, cluster or folder
+     list
+     created_on                 Group creation date
+     string            success  Sample:
+                                2018-08-12T08:37:55+00:00
+     description       success  The group description
+     string
+     group_type        success  The group type, system or user
+     string
+     id                success  The group id
+     integer
+     managed_filters   success  The tag values per category
+     dictionary
+     role              success  The group role name
+     string
+     tenant            success  The group tenant name
+     string
+     updated_on                 Group update date
+     integer           success  Sample:
+                                2018-08-12T08:37:55+00:00
+
+STATUS                   *manageiq_group-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Evert Mulder (@evertmulder)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *manageiq_group-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/manageiq_group_module.html

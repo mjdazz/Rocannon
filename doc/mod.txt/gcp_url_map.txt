@@ -1,0 +1,120 @@
+DEPRECATED                   *gcp_url_map*
+
+                            Removed in Ansible:
+                  version: 2.12
+        Why:      Updated modules released with increased functionality
+    Alternative:  Use gcp_compute_url_map instead.
+
+SYNOPSIS                   *gcp_url_map-synopsis*
+
+     • Create, Update or Destroy a Url_Map. See https://cloud.google.com/compute/docs/load-balancing/http/url-map for an overview. More details on the Url_Map API can be found at
+       https://cloud.google.com/compute/docs/reference/latest/urlMaps#resource.
+
+REQUIREMENTS                   *gcp_url_map-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • google-api-python-client >= 1.6.2
+     • google-auth >= 0.9.0
+     • google-auth-httplib2 >= 0.0.2
+
+PARAMETERS                   *gcp_url_map-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   default_service                  Default Backend Service if no host rules match.
+   - / required
+                                    The list of HostRules to use against the URL. Contains a list of hosts and an associated path_matcher.
+   host_rules                       The 'hosts' parameter is a list of host patterns to match. They must be valid hostnames, except " will match any string of ([a-z0-9-.]"). In that case, " must be
+   -                                the first character and must be followed in the pattern by either - or ..
+                                    The 'path_matcher' parameter is name of the PathMatcher to use to match the path portion of the URL if the hostRule matches the URL's host portion.
+                                    The list of named PathMatchers to use against the URL. Contains path_rules, which is a list of paths and an associated service. A default_service can also be
+                                    specified for each path_matcher.
+   path_matchers                    The 'name' parameter to which this path_matcher is referred by the host_rule.
+   -                                The 'default_service' parameter is the name of the BackendService resource. This will be used if none of the path_rules defined by this path_matcher is matched
+                                    by the URL's path portion.
+                                    The 'path_rules' parameter is a list of dictionaries containing a list of paths and a service to direct traffic to. Each path item must start with / and the only
+                                    place a " is allowed is at the end following a /. The string fed to the path matcher does not include any text after the first ? or
+   url_map_name                     Name of the Url_Map.
+   - / required
+
+NOTES                   *gcp_url_map-notes*
+
+   Note
+
+     • Only supports global Backend Services.
+     • Url_Map tests are not currently supported.
+
+EXAMPLES                   *gcp_url_map-examples*
+
+ - name: Create Minimal Url_Map
+   gcp_url_map:
+     service_account_email: "{{ service_account_email }}"
+     credentials_file: "{{ credentials_file }}"
+     project_id: "{{ project_id }}"
+     url_map_name: my-url_map
+     default_service: my-backend-service
+     state: present
+ - name: Create UrlMap with pathmatcher
+   gcp_url_map:
+     service_account_email: "{{ service_account_email }}"
+     credentials_file: "{{ credentials_file }}"
+     project_id: "{{ project_id }}"
+     url_map_name: my-url-map-pm
+     default_service: default-backend-service
+     path_matchers:
+     - name: 'path-matcher-one'
+       description: 'path matcher one'
+       default_service: 'bes-pathmatcher-one-default'
+       path_rules:
+       - service: 'my-one-bes'
+         paths:
+         - '/data'
+         - '/aboutus'
+     host_rules:
+       - hosts:
+         - '".'
+         path_matcher: 'path-matcher-one'
+     state: "present"
+
+RETURN VALUES                   *gcp_url_map-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key                                    Returned                                                                                Description
+   host_rules                                                                          List of HostRules.
+   dictionary      If specified.                                                       Sample:
+                                                                                       [{'hosts': ['".'], 'path_matcher': 'my-pm'}]
+   path_matchers                                                                       The list of named PathMatchers to use against the URL.
+   dictionary      If specified.                                                       Sample:
+                                                                                       [{'name': 'my-pm', 'path_rules': [{'paths': ['/data']}], 'service': 'my-service'}]
+   state                                                                               state of the Url_Map
+   string          Always.                                                             Sample:
+                                                                                       present
+   updated_url_map                                                                     True if the url_map has been updated. Will not appear on initial url_map creation.
+   boolean         if the url_map has been updated.                                    Sample:
+                                                                                       True
+   url_map                                                                             GCP Url_Map dictionary
+   dictionary      Always. Refer to GCP documentation for detailed field descriptions. Sample:
+                                                                                       {'name': 'my-url-map', 'hostRules': ['...'], 'pathMatchers': ['...']}
+   url_map_name                                                                        Name of the Url_Map
+   string          Always                                                              Sample:
+                                                                                       my-url-map
+
+STATUS                   *gcp_url_map-status*
+
+     • This module will be removed in version 2.12. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Tom Melendez (@supertom) <tom@supertom.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_url_map-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_url_map_module.html

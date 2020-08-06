@@ -1,0 +1,153 @@
+SYNOPSIS                   *vmware_guest_move*
+
+     • This module can be used to move virtual machines between folders.
+
+REQUIREMENTS                   *vmware_guest_move-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_guest_move-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   datacenter                         Destination datacenter for the move operation
+   string / required
+                                      Absolute path to move an existing guest
+                                      The dest_folder should include the datacenter. ESX's datacenter is ha-datacenter.
+                                      This parameter is case sensitive.
+                                      Examples:
+                                      dest_folder: /ha-datacenter/vm
+   dest_folder                        dest_folder: ha-datacenter/vm
+   string / required                  dest_folder: /datacenter1/vm
+                                      dest_folder: datacenter1/vm
+                                      dest_folder: /datacenter1/vm/folder1
+                                      dest_folder: datacenter1/vm/folder1
+                                      dest_folder: /folder1/datacenter1/vm
+                                      dest_folder: folder1/datacenter1/vm
+                                      dest_folder: /folder1/datacenter1/vm/folder2
+   hostname                           The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                             If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                      Environment variable support added in Ansible 2.6.
+   moid                               Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+   string                             This is required if name or uuid is not supplied.
+   added in 2.9
+   name                               Name of the existing virtual machine to move.
+   string                             This is required if uuid or moid is not supplied.
+   name_match          Choices:
+   string              • first ←      If multiple virtual machines matching the name, use the first or last found.
+                       • last
+                                      The password of the vSphere vCenter or ESXi server.
+   password                           If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                             Environment variable support added in Ansible 2.6.
+                                      aliases: pass, pwd
+   port              Default:         The port number of the vSphere vCenter or ESXi server.
+   integer           443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                       Environment variable support added in Ansible 2.6.
+   proxy_host                         Address of a proxy that will receive all HTTPS requests and relay them.
+   string                             The format is a hostname or a IP.
+   added in 2.9                       If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                      This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                         Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                            If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   use_instance_uuid   Choices:
+   boolean             • no ←         Whether to use the VMware instance UUID rather than the BIOS UUID.
+   added in 2.8        • yes
+                                      The username of the vSphere vCenter or ESXi server.
+   username                           If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                             Environment variable support added in Ansible 2.6.
+                                      aliases: admin, user
+   uuid                               UUID of the virtual machine to manage if known, this is VMware's unique identifier.
+   string                             This is required if name or moid is not supplied.
+                       Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs      • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean             • yes ←        Environment variable support added in Ansible 2.6.
+                                      If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_guest_move-notes*
+
+   Note
+
+     • Tested on vSphere 5.5 and vSphere 6.5
+
+EXAMPLES                   *vmware_guest_move-examples*
+
+ - name: Move Virtual Machine
+   vmware_guest_move:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: datacenter
+     validate_certs: no
+     name: testvm-1
+     dest_folder: "/{{ datacenter }}/vm"
+   delegate_to: localhost
+
+ - name: Move Virtual Machine using MoID
+   vmware_guest_move:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: datacenter
+     validate_certs: no
+     moid: vm-42
+     dest_folder: "/{{ datacenter }}/vm"
+   delegate_to: localhost
+
+ - name: Get VM UUID
+   vmware_guest_facts:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     validate_certs: no
+     datacenter: "{{ datacenter }}"
+     folder: "/{{datacenter}}/vm"
+     name: "{{ vm_name }}"
+   delegate_to: localhost
+   register: vm_facts
+
+ - name: Get UUID from previous task and pass it to this task
+   vmware_guest_move:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     validate_certs: no
+     datacenter: "{{ datacenter }}"
+     uuid: "{{ vm_facts.instance.hw_product_uuid }}"
+     dest_folder: "/DataCenter/vm/path/to/new/folder/where/we/want"
+   delegate_to: localhost
+   register: facts
+
+RETURN VALUES                   *vmware_guest_move-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+                       metadata about the virtual machine
+                       Sample:
+                       {'annotation': None, 'current_snapshot': None, 'customvalues': {}, 'guest_consolidation_needed': False, 'guest_question': None, 'guest_tools_status': None,
+   instance   always   'guest_tools_version': '0', 'hw_cores_per_socket': 1, 'hw_datastores': ['LocalDS_0'], 'hw_esxi_host': 'DC0_H0', 'hw_eth0': {'addresstype': 'generated', 'ipaddresses': None,
+   dictionary          'label': 'ethernet-0', 'macaddress': '00:0c:29:6b:34:2c', 'macaddress_dash': '00-0c-29-6b-34-2c', 'summary': 'DVSwitch: 43cdd1db-1ef7-4016-9bbe-d96395616199'}, 'hw_files':
+                       ['[LocalDS_0] DC0_H0_VM0/DC0_H0_VM0.vmx'], 'hw_folder': '/F0/DC0/vm/F0', 'hw_guest_full_name': None, 'hw_guest_ha_state': None, 'hw_guest_id': 'otherGuest', 'hw_interfaces':
+                       ['eth0'], 'hw_is_template': False, 'hw_memtotal_mb': 32, 'hw_name': 'DC0_H0_VM0', 'hw_power_status': 'poweredOn', 'hw_processor_count': 1, 'hw_product_uuid':
+                       '581c2808-64fb-45ee-871f-6a745525cb29', 'instance_uuid': '8bcb0b6e-3a7d-4513-bf6a-051d15344352', 'ipv4': None, 'ipv6': None, 'module_hw': True, 'snapshots': []}
+
+STATUS                   *vmware_guest_move-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jose Angel Munoz (@imjoseangel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_guest_move-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_guest_move_module.html

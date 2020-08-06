@@ -1,0 +1,289 @@
+SYNOPSIS                   *ios_l2_interfaces*
+
+     • This module provides declarative management of Layer-2 interface on Cisco IOS devices.
+
+PARAMETERS                   *ios_l2_interfaces-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   config                                      A dictionary of Layer-2 interface options
+   list / elements=dictionary
+       access                                  Switchport mode access command to configure the interface as a layer 2 access.
+       dictionary
+             vlan                              Configure given VLAN in access port. It's used as the access VLAN ID.
+             integer
+       name                                    Full name of the interface excluding any logical unit number, i.e. GigabitEthernet0/1.
+       string / required
+       trunk                                   Switchport mode trunk command to configure the interface as a Layer 2 trunk. Note The encapsulation is always set to dot1q.
+       dictionary
+             allowed_vlans                     List of allowed VLANs in a given trunk port. These are the only VLANs that will be configured on the trunk.
+             list
+                                Choices:
+             encapsulation      • dot1q        Trunking encapsulation when interface is in trunking mode.
+             string             • isl
+                                • negotiate
+             native_vlan                       Native VLAN to be configured in trunk port. It's used as the trunk native VLAN ID.
+             integer
+             pruning_vlans                     Pruning VLAN to be configured in trunk port. It's used as the trunk pruning VLAN ID.
+             list
+                                Choices:
+   state                        • merged ←
+   string                       • replaced     The state of the configuration after module completion
+                                • overridden
+                                • deleted
+
+NOTES                   *ios_l2_interfaces-notes*
+
+   Note
+
+     • Tested against Cisco IOSv Version 15.2 on VIRL
+     • This module works with connection network_cli. See IOS Platform Options.
+
+EXAMPLES                   *ios_l2_interfaces-examples*
+
+ ---
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport access vlan 20
+ #  media-type rj45
+ #  negotiation auto
+
+ - name: Merge provided configuration with device configuration
+   ios_l2_interfaces:
+     config:
+       - name: GigabitEthernet0/1
+         access:
+           vlan: 10
+       - name: GigabitEthernet0/2
+         trunk:
+           allowed_vlan: 10-20, 40
+           native_vlan: 20
+           pruning_vlan: 10,20
+           encapsulation: dot1q
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  switchport access vlan 10
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport trunk allowed vlan 10-20,40
+ #  switchport trunk encapsulation dot1q
+ #  switchport trunk native vlan 20
+ #  switchport trunk pruning vlan 10,20
+ #  media-type rj45
+ #  negotiation auto
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  switchport access vlan 20
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport access vlan 20
+ #  media-type rj45
+ #  negotiation auto
+
+ - name: Replaces device configuration of listed l2 interfaces with provided configuration
+   ios_l2_interfaces:
+     config:
+       - name: GigabitEthernet0/2
+         trunk:
+         - allowed_vlan: 20-25,40
+           native_vlan: 20
+           pruning_vlan: 10
+           encapsulation: isl
+     state: replaced
+
+ # After state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  switchport access vlan 20
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport trunk allowed vlan 20-25,40
+ #  switchport trunk encapsulation isl
+ #  switchport trunk native vlan 20
+ #  switchport trunk pruning vlan 10
+ #  media-type rj45
+ #  negotiation auto
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  switchport trunk encapsulation dot1q
+ #  switchport trunk native vlan 20
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport access vlan 20
+ #  switchport trunk encapsulation dot1q
+ #  switchport trunk native vlan 20
+ #  media-type rj45
+ #  negotiation auto
+
+ - name: Override device configuration of all l2 interfaces with provided configuration
+   ios_l2_interfaces:
+     config:
+       - name: GigabitEthernet0/2
+         access:
+           vlan: 20
+     state: overridden
+
+ # After state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport access vlan 20
+ #  media-type rj45
+ #  negotiation auto
+
+ # Using Deleted
+
+ # Before state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  switchport access vlan 20
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport access vlan 20
+ #  switchport trunk allowed vlan 20-40,60,80
+ #  switchport trunk encapsulation dot1q
+ #  switchport trunk native vlan 10
+ #  switchport trunk pruning vlan 10
+ #  media-type rj45
+ #  negotiation auto
+
+ - name: Delete IOS L2 interfaces as in given arguments
+   ios_l2_interfaces:
+     config:
+       - name: GigabitEthernet0/1
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport access vlan 20
+ #  switchport trunk allowed vlan 20-40,60,80
+ #  switchport trunk encapsulation dot1q
+ #  switchport trunk native vlan 10
+ #  switchport trunk pruning vlan 10
+ #  media-type rj45
+ #  negotiation auto
+
+
+ # Using Deleted without any config passed
+ #"(NOTE: This will delete all of configured resource module attributes from each configured interface)"
+
+ # Before state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  switchport access vlan 20
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  switchport access vlan 20
+ #  switchport trunk allowed vlan 20-40,60,80
+ #  switchport trunk encapsulation dot1q
+ #  switchport trunk native vlan 10
+ #  switchport trunk pruning vlan 10
+ #  media-type rj45
+ #  negotiation auto
+
+ - name: Delete IOS L2 interfaces as in given arguments
+   ios_l2_interfaces:
+     state: deleted
+
+ # After state:
+ # -------------
+ #
+ # viosl2#show running-config | section ^interface
+ # interface GigabitEthernet0/1
+ #  description Configured by Ansible
+ #  negotiation auto
+ # interface GigabitEthernet0/2
+ #  description This is test
+ #  media-type rj45
+ #  negotiation auto
+
+RETURN VALUES                   *ios_l2_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device
+   list     always       Sample:
+                         ['interface GigabitEthernet0/1', 'switchport access vlan 20']
+
+STATUS                   *ios_l2_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *ios_l2_interfaces-red hat support*
+
+     • Sumit Jaiswal (@justjais)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_l2_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_l2_interfaces_module.html

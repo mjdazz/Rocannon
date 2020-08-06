@@ -1,0 +1,176 @@
+SYNOPSIS                   *nxos_lacp_interfaces*
+
+     • This module manages Link Aggregation Control Protocol (LACP) attributes of NX-OS Interfaces.
+
+PARAMETERS                   *nxos_lacp_interfaces-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   config
+   list /                               A dictionary of LACP interfaces options.
+   elements=dictionary
+    convergence                         This dict contains configurable options related to convergence. Applicable only for Port-channel.
+    dictionary
+          graceful       Choices:       port-channel lacp graceful convergence. Disable this only with lacp ports connected to Non-Nexus peer. Disabling this with Nexus peer can lead to port
+          boolean        • no           suspension.
+                         • yes
+          vpc            Choices:
+          boolean        • no           Enable lacp convergence for vPC port channels.
+                         • yes
+    links                               This dict contains configurable options related to max and min port-channel links. Applicable only for Port-channel.
+    dictionary
+          max                           Port-channel max bundle.
+          integer
+          min                           Port-channel min links.
+          integer
+    mode                 Choices:       LACP mode. Applicable only for Port-channel.
+    string               • delay
+    name                                Name of the interface.
+    string / required
+    port_priority                       LACP port priority for the interface. Range 1-65535. Applicable only for Ethernet.
+    integer
+    rate                 Choices:       Rate at which PDUs are sent by LACP. Applicable only for Ethernet. At fast rate LACP is transmitted once every 1 second. At normal rate LACP is transmitted
+    string               • fast         every 30 seconds after the link is bundled.
+                         • normal
+    suspend_individual   Choices:       port-channel lacp state. Disabling this will cause lacp to put the port to individual state and not suspend the port in case it does not get LACP BPDU from
+    boolean              • no           the peer ports in the port-channel.
+                         • yes
+                         Choices:
+   state                 • merged ←
+   string                • replaced     The state of the configuration after module completion.
+                         • overridden
+                         • deleted
+
+NOTES                   *nxos_lacp_interfaces-notes*
+
+   Note
+
+     • Tested against NXOS 7.3.(0)D1(1) on VIRL
+
+EXAMPLES                   *nxos_lacp_interfaces-examples*
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+
+ - name: Merge provided configuration with device configuration.
+   nxos_lacp_interfaces:
+     config:
+       - name: Ethernet1/3
+         port_priority: 5
+         rate: fast
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/3
+ # lacp port-priority 5
+ # lacp rate fast
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/3
+ #   lacp port-priority 5
+ # interface port-channel11
+ #   lacp mode delay
+
+ - name: Replace device lacp interfaces configuration with the given configuration.
+   nxos_lacp_interfaces:
+     config:
+       - name: port-channel11
+         links:
+           min: 4
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/3
+ #   lacp port-priority 5
+ # interface port-channel11
+ #   lacp min-links 4
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/3
+ #   lacp port-priority 5
+ # interface port-channel11
+ #   lacp mode delay
+
+ - name: Override device configuration of all LACP interfaces attributes of given interfaces on device with provided configuration.
+   nxos_lacp_interfaces:
+     config:
+       - name: port-channel11
+         links:
+           min: 4
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # interface port-channel11
+ # lacp min-links 4
+
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/3
+ #   lacp port-priority 5
+ # interface port-channel11
+ #   lacp mode delay
+
+ - name: Delete LACP interfaces configurations.
+   nxos_lacp_interfaces:
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+
+RETURN VALUES                   *nxos_lacp_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['interface port-channel10', 'lacp min-links 5', 'lacp mode delay']
+
+STATUS                   *nxos_lacp_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_lacp_interfaces-red hat support*
+
+     • Trishna Guha (@trishnaguha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_lacp_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_lacp_interfaces_module.html

@@ -1,0 +1,81 @@
+SYNOPSIS                   *sefcontext*
+
+     • Manages SELinux file context mapping definitions.
+     • Similar to the semanage fcontext command.
+
+REQUIREMENTS                   *sefcontext-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • libselinux-python
+     • policycoreutils-python
+
+PARAMETERS                   *sefcontext-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+                          Choices:       The file type that should have SELinux contexts applied.
+                          • a ←          The following file type options are available:
+                          • b            a for all files,
+                          • c            b for block devices,
+   ftype                  • d            c for character devices,
+   string                 • f            d for directories,
+                          • l            f for regular files,
+                          • p            l for symbolic links,
+                          • s            p for named pipes,
+                                         s for socket files.
+   ignore_selinux_state   Choices:
+   boolean                • no ←         Useful for scenarios (chrooted environment) that you can't get the real SELinux state.
+   added in 2.8           • yes
+   reload                 Choices:       Reload SELinux policy after commit.
+   boolean                • no           Note that this does not apply SELinux file contexts to existing files.
+                          • yes ←
+   selevel                               SELinux range for the specified target.
+   string                                aliases: serange
+   setype                                SELinux type for the specified target.
+   string / required
+   seuser                                SELinux user for the specified target.
+   string
+   state                  Choices:
+   string                 • absent       Whether the SELinux file context must be absent or present.
+                          • present ←
+   target                                Target path (expression).
+   string / required                     aliases: path
+
+NOTES                   *sefcontext-notes*
+
+   Note
+
+     • The changes are persistent across reboots.
+     • The sefcontext module does not modify existing files to the new SELinux context(s), so it is advisable to first create the SELinux file contexts before creating files, or run restorecon
+       manually for the existing files that require the new SELinux file contexts.
+     • Not applying SELinux fcontexts to existing files is a deliberate decision as it would be unclear what reported changes would entail to, and there’s no guarantee that applying SELinux
+       fcontext does not pick up other unrelated prior changes.
+
+EXAMPLES                   *sefcontext-examples*
+
+ - name: Allow apache to modify files in /srv/git_repos
+   sefcontext:
+     target: '/srv/git_repos(/.")?'
+     setype: httpd_git_rw_content_t
+     state: present
+
+ - name: Apply new SELinux file context to filesystem
+   command: restorecon -irv /srv/git_repos
+
+STATUS                   *sefcontext-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sefcontext-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sefcontext_module.html

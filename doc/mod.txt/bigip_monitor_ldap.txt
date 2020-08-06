@@ -1,0 +1,169 @@
+SYNOPSIS                   *bigip_monitor_ldap*
+
+     • Manages BIG-IP LDAP monitors.
+
+PARAMETERS                   *bigip_monitor_ldap-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   base                                  Specifies the location in the LDAP tree from which the monitor starts the health check.
+   string
+   chase_referrals        Choices:
+   boolean                • no           Specifies whether, upon receipt of an LDAP referral entry, the target follows (or chases) that referral.
+                          • yes
+   debug                  Choices:
+   boolean                • no           Specifies whether the monitor sends error messages and additional information to a log file created and labeled specifically for this monitor.
+                          • yes
+   description                           Specifies descriptive text that identifies the monitor.
+   string
+   filter                                Specifies an LDAP key for which the monitor searches.
+   string
+   interval                              Specifies, in seconds, the frequency at which the system issues the monitor check when either the resource is down or the status of the resource is unknown.
+   integer
+   ip                                    IP address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'.
+   string
+   mandatory_attributes   Choices:
+   boolean                • no           Specifies whether the target must include attributes in its response to be considered up.
+                          • yes
+                          Choices:       Specifies whether the system automatically changes the status of a resource to enabled at the next successful monitor check.
+   manual_resume          • no           If you set this option to yes, you must manually re-enable the resource before the system can use it for load balancing connections.
+   boolean                • yes          When yes, specifies that you must manually re-enable the resource after an unsuccessful monitor check.
+                                         When no, specifies that the system automatically changes the status of a resource to enabled at the next successful monitor check.
+   name                                  Monitor name.
+   string / required
+   parent               Default:         The parent template of this monitor template. Once this value has been set, it cannot be changed.
+   string               "/Common/ldap"   By default, this value is the ldap parent on the Common partition.
+   partition            Default:         Device partition to manage resources on.
+   string               "Common"
+   port                                  Port address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'.
+   string                                Note that if specifying an IP address, a value between 1 and 65535 must be specified.
+   provider
+   dictionary                            A dict object containing connection details.
+   added in 2.5
+     auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                              This option is really used when working with BIG-IQ devices.
+     password                            The password for the user account used to connect to the BIG-IP.
+     string / required                   You may omit this option by setting the environment variable F5_PASSWORD.
+                                         aliases: pass, pwd
+     server                              The BIG-IP host.
+     string / required                   You may omit this option by setting the environment variable F5_SERVER.
+     server_port        Default:         The BIG-IP server port.
+     integer            443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                             operation is completed, the module will error.
+     transport            Choices:
+     string               • cli          Configures the transport connection to use when connecting to the remote device.
+                          • rest ←
+     user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string / required                   You may omit this option by setting the environment variable F5_USER.
+     validate_certs       Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean              • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                          • yes ←
+                          Choices:
+   security               • none         Specifies the secure protocol type for communications with the target.
+   string                 • ssl
+                          • tls
+   state                  Choices:       When present, ensures that the monitor exists.
+   string                 • present ←    When absent, ensures the monitor is removed.
+                          • absent
+   target_password                       Specifies the password, if the monitored target requires authentication.
+   string
+   target_username                       Specifies the user name, if the monitored target requires authentication.
+   string
+                                         Specifies the number of seconds to wait after a resource first responds correctly to the monitor before setting the resource to 'up'.
+   time_until_up                         During the interval, all responses from the resource must be correct.
+   integer                               When the interval expires, the resource is marked 'up'.
+                                         A value of 0, means that the resource is marked up immediately upon receipt of the first correct response.
+                                         Specifies the number of seconds the target has in which to respond to the monitor request.
+   timeout                               If the target responds within the set time period, it is considered 'up'. If the target does not respond within the set time period, it is considered
+   integer                               'down'. When this value is set to 0 (zero), the system uses the interval from the parent monitor.
+                                         Note that timeout and time_until_up combine to control when a resource is set to up.
+   up_interval                           Specifies the interval for the system to use to perform the health check when a resource is up.
+   integer                               When 0, specifies that the system uses the interval specified in interval to check the health of the resource.
+                                         When any other number, enables specification of a different interval to use when checking the health of a resource that is up.
+   update_password        Choices:       always will update passwords if the target_password is specified.
+   string                 • always ←     on_create will only set the password for newly created monitors.
+                          • on_create
+
+NOTES                   *bigip_monitor_ldap-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_monitor_ldap-examples*
+
+ - name: Create a LDAP monitor
+   bigip_monitor_ldap:
+     name: foo
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_monitor_ldap-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   base                          The new LDAP Base setting of the resource.
+   string               changed  Sample:
+                                 base
+   chase_referrals               The new Chase Referrals setting of the resource.
+   boolean              changed  Sample:
+                                 True
+   debug                         The new Debug setting of the resource.
+   boolean              changed  Sample:
+                                 True
+   description                   The description of the monitor.
+   string               changed  Sample:
+                                 Important_Monitor
+   filter                        The new LDAP Filter setting of the resource.
+   string               changed  Sample:
+                                 filter1
+   interval                      The new interval in which to run the monitor check.
+   integer              changed  Sample:
+                                 2
+   ip                            The new IP of IP/port definition.
+   string               changed  Sample:
+                                 10.12.13.14
+   mandatory_attributes changed  The new Mandatory Attributes setting of the resource.
+   boolean
+   manual_resume        changed  The new Manual Resume setting of the resource.
+   boolean
+   parent                        New parent template of the monitor.
+   string               changed  Sample:
+                                 ldap
+   security                      The new Security setting of the resource.
+   string               changed  Sample:
+                                 ssl
+   time_until_up                 The new time in which to mark a system as up after first successful response.
+   integer              changed  Sample:
+                                 2
+   timeout                       The new timeout in which the remote system must respond to the monitor.
+   integer              changed  Sample:
+                                 10
+
+STATUS                   *bigip_monitor_ldap-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Greg Crosby (@crosbygw)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_monitor_ldap-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_monitor_ldap_module.html

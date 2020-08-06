@@ -1,76 +1,156 @@
-SYNOPSIS                           *digital_ocean*
+DEPRECATED                   *digital_ocean*
 
-New in version 1.3.
+                                      Removed in Ansible:
+                  version: 2.12
+        Why:      Updated module to remove external dependency with increased functionality.
+    Alternative:  Use digital_ocean_droplet instead.
 
-Create/delete a droplet in DigitalOcean and optionally wait for it to be ‘running’, or deploy an SSH key.
+SYNOPSIS                   *digital_ocean-synopsis*
 
-EXAMPLES                           *digital_ocean-examples*
->
-    # Ensure a SSH key is present
-    # If a key matches this name, will return the ssh key id and changed = False
-    # If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
-   
-    - digital_ocean: >
-          state=present
-          command=ssh
-          name=my_ssh_key
-          ssh_pub_key='ssh-rsa AAAA...'
-          client_id=XXX
-          api_key=XXX
-   
-    # Create a new Droplet
-    # Will return the droplet details including the droplet id (used for idempotence)
-   
-    - digital_ocean: >
-          state=present
-          command=droplet
-          name=mydroplet
-          client_id=XXX
-          api_key=XXX
-          size_id=1
-          region_id=2
-          image_id=3
-          wait_timeout=500
-      register: my_droplet
-    - debug: msg="ID is {{ my_droplet.droplet.id }}"
-    - debug: msg="IP is {{ my_droplet.droplet.ip_address }}"
-   
-    # Ensure a droplet is present
-    # If droplet id already exist, will return the droplet details and changed = False
-    # If no droplet matches the id, a new droplet will be created and the droplet details (including the new id) are returned, changed = True.
-   
-    - digital_ocean: >
-          state=present
-          command=droplet
-          id=123
-          name=mydroplet
-          client_id=XXX
-          api_key=XXX
-          size_id=1
-          region_id=2
-          image_id=3
-          wait_timeout=500
-   
-    # Create a droplet with ssh key
-    # The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids).
-    # Several keys can be added to ssh_key_ids as id1,id2,id3
-    # The keys are used to connect as root to the droplet.
-   
-    - digital_ocean: >
-          state=present
-          ssh_key_ids=id1,id2
-          name=mydroplet
-          client_id=XXX
-          api_key=XXX
-          size_id=1
-          region_id=2
-          image_id=3
-   
-      Note
-   
-      Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
-   
+     • Create/delete a droplet in DigitalOcean and optionally wait for it to be ‘running’, or deploy an SSH key.
+
+REQUIREMENTS                   *digital_ocean-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • dopy
+
+PARAMETERS                   *digital_ocean-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   api_token                           DigitalOcean api token.
+   -
+   backups_enabled      Choices:
+   boolean              • no ←         Optional, Boolean, enables backups for your droplet.
+                        • yes
+   command              Choices:
+   -                    • droplet ←    Which target you want to operate on.
+                        • ssh
+   id                                  Numeric, the droplet id you want to operate on.
+   -                                   aliases: droplet_id
+   image_id                            This is the slug of the image you would like the droplet created with.
+   -
+   ipv6                 Choices:
+   boolean              • no ←         Optional, Boolean, enable IPv6 for your droplet.
+                        • yes
+   name                                String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key.
+   -
+   private_networking   Choices:
+   boolean              • no ←         Bool, add an additional, private network interface to droplet for inter-droplet communication.
+                        • yes
+   region_id                           This is the slug of the region you would like your server to be created in.
+   -
+   size_id                             This is the slug of the size you would like the droplet created with.
+   -
+   ssh_key_ids                         Optional, array of SSH key (numeric) ID that you would like to be added to the server.
+   -
+   ssh_pub_key                         The public SSH key you want to add to your account.
+   -
+                        Choices:
+   state                • present ←
+   -                    • active       Indicate desired state of the target.
+                        • absent
+                        • deleted
+   unique_name          Choices:       Bool, require unique hostnames. By default, DigitalOcean allows multiple hosts with the same name. Setting this to "yes" allows only one host per name. Useful
+   boolean              • no ←         for idempotence.
+                        • yes
+   user_data                           opaque blob of data which is made available to the droplet
+   -
+   virtio               Choices:
+   boolean              • no           Bool, turn on virtio driver in droplet for improved network and storage I/O.
+                        • yes ←
+   wait                 Choices:
+   boolean              • no           Wait for the droplet to be in state 'running' before returning. If wait is "no" an ip_address may not be returned.
+                        • yes ←
+   wait_timeout       Default:         How long before wait gives up, in seconds.
+   -                  300
+
+NOTES                   *digital_ocean-notes*
+
+   Note
+
+     • Two environment variables can be used, DO_API_KEY and DO_API_TOKEN. They both refer to the v2 token.
+     • As of Ansible 1.9.5 and 2.0, Version 2 of the DigitalOcean API is used, this removes client_id and api_key options in favor of api_token.
+     • If you are running Ansible 1.9.4 or earlier you might not be able to use the included version of this module as the API version used has been retired. Upgrade Ansible or, if unable to, try
+       downloading the latest version of this module from github and putting it into a ‘library’ directory.
+
+EXAMPLES                   *digital_ocean-examples*
+
+ # Ensure a SSH key is present
+ # If a key matches this name, will return the ssh key id and changed = False
+ # If no existing key matches this name, a new key is created, the ssh key id is returned and changed = False
+
+ - digital_ocean:
+     state: present
+     command: ssh
+     name: my_ssh_key
+     ssh_pub_key: 'ssh-rsa AAAA...'
+     api_token: XXX
+
+ # Create a new Droplet
+ # Will return the droplet details including the droplet id (used for idempotence)
+
+ - digital_ocean:
+     state: present
+     command: droplet
+     name: mydroplet
+     api_token: XXX
+     size_id: 2gb
+     region_id: ams2
+     image_id: fedora-19-x64
+     wait_timeout: 500
+   register: my_droplet
+
+ - debug:
+     msg: "ID is {{ my_droplet.droplet.id }}"
+
+ - debug:
+     msg: "IP is {{ my_droplet.droplet.ip_address }}"
+
+ # Ensure a droplet is present
+ # If droplet id already exist, will return the droplet details and changed = False
+ # If no droplet matches the id, a new droplet will be created and the droplet details (including the new id) are returned, changed = True.
+
+ - digital_ocean:
+     state: present
+     command: droplet
+     id: 123
+     name: mydroplet
+     api_token: XXX
+     size_id: 2gb
+     region_id: ams2
+     image_id: fedora-19-x64
+     wait_timeout: 500
+
+ # Create a droplet with ssh key
+ # The ssh key id can be passed as argument at the creation of a droplet (see ssh_key_ids).
+ # Several keys can be added to ssh_key_ids as id1,id2,id3
+ # The keys are used to connect as root to the droplet.
+
+ - digital_ocean:
+     state: present
+     ssh_key_ids: 123,456
+     name: mydroplet
+     api_token: XXX
+     size_id: 2gb
+     region_id: ams2
+     image_id: fedora-19-x64
+
+STATUS                   *digital_ocean-status*
+
+     • This module will be removed in version 2.12. [deprecated]
+     • For more information see DEPRECATED.
+
+     • Vincent Viallet (@zbal)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *digital_ocean-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/digital_ocean_module.html
+https://docs.ansible.com/ansible/latest/modules/digital_ocean_module.html

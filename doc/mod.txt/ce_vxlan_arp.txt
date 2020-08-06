@@ -1,0 +1,124 @@
+SYNOPSIS                   *ce_vxlan_arp*
+
+     • Manages ARP attributes of VXLAN on HUAWEI CloudEngine devices.
+
+PARAMETERS                   *ce_vxlan_arp-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   arp_collect_host        Choices:
+   -                       • enable       Enables EVN BGP or BGP EVPN to collect host information.
+                           • disable
+   arp_suppress            Choices:
+   -                       • enable       Enables ARP broadcast suppression in a BD.
+                           • disable
+   bridge_domain_id                       Specifies a BD(bridge domain) ID. The value is an integer ranging from 1 to 16777215.
+   -
+   evn_bgp                 Choices:
+   -                       • enable       Enables EVN BGP.
+                           • disable
+   evn_peer_ip                            Specifies the IP address of an EVN BGP peer. The value is in dotted decimal notation.
+   -
+   evn_reflect_client      Choices:
+   -                       • enable       Configures the local device as the route reflector (RR) and its peer as the client.
+                           • disable
+   evn_server              Choices:
+   -                       • enable       Configures the local device as the router reflector (RR) on the EVN network.
+                           • disable
+   evn_source_ip                          Specifies the source address of an EVN BGP peer. The value is in dotted decimal notation.
+   -
+   host_collect_protocol   Choices:
+   -                       • bgp          Enables EVN BGP or BGP EVPN to advertise host information.
+                           • none
+   state                   Choices:
+   -                       • present ←    Determines whether the config should be present or not on the device.
+                           • absent
+   vbdif_name                             Full name of VBDIF interface, i.e. Vbdif100.
+   -
+
+NOTES                   *ce_vxlan_arp-notes*
+
+   Note
+
+     • Recommended connection is network_cli.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_vxlan_arp-examples*
+
+ - name: vxlan arp module test
+   hosts: ce128
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: Configure EVN BGP on Layer 2 and Layer 3 VXLAN gateways to establish EVN BGP peer relationships.
+     ce_vxlan_arp:
+       evn_bgp: enable
+       evn_source_ip: 6.6.6.6
+       evn_peer_ip: 7.7.7.7
+       provider: "{{ cli }}"
+   - name: Configure a Layer 3 VXLAN gateway as a BGP RR.
+     ce_vxlan_arp:
+       evn_bgp: enable
+       evn_server: enable
+       provider: "{{ cli }}"
+   - name: Enable EVN BGP on a Layer 3 VXLAN gateway to collect host information.
+     ce_vxlan_arp:
+       vbdif_name: Vbdif100
+       arp_collect_host: enable
+       provider: "{{ cli }}"
+   - name: Enable Layer 2 and Layer 3 VXLAN gateways to use EVN BGP to advertise host information.
+     ce_vxlan_arp:
+       host_collect_protocol: bgp
+       provider: "{{ cli }}"
+   - name: Enable ARP broadcast suppression on a Layer 2 VXLAN gateway.
+     ce_vxlan_arp:
+       bridge_domain_id: 100
+       arp_suppress: enable
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_vxlan_arp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                  Description
+   changed                 check to see if a change was made on the device
+   boolean    always       Sample:
+                           True
+   end_state               k/v pairs of configuration after module execution
+   dictionary verbose mode Sample:
+                           {'evn_bgp': 'enable', 'evn_source_ip': '6.6.6.6', 'evn_peer_ip': ['7.7.7.7']}
+   existing                k/v pairs of existing configuration
+   dictionary verbose mode Sample:
+                           {'evn_bgp': 'disable', 'evn_source_ip': None, 'evn_peer_ip': []}
+   proposed                k/v pairs of parameters passed into module
+   dictionary verbose mode Sample:
+                           {'evn_bgp': 'enable', 'evn_source_ip': '6.6.6.6', 'evn_peer_ip': '7.7.7.7', 'state': 'present'}
+   updates                 commands sent to the device
+   list       always       Sample:
+                           ['evn bgp', 'source-address 6.6.6.6', 'peer 7.7.7.7']
+
+STATUS                   *ce_vxlan_arp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • QijunPan (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_vxlan_arp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_vxlan_arp_module.html

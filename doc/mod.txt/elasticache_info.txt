@@ -1,0 +1,180 @@
+SYNOPSIS                   *elasticache_info*
+
+     • Retrieve information from AWS Elasticache clusters
+     • This module was called elasticache_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: elasticache_facts
+
+REQUIREMENTS                   *elasticache_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *elasticache_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   name                                          The name of an Elasticache cluster
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *elasticache_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *elasticache_info-examples*
+
+ - name: obtain all Elasticache information
+   elasticache_info:
+
+ - name: obtain all information for a single Elasticache cluster
+   elasticache_info:
+     name: test_elasticache
+
+RETURN VALUES                   *elasticache_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key                         Returned                                                                        Description
+   elasticache_clusters           always                       List of elasticache clusters
+   complex
+     auto_minor_version_upgrade                                Whether to automatically upgrade to minor versions
+     boolean                      always                       Sample:
+                                                               True
+     cache_cluster_create_time                                 Date and time cluster was created
+     string                       always                       Sample:
+                                                               2017-09-15T05:43:46.038000+00:00
+     cache_cluster_id                                          ID of the cache cluster
+     string                       always                       Sample:
+                                                               abcd-1234-001
+     cache_cluster_status                                      Status of Elasticache cluster
+     string                       always                       Sample:
+                                                               available
+     cache_node_type                                           Instance type of Elasticache nodes
+     string                       always                       Sample:
+                                                               cache.t2.micro
+     cache_nodes                  always                       List of Elasticache nodes in the cluster
+     complex
+       cache_node_create_time                                  Date and time node was created
+       string                     always                       Sample:
+                                                               2017-09-15T05:43:46.038000+00:00
+       cache_node_id                                           ID of the cache node
+       string                     always                       Sample:
+                                                               0001
+       cache_node_status                                       Status of the cache node
+       string                     always                       Sample:
+                                                               available
+       customer_availability_zone                              Availability Zone in which the cache node was created
+       string                     always                       Sample:
+                                                               ap-southeast-2b
+       endpoint                   always                       Connection details for the cache node
+       complex
+                  address                                      URL of the cache node endpoint
+                  string          always                       Sample:
+                                                               abcd-1234-001.bgiz2p.0001.apse2.cache.amazonaws.com
+                  port                                         Port of the cache node endpoint
+                  integer         always                       Sample:
+                                                               6379
+       parameter_group_status                                  Status of the Cache Parameter Group
+       string                     always                       Sample:
+                                                               in-sync
+     cache_parameter_group        always                       Contents of the Cache Parameter Group
+     complex
+       cache_node_ids_to_reboot   always                       Cache nodes which need to be rebooted for parameter changes to be applied
+       list
+       cache_parameter_group_name                              Name of the cache parameter group
+       string                     always                       Sample:
+                                                               default.redis3.2
+       parameter_apply_status                                  Status of parameter updates
+       string                     always                       Sample:
+                                                               in-sync
+     cache_security_groups                                     Security Groups used by the cache
+     list                         always                       Sample:
+                                                               ['sg-abcd1234']
+     cache_subnet_group_name                                   Elasticache Subnet Group used by the cache
+     string                       always                       Sample:
+                                                               abcd-subnet-group
+     client_download_landing_page                              URL of client download web page
+     string                       always                       Sample:
+                                                               https://console.aws.amazon.com/elasticache/home#client-download:
+     engine                                                    Engine used by elasticache
+     string                       always                       Sample:
+                                                               redis
+     engine_version                                            Version of elasticache engine
+     string                       always                       Sample:
+                                                               3.2.4
+     notification_configuration   if notifications are enabled Configuration of notifications
+     complex
+       topic_arn                                               ARN of notification destination topic
+       string                     if notifications are enabled Sample:
+                                                               arn:aws:sns:":123456789012:my_topic
+       topic_name                                              Name of notification destination topic
+       string                     if notifications are enabled Sample:
+                                                               MyTopic
+     num_cache_nodes                                           Number of Cache Nodes
+     integer                      always                       Sample:
+                                                               1
+     pending_modified_values      always                       Values that are pending modification
+     complex
+     preferred_availability_zone                               Preferred Availability Zone
+     string                       always                       Sample:
+                                                               ap-southeast-2b
+     preferred_maintenance_window                              Time slot for preferred maintenance window
+     string                       always                       Sample:
+                                                               sat:12:00-sat:13:00
+     replication_group_id                                      Replication Group Id
+     string                       always                       Sample:
+                                                               replication-001
+     security_groups              always                       List of Security Groups associated with Elasticache
+     complex
+       security_group_id                                       Security Group ID
+       string                     always                       Sample:
+                                                               sg-abcd1234
+       status                                                  Status of Security Group
+       string                     always                       Sample:
+                                                               active
+     tags                                                      Tags applied to the elasticache cluster
+     complex                      always                       Sample:
+                                                               {'Application': 'web', 'Environment': 'test'}
+
+STATUS                   *elasticache_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *elasticache_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/elasticache_info_module.html

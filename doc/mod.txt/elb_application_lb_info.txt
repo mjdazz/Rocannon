@@ -1,0 +1,156 @@
+SYNOPSIS                   *elb_application_lb_info*
+
+     • Gather information about application ELBs in AWS
+     • This module was called elb_application_lb_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: elb_application_lb_facts
+
+REQUIREMENTS                   *elb_application_lb_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *elb_application_lb_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   load_balancer_arns                            The Amazon Resource Names (ARN) of the load balancers. You can specify up to 20 load balancers in a single call.
+   -
+   names                                         The names of the load balancers.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *elb_application_lb_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *elb_application_lb_info-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Gather information about all target groups
+ - elb_application_lb_info:
+
+ # Gather information about the target group attached to a particular ELB
+ - elb_application_lb_info:
+     load_balancer_arns:
+       - "arn:aws:elasticloadbalancing:ap-southeast-2:001122334455:loadbalancer/app/my-elb/aabbccddeeff"
+
+ # Gather information about a target groups named 'tg1' and 'tg2'
+ - elb_application_lb_info:
+     names:
+       - elb1
+       - elb2
+
+ # Gather information about specific ALB
+ - elb_application_lb_info:
+     names: "alb-name"
+     region: "aws-region"
+   register: alb_info
+ - debug:
+     var: alb_info
+
+RETURN VALUES                   *elb_application_lb_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                Key                      Returned                                                                        Description
+   load_balancers                 always                 a list of load balancers
+   complex
+     access_logs_s3_bucket                               The name of the S3 bucket for the access logs.
+     string                       when status is present Sample:
+                                                         mys3bucket
+     access_logs_s3_enabled                              Indicates whether access logs stored in Amazon S3 are enabled.
+     string                       when status is present Sample:
+                                                         True
+     access_logs_s3_prefix                               The prefix for the location in the S3 bucket.
+     string                       when status is present Sample:
+                                                         /my/logs
+     availability_zones                                  The Availability Zones for the load balancer.
+     list                         when status is present Sample:
+                                                         [{'subnet_id': 'subnet-aabbccddff', 'zone_name': 'ap-southeast-2a'}]
+     canonical_hosted_zone_id                            The ID of the Amazon Route 53 hosted zone associated with the load balancer.
+     string                       when status is present Sample:
+                                                         ABCDEF12345678
+     created_time                                        The date and time the load balancer was created.
+     string                       when status is present Sample:
+                                                         2015-02-12T02:14:02+00:00
+     deletion_protection_enabled                         Indicates whether deletion protection is enabled.
+     string                       when status is present Sample:
+                                                         True
+     dns_name                                            The public DNS name of the load balancer.
+     string                       when status is present Sample:
+                                                         internal-my-elb-123456789.ap-southeast-2.elb.amazonaws.com
+     idle_timeout_timeout_seconds                        The idle timeout value, in seconds.
+     string                       when status is present Sample:
+                                                         60
+     ip_address_type                                     The type of IP addresses used by the subnets for the load balancer.
+     string                       when status is present Sample:
+                                                         ipv4
+     load_balancer_arn                                   The Amazon Resource Name (ARN) of the load balancer.
+     string                       when status is present Sample:
+                                                         arn:aws:elasticloadbalancing:ap-southeast-2:0123456789:loadbalancer/app/my-elb/001122334455
+     load_balancer_name                                  The name of the load balancer.
+     string                       when status is present Sample:
+                                                         my-elb
+     scheme                                              Internet-facing or internal load balancer.
+     string                       when status is present Sample:
+                                                         internal
+     security_groups                                     The IDs of the security groups for the load balancer.
+     list                         when status is present Sample:
+                                                         ['sg-0011223344']
+     state                                               The state of the load balancer.
+     dictionary                   when status is present Sample:
+                                                         {'code': 'active'}
+     tags                                                The tags attached to the load balancer.
+     dictionary                   when status is present Sample:
+                                                         { 'Tag': 'Example' }
+     type                                                The type of load balancer.
+     string                       when status is present Sample:
+                                                         application
+     vpc_id                                              The ID of the VPC for the load balancer.
+     string                       when status is present Sample:
+                                                         vpc-0011223344
+
+STATUS                   *elb_application_lb_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *elb_application_lb_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/elb_application_lb_info_module.html

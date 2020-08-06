@@ -1,34 +1,146 @@
-SYNOPSIS                           *command*
+SYNOPSIS                   *command*
 
-The command module takes the command name followed by a list of space-delimited arguments. The given command will be executed on all selected nodes. It will not be processed through the shell,
-so variables like $HOME and operations like "<", ">", "|", and "&" will not work (use the shell module if you need these features).
+     • The command module takes the command name followed by a list of space-delimited arguments.
+     • The given command will be executed on all selected nodes.
+     • The command(s) will not be processed through the shell, so variables like $HOME and operations like "<", ">", "|", ";" and "&" will not work. Use the shell module if you need these features.
+     • To create command tasks that are easier to read than the ones using space-delimited arguments, pass parameters using the args task keyword or use cmd parameter.
+     • Either a free form command or cmd parameter is required, see the examples.
+     • For Windows targets, use the win_command module instead.
 
-EXAMPLES                           *command-examples*
->
-    # Example from Ansible Playbooks.
-    - command: /sbin/shutdown -t now
-   
-    # Run the command if the specified file does not exist.
-    - command: /usr/bin/make_database.sh arg1 arg2 creates=/path/to/database
-   
-    # You can also use the 'args' form to provide the options. This command
-    # will change the working directory to somedir/ and will only run when
-    # /path/to/database doesn't exist.
-    - command: /usr/bin/make_database.sh arg1 arg2
-      args:
-        chdir: somedir/
-        creates: /path/to/database
-   
-      Note
-   
-      If you want to run a command through the shell (say you are using <, >, |, etc), you actually want the shell module instead. The command module is much more secure as it’s not affected by the
-      user’s environment.
-   
-      Note
-   
-      creates, removes, and chdir can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this.
-   
+PARAMETERS                   *command-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   argv                               Passes the command as a list rather than a string.
+   list                               Use argv to avoid quoting values that would otherwise be interpreted incorrectly (for example "user name").
+   added in 2.6                       Only the string or the list form can be provided, not both. One or the other must be provided.
+   chdir                              Change into this directory before running the command.
+   path
+   cmd                                The command to run.
+   string
+   creates                            A filename or (since 2.0) glob pattern. If it already exists, this step won't be run.
+   path
+   free_form                          The command module takes a free form command to run.
+   -                                  There is no actual parameter named 'free form'.
+   removes                            A filename or (since 2.0) glob pattern. If it already exists, this step will be run.
+   path
+   stdin
+   -                                  Set the stdin of the command directly to the specified value.
+   added in 2.4
+   stdin_add_newline   Choices:
+   boolean             • no           If set to yes, append a newline to stdin data.
+   added in 2.8        • yes ←
+   strip_empty_ends    Choices:
+   boolean             • no           Strip empty lines from the end of stdout/stderr in result.
+   added in 2.8        • yes ←
+   warn                Choices:
+   boolean             • no           Enable or disable task warnings.
+                       • yes ←
+
+NOTES                   *command-notes*
+
+   Note
+
+     • If you want to run a command through the shell (say you are using <, >, |, etc), you actually want the shell module instead. Parsing shell metacharacters can lead to unexpected commands
+       being executed if quoting is not done correctly so it is more secure to use the command module when possible.
+     • creates, removes, and chdir can be specified after the command. For instance, if you only want to run a command if a certain file does not exist, use this.
+     • Check mode is supported when passing creates or removes. If running in check mode and either of these are specified, the module will check for the existence of the file and report the
+       correct changed status. If these are not supplied, the task will be skipped.
+     • The executable parameter is removed since version 2.4. If you have a need for this parameter, use the shell module instead.
+     • For Windows targets, use the win_command module instead.
+     • For rebooting systems, use the reboot or win_reboot module.
+
+SEE ALSO                   *command-see also*
+
+   See also
+
+   raw – Executes a low-down and dirty command
+   The official documentation on the raw module.
+
+   script – Runs a local script on a remote node after transferring it
+   The official documentation on the script module.
+
+   shell – Execute shell commands on targets
+   The official documentation on the shell module.
+
+   win_command – Executes a command on a remote Windows node
+   The official documentation on the win_command module.
+
+EXAMPLES                   *command-examples*
+
+ - name: return motd to registered var
+   command: cat /etc/motd
+   register: mymotd
+
+ - name: Run command if /path/to/database does not exist (without 'args' keyword).
+   command: /usr/bin/make_database.sh db_user db_name creates=/path/to/database
+
+ # 'args' is a task keyword, passed at the same level as the module
+ - name: Run command if /path/to/database does not exist (with 'args' keyword).
+   command: /usr/bin/make_database.sh db_user db_name
+   args:
+     creates: /path/to/database
+
+ # 'cmd' is module parameter
+ - name: Run command if /path/to/database does not exist (with 'cmd' parameter).
+   command:
+     cmd: /usr/bin/make_database.sh db_user db_name
+     creates: /path/to/database
+
+ - name: Change the working directory to somedir/ and run the command as db_owner if /path/to/database does not exist.
+   command: /usr/bin/make_database.sh db_user db_name
+   become: yes
+   become_user: db_owner
+   args:
+     chdir: somedir/
+     creates: /path/to/database
+
+ # 'argv' is a parameter, indented one level from the module
+ - name: Use 'argv' to send a command as a list - leave 'command' empty
+   command:
+     argv:
+       - /usr/bin/make_database.sh
+       - Username with whitespace
+       - dbname with whitespace
+
+ - name: safely use templated variable to run command. Always use the quote filter to avoid injection issues.
+   command: cat {{ myfile|quote }}
+   register: myoutput
+
+RETURN VALUES                   *command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   cmd             the cmd that was run on the remote machine
+   list   always   Sample:
+                   ['echo', 'hello']
+   delta           cmd end time - cmd start time
+   string always   Sample:
+                   0.001529
+   end             cmd end time
+   string always   Sample:
+                   2017-09-29 22:03:48.084657
+   start           cmd start time
+   string always   Sample:
+                   2017-09-29 22:03:48.083128
+
+STATUS                   *command-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *command-red hat support*
+
+     • Ansible Core Team
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *command-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/command_module.html
+https://docs.ansible.com/ansible/latest/modules/command_module.html

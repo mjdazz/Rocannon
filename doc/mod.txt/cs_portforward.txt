@@ -1,0 +1,183 @@
+SYNOPSIS                   *cs_portforward*
+
+     • Create, update and remove port forwarding rules.
+
+REQUIREMENTS                   *cs_portforward-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_portforward-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   account                             Account the vm is related to.
+   string
+                        Choices:       HTTP method used to query the API endpoint.
+   api_http_method      • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string               • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is get if not specified.
+   api_key                             API key of the CloudStack API.
+   string                              If not given, the CLOUDSTACK_KEY env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   api_region         Default:         Name of the ini section in the cloustack.ini file.
+   string             "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                          Secret key of the CloudStack API.
+   string                              If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+                                       HTTP timeout in seconds.
+   api_timeout                         If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                             As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is 10 seconds if not specified.
+   api_url                             URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                              If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   domain                              Domain the vm is related to.
+   string
+   ip_address                          Public IP address the rule is assigned to.
+   string / required
+   network                             Name of the network.
+   string
+   open_firewall        Choices:       Whether the firewall rule for public port should be created, while creating the new rule.
+   boolean              • no ←         Use cs_firewall for managing firewall rules.
+                        • yes
+   poll_async           Choices:
+   boolean              • no           Poll async jobs until job has finished.
+                        • yes ←
+   private_end_port                    End private port for this rule.
+   integer                             If not specified equal private_port.
+   private_port                        Start private port for this rule.
+   integer / required
+   project                             Name of the project the vm is located in.
+   string
+   protocol             Choices:
+   string               • tcp ←        Protocol of the port forwarding rule.
+                        • udp
+   public_end_port                     End public port for this rule.
+   integer                             If not specified equal public_port.
+   public_port                         Start public port for this rule.
+   integer / required
+   state                Choices:
+   string               • present ←    State of the port forwarding rule.
+                        • absent
+   tags                                List of tags. Tags are a list of dictionaries having keys key and value.
+   list                                To delete all tags, set a empty list e.g. tags: [].
+   added in 2.4                        aliases: tag
+   vm                                  Name of virtual machine which we make the port forwarding rule for.
+   string                              Required if state=present.
+   vm_guest_ip                         VM guest NIC secondary IP address for the port forwarding rule.
+   string
+   vpc                                 Name of the VPC.
+   string
+   zone                                Name of the zone in which the virtual machine is in.
+   string                              If not set, default zone is used.
+
+NOTES                   *cs_portforward-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_portforward-examples*
+
+ - name: 1.2.3.4:80 -> web01:8080
+   cs_portforward:
+     ip_address: 1.2.3.4
+     vm: web01
+     public_port: 80
+     private_port: 8080
+   delegate_to: localhost
+
+ - name: forward SSH and open firewall
+   cs_portforward:
+     ip_address: '{{ public_ip }}'
+     vm: '{{ inventory_hostname }}'
+     public_port: '{{ ansible_ssh_port }}'
+     private_port: 22
+     open_firewall: true
+   delegate_to: localhost
+
+ - name: forward DNS traffic, but do not open firewall
+   cs_portforward:
+     ip_address: 1.2.3.4
+     vm: '{{ inventory_hostname }}'
+     public_port: 53
+     private_port: 53
+     protocol: udp
+   delegate_to: localhost
+
+ - name: remove ssh port forwarding
+   cs_portforward:
+     ip_address: 1.2.3.4
+     public_port: 22
+     private_port: 22
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_portforward-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   id                        UUID of the public IP address.
+   string           success  Sample:
+                             a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   ip_address                Public IP address.
+   string           success  Sample:
+                             1.2.3.4
+   network                   Name of the network.
+   string           success  Sample:
+                             dmz
+   private_end_port          End port on the virtual machine's IP address.
+   integer          success  Sample:
+                             80
+   private_port              Start port on the virtual machine's IP address.
+   integer          success  Sample:
+                             80
+   protocol                  Protocol.
+   string           success  Sample:
+                             tcp
+   public_end_port           End port on the public IP address.
+   integer          success  Sample:
+                             80
+   public_port               Start port on the public IP address.
+   integer          success  Sample:
+                             80
+   tags             success  Tags related to the port forwarding.
+   list
+   vm_display_name           Display name of the virtual machine.
+   string           success  Sample:
+                             web-01
+   vm_guest_ip               IP of the virtual machine.
+   string           success  Sample:
+                             10.101.65.152
+   vm_name                   Name of the virtual machine.
+   string           success  Sample:
+                             web-01
+   vpc                       Name of the VPC.
+   string           success  Sample:
+                             my_vpc
+
+STATUS                   *cs_portforward-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_portforward-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_portforward_module.html

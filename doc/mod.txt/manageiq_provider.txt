@@ -1,0 +1,500 @@
+SYNOPSIS                   *manageiq_provider*
+
+     • The manageiq_provider module supports adding, updating, and deleting provider in ManageIQ.
+
+REQUIREMENTS                   *manageiq_provider-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • manageiq-client https://github.com/ManageIQ/manageiq-api-client-python/
+
+PARAMETERS                   *manageiq_provider-parameters*
+
+            Parameter                   Choices/Defaults                                                                        Comments
+   alerts                                                          Alerts endpoint connection information.
+   -
+       auth_key                                                    Provider's api endpoint authentication bearer token. defaults to None.
+       -
+       certificate_authority                                       The CA bundle string with custom certificates. defaults to None.
+       -
+       hostname                                                    The provider's api hostname.
+       - / required
+       password                                                    Provider's api endpoint authentication password. defaults to None.
+       -
+       port                                                        The provider's api port.
+       -
+                                 Choices:
+       security_protocol         • ssl-with-validation             How SSL certificates should be used for HTTPS requests. defaults to None.
+       -                         • ssl-with-validation-custom-ca
+                                 • ssl-without-validation
+       userid                                                      Provider's api endpoint authentication userid. defaults to None.
+       -
+       validate_certs          Default:                            Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+       -                       "yes"
+   api_version                   Choices:
+   -                             • v2                              The OpenStack Keystone API version. defaults to None.
+   added in 2.5                  • v3
+   azure_tenant_id                                                 Tenant ID. defaults to None.
+   -                                                               aliases: keystone_v3_domain_id
+   added in 2.5
+   host_default_vnc_port_end
+   -                                                               The last port in the host VNC range. defaults to None.
+   added in 2.5
+   host_default_vnc_port_start
+   -                                                               The first port in the host VNC range. defaults to None.
+   added in 2.5
+   manageiq_connection                                             ManageIQ connection configuration information.
+   dictionary / required
+       ca_cert                                                     The path to a CA bundle file or directory with certificates. defaults to None.
+       path                                                        aliases: ca_bundle_path
+       password                                                    ManageIQ password. MIQ_PASSWORD env var if set. otherwise, required if no token is passed in.
+       string
+       token                                                       ManageIQ token. MIQ_TOKEN env var if set. otherwise, required if no username or password is passed in.
+       string
+       url                                                         ManageIQ environment url. MIQ_URL env var if set. otherwise, it is required to pass it.
+       string / required
+       username                                                    ManageIQ username. MIQ_USERNAME env var if set. otherwise, required if no token is passed in.
+       string
+       validate_certs            Choices:                          Whether SSL certificates should be verified for HTTPS requests. defaults to True.
+       boolean                   • no                              aliases: verify_ssl
+                                 • yes ←
+   metrics                                                         Metrics endpoint connection information.
+   -
+       auth_key                                                    Provider's api endpoint authentication bearer token. defaults to None.
+       -
+       certificate_authority                                       The CA bundle string with custom certificates. defaults to None.
+       -
+       hostname                                                    The provider's api hostname.
+       - / required
+       password                                                    Provider's api endpoint authentication password. defaults to None.
+       -
+       path                    Default:                            Database name for oVirt metrics. Defaults to ovirt_engine_history.
+       -                       "ovirt_engine_history"
+       port                                                        The provider's api port.
+       -
+                                 Choices:
+       security_protocol         • ssl-with-validation
+       -                         • ssl-with-validation-custom-ca   How SSL certificates should be used for HTTPS requests. defaults to None.
+                                 • ssl-without-validation
+                                 • non-ssl
+       userid                                                      Provider's api endpoint authentication userid. defaults to None.
+       -
+       validate_certs            Choices:
+       boolean                   • no                              Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+                                 • yes ←
+   name                                                            The provider's name.
+   - / required
+   project
+   -                                                               Google Compute Engine Project ID. defaults to None.
+   added in 2.5
+   provider                                                        Default endpoint connection information, required if state is true.
+   -
+       auth_key                                                    Provider's api endpoint authentication bearer token. defaults to None.
+       -
+       certificate_authority                                       The CA bundle string with custom certificates. defaults to None.
+       -
+       hostname                                                    The provider's api hostname.
+       - / required
+       password                                                    Provider's api endpoint authentication password. defaults to None.
+       -
+       port                                                        The provider's api port.
+       -
+                                 Choices:
+       security_protocol         • ssl-with-validation
+       -                         • ssl-with-validation-custom-ca   How SSL certificates should be used for HTTPS requests. defaults to None.
+                                 • ssl-without-validation
+                                 • non-ssl
+       userid                                                      Provider's api endpoint authentication userid. defaults to None.
+       -
+       validate_certs            Choices:
+       boolean                   • no                              Whether SSL certificates should be verified for HTTPS requests (deprecated). defaults to True.
+                                 • yes ←
+   provider_region                                                 The provider region name to connect to (e.g. AWS region for Amazon).
+   -
+   ssh_keypair
+   -                                                               SSH key pair used for SSH connections to all hosts in this provider.
+   added in 2.5
+       auth_key                                                    SSH private key.
+       -
+       hostname                                                    Director hostname.
+       - / required
+       userid                                                      SSH username.
+       -
+                                 Choices:
+   state                         • absent                          absent - provider should not exist, present - provider should be present, refresh - provider will be refreshed
+   -                             • present ←
+                                 • refresh
+   subscription
+   -                                                               Microsoft Azure subscription ID. defaults to None.
+   added in 2.5
+   tenant_mapping_enabled        Choices:
+   boolean                       • no ←                            Whether to enable mapping of existing tenants. defaults to False.
+   added in 2.5                  • yes
+                                 Choices:
+                                 • Openshift
+                                 • Amazon
+   type                          • oVirt
+   - / required                  • VMware                          The provider's type.
+                                 • Azure
+                                 • Director
+                                 • OpenStack
+                                 • GCE
+   zone                        Default:                            The ManageIQ zone name that will manage the provider.
+   -                           "default"
+
+EXAMPLES                   *manageiq_provider-examples*
+
+ - name: Create a new provider in ManageIQ ('Hawkular' metrics)
+   manageiq_provider:
+     name: 'EngLab'
+     type: 'OpenShift'
+     state: 'present'
+     provider:
+       auth_key: 'topSecret'
+       hostname: 'example.com'
+       port: 8443
+       validate_certs: true
+       security_protocol: 'ssl-with-validation-custom-ca'
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     metrics:
+       auth_key: 'topSecret'
+       role: 'hawkular'
+       hostname: 'example.com'
+       port: 443
+       validate_certs: true
+       security_protocol: 'ssl-with-validation-custom-ca'
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     manageiq_connection:
+       url: 'https://127.0.0.1:80'
+       username: 'admin'
+       password: 'password'
+       validate_certs: true
+
+
+ - name: Update an existing provider named 'EngLab' (defaults to 'Prometheus' metrics)
+   manageiq_provider:
+     name: 'EngLab'
+     type: 'Openshift'
+     state: 'present'
+     provider:
+       auth_key: 'topSecret'
+       hostname: 'next.example.com'
+       port: 8443
+       validate_certs: true
+       security_protocol: 'ssl-with-validation-custom-ca'
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     metrics:
+       auth_key: 'topSecret'
+       hostname: 'next.example.com'
+       port: 443
+       validate_certs: true
+       security_protocol: 'ssl-with-validation-custom-ca'
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     manageiq_connection:
+       url: 'https://127.0.0.1'
+       username: 'admin'
+       password: 'password'
+       validate_certs: true
+
+
+ - name: Delete a provider in ManageIQ
+   manageiq_provider:
+     name: 'EngLab'
+     type: 'Openshift'
+     state: 'absent'
+     manageiq_connection:
+       url: 'https://127.0.0.1'
+       username: 'admin'
+       password: 'password'
+       validate_certs: true
+
+
+ - name: Create a new Amazon provider in ManageIQ using token authentication
+   manageiq_provider:
+     name: 'EngAmazon'
+     type: 'Amazon'
+     state: 'present'
+     provider:
+       hostname: 'amazon.example.com'
+       userid: 'hello'
+       password: 'world'
+     manageiq_connection:
+       url: 'https://127.0.0.1'
+       token: 'VeryLongToken'
+       validate_certs: true
+
+
+ - name: Create a new oVirt provider in ManageIQ
+   manageiq_provider:
+     name: 'RHEV'
+     type: 'oVirt'
+     state: 'present'
+     provider:
+       hostname: 'rhev01.example.com'
+       userid: '[email protected]'
+       password: 'password'
+       validate_certs: true
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     metrics:
+       hostname: 'metrics.example.com'
+       path: 'ovirt_engine_history'
+       userid: 'user_id_metrics'
+       password: 'password_metrics'
+       validate_certs: true
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     manageiq_connection:
+       url: 'https://127.0.0.1'
+       username: 'admin'
+       password: 'password'
+       validate_certs: true
+
+ - name: Create a new VMware provider in ManageIQ
+   manageiq_provider:
+     name: 'EngVMware'
+     type: 'VMware'
+     state: 'present'
+     provider:
+       hostname: 'vcenter.example.com'
+       host_default_vnc_port_start: 5800
+       host_default_vnc_port_end: 5801
+       userid: 'root'
+       password: 'password'
+     manageiq_connection:
+       url: 'https://127.0.0.1'
+       token: 'VeryLongToken'
+       validate_certs: true
+
+ - name: Create a new Azure provider in ManageIQ
+   manageiq_provider:
+     name: 'EngAzure'
+     type: 'Azure'
+     provider_region: 'northeurope'
+     subscription: 'e272bd74-f661-484f-b223-88dd128a4049'
+     azure_tenant_id: 'e272bd74-f661-484f-b223-88dd128a4048'
+     state: 'present'
+     provider:
+       hostname: 'azure.example.com'
+       userid: 'e272bd74-f661-484f-b223-88dd128a4049'
+       password: 'password'
+     manageiq_connection:
+       url: 'https://cf-6af0.rhpds.opentlc.com'
+       username: 'admin'
+       password: 'password'
+       validate_certs: false
+
+ - name: Create a new OpenStack Director provider in ManageIQ with rsa keypair
+   manageiq_provider:
+     name: 'EngDirector'
+     type: 'Director'
+     api_version: 'v3'
+     state: 'present'
+     provider:
+       hostname: 'director.example.com'
+       userid: 'admin'
+       password: 'password'
+       security_protocol: 'ssl-with-validation'
+       validate_certs: 'true'
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     ssh_keypair:
+       hostname: director.example.com
+       userid: heat-admin
+       auth_key: 'SecretSSHPrivateKey'
+
+ - name: Create a new OpenStack provider in ManageIQ with amqp metrics
+   manageiq_provider:
+     name: 'EngOpenStack'
+     type: 'OpenStack'
+     api_version: 'v3'
+     state: 'present'
+     provider_region: 'europe'
+     tenant_mapping_enabled: 'False'
+     keystone_v3_domain_id: 'mydomain'
+     provider:
+       hostname: 'openstack.example.com'
+       userid: 'admin'
+       password: 'password'
+       security_protocol: 'ssl-with-validation'
+       validate_certs: 'true'
+       certificate_authority: |
+         -----BEGIN CERTIFICATE-----
+         FAKECERTsdKgAwIBAgIBATANBgkqhkiG9w0BAQsFADAmMSQwIgYDVQQDDBtvcGVu
+         c2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkwHhcNMTcwODIxMTI1NTE5WhcNMjIwODIw
+         MTI1NTIwWjAmMSQwIgYDVQQDDBtvcGVuc2hpZnQtc2lnbmVyQDE1MDMzMjAxMTkw
+         ggEiMA0GCSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQDUDnL2tQ2xf/zO7F7hmZ4S
+         ZuwKENdI4IYuWSxye4i3hPhKg6eKPzGzmDNWkIMDOrDAj1EgVSNPtPwsOL8OWvJm
+         AaTjr070D7ZGWWnrrDrWEClBx9Rx/6JAM38RT8Pu7c1hXBm0J81KufSLLYiZ/gOw
+         Znks5v5RUSGcAXvLkBJeATbsbh6fKX0RgQ3fFTvqQaE/r8LxcTN1uehPX1g5AaRa
+         z/SNDHaFtQlE3XcqAAukyMn4N5kdNcuwF3GlQ+tJnJv8SstPkfQcZbTMUQ7I2KpJ
+         ajXnMxmBhV5fCN4rb0QUNCrk2/B+EUMBY4MnxIakqNxnN1kvgI7FBbFgrHUe6QvJ
+         AgMBAAGjIzAhMA4GA1UdDwEB/wQEAwICpDAPBgNVHRMBAf8EBTADAQH/MA0GCSqG
+         SIb3DQEBCwUAA4IBAQAYRV57LUsqznSLZHA77o9+0fQetIE115DYP7wea42PODJI
+         QJ+JETEfoCr0+YOMAbVmznP9GH5cMTKEWHExcIpbMBU7nMZp6A3htcJgF2fgPzOA
+         aTUtzkuVCSrV//mbbYVxoFOc6sR3Br0wBs5+5iz3dBSt7xmgpMzZvqsQl655i051
+         gGSTIY3z5EJmBZBjwuTjal9mMoPGA4eoTPqlITJDHQ2bdCV2oDbc7zqupGrUfZFA
+         qzgieEyGzdCSRwjr1/PibA3bpwHyhD9CGD0PRVVTLhw6h6L5kuN1jA20OfzWxf/o
+         XUsdmRaWiF+l4s6Dcd56SuRp5SGNa2+vP9Of/FX5
+         -----END CERTIFICATE-----
+     metrics:
+       role: amqp
+       hostname: 'amqp.example.com'
+       security_protocol: 'non-ssl'
+       port: 5666
+       userid: admin
+       password: password
+
+
+ - name: Create a new GCE provider in ManageIQ
+   manageiq_provider:
+     name: 'EngGoogle'
+     type: 'GCE'
+     provider_region: 'europe-west1'
+     project: 'project1'
+     state: 'present'
+     provider:
+       hostname: 'gce.example.com'
+       auth_key: 'google_json_key'
+       validate_certs: 'false'
+
+STATUS                   *manageiq_provider-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Daniel Korn (@dkorn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *manageiq_provider-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/manageiq_provider_module.html

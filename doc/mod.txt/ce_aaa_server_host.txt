@@ -1,0 +1,179 @@
+SYNOPSIS                   *ce_aaa_server_host*
+
+     • Manages AAA server host configuration on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_aaa_server_host-parameters*
+
+            Parameter             Choices/Defaults                                                                       Comments
+   hwtacacs_is_public_net         Choices:
+   boolean                        • no ←              Set the public-net.
+                                  • yes
+   hwtacacs_is_secondary_server   Choices:
+   boolean                        • no ←              Whether the server is secondary.
+                                  • yes
+   hwtacacs_server_host_name                          Hwtacacs server host name.
+   -
+   hwtacacs_server_ip                                 Server IPv4 address. Must be a valid unicast IP address. The value is a string of 0 to 255 characters, in dotted decimal notation.
+   -
+   hwtacacs_server_ipv6                               Server IPv6 address. Must be a valid unicast IP address. The total length is 128 bits.
+   -
+                                  Choices:
+   hwtacacs_server_type           • Authentication
+   -                              • Authorization     Hwtacacs server type.
+                                  • Accounting
+                                  • Common
+   hwtacacs_template                                  Name of a HWTACACS template. The value is a string of 1 to 32 case-insensitive characters.
+   -
+   hwtacacs_vpn_name                                  VPN instance name.
+   -
+   local_ftp_dir                                      FTP user directory. The value is a string of 1 to 255 characters.
+   -
+   local_password                                     Login password of a user. The password can contain letters, numbers, and special characters. The value is a string of 1 to 255 characters.
+   -
+   local_service_type                                 The type of local user login through, such as ftp ssh snmp telnet.
+   -
+   local_user_group                                   Name of the user group where the user belongs. The user inherits all the rights of the user group. The value is a string of 1 to 32 characters.
+   -
+   local_user_level                                   Login level of a local user. The value is an integer ranging from 0 to 15.
+   -
+   local_user_name                                    Name of a local user. The value is a string of 1 to 253 characters.
+   -
+   radius_group_name                                  RADIUS server group's name. The value is a string of 1 to 32 case-insensitive characters.
+   -
+   radius_server_ip                                   IPv4 address of configured server. The value is a string of 0 to 255 characters, in dotted decimal notation.
+   -
+   radius_server_ipv6                                 IPv6 address of configured server. The total length is 128 bits.
+   -
+   radius_server_mode             Choices:
+   -                              • Secondary-server  Configured primary or secondary server for a particular server.
+                                  • Primary-server
+   radius_server_name                                 Hostname of configured server. The value is a string of 0 to 255 case-sensitive characters.
+   -
+   radius_server_port                                 Configured server port for a particular server. The value is an integer ranging from 1 to 65535.
+   -
+   radius_server_type             Choices:
+   -                              • Authentication    Type of Radius Server.
+                                  • Accounting
+   radius_vpn_name                                    Set VPN instance. The value is a string of 1 to 31 case-sensitive characters.
+   -
+   state                          Choices:
+   -                              • present ←         Specify desired state of the resource.
+                                  • absent
+
+NOTES                   *ce_aaa_server_host-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_aaa_server_host-examples*
+
+ - name: AAA server host test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Config local user when use local scheme"
+     ce_aaa_server_host:
+       state: present
+       local_user_name: user1
+       local_password: 123456
+       provider: "{{ cli }}"
+
+   - name: "Undo local user when use local scheme"
+     ce_aaa_server_host:
+       state: absent
+       local_user_name: user1
+       local_password: 123456
+       provider: "{{ cli }}"
+
+   - name: "Config radius server ip"
+     ce_aaa_server_host:
+       state: present
+       radius_group_name: group1
+       radius_server_type: Authentication
+       radius_server_ip: 10.1.10.1
+       radius_server_port: 2000
+       radius_server_mode: Primary-server
+       radius_vpn_name: _public_
+       provider: "{{ cli }}"
+
+   - name: "Undo radius server ip"
+     ce_aaa_server_host:
+       state: absent
+       radius_group_name: group1
+       radius_server_type: Authentication
+       radius_server_ip: 10.1.10.1
+       radius_server_port: 2000
+       radius_server_mode: Primary-server
+       radius_vpn_name: _public_
+       provider: "{{ cli }}"
+
+   - name: "Config hwtacacs server ip"
+     ce_aaa_server_host:
+       state: present
+       hwtacacs_template: template
+       hwtacacs_server_ip: 10.10.10.10
+       hwtacacs_server_type: Authorization
+       hwtacacs_vpn_name: _public_
+       provider: "{{ cli }}"
+
+   - name: "Undo hwtacacs server ip"
+     ce_aaa_server_host:
+       state: absent
+       hwtacacs_template: template
+       hwtacacs_server_ip: 10.10.10.10
+       hwtacacs_server_type: Authorization
+       hwtacacs_vpn_name: _public_
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_aaa_server_host-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of aaa params after module execution
+   dictionary always   Sample:
+                       {'radius server ipv4': [['10.1.10.1', 'Authentication', '2000', 'Primary-server', '_public_']]}
+   existing            k/v pairs of existing aaa server host
+   dictionary always   Sample:
+                       {'radius server ipv4': []}
+                       k/v pairs of parameters passed into module
+   proposed   always   Sample:
+   dictionary          {'hwtacacs_is_public_net': 'false', 'hwtacacs_is_secondary_server': 'false', 'hwtacacs_server_ip': '10.135.182.157', 'hwtacacs_server_type': 'Authorization',
+                       'hwtacacs_template': 'wdz', 'hwtacacs_vpn_name': '_public_', 'local_password': '""""""', 'state': 'present'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['hwtacacs server template test', 'hwtacacs server authorization 10.135.182.157 vpn-instance test_vpn public-net']
+
+STATUS                   *ce_aaa_server_host-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • wangdezhuang (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_aaa_server_host-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_aaa_server_host_module.html

@@ -1,0 +1,264 @@
+SYNOPSIS                   *netscaler_service*
+
+     • Manage service configuration in Netscaler.
+     • This module allows the creation, deletion and modification of Netscaler services.
+     • This module is intended to run either on the ansible control node or a bastion (jumpserver) with access to the actual netscaler instance.
+     • This module supports check mode.
+
+REQUIREMENTS                   *netscaler_service-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • nitro python sdk
+
+PARAMETERS                   *netscaler_service-parameters*
+
+       Parameter       Choices/Defaults                                                                            Comments
+   accessdown           Choices:         Use Layer 2 mode to bridge the packets sent to this service if it is marked as DOWN. If the service is DOWN, and this parameter is disabled, the packets are
+   boolean              • no ←           dropped.
+                        • yes
+   appflowlog           Choices:
+   -                    • enabled        Enable logging of AppFlow information.
+                        • disabled
+   cacheable            Choices:         Use the transparent cache redirection virtual server to forward requests to the cache server.
+   boolean              • no ←           Note: Do not specify this parameter if you set the Cache Type parameter.
+                        • yes
+                        Choices:
+   cachetype            • TRANSPARENT    Cache type supported by the cache server.
+   -                    • REVERSE
+                        • FORWARD
+   cip                  Choices:         Before forwarding a request to the service, insert an HTTP header with the client's IPv4 or IPv6 address as its value. Used if the server needs the client's
+   -                    • enabled        IP address for security, accounting, or other purposes, and setting the Use Source IP parameter is not a viable option.
+                        • disabled
+                                         Name for the HTTP header whose value must be set to the IP address of the client. Used with the Client IP parameter. If you set the Client IP parameter, and
+   cipheader                             you do not specify a name for the header, the appliance uses the header name specified for the global Client IP Header parameter (the cipHeader parameter in
+   -                                     the set ns param CLI command or the Client IP Header parameter in the Configure HTTP Parameters dialog box at System > Settings > Change HTTP parameters).
+                                         If the global Client IP Header parameter is not specified, the appliance inserts a header with the name "client-ip.".
+                                         Minimum length = 1
+   cka                  Choices:
+   boolean              • no             Enable client keep-alive for the service.
+                        • yes
+   cleartextport                         Port to which clear text data must be sent after the appliance decrypts incoming SSL traffic. Applicable to transparent SSL services.
+   -                                     Minimum value = 1
+   clttimeout                            Time, in seconds, after which to terminate an idle client connection.
+   -                                     Minimum value = 0
+                                         Maximum value = 31536000
+   cmp                  Choices:
+   boolean              • no             Enable compression for the service.
+                        • yes
+   comment                               Any information about the service.
+   -
+   customserverid     Default:           Unique identifier for the service. Used when the persistency type for the virtual server is set to Custom Server ID.
+   -                  "None"
+   disabled             Choices:         When set to yes the service state will be set to DISABLED.
+   boolean              • no ←           When set to no the service state will be set to ENABLED.
+                        • yes            Note that due to limitations of the underlying NITRO API a disabled state change alone does not cause the module result to report a changed status.
+                                         Name of the DNS profile to be associated with the service. DNS profile properties will applied to the transactions processed by a service. This parameter is
+   dnsprofilename                        valid only for ADNS and ADNS-TCP services.
+   -                                     Minimum length = 1
+                                         Maximum length = 127
+   downstateflush       Choices:         Flush all active transactions associated with a service whose state transitions from UP to DOWN. Do not enable this option for applications that must
+   -                    • enabled        complete their transactions.
+                        • disabled
+   graceful             Choices:
+   boolean              • no ←           Shut down gracefully, not accepting any new connections, and disabling the service when all of its connections are closed.
+                        • yes
+   hashid                                A numerical identifier that can be used by hash based load balancing methods. Must be unique for each service.
+   -                                     Minimum value = 1
+   healthmonitor        Choices:
+   boolean              • no             Monitor the health of this service
+                        • yes ←
+   httpprofilename                       Name of the HTTP profile that contains HTTP configuration settings for the service.
+   -                                     Minimum length = 1
+                                         Maximum length = 127
+   ip                                    IP to assign to the service.
+   -                                     Minimum length = 1
+   ipaddress                             The new IP address of the service.
+   -
+   maxbandwidth                          Maximum bandwidth, in Kbps, allocated to the service.
+   -                                     Minimum value = 0
+                                         Maximum value = 4294967287
+   maxclient                             Maximum number of simultaneous open connections to the service.
+   -                                     Minimum value = 0
+                                         Maximum value = 4294967294
+                                         Maximum number of requests that can be sent on a persistent connection to the service.
+   maxreq                                Note: Connection requests beyond this value are rejected.
+   -                                     Minimum value = 0
+                                         Maximum value = 65535
+   monitor_bindings                      A list of load balancing monitors to bind to this service.
+   -                                     Each monitor entry is a dictionary which may contain the following options.
+                                         Note that if not using the built in monitors they must first be setup.
+                        Choices:         State of the monitor.
+          dup_state     • enabled        The state setting for a monitor of a given type affects all monitors of that type.
+          -             • disabled       For example, if an HTTP monitor is enabled, all HTTP monitors on the appliance are (or remain) enabled.
+                                         If an HTTP monitor is disabled, all HTTP monitors on the appliance are disabled.
+          dup_weight                     Weight to assign to the binding between the monitor and service.
+          -
+          monitorname                    Name of the monitor.
+          -
+          weight                         Weight to assign to the binding between the monitor and service.
+          -
+   monthreshold                          Minimum sum of weights of the monitors that are bound to this service. Used to determine whether to mark a service as UP or DOWN.
+   -                                     Minimum value = 0
+                                         Maximum value = 65535
+   name                                  Name for the service. Must begin with an ASCII alphabetic or underscore _ character, and must contain only ASCII alphanumeric, underscore _, hash #, period
+   -                                     ., space  , colon :, at @, equals =, and hyphen - characters. Cannot be changed after the service has been created.
+                                         Minimum length = 1
+   netprofile                            Network profile to use for the service.
+   -                                     Minimum length = 1
+                                         Maximum length = 127
+   nitro_pass                            The password with which to authenticate to the netscaler node.
+   string / required
+   nitro_protocol       Choices:
+   string               • http ←         Which protocol to use when accessing the nitro API objects.
+                        • https
+   nitro_timeout      Default:           Time in seconds until a timeout error is thrown when establishing a new session with Netscaler
+   float              310
+   nitro_user                            The username with which to authenticate to the netscaler node.
+   string / required
+   nsip                                  The ip address of the netscaler appliance where the nitro API calls will be made.
+   string / required                     The port can be specified with the colon (:). E.g. 192.168.1.1:555.
+   pathmonitor                           Path monitoring for clustering.
+   -
+   pathmonitorindv                       Individual Path monitoring decisions.
+   -
+   port                                  Port number of the service.
+   -                                     Range 1 - 65535
+                                         " in CLI is represented as 65535 in NITRO API
+   processlocal         Choices:         By turning on this option packets destined to a service in a cluster will not under go any steering. Turn this option for single packet request response
+   -                    • enabled        mode or when the upstream device is performing a proper RSS for connection based distribution.
+                        • disabled
+   rtspsessionidremap   Choices:
+   boolean              • no ←           Enable RTSP session ID mapping for the service.
+                        • yes
+   save_config          Choices:         If yes the module will save the configuration on the netscaler node if it makes any changes.
+   boolean              • no             The module will not save the configuration on the netscaler node if it made no changes.
+                        • yes ←
+   serverid                              The identifier for the service. This is used when the persistency type is set to Custom Server ID.
+   -
+   servername                            Name of the server that hosts the service.
+   -                                     Minimum length = 1
+                        Choices:
+                        • HTTP
+                        • FTP
+                        • TCP
+                        • UDP
+                        • SSL
+                        • SSL_BRIDGE
+                        • SSL_TCP
+                        • DTLS
+                        • NNTP
+                        • RPCSVR
+                        • DNS
+                        • ADNS
+                        • SNMP
+                        • RTSP
+                        • DHCPRA
+                        • ANY
+                        • SIP_UDP
+   servicetype          • SIP_TCP        Protocol in which data is exchanged with the service.
+   -                    • SIP_SSL
+                        • DNS_TCP
+                        • ADNS_TCP
+                        • MYSQL
+                        • MSSQL
+                        • ORACLE
+                        • RADIUS
+                        • RADIUSListener
+                        • RDP
+                        • DIAMETER
+                        • SSL_DIAMETER
+                        • TFTP
+                        • SMPP
+                        • PPTP
+                        • GRE
+                        • SYSLOGTCP
+                        • SYSLOGUDP
+                        • FIX
+                        • SSL_FIX
+   sp                   Choices:
+   boolean              • no             Enable surge protection for the service.
+                        • yes
+   state                Choices:         The state of the resource being configured by the module on the netscaler node.
+   string               • absent         When present the resource will be created if needed and configured according to the module's parameters.
+                        • present ←      When absent the resource will be deleted from the netscaler node.
+   svrtimeout                            Time, in seconds, after which to terminate an idle server connection.
+   -                                     Minimum value = 0
+                                         Maximum value = 31536000
+   tcpb                 Choices:
+   boolean              • no             Enable TCP buffering for the service.
+                        • yes
+   tcpprofilename                        Name of the TCP profile that contains TCP configuration settings for the service.
+   -                                     Minimum length = 1
+                                         Maximum length = 127
+                                         Integer value that uniquely identifies the traffic domain in which you want to configure the entity. If you do not specify an ID, the entity becomes part of
+   td                                    the default traffic domain, which has an ID of 0.
+   -                                     Minimum value = 0
+                                         Maximum value = 4094
+   useproxyport         Choices:         Use the proxy port as the source port when initiating connections with the server. With the NO setting, the client-side connection port is used as the
+   boolean              • no             source port for the server-side connection.
+                        • yes            Note: This parameter is available only when the Use Source IP (USIP) parameter is set to YES.
+   usip                 Choices:         Use the client's IP address as the source IP address when initiating a connection to the server. When creating a service, if you do not set this parameter,
+   boolean              • no             the service inherits the global Use Source IP setting (available in the enable ns mode and disable ns mode CLI commands, or in the System > Settings >
+                        • yes            Configure modes > Configure Modes dialog box). However, you can override this setting after you create the service.
+   validate_certs       Choices:
+   boolean              • no             If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+                        • yes ←
+
+NOTES                   *netscaler_service-notes*
+
+   Note
+
+     • For more information on using Ansible to manage Citrix NetScaler Network devices see https://www.ansible.com/ansible-netscaler.
+
+EXAMPLES                   *netscaler_service-examples*
+
+ # Monitor monitor-1 must have been already setup
+
+ - name: Setup http service
+   gather_facts: False
+   delegate_to: localhost
+   netscaler_service:
+     nsip: 172.18.0.2
+     nitro_user: nsroot
+     nitro_pass: nsroot
+
+     state: present
+
+     name: service-http-1
+     servicetype: HTTP
+     ipaddress: 10.78.0.1
+     port: 80
+
+     monitor_bindings:
+       - monitor-1
+
+RETURN VALUES                   *netscaler_service-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   diff                A dictionary with a list of differences between the actual configured object and the configuration specified in the module
+   dictionary failure  Sample:
+                       { 'clttimeout': 'difference. ours: (float) 10.0 other: (float) 20.0' }
+   loglines            list of logged messages by the module
+   list       always   Sample:
+                       ['message 1', 'message 2']
+
+STATUS                   *netscaler_service-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • George Nikolopoulos (@giorgos-nikolopoulos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netscaler_service-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netscaler_service_module.html

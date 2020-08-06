@@ -1,0 +1,136 @@
+SYNOPSIS                   *bigip_message_routing_route*
+
+     • Manages static routes for routing message protocol messages.
+
+PARAMETERS                   *bigip_message_routing_route-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   description                          The user defined description of the static route.
+   string
+   dst_address                          Specifies the destination address of the route.
+   string                               Setting the attribute to an empty string will create a wildcard matching all message destination-addresses, which is the default when creating a new route.
+   name                                 Specifies the name of the static route.
+   string / required
+   partition           Default:         Device partition to create route object on.
+   string              "Common"
+   peer_selection_mode   Choices:
+   string                • ratio        Specifies the method to use when selecting a peer from the provided list of peers.
+                         • sequential
+   peers                                Specifies a list of ltm messagerouting-peer objects.
+   list                                 The specified peer must be on the same partition as the route.
+   provider
+   dictionary                           A dict object containing connection details.
+   added in 2.5
+     auth_provider                      Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                             This option is really used when working with BIG-IQ devices.
+     password                           The password for the user account used to connect to the BIG-IP.
+     string / required                  You may omit this option by setting the environment variable F5_PASSWORD.
+                                        aliases: pass, pwd
+     server                             The BIG-IP host.
+     string / required                  You may omit this option by setting the environment variable F5_SERVER.
+     server_port       Default:         The BIG-IP server port.
+     integer           443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                        Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                               You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                            Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                            operation is completed, the module will error.
+     transport           Choices:
+     string              • cli          Configures the transport connection to use when connecting to the remote device.
+                         • rest ←
+     user                               The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string / required                  You may omit this option by setting the environment variable F5_USER.
+     validate_certs      Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean             • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                         • yes ←
+   src_address                          Specifies the source address of the route.
+   string                               Setting the attribute to an empty string will create a wildcard matching all message source-addresses, which is the default when creating a new route.
+   state                 Choices:       When present, ensures that the route exists.
+   string                • present ←    When absent, ensures the route is removed.
+                         • absent
+   type                  Choices:       Parameter used to specify the type of the route to manage.
+   string                • generic ←    Default setting is generic with more options added in future.
+
+NOTES                   *bigip_message_routing_route-notes*
+
+   Note
+
+     • Requires BIG-IP >= 14.0.0
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_message_routing_route-examples*
+
+ - name: Create a simple generic route
+   bigip_message_routing_route:
+     name: foobar
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify a generic route
+   bigip_message_routing_route:
+     name: foobar
+     peers:
+       - peer1
+       - peer2
+     peer_selection_mode: ratio
+     src_address: annoying_user
+     dst_address: blackhole
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove a generic
+   bigip_message_routing_route:
+     name: foobar
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_message_routing_route-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+   description                  The user defined description of the route.
+   string              changed  Sample:
+                                Some description
+   dst_address                  The destination address of the route.
+   string              changed  Sample:
+                                blackhole
+   peer_selection_mode          The method to use when selecting a peer.
+   string              changed  Sample:
+                                ratio
+   peers                        The list of ltm messagerouting-peer object.
+   list                changed  Sample:
+                                ['/Common/peer1', '/Common/peer2']
+   src_address                  The source address of the route.
+   string              changed  Sample:
+                                annyoing_user
+
+STATUS                   *bigip_message_routing_route-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_message_routing_route-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_message_routing_route_module.html

@@ -1,22 +1,270 @@
-SYNOPSIS                           *user*
+SYNOPSIS                   *user*
 
-Manage user accounts and user attributes.
+     • Manage user accounts and user attributes.
+     • For Windows targets, use the win_user module instead.
 
-EXAMPLES                           *user-examples*
->
-    # Add the user 'johnd' with a specific uid and a primary group of 'admin'
-    - user: name=johnd comment="John Doe" uid=1040 group=admin
-   
-    # Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
-    - user: name=james shell=/bin/bash groups=admins,developers append=yes
-   
-    # Remove the user 'johnd'
-    - user: name=johnd state=absent remove=yes
-   
-    # Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
-    - user: name=jsmith generate_ssh_key=yes ssh_key_bits=2048 ssh_key_file=.ssh/id_rsa
-   
+PARAMETERS                   *user-parameters*
+
+       Parameter       Choices/Defaults                                                                            Comments
+   append               Choices:         If yes, add the user to the groups specified in groups.
+   boolean              • no ←           If no, user will only be added to the groups specified in groups, removing them from all other groups.
+                        • yes            Mutually exclusive with local
+                                         Sets the authorization of the user.
+   authorization                         Does nothing when used with other platforms.
+   string                                Can set multiple authorizations using comma separation.
+   added in 2.8                          To delete all authorizations, use authorization=''.
+                                         Currently supported on Illumos/Solaris.
+   comment                               Optionally sets the description (aka GECOS) of user account.
+   string
+   create_home          Choices:         Unless set to no, a home directory will be made for the user when the account is created or if the home directory does not exist.
+   boolean              • no             Changed from createhome to create_home in Ansible 2.5.
+                        • yes ←          aliases: createhome
+   expires                               An expiry time for the user in epoch, it will be ignored on platforms that do not support this.
+   float                                 Currently supported on GNU/Linux, FreeBSD, and DragonFlyBSD.
+                                         Since Ansible 2.6 you can remove the expiry time specify a negative value. Currently supported on GNU/Linux and FreeBSD.
+   force                Choices:         This only affects state=absent, it forces removal of the user and associated directories on supported platforms.
+   boolean              • no ←           The behavior is the same as userdel --force, check the man page for userdel on your system for details and support.
+                        • yes            When used with generate_ssh_key=yes this forces an existing key to be overwritten.
+   generate_ssh_key     Choices:         Whether to generate a SSH key for the user in question.
+   boolean              • no ←           This will not overwrite an existing SSH key unless used with force=yes.
+                        • yes
+   group                                 Optionally sets the user's primary group (takes a group name).
+   string
+   groups                                List of groups user will be added to. When set to an empty string '', the user is removed from all groups except the primary group.
+   list                                  Before Ansible 2.3, the only input format allowed was a comma separated string.
+                                         Mutually exclusive with local
+   hidden               Choices:         macOS only, optionally hide the user from the login window and system preferences.
+   boolean              • no             The default will be yes if the system option is used.
+   added in 2.6         • yes
+   home                                  Optionally set the user's home directory.
+   path
+                                         Forces the use of "local" command alternatives on platforms that implement it.
+   local                Choices:         This is useful in environments that use centralized authentification when you want to manipulate the local users (i.e. it uses luseradd instead of useradd).
+   boolean              • no ←           This will check /etc/passwd for an existing account before invoking commands. If the local account database exists somewhere other than /etc/passwd, this
+   added in 2.4         • yes            setting will not work properly.
+                                         This requires that the above commands as well as /etc/passwd must exist on the target host, otherwise it will be a fatal error.
+                                         Mutually exclusive with groups and append
+   login_class                           Optionally sets the user's login class, a feature of most BSD OSs.
+   string
+   move_home            Choices:         If set to yes when used with home: , attempt to move the user's old home directory to the specified directory if it isn't there already and the old home
+   boolean              • no ←           exists.
+                        • yes
+   name                                  Name of the user to create, remove or modify.
+   string / required                     aliases: user
+   non_unique           Choices:
+   boolean              • no ←           Optionally when used with the -u option, this option allows to change the user ID to a non-unique value.
+                        • yes
+                                         Optionally set the user's password to this crypted value.
+                                         On macOS systems, this value has to be cleartext. Beware of security issues.
+   password                              To create a disabled account on Linux systems, set this to '!' or '"'.
+   string                                To create a disabled account on OpenBSD, set this to '"""""""""""""'.
+                                         See https://docs.ansible.com/ansible/faq.html#how-do-i-generate-encrypted-passwords-for-the-user-module for details on various ways to generate these
+                                         password values.
+   password_lock        Choices:         Lock the password (usermod -L, pw lock, usermod -C).
+   boolean              • no             BUT implementation differs on different platforms, this option does not always mean the user cannot login via other methods.
+   added in 2.6         • yes            This option does not disable the user, only lock the password. Do not change the password in the same task.
+                                         Currently supported on Linux, FreeBSD, DragonFlyBSD, NetBSD, OpenBSD.
+                                         Sets the profile of the user.
+   profile                               Does nothing when used with other platforms.
+   string                                Can set multiple profiles using comma separation.
+   added in 2.8                          To delete all the profiles, use profile=''.
+                                         Currently supported on Illumos/Solaris.
+   remove               Choices:         This only affects state=absent, it attempts to remove directories associated with the user.
+   boolean              • no ←           The behavior is the same as userdel --remove, check the man page for details and support.
+                        • yes
+                                         Sets the role of the user.
+   role                                  Does nothing when used with other platforms.
+   string                                Can set multiple roles using comma separation.
+   added in 2.8                          To delete all roles, use role=''.
+                                         Currently supported on Illumos/Solaris.
+   seuser                                Optionally sets the seuser type (user_u) on selinux enabled systems.
+   string
+                                         Optionally set the user's shell.
+   shell                                 On macOS, before Ansible 2.5, the default shell for non-system users was /usr/bin/false. Since Ansible 2.5, the default shell for non-system users on macOS
+   string                                is /bin/bash.
+                                         On other operating systems, the default shell is determined by the underlying tool being used. See Notes for details.
+   skeleton                              Optionally set a home skeleton directory.
+   string                                Requires create_home option!
+   ssh_key_bits       Default:
+   integer            "default set by    Optionally specify number of bits in SSH key to create.
+                      ssh-keygen"
+   ssh_key_comment    Default:
+   string             "ansible-generated Optionally define the comment for the SSH key.
+                      on $HOSTNAME"
+   ssh_key_file                          Optionally specify the SSH key filename.
+   path                                  If this is a relative filename then it will be relative to the user's home directory.
+                                         This parameter defaults to .ssh/id_rsa.
+   ssh_key_passphrase                    Set a passphrase for the SSH key.
+   string                                If no passphrase is provided, the SSH key will default to having no passphrase.
+   ssh_key_type       Default:           Optionally specify the type of SSH key to generate.
+   string             "rsa"              Available SSH key types will depend on implementation present on target host.
+   state                Choices:
+   string               • absent         Whether the account should exist or not, taking action if the state is different from what is stated.
+                        • present ←
+   system               Choices:         When creating an account state=present, setting this to yes makes the user a system account.
+   boolean              • no ←           This setting cannot be changed on existing users.
+                        • yes
+   uid                                   Optionally sets the UID of the user.
+   integer
+   update_password      Choices:         always will update passwords if they differ.
+   string               • always ←       on_create will only set the password for newly created users.
+                        • on_create
+
+NOTES                   *user-notes*
+
+   Note
+
+     • There are specific requirements per platform on user management utilities. However they generally come pre-installed with the system and Ansible will require they are present at runtime. If
+       they are not, a descriptive error message will be shown.
+     • On SunOS platforms, the shadow file is backed up automatically since this module edits it directly. On other platforms, the shadow file is backed up by the underlying tools used by this
+       module.
+     • On macOS, this module uses dscl to create, modify, and delete accounts. dseditgroup is used to modify group membership. Accounts are hidden from the login window by modifying
+       /Library/Preferences/com.apple.loginwindow.plist.
+     • On FreeBSD, this module uses pw useradd and chpass to create, pw usermod and chpass to modify, pw userdel remove, pw lock to lock, and pw unlock to unlock accounts.
+     • On all other platforms, this module uses useradd to create, usermod to modify, and userdel to remove accounts.
+
+SEE ALSO                   *user-see also*
+
+   See also
+
+   authorized_key – Adds or removes an SSH authorized key
+   The official documentation on the authorized_key module.
+
+   group – Add or remove groups
+   The official documentation on the group module.
+
+   win_user – Manages local Windows user accounts
+   The official documentation on the win_user module.
+
+EXAMPLES                   *user-examples*
+
+ - name: Add the user 'johnd' with a specific uid and a primary group of 'admin'
+   user:
+     name: johnd
+     comment: John Doe
+     uid: 1040
+     group: admin
+
+ - name: Add the user 'james' with a bash shell, appending the group 'admins' and 'developers' to the user's groups
+   user:
+     name: james
+     shell: /bin/bash
+     groups: admins,developers
+     append: yes
+
+ - name: Remove the user 'johnd'
+   user:
+     name: johnd
+     state: absent
+     remove: yes
+
+ - name: Create a 2048-bit SSH key for user jsmith in ~jsmith/.ssh/id_rsa
+   user:
+     name: jsmith
+     generate_ssh_key: yes
+     ssh_key_bits: 2048
+     ssh_key_file: .ssh/id_rsa
+
+ - name: Added a consultant whose account you want to expire
+   user:
+     name: james18
+     shell: /bin/zsh
+     groups: developers
+     expires: 1422403387
+
+ - name: Starting at Ansible 2.6, modify user, remove expiry time
+   user:
+     name: james18
+     expires: -1
+
+RETURN VALUES                   *user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key           Returned                                                                                Description
+   append          When state is    Whether or not to append the user to groups
+   boolean         'present' and    Sample:
+                   the user exists  True
+   comment                          Comment section from passwd file, usually the user name
+   string          When user exists Sample:
+                                    Agent Smith
+   create_home     When user does   Whether or not to create the home directory
+   boolean         not exist and    Sample:
+                   not check mode   True
+   force           When state is
+   boolean         'absent' and     Whether or not a user account was forcibly deleted
+                   user exists
+   group                            Primary user group ID
+   integer         When user exists Sample:
+                                    1001
+                   When groups is   List of groups of which the user is a member
+   groups          not empty and    Sample:
+   string          state is         chrony,apache
+                   'present'
+   home            When state is    Path to user's home directory
+   string          'present'        Sample:
+                                    /home/asmith
+   move_home       When state is
+   boolean         'present' and    Whether or not to move an existing home directory
+                   user exists
+   name                             User account name
+   string          always           Sample:
+                                    asmith
+                   When state is    Masked value of the password
+   password        'present' and    Sample:
+   string          password is not  NOT_LOGGING_PASSWORD
+                   empty
+   remove          When state is    Whether or not to remove the user account
+   boolean         'absent' and     Sample:
+                   user exists      True
+   shell           When state is    User login shell
+   string          'present'        Sample:
+                                    /bin/bash
+   ssh_fingerprint When             Fingerprint of generated SSH key
+   string          generate_ssh_key Sample:
+                   is True          2048 SHA256:aYNHYcyVm87Igh0IMEDMbvW0QDlRQfE0aJugp684ko8 ansible-generated on host (RSA)
+   ssh_key_file    When             Path to generated SSH private key file
+   string          generate_ssh_key Sample:
+                   is True          /home/asmith/.ssh/id_rsa
+                                    Generated SSH public key file
+   ssh_public_key  When             Sample:
+   string          generate_ssh_key 'ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC95opt4SPEC06tOYsJQJIuN23BbLMGmYo8ysVZQc4h2DZE9ugbjWWGS1/pweUGjVstgzMkBEeBCByaEf/RJKNecKRPeGd2Bw9DCj/bn5Z6rGfNENKBmo
+                   is True          618mUJBvdlEgea96QGjOwSB7/gmonduC7gsWDMNcOdSE3wJMTim4lddiBx4RgC9yXsJ6Tkz9BHD73MXPpT5ETnse+A3fw3IGVSjaueVnlUyUmOBf7fzmZbhlFVXf2Zi2rFTXqvbdGHKkzpw1U8eB8xFPP7y
+                                    d5u1u0e6Acju/8aZ/l17IDFiLke5IzlqIMRTEbDwLNeO84YQKWTm9fODHzhYe0yvxqLiK07 ansible-generated on host'
+                   When stderr is   Standard error from running commands
+   stderr          returned by a    Sample:
+   string          command that is  Group wheels does not exist
+                   run
+                   When standard
+   stdout          output is
+   string          returned by the  Standard output from running commands
+                   command that is
+                   run
+                   When system is
+   system          passed to the    Whether or not the account is a system account
+   boolean         module and the   Sample:
+                   account does not True
+                   exist
+   uid             When UID is      User ID of the user account
+   integer         passed to the    Sample:
+                   module           1044
+
+STATUS                   *user-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *user-red hat support*
+
+     • Stephen Fromm (@sfromm)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *user-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/user_module.html
+https://docs.ansible.com/ansible/latest/modules/user_module.html

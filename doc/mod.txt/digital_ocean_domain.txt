@@ -1,38 +1,83 @@
-SYNOPSIS                           *digital_ocean_domain*
+SYNOPSIS                   *digital_ocean_domain*
 
-New in version 1.6.
+     • Create/delete a DNS domain in DigitalOcean.
 
-Create/delete a DNS record in DigitalOcean.
+REQUIREMENTS                   *digital_ocean_domain-requirements*
 
-EXAMPLES                           *digital_ocean_domain-examples*
->
-    # Create a domain record
-   
-    - digital_ocean_domain: >
-          state=present
-          name=my.digitalocean.domain
-          ip=127.0.0.1
-   
-    # Create a droplet and a corresponding domain record
-   
-    - digital_ocean: >
-          state=present
-          name=test_droplet
-          size_id=1
-          region_id=2
-          image_id=3
-      register: test_droplet
-   
-    - digital_ocean_domain: >
-          state=present
-          name={{ test_droplet.droplet.name }}.my.domain
-          ip={{ test_droplet.droplet.ip_address }}
-   
-      Note
-   
-      Two environment variables can be used, DO_CLIENT_ID and DO_API_KEY.
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+
+PARAMETERS                   *digital_ocean_domain-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   id                              Numeric, the droplet id you want to operate on.
+   -                               aliases: droplet_id
+   ip                              An 'A' record for '@' ($ORIGIN) will be created with the value 'ip'. 'ip' is an IP version 4 address.
+   -
+   name                            String, this is the name of the droplet - must be formatted by hostname rules, or the name of a SSH key, or the name of a domain.
+   -
+                                   DigitalOcean OAuth token.
+   oauth_token                     There are several other environment variables which can be used to provide this value.
+   string                          i.e., - 'DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN' and 'OAUTH_TOKEN'
+                                   aliases: api_token
+   state            Choices:
+   -                • present ←    Indicate desired state of the target.
+                    • absent
+   timeout        Default:         The timeout in seconds used for polling DigitalOcean's API.
+   integer        30
+   validate_certs   Choices:       If set to no, the SSL certificates will not be validated.
+   boolean          • no           This should only set to no used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+NOTES                   *digital_ocean_domain-notes*
+
+   Note
+
+     • Environment variables DO_OAUTH_TOKEN can be used for the oauth_token.
+     • As of Ansible 1.9.5 and 2.0, Version 2 of the DigitalOcean API is used, this removes client_id and api_key options in favor of oauth_token.
+     • If you are running Ansible 1.9.4 or earlier you might not be able to use the included version of this module as the API version used has been retired.
+
+EXAMPLES                   *digital_ocean_domain-examples*
+
+ # Create a domain
+
+ - digital_ocean_domain:
+     state: present
+     name: my.digitalocean.domain
+     ip: 127.0.0.1
+
+ # Create a droplet and a corresponding domain
+
+ - digital_ocean:
+     state: present
+     name: test_droplet
+     size_id: 1gb
+     region_id: sgp1
+     image_id: ubuntu-14-04-x64
+
+
+   register: test_droplet
+
+ - digital_ocean_domain:
+     state: present
+     name: "{{ test_droplet.droplet.name }}.my.domain"
+     ip: "{{ test_droplet.droplet.ip_address }}"
+
+STATUS                   *digital_ocean_domain-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Gregson (@mgregson)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *digital_ocean_domain-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/digital_ocean_domain_module.html
+https://docs.ansible.com/ansible/latest/modules/digital_ocean_domain_module.html

@@ -1,0 +1,121 @@
+SYNOPSIS                   *datadog_monitor*
+
+     • Manages monitors within Datadog.
+     • Options as described on https://docs.datadoghq.com/api/.
+
+REQUIREMENTS                   *datadog_monitor-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • datadog
+
+PARAMETERS                   *datadog_monitor-parameters*
+
+        Parameter                      Choices/Defaults                                                                           Comments
+   api_key                                                              Your Datadog API key.
+   string / required
+   app_key                                                              Your Datadog app key.
+   string / required
+   escalation_message                                                   A message to include with a re-notification. Supports the '@username' notification we allow elsewhere.
+   string                                                               Not applicable if renotify_interval=None.
+   evaluation_delay                                                     Time to delay evaluation (in seconds).
+   string                                                               Effective for sparse values.
+   added in 2.7
+   id                                                                   The ID of the alert.
+   string                                                               If set, will be used instead of the name to locate the alert.
+   locked                Choices:
+   boolean               • no ←                                         Whether changes to this monitor should be restricted to the creator or admins.
+                         • yes
+   message                                                              A message to include with notifications for this monitor.
+   string                                                               Email notifications can be sent to specific users by using the same '@username' notation as events.
+                                                                        Monitor message template variables can be accessed by using double square brackets, i.e '[[' and ']]'.
+   name                                                                 The name of the alert.
+   string / required
+   new_host_delay                                                       A positive integer representing the number of seconds to wait before evaluating the monitor for new hosts.
+   string                                                               This gives the host time to fully initialize.
+   added in 2.4
+   no_data_timeframe   Default:                                         The number of minutes before a monitor will notify when data stops reporting.
+   string              "2x timeframe for metric, 2 minutes for service" Must be at least 2x the monitor timeframe for metric alerts or 2 minutes for service checks.
+   notify_audit          Choices:
+   boolean               • no ←                                         Whether tagged users will be notified on changes to this monitor.
+                         • yes
+   notify_no_data        Choices:
+   boolean               • no ←                                         Whether this monitor will notify when data stops reporting.
+                         • yes
+   query                                                                The monitor query to notify on.
+   string                                                               Syntax varies depending on what type of monitor you are creating.
+   renotify_interval                                                    The number of minutes after the last notification before a monitor will re-notify on the current status.
+   string                                                               It will only re-notify if it is not resolved.
+   require_full_window   Choices:                                       Whether this monitor needs a full window of data before it gets evaluated.
+   boolean               • no                                           We highly recommend you set this to False for sparse metrics, otherwise some evaluations will be skipped.
+                         • yes
+   silenced            Default:                                         Dictionary of scopes to silence, with timestamps or None.
+   -                   ""                                               Each scope will be muted until the given POSIX timestamp or forever if the value is None.
+                         Choices:
+   state                 • present
+   string / required     • absent                                       The designated state of the monitor.
+                         • mute
+                         • unmute
+   tags                                                                 A list of tags to associate with your monitor when creating or updating.
+   list                                                                 This can help you categorize and filter monitors.
+   thresholds          Default:                                         A dictionary of thresholds by status.
+   -                   {"critical": 1, "ok": 1, "warning": 1}           Only available for service checks and metric alerts.
+                                                                        Because each of them can have multiple thresholds, we do not define them directly in the query.
+   timeout_h                                                            The number of hours of the monitor not reporting data before it will automatically resolve from a triggered state.
+   string
+                         Choices:
+   type                  • metric alert                                 The type of the monitor.
+   string                • service check
+                         • event alert
+
+EXAMPLES                   *datadog_monitor-examples*
+
+ # Create a metric monitor
+ - datadog_monitor:
+     type: "metric alert"
+     name: "Test monitor"
+     state: "present"
+     query: "datadog.agent.up.over('host:host1').last(2).count_by_status()"
+     message: "Host [[host.name]] with IP [[host.ip]] is failing to report to datadog."
+     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
+     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
+
+ # Deletes a monitor
+ - datadog_monitor:
+     name: "Test monitor"
+     state: "absent"
+     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
+     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
+
+ # Mutes a monitor
+ - datadog_monitor:
+     name: "Test monitor"
+     state: "mute"
+     silenced: '{""":None}'
+     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
+     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
+
+ # Unmutes a monitor
+ - datadog_monitor:
+     name: "Test monitor"
+     state: "unmute"
+     api_key: "9775a026f1ca7d1c6c5af9d94d9595a4"
+     app_key: "87ce4a24b5553d2e482ea8a8500e71b8ad4554ff"
+
+STATUS                   *datadog_monitor-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Sebastian Kornehl (@skornehl)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *datadog_monitor-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/datadog_monitor_module.html

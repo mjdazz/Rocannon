@@ -1,0 +1,244 @@
+SYNOPSIS                   *frr_bgp*
+
+     • This module provides configuration management of global BGP parameters on devices running Free Range Routing(FRR).
+
+PARAMETERS                   *frr_bgp-parameters*
+
+           Parameter          Choices/Defaults                                                                         Comments
+   config                                        Specifies the BGP related configuration.
+   -
+    address_family                               Specifies BGP address family related configurations.
+    -
+     afi                       Choices:
+     - / required              • ipv4            Type of address family to configure.
+                               • ipv6
+     neighbors                                   Specifies BGP neighbor related configurations in Address Family configuration mode.
+     -
+      activate                 Choices:
+      boolean                  • no              Enable the address family for this neighbor.
+                               • yes
+      maximum_prefix                             Maximum number of prefixes to accept from this peer.
+      integer                                    The range is from 1 to 4294967295.
+      neighbor                                   Neighbor router address.
+      - / required
+      next_hop_self            Choices:
+      boolean                  • no              Enable/disable the next hop calculation for this neighbor.
+                               • yes
+      remove_private_as        Choices:
+      boolean                  • no              Remove the private AS number from outbound updates.
+                               • yes
+      route_reflector_client   Choices:
+      boolean                  • no              Specify a neighbor as a route reflector client.
+                               • yes
+      route_server_client      Choices:
+      boolean                  • no              Specify a neighbor as a route server client.
+                               • yes
+     networks                                    Specify networks to announce via BGP.
+     -                                           For operation replace, this option is mutually exclusive with root level networks option.
+      masklen                                    Subnet mask length for the network to announce(e.g, 8, 16, 24, etc.).
+      -
+      network                                    Network ID to announce via BGP.
+      - / required
+      route_map                                  Route map to modify the attributes.
+      -
+     redistribute                                Specifies the redistribute information from another routing protocol.
+     -
+      id                                         Specifies the instance ID/table ID for this protocol
+      -                                          Valid for ospf and table
+      metric                                     Specifies the metric for redistributed routes.
+      -
+                               Choices:
+                               • ospf
+                               • ospf6
+                               • eigrp
+                               • isis
+      protocol                 • table
+      - / required             • static          Specifies the protocol for configuring redistribute information.
+                               • connected
+                               • sharp
+                               • nhrp
+                               • kernel
+                               • babel
+                               • rip
+      route_map                                  Specifies the route map reference.
+      -
+                               Choices:
+     safi                      • flowspec
+     -                         • unicast ←       Specifies the type of cast for the address family.
+                               • multicast
+                               • labeled-unicast
+    bgp_as                                       Specifies the BGP Autonomous System (AS) number to configure on the device.
+    integer / required
+    log_neighbor_changes       Choices:
+    boolean                    • no              Enable/disable logging neighbor up/down and reset reason.
+                               • yes
+    neighbors                                    Specifies BGP neighbor related configurations.
+    -
+     advertisement_interval                      Minimum interval between sending BGP routing updates for this neighbor.
+     integer
+     description                                 Neighbor specific description.
+     -
+     ebgp_multihop                               Specifies the maximum hop count for EBGP neighbors not on directly connected networks.
+     integer                                     The range is from 1 to 255.
+     enabled                   Choices:
+     boolean                   • no              Administratively shutdown or enable a neighbor.
+                               • yes
+     local_as                                    The local AS number for the neighbor.
+     integer
+     neighbor                                    Neighbor router address.
+     - / required
+     password                                    Password to authenticate the BGP peer connection.
+     -
+     peer_group                                  Name of the peer group that the neighbor is a member of.
+     -
+     port                                        The TCP Port number to use for this neighbor.
+     integer                                     The range is from 0 to 65535.
+     remote_as                                   Remote AS of the BGP neighbor to configure.
+     integer / required
+     timers                                      Specifies BGP neighbor timer related configurations.
+     -
+      holdtime                                   Interval (in seconds) after not receiving a keepalive message that FRR declares a peer dead.
+      integer / required                         The range is from 0 to 65535.
+      keepalive                                  Frequency (in seconds) with which the FRR sends keepalive messages to its peer.
+      integer / required                         The range is from 0 to 65535.
+     update_source                               Source of the routing updates.
+     -
+    networks                                     Specify networks to announce via BGP.
+    -                                            For operation replace, this option is mutually exclusive with networks option under address_family.
+                                                 For operation replace, if the device already has an address family activated, this option is not allowed.
+     masklen                                     Subnet mask length for the network to announce(e.g, 8, 16, 24, etc.).
+     -
+     prefix                                      Network ID to announce via BGP.
+     - / required
+     route_map                                   Route map to modify the attributes.
+     -
+    router_id                Default:            Configures the BGP routing process router-id value.
+    -                        null
+                               Choices:          Specifies the operation to be performed on the BGP process configured on the device.
+                               • merge ←         In case of merge, the input configuration will be merged with the existing BGP configuration on the device.
+   operation                   • replace         In case of replace, if there is a diff between the existing configuration and the input configuration, the existing configuration will be replaced
+   -                           • override        by the input configuration for every option that has the diff.
+                               • delete          In case of override, all the existing BGP configuration will be removed from the device and replaced with the input configuration.
+                                                 In case of delete the existing BGP configuration will be removed from the device.
+
+NOTES                   *frr_bgp-notes*
+
+   Note
+
+     • Tested against FRRouting 6.0.
+
+EXAMPLES                   *frr_bgp-examples*
+
+ - name: configure global bgp as 64496
+   frr_bgp:
+     config:
+       bgp_as: 64496
+       router_id: 192.0.2.1
+       log_neighbor_changes: True
+       neighbors:
+         - neighbor: 192.51.100.1
+           remote_as: 64497
+           timers:
+             keepalive: 120
+             holdtime: 360
+         - neighbor: 198.51.100.2
+           remote_as: 64498
+       networks:
+         - prefix: 192.0.2.0
+           masklen: 24
+           route_map: RMAP_1
+         - prefix: 198.51.100.0
+           masklen: 24
+       address_family:
+         - afi: ipv4
+           safi: unicast
+           redistribute:
+             - protocol: ospf
+               id: 223
+               metric: 10
+     operation: merge
+
+ - name: Configure BGP neighbors
+   frr_bgp:
+     config:
+       bgp_as: 64496
+       neighbors:
+         - neighbor: 192.0.2.10
+           remote_as: 64496
+           password: ansible
+           description: IBGP_NBR_1
+           timers:
+             keepalive: 120
+             holdtime: 360
+         - neighbor: 192.0.2.15
+           remote_as: 64496
+           description: IBGP_NBR_2
+           advertisement_interval: 120
+     operation: merge
+
+ - name: Configure BGP neighbors under address family mode
+   frr_bgp:
+     config:
+       bgp_as: 64496
+       address_family:
+         - afi: ipv4
+           safi: multicast
+           neighbors:
+             - neighbor: 203.0.113.10
+               activate: yes
+               maximum_prefix: 250
+
+             - neighbor: 192.0.2.15
+               activate: yes
+               route_reflector_client: True
+     operation: merge
+
+ - name: Configure root-level networks for BGP
+   frr_bgp:
+     config:
+       bgp_as: 64496
+       networks:
+         - prefix: 203.0.113.0
+           masklen: 27
+           route_map: RMAP_1
+         - prefix: 203.0.113.32
+           masklen: 27
+           route_map: RMAP_2
+     operation: merge
+
+ - name: remove bgp as 64496 from config
+   frr_bgp:
+     config:
+       bgp_as: 64496
+     operation: delete
+
+RETURN VALUES                   *frr_bgp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+                     The list of configuration mode commands to send to the device
+   commands          Sample:
+   list     always   ['router bgp 64496', 'bgp router-id 192.0.2.1', 'neighbor 192.51.100.1 remote-as 64497', 'neighbor 192.51.100.1 timers 120 360', 'neighbor 198.51.100.2 remote-as 64498',
+                     'address-family ipv4 unicast', 'redistribute ospf 223 metric 10', 'exit-address-family', 'bgp log-neighbor-changes', 'network 192.0.2.0/24 route-map RMAP_1', 'network
+                     198.51.100.0/24', 'exit']
+
+STATUS                   *frr_bgp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *frr_bgp-red hat support*
+
+     • Nilashish Chakraborty (@NilashishC)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *frr_bgp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/frr_bgp_module.html

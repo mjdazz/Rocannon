@@ -1,0 +1,114 @@
+SYNOPSIS                   *get_certificate*
+
+     • Makes a secure connection and returns information about the presented certificate
+     • The module can use the cryptography Python library, or the pyOpenSSL Python library. By default, it tries to detect which one is available. This can be overridden with the
+       select_crypto_backend option. Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and will be removed in Ansible 2.13.”
+
+REQUIREMENTS                   *get_certificate-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7 when using proxy_host
+     • cryptography >= 1.6 or pyOpenSSL >= 0.15
+
+PARAMETERS                   *get_certificate-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   ca_cert                                  A PEM file containing one or more root certificates; if present, the cert will be validated against these root certs.
+   path                                     Note that this only validates the certificate is signed by the chain; not that the cert is valid for the host presenting it.
+   host                                     The host to get the cert for (IP is fine)
+   string / required
+   port                                     The port to connect to
+   integer / required
+   proxy_host
+   string                                   Proxy host used when get a certificate.
+   added in 2.9
+   proxy_port            Default:
+   integer               8080               Proxy port used when get a certificate.
+   added in 2.9
+   select_crypto_backend   Choices:         Determines which crypto backend to use.
+   string                  • auto ←         The default choice is auto, which tries to use cryptography if available, and falls back to pyopenssl.
+   added in 2.9            • cryptography   If set to pyopenssl, will try to use the pyOpenSSL library.
+                           • pyopenssl      If set to cryptography, will try to use the cryptography library.
+   timeout               Default:           The timeout in seconds
+   integer               10
+
+NOTES                   *get_certificate-notes*
+
+   Note
+
+     • When using ca_cert on OS X it has been reported that in some conditions the validate will always succeed.
+
+EXAMPLES                   *get_certificate-examples*
+
+ - name: Get the cert from an RDP port
+   get_certificate:
+     host: "1.2.3.4"
+     port: 3389
+   delegate_to: localhost
+   run_once: true
+   register: cert
+
+ - name: Get a cert from an https port
+   get_certificate:
+     host: "www.google.com"
+     port: 443
+   delegate_to: localhost
+   run_once: true
+   register: cert
+
+ - name: How many days until cert expires
+   debug:
+     msg: "cert expires in: {{ expire_days }} days."
+   vars:
+     expire_days: "{{ (( cert.not_after | to_datetime('%Y%m%d%H%M%SZ')) - (ansible_date_time.iso8601 | to_datetime('%Y-%m-%dT%H:%M:%SZ')) ).days }}"
+
+RETURN VALUES                   *get_certificate-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   cert                       success  The certificate retrieved from the port
+   string
+   expired                    success  Boolean indicating if the cert is expired
+   boolean
+   extensions                 success  Extensions applied to the cert
+   list / elements=dictionary
+             asn1_data        success  The Base64 encoded ASN.1 content of the extnesion.
+             string
+             critical         success  Whether the extension is critical.
+             boolean
+             name             success  The extension's name.
+             string
+   issuer                     success  Information about the issuer of the cert
+   dictionary
+   not_after                  success  Expiration date of the cert
+   string
+   not_before                 success  Issue date of the cert
+   string
+   serial_number              success  The serial number of the cert
+   string
+   signature_algorithm        success  The algorithm used to sign the cert
+   string
+   subject                    success  Information about the subject of the cert (OU, CN, etc)
+   dictionary
+   version                    success  The version number of the certificate
+   string
+
+STATUS                   *get_certificate-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • John Westcott IV (@john-westcott-iv)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *get_certificate-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/get_certificate_module.html

@@ -1,0 +1,113 @@
+SYNOPSIS                   *aws_config_rule*
+
+     • Module manages AWS Config rules
+
+REQUIREMENTS                   *aws_config_rule-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *aws_config_rule-parameters*
+
+            Parameter             Choices/Defaults                                                                       Comments
+   aws_access_key                                    AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                            aliases: ec2_access_key, access_key
+   aws_secret_key                                    AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                            aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:           Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←             resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes              ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   description                                       The description that you provide for the AWS Config rule.
+   -
+   ec2_url                                           Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                            required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any,
+                                                     is used.
+                                  Choices:
+                                  • One_Hour
+   execution_frequency            • Three_Hours      The maximum frequency with which AWS Config runs evaluations for a rule.
+   -                              • Six_Hours
+                                  • Twelve_Hours
+                                  • TwentyFour_Hours
+   input_parameters                                  A string, in JSON format, that is passed to the AWS Config rule Lambda function.
+   -
+   name                                              The name of the AWS Config resource.
+   - / required
+   profile                                           Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                            The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                            http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                     aliases: aws_region, ec2_region
+   scope                                             Defines which resources can trigger an evaluation for the rule.
+   -
+          compliance_id                              The ID of the only AWS resource that you want to trigger an evaluation for the rule. If you specify a resource ID, you must specify one resource
+          -                                          type for `compliance_types`.
+          compliance_types                           The resource types of only those AWS resources that you want to trigger an evaluation for the rule. You can only specify one type if you also
+          -                                          specify a resource ID for `compliance_id`.
+          tag_key                                    The tag key that is applied to only those AWS resources that you want to trigger an evaluation for the rule.
+          -
+          tag_value                                  The tag value applied to only those AWS resources that you want to trigger an evaluation for the rule. If you specify a value for `tag_value`,
+          -                                          you must also specify a value for `tag_key`.
+   security_token                                    AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                            aliases: access_token
+   source                                            Provides the rule owner (AWS or customer), the rule identifier, and the notifications that cause the function to evaluate your AWS resources.
+   -
+                                                     Provides the source and type of the event that causes AWS Config to evaluate your AWS resources.
+          details                                    This parameter expects a list of dictionaries. Each dictionary expects the following key/value pairs.
+          -                                          Key `EventSource` The source of the event, such as an AWS service, that triggers AWS Config to evaluate your AWS resources.
+                                                     Key `MessageType` The type of notification that triggers AWS Config to run an evaluation for a rule.
+                                                     Key `MaximumExecutionFrequency` The frequency at which you want AWS Config to run evaluations for a custom rule with a periodic trigger.
+          identifier                                 The ID of the only AWS resource that you want to trigger an evaluation for the rule. If you specify a resource ID, you must specify one resource
+          -                                          type for `compliance_types`.
+          owner                                      The resource types of only those AWS resources that you want to trigger an evaluation for the rule. You can only specify one type if you also
+          -                                          specify a resource ID for `compliance_id`.
+   state                          Choices:
+   -                              • present ←        Whether the Config rule should be present or absent.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no               When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *aws_config_rule-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_config_rule-examples*
+
+ - name: Create Config Rule for AWS Config
+   aws_config_rule:
+     name: test_config_rule
+     state: present
+     description: 'This AWS Config rule checks for public write access on S3 buckets'
+     scope:
+         compliance_types:
+             - 'AWS::S3::Bucket'
+     source:
+         owner: AWS
+         identifier: 'S3_BUCKET_PUBLIC_WRITE_PROHIBITED'
+
+STATUS                   *aws_config_rule-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Aaron Smith (@slapula)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_config_rule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_config_rule_module.html

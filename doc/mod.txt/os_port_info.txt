@@ -1,0 +1,171 @@
+SYNOPSIS                   *os_port_info*
+
+     • Retrieve information about ports from OpenStack.
+     • This module was called os_port_facts before Ansible 2.9, returning ansible_facts. Note that the os_port_info module no longer returns ansible_facts!
+
+   Aliases: os_port_facts
+
+REQUIREMENTS                   *os_port_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_port_info-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_timeout                        How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                      Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url, username,
+   auth                               password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports them. For other
+   dictionary                         plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud is provided or OpenStack
+                                      OS_" environment variables are present.
+   auth_type                          Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and the
+   string                             contents of the auth parameter should be updated accordingly.
+   availability_zone                  Ignored. Present for backwards compatibility
+   -
+   ca_cert                            A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                             aliases: cacert
+   client_cert                        A path to a client certificate to use as part of the SSL transaction.
+   string                             aliases: cert
+   client_key                         A path to a client key to use as part of the SSL transaction.
+   string                             aliases: key
+   cloud                              Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file. Provides
+   raw                                default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are present. If cloud is a
+                                      dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   filters                            A dictionary of meta data to use for further filtering. Elements of this dictionary will be matched against the returned port dictionaries. Matching is
+   -                                  currently limited to strings within the port dictionary, or strings within nested dictionaries.
+                       Choices:
+   interface           • admin        Endpoint URL type to fetch from the service catalog.
+   string              • internal     aliases: endpoint_type
+                       • public ←
+   port                               Unique name or ID of a port.
+   -
+   region_name                        Name of the region.
+   string
+   timeout           Default:         How long should ansible wait for the requested resource.
+   integer           180
+   validate_certs      Choices:       Whether or not SSL API requests should be verified.
+   boolean             • no ←         Before Ansible 2.3 this defaulted to yes.
+                       • yes          aliases: verify
+   wait                Choices:
+   boolean             • no           Should ansible wait until the requested resource is complete.
+                       • yes ←
+
+NOTES                   *os_port_info-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_port_info-examples*
+
+ # Gather information about all ports
+ - os_port_info:
+     cloud: mycloud
+   register: result
+
+ - debug:
+     msg: "{{ result.openstack_ports }}"
+
+ # Gather information about a single port
+ - os_port_info:
+     cloud: mycloud
+     port: 6140317d-e676-31e1-8a4a-b1913814a471
+
+ # Gather information about all ports that have device_id set to a specific value
+ # and with a status of ACTIVE.
+ - os_port_info:
+     cloud: mycloud
+     filters:
+       device_id: 1038a010-3a37-4a9d-82ea-652f1da36597
+       status: ACTIVE
+
+RETURN VALUES                   *os_port_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key                  Returned                                                                            Description
+   openstack_ports         always, but can be null List of port dictionaries. A subset of the dictionary keys listed below may be returned, depending on your cloud provider.
+   complex
+     admin_state_up                                The administrative state of the router, which is up (true) or down (false).
+     boolean               success                 Sample:
+                                                   True
+     allowed_address_pairs success                 A set of zero or more allowed address pairs. An address pair consists of an IP address and MAC address.
+     list
+     binding:host_id                               The UUID of the host where the port is allocated.
+     string                success                 Sample:
+                                                   b4bd682d-234a-4091-aa5b-4b025a6a7759
+     binding:profile       success                 A dictionary the enables the application running on the host to pass and receive VIF port-specific information to the plug-in.
+     dictionary
+     binding:vif_details                           A dictionary that enables the application to pass information about functions that the Networking API provides.
+     dictionary            success                 Sample:
+                                                   {'port_filter': True}
+     binding:vif_type                              The VIF type for the port.
+     dictionary            success                 Sample:
+                                                   ovs
+     binding:vnic_type                             The virtual network interface card (vNIC) type that is bound to the neutron port.
+     string                success                 Sample:
+                                                   normal
+     device_id                                     The UUID of the device that uses this port.
+     string                success                 Sample:
+                                                   b4bd682d-234a-4091-aa5b-4b025a6a7759
+     device_owner                                  The UUID of the entity that uses this port.
+     string                success                 Sample:
+                                                   network:router_interface
+     dns_assignment        success                 DNS assignment information.
+     list
+     dns_name              success                 DNS name
+     string
+     extra_dhcp_opts       success                 A set of zero or more extra DHCP option pairs. An option pair consists of an option value and name.
+     list
+     fixed_ips             success                 The IP addresses for the port. Includes the IP address and UUID of the subnet.
+     list
+     id                                            The UUID of the port.
+     string                success                 Sample:
+                                                   3ec25c97-7052-4ab8-a8ba-92faf84148de
+     ip_address                                    The IP address.
+     string                success                 Sample:
+                                                   127.0.0.1
+     mac_address                                   The MAC address.
+     string                success                 Sample:
+                                                   00:00:5E:00:53:42
+     name                                          The port name.
+     string                success                 Sample:
+                                                   port_name
+     network_id                                    The UUID of the attached network.
+     string                success                 Sample:
+                                                   dd1ede4f-3952-4131-aab6-3b8902268c7d
+     port_security_enabled success                 The port security status. The status is enabled (true) or disabled (false).
+     boolean
+     security_groups       success                 The UUIDs of any attached security groups.
+     list
+     status                                        The port status.
+     string                success                 Sample:
+                                                   ACTIVE
+     tenant_id                                     The UUID of the tenant who owns the network.
+     string                success                 Sample:
+                                                   51fce036d7984ba6af4f6c849f65ef00
+
+STATUS                   *os_port_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Shrewsbury (@Shrews)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_port_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_port_info_module.html

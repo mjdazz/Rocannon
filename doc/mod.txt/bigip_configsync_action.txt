@@ -1,0 +1,103 @@
+SYNOPSIS                   *bigip_configsync_action*
+
+     • Allows one to run different config-sync actions. These actions allow you to manually sync your configuration across multiple BIG-IPs when those devices are in an HA pair.
+
+PARAMETERS                   *bigip_configsync_action-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   device_group                                The device group that you want to perform config-sync actions on.
+   string / required
+   overwrite_config             Choices:
+   boolean                      • no ←         Indicates that the sync operation overwrites the configuration on the target.
+                                • yes
+   provider
+   dictionary                                  A dict object containing connection details.
+   added in 2.5
+         auth_provider                         Configures the auth provider for to obtain authentication tokens from the remote device.
+         string                                This option is really used when working with BIG-IQ devices.
+         password                              The password for the user account used to connect to the BIG-IP.
+         string / required                     You may omit this option by setting the environment variable F5_PASSWORD.
+                                               aliases: pass, pwd
+         server                                The BIG-IP host.
+         string / required                     You may omit this option by setting the environment variable F5_SERVER.
+         server_port          Default:         The BIG-IP server port.
+         integer              443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+         ssh_keyfile                           Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+         path                                  You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+         timeout                               Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+         integer                               before the operation is completed, the module will error.
+         transport              Choices:
+         string                 • cli          Configures the transport connection to use when connecting to the remote device.
+                                • rest ←
+         user                                  The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+         string / required                     You may omit this option by setting the environment variable F5_USER.
+         validate_certs         Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+         boolean                • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                                • yes ←
+   sync_device_to_group         Choices:       Specifies that the system synchronizes configuration data from this device to other members of the device group. In this case, the device will do a
+   boolean                      • no           "push" to all the other devices in the group. This option is mutually exclusive with the sync_group_to_device option.
+                                • yes
+   sync_most_recent_to_device   Choices:       Specifies that the system synchronizes configuration data from the device with the most recent configuration. In this case, the device will do a
+   boolean                      • no           "pull" from the most recently updated device. This option is mutually exclusive with the sync_device_to_group options.
+                                • yes
+
+NOTES                   *bigip_configsync_action-notes*
+
+   Note
+
+     • Requires the objectpath Python package on the host. This is as easy as pip install objectpath.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_configsync_action-examples*
+
+ - name: Sync configuration from device to group
+   bigip_configsync_action:
+     device_group: foo-group
+     sync_device_to_group: yes
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Sync configuration from most recent device to the current host
+   bigip_configsync_action:
+     device_group: foo-group
+     sync_most_recent_to_device: yes
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Perform an initial sync of a device to a new device group
+   bigip_configsync_action:
+     device_group: new-device-group
+     sync_device_to_group: yes
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+STATUS                   *bigip_configsync_action-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_configsync_action-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_configsync_action_module.html

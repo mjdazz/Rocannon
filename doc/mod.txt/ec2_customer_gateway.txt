@@ -1,0 +1,120 @@
+SYNOPSIS                   *ec2_customer_gateway*
+
+     • Manage an AWS customer gateway
+
+REQUIREMENTS                   *ec2_customer_gateway-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *ec2_customer_gateway-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   bgp_asn                                       Border Gateway Protocol (BGP) Autonomous System Number (ASN), required when state=present.
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   ip_address                                    Internet-routable IP address for customers gateway, must be a static address.
+   - / required
+   name                                          Name of the customer gateway.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   routing                        Choices:
+   -                              • static       The type of routing.
+   added in 2.4                   • dynamic ←
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    Create or terminate the Customer Gateway.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_customer_gateway-notes*
+
+   Note
+
+     • You cannot create more than one customer gateway with the same IP address. If you run an identical request more than one time, the first request creates the customer gateway, and subsequent
+       requests return information about the existing customer gateway. The subsequent requests do not create new customer gateway resources.
+     • Return values contain customer_gateway and customer_gateways keys which are identical dicts. You should use customer_gateway. See
+       https://github.com/ansible/ansible-modules-extras/issues/2773 for details.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_customer_gateway-examples*
+
+ # Create Customer Gateway
+ - ec2_customer_gateway:
+     bgp_asn: 12345
+     ip_address: 1.2.3.4
+     name: IndianapolisOffice
+     region: us-east-1
+   register: cgw
+
+ # Delete Customer Gateway
+ - ec2_customer_gateway:
+     ip_address: 1.2.3.4
+     name: IndianapolisOffice
+     state: absent
+     region: us-east-1
+   register: cgw
+
+RETURN VALUES                   *ec2_customer_gateway-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key                                     Returned                                                                           Description
+   gateway.customer_gateways success                                                    details about the gateway that was created.
+   complex
+       bgp_asn                                                                          The Border Gateway Autonomous System Number.
+       string                when exists and gateway is available.                      Sample:
+                                                                                        65123
+       customer_gateway_id                                                              gateway id assigned by amazon.
+       string                when exists and gateway is available.                      Sample:
+                                                                                        cgw-cb6386a2
+       ip_address                                                                       ip address of your gateway device.
+       string                when exists and gateway is available.                      Sample:
+                                                                                        1.2.3.4
+       state                 when gateway exists and is available.                      state of gateway.
+       string
+       tags                  when gateway exists and is available, and when tags exist. any tags on the gateway.
+       string
+       type                                                                             encryption type.
+       string                when gateway exists and is available.                      Sample:
+                                                                                        ipsec.1
+
+STATUS                   *ec2_customer_gateway-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Baydoun (@MichaelBaydoun)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_customer_gateway-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_customer_gateway_module.html

@@ -1,0 +1,111 @@
+SYNOPSIS                   *rax_clb_ssl*
+
+     • Set up, reconfigure, or remove SSL termination for an existing load balancer.
+
+REQUIREMENTS                   *rax_clb_ssl-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • pyrax
+     • python >= 2.6
+
+PARAMETERS                   *rax_clb_ssl-parameters*
+
+          Parameter                        Choices/Defaults                                                                         Comments
+   api_key                                                                  Rackspace API key, overrides credentials.
+   string                                                                   aliases: password
+   auth_endpoint            Default:                                        The URI of the authentication service.
+   -                        "https://identity.api.rackspacecloud.com/v2.0/"
+   certificate                                                              The public SSL certificates as a string in PEM format.
+   -
+   credentials                                                              File to find the Rackspace credentials in. Ignored if api_key and username are provided.
+   path                                                                     aliases: creds_file
+   enabled                    Choices:                                      If set to "false", temporarily disable SSL termination without discarding
+   boolean                    • no                                          existing credentials.
+                              • yes ←
+   env                                                                      Environment as configured in ~/.pyrax.cfg, see
+   string                                                                   https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration.
+   https_redirect             Choices:                                      If "true", the load balancer will redirect HTTP traffic to HTTPS.
+   boolean                    • no                                          Requires "secure_traffic_only" to be true. Incurs an implicit wait if SSL
+                              • yes                                         termination is also applied or removed.
+   identity_type            Default:                                        Authentication mechanism to use, such as rackspace or keystone.
+   -                        "rackspace"
+   intermediate_certificate                                                 One or more intermediate certificate authorities as a string in PEM
+   -                                                                        format, concatenated into a single string.
+   loadbalancer                                                             Name or ID of the load balancer on which to manage SSL termination.
+   - / required
+   private_key                                                              The private SSL key as a string in PEM format.
+   -
+   region                   Default:                                        Region to create an instance in.
+   string                   "DFW"
+   secure_port              Default:                                        The port to listen for secure traffic.
+   -                        443
+   secure_traffic_only        Choices:
+   boolean                    • no ←                                        If "true", the load balancer will "only" accept secure traffic.
+                              • yes
+   state                      Choices:                                      If set to "present", SSL termination will be added to this load balancer.
+   -                          • present ←                                   If "absent", SSL termination will be removed instead.
+                              • absent
+   tenant_id                                                                The tenant ID used for authentication.
+   -
+   tenant_name                                                              The tenant name used for authentication.
+   -
+   username                                                                 Rackspace username, overrides credentials.
+   string
+   validate_certs             Choices:                                      Whether or not to require SSL validation of API endpoints.
+   boolean                    • no                                          aliases: verify_ssl
+                              • yes
+   wait                       Choices:
+   boolean                    • no ←                                        Wait for the balancer to be in state "running" before turning.
+                              • yes
+   wait_timeout             Default:                                        How long before "wait" gives up, in seconds.
+   -                        300
+
+NOTES                   *rax_clb_ssl-notes*
+
+   Note
+
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+
+EXAMPLES                   *rax_clb_ssl-examples*
+
+ - name: Enable SSL termination on a load balancer
+   rax_clb_ssl:
+     loadbalancer: the_loadbalancer
+     state: present
+     private_key: "{{ lookup('file', 'credentials/server.key' ) }}"
+     certificate: "{{ lookup('file', 'credentials/server.crt' ) }}"
+     intermediate_certificate: "{{ lookup('file', 'credentials/trust-chain.crt') }}"
+     secure_traffic_only: true
+     wait: true
+
+ - name: Disable SSL termination
+   rax_clb_ssl:
+     loadbalancer: "{{ registered_lb.balancer.id }}"
+     state: absent
+     wait: true
+
+STATUS                   *rax_clb_ssl-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ash Wilson (@smashwilson)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *rax_clb_ssl-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/rax_clb_ssl_module.html

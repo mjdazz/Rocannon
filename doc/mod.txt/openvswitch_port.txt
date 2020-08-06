@@ -1,15 +1,84 @@
-SYNOPSIS                           *openvswitch_port*
+SYNOPSIS                   *openvswitch_port*
 
-New in version 1.4.
+     • Manage Open vSwitch ports
 
-Manage Open vSwitch ports
+REQUIREMENTS                   *openvswitch_port-requirements*
 
-EXAMPLES                           *openvswitch_port-examples*
->
-    # Creates port eth2 on bridge br-ex
-    - openvswitch_port: bridge=br-ex port=eth2 state=present
-   
+   The below requirements are needed on the host that executes this module.
+
+     • ovs-vsctl
+
+PARAMETERS                   *openvswitch_port-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   bridge                        Name of bridge to manage
+   - / required
+   external_ids Default:         Dictionary of external_ids applied to a port.
+   -            {}
+   port                          Name of port to manage on the bridge
+   - / required
+   set                           Set a single property on a port.
+   -
+   state          Choices:
+   -              • present ←    Whether the port should exist
+                  • absent
+   tag                           VLAN tag for this port. Must be a value between 0 and 4095.
+   -
+   timeout      Default:         How long to wait for ovs-vswitchd to respond
+   -            5
+
+EXAMPLES                   *openvswitch_port-examples*
+
+ # Creates port eth2 on bridge br-ex
+ - openvswitch_port:
+     bridge: br-ex
+     port: eth2
+     state: present
+
+ # Creates port eth6
+ - openvswitch_port:
+     bridge: bridge-loop
+     port: eth6
+     state: present
+     set: Interface eth6
+
+ # Creates port vlan10 with tag 10 on bridge br-ex
+ - openvswitch_port:
+     bridge: br-ex
+     port: vlan10
+     tag: 10
+     state: present
+     set: Interface vlan10
+
+ # Assign interface id server1-vifeth6 and mac address 00:00:5E:00:53:23
+ # to port vifeth6 and setup port to be managed by a controller.
+ - openvswitch_port:
+     bridge: br-int
+     port: vifeth6
+     state: present
+   args:
+     external_ids:
+       iface-id: '{{ inventory_hostname }}-vifeth6'
+       attached-mac: '00:00:5E:00:53:23'
+       vm-id: '{{ inventory_hostname }}'
+       iface-status: active
+
+STATUS                   *openvswitch_port-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *openvswitch_port-red hat support*
+
+     • David Stygstra (@stygstra)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *openvswitch_port-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/openvswitch_port_module.html
+https://docs.ansible.com/ansible/latest/modules/openvswitch_port_module.html

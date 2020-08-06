@@ -1,0 +1,124 @@
+SYNOPSIS                   *na_ontap_broadcast_domain*
+
+     • Modify a ONTAP broadcast domain.
+
+REQUIREMENTS                   *na_ontap_broadcast_domain-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_broadcast_domain-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   from_name
+   -                               Specify the broadcast domain name to be split into new broadcast domain.
+   added in 2.8
+   hostname
+   string /                        The hostname or IP address of the ONTAP instance.
+   required
+   http_port                       Override the default port (80 or 443) with this port
+   integer
+   https            Choices:
+   boolean          • no ←         Enable and disable https
+                    • yes
+   ipspace                         Specify the required ipspace for the broadcast domain.
+   -                               A domain ipspace can not be modified after the domain has been created.
+   mtu                             Specify the required mtu for the broadcast domain.
+   -
+   name                            Specify the broadcast domain name.
+   - / required                    aliases: broadcast_domain
+   ontapi                          The ontap api version to use
+   integer
+   password                        Password for the specified user.
+   string /                        aliases: pass
+   required
+                                   Specify the ports associated with this broadcast domain. Should be comma separated.
+                                   It represents the expected state of a list of ports at any time.
+   ports                           Add a port if it is specified in expected state but not in current state.
+   -                               Delete a port if it is specified in current state but not in expected state.
+                                   For split action, it represents the ports to be split from current broadcast domain and added to the new broadcast domain.
+                                   if all ports are removed or split from a broadcast domain, the broadcast domain will be deleted automatically.
+   state            Choices:
+   -                • present ←    Whether the specified broadcast domain should exist or not.
+                    • absent
+                    Choices:       REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest         • Never        Always -- will always use the REST API
+   string           • Always       Never -- will always use the ZAPI
+                    • Auto ←       Auto -- will try to use the REST Api
+   username                        This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read the
+   string /                        documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+   required                        aliases: user
+   validate_certs   Choices:       If set to no, the SSL certificates will not be validated.
+   boolean          • no           This should only set to False used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+NOTES                   *na_ontap_broadcast_domain-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_broadcast_domain-examples*
+
+ - name: create broadcast domain
+   na_ontap_broadcast_domain:
+     state: present
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     hostname: "{{ netapp_hostname }}"
+     name: ansible_domain
+     mtu: 1000
+     ipspace: Default
+     ports: ["khutton-vsim1:e0d-12", "khutton-vsim1:e0d-13"]
+ - name: modify broadcast domain
+   na_ontap_broadcast_domain:
+     state: present
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     hostname: "{{ netapp_hostname }}"
+     name: ansible_domain
+     mtu: 1100
+     ipspace: Default
+     ports: ["khutton-vsim1:e0d-12", "khutton-vsim1:e0d-13"]
+ - name: split broadcast domain
+   na_ontap_broadcast_domain:
+     state: present
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     hostname: "{{ netapp_hostname }}"
+     from_name: ansible_domain
+     name: new_ansible_domain
+     mtu: 1200
+     ipspace: Default
+     ports: khutton-vsim1:e0d-12
+ - name: delete broadcast domain
+   na_ontap_broadcast_domain:
+     state: absent
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     hostname: "{{ netapp_hostname }}"
+     name: ansible_domain
+     ipspace: Default
+
+STATUS                   *na_ontap_broadcast_domain-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_broadcast_domain-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_broadcast_domain_module.html

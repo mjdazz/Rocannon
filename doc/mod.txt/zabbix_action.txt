@@ -1,0 +1,334 @@
+SYNOPSIS                   *zabbix_action*
+
+     • This module allows you to create, modify and delete Zabbix actions.
+
+REQUIREMENTS                   *zabbix_action-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • zabbix-api >= 0.5.4
+
+PARAMETERS                   *zabbix_action-parameters*
+
+            Parameter                 Choices/Defaults                                                                        Comments
+   acknowledge_default_message                                 Update operation (known as "Acknowledge operation" before Zabbix 4.0) message text.
+   -                                                           Works only with >= Zabbix 3.4
+   acknowledge_default_subject                                 Update operation (known as "Acknowledge operation" before Zabbix 4.0) message subject.
+   -                                                           Works only with >= Zabbix 3.4
+   acknowledge_operations                                      List of acknowledge operations.
+   list                                                        Suboptions are the same as for operations.
+                                                               Works only with >= Zabbix 3.4
+   conditions                                                  List of dictionaries of conditions to evaluate.
+   list                                                        For more information about suboptions of this option please check out Zabbix API documentation
+                                                               https://www.zabbix.com/documentation/3.4/manual/api/reference/action/object#action_filter_condition
+        formulaid                                              Arbitrary unique ID that is used to reference the condition from a custom expression.
+        -                                                      Can only contain upper-case letters.
+                                                               Required for custom expression filters.
+                                 Choices:
+                                 • =
+                                 • <>
+                                 • like
+                                 • not like
+        operator                 • in                          Condition operator.
+        -                        • >=                          When type is set to time_period, the choices are in, not in.
+                                 • <=                          matches, does not match, Yes and No condition operators work only with >= Zabbix 4.0
+                                 • not in
+                                 • matches
+                                 • does not match
+                                 • Yes
+                                 • No
+                                 Choices:
+                                 • host_group
+                                 • host
+                                 • trigger
+                                 • trigger_name
+                                 • trigger_severity
+                                 • time_period
+                                 • host_template
+                                 • application
+                                 • maintenance_status
+                                 • event_tag
+                                 • event_tag_value
+                                 • host_IP
+                                 • discovered_service_type
+        type                     • discovered_service_port     Type (label) of the condition.
+        -                        • discovery_status
+                                 • uptime_or_downtime_duration
+                                 • received_value
+                                 • discovery_rule
+                                 • discovery_check
+                                 • proxy
+                                 • discovery_object
+                                 • proxy
+                                 • host_name
+                                 • host_metadata
+                                 • host_group
+                                 • host
+                                 • host_template
+                                 • application
+                                 • event_type
+                                                               Value to compare with.
+                                                               When type is set to discovery_status, the choices are up, down, discovered, lost.
+                                                               When type is set to discovery_object, the choices are host, service.
+        value                                                  When type is set to event_type, the choices are item in not supported state, item in normal state, LLD rule in not supported state,
+        -                                                      LLD rule in normal state, trigger in unknown state, trigger in normal state.
+                                                               When type is set to trigger_severity, the choices are (case-insensitive) not classified, information, warning, average, high, disaster
+                                                               irrespective of user-visible names being changed in Zabbix. Defaults to not classified if omitted.
+                                                               Besides the above options, this is usually either the name of the object or a string to compare with.
+   default_message                                             Problem message default text.
+   -
+   default_subject                                             Problem message default subject.
+   -
+   esc_period                                                  Default operation step duration. Must be greater than 60 seconds. Accepts seconds, time unit with suffix and user macro.
+   -                                                           Required when state=present.
+                                 Choices:
+   eval_type                     • andor                       Filter condition evaluation method.
+   -                             • and                         Defaults to andor if conditions are less then 2 or if formula is not specified.
+                                 • or                          Defaults to custom_expression when formula is specified.
+                                 • custom_expression
+                                 Choices:
+   event_source                  • trigger                     Type of events that the action will handle.
+   -                             • discovery                   Required when state=present.
+                                 • auto_registration
+                                 • internal
+                                                               User-defined expression to be used for evaluating conditions of filters with a custom expression.
+                                                               The expression must contain IDs that reference specific filter conditions by its formulaid.
+   formula                                                     The IDs used in the expression must exactly match the ones defined in the filter conditions. No condition can remain unused or
+   -                                                           omitted.
+                                                               Required for custom expression filters.
+                                                               Use sequential IDs that start at "A". If non-sequential IDs are used, Zabbix re-indexes them. This makes each module run notice the
+                                                               difference in IDs and update the action.
+   http_login_password                                         Basic Auth password
+   string
+   http_login_user                                             Basic Auth login
+   string / required
+   login_password                                              Zabbix user password.
+   string / required
+   login_user                                                  Zabbix user name.
+   string / required
+   name                                                        Name of the action
+   - / required
+   operations                                                  List of action operations
+   list
+        command                                                Command to run.
+        -                                                      Required when type=remote_command and command_type!=global_script.
+                                 Choices:
+                                 • custom_script
+        command_type             • ipmi                        Type of operation command.
+        -                        • ssh                         Required when type=remote_command.
+                                 • telnet
+                                 • global_script
+                                                               Duration of an escalation step in seconds.
+        esc_period             Default:                        Must be greater than 60 seconds.
+        -                      "0s"                            Accepts seconds, time unit with suffix and user macro.
+                                                               If set to 0 or 0s, the default action escalation period will be used.
+        esc_step_from          Default:                        Step to start escalation from.
+        -                      1
+        esc_step_to            Default:                        Step to end escalation at.
+        -                      1
+                                 Choices:
+        execute_on               • agent                       Target on which the custom script operation command will be executed.
+        -                        • server                      Required when type=remote_command and command_type=custom_script.
+                                 • proxy
+        host_groups                                            List of host groups host should be added to.
+        list                                                   Required when type=add_to_host_group or type=remove_from_host_group.
+        inventory                                              Host inventory mode.
+        -                                                      Required when type=set_host_inventory_mode.
+        media_type             Default:                        Media type that will be used to send the message.
+        -                      "all"                           Set to all for all media types
+        message                                                Operation message text.
+        -                                                      Will check the 'default message' and use the text from default_message if this and default_subject are not specified
+        operation_condition      Choices:
+        string                   • acknowledged                The action operation condition object defines a condition that must be met to perform the current operation.
+                                 • not_acknowledged
+        password                                               Password used for authentication.
+        -                                                      Required when type=remote_command and command_type in [ssh, telnet].
+        port                                                   Port number used for authentication.
+        -                                                      Required when type=remote_command and command_type in [ssh, telnet].
+        run_on_groups                                          Host groups to run remote commands on.
+        -                                                      Required when type=remote_command if run_on_hosts is not set.
+        run_on_hosts                                           Hosts to run remote commands on.
+        -                                                      Required when type=remote_command if run_on_groups is not set.
+                                                               If set to 0 the command will be run on the current host.
+        script_name                                            The name of script used for global script commands.
+        -                                                      Required when type=remote_command and command_type=global_script.
+        send_to_groups                                         User groups to send messages to.
+        list
+        send_to_users                                          Users (usernames or aliases) to send messages to.
+        list
+        ssh_auth_type            Choices:                      Authentication method used for SSH commands.
+        -                        • password                    Required when type=remote_command and command_type=ssh.
+                                 • public_key
+        ssh_privatekey_file                                    Name of the private key file used for SSH commands with public key authentication.
+        -                                                      Required when type=remote_command and command_type=ssh.
+        ssh_publickey_file                                     Name of the public key file used for SSH commands with public key authentication.
+        -                                                      Required when type=remote_command and command_type=ssh.
+        subject                                                Operation message subject.
+        -                                                      Will check the 'default message' and use the text from default_subject if this and default_subject are not specified
+        templates                                              List of templates host should be linked to.
+        list                                                   Required when type=link_to_template or type=unlink_from_template.
+                                 Choices:
+                                 • send_message
+                                 • remote_command
+                                 • add_host
+                                 • remove_host
+        type                     • add_to_host_group           Type of operation.
+        -                        • remove_from_host_group
+                                 • link_to_template
+                                 • unlink_from_template
+                                 • enable_host
+                                 • disable_host
+                                 • set_host_inventory_mode
+        username                                               User name used for authentication.
+        -                                                      Required when type=remote_command and command_type in [ssh, telnet].
+   pause_in_maintenance          Choices:                      Whether to pause escalation during maintenance periods or not.
+   boolean                       • no                          Can be used when event_source=trigger.
+                                 • yes ←
+   recovery_default_message                                    Recovery message text.
+   -                                                           Works only with >= Zabbix 3.2
+   recovery_default_subject                                    Recovery message subject.
+   -                                                           Works only with >= Zabbix 3.2
+   recovery_operations                                         List of recovery operations.
+   list                                                        Suboptions are the same as for operations.
+                                                               Works only with >= Zabbix 3.2
+   server_url                                                  URL of Zabbix server, with protocol (http or https). url is an alias for server_url.
+   string / required                                           aliases: url
+   state                         Choices:                      State of the action.
+   -                             • present ←                   On present, it will create an action if it does not exist or update the action if the associated data is different.
+                                 • absent                      On absent, it will remove the action if it exists.
+   status                        Choices:
+   -                             • enabled ←                   Status of the action.
+                                 • disabled
+   timeout                     Default:                        The timeout of API request (seconds).
+   integer                     10
+   validate_certs                Choices:                      If set to False, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed
+   boolean                       • no                          certificates.
+   added in 2.5                  • yes ←
+
+NOTES                   *zabbix_action-notes*
+
+   Note
+
+     • Only Zabbix >= 3.0 is supported.
+     • If you use login_password=zabbix, the word “zabbix” is replaced by “""""” in all module output, because login_password uses no_log. See this FAQ for more information.
+
+EXAMPLES                   *zabbix_action-examples*
+
+ # Trigger action with only one condition
+ - name: Deploy trigger action
+   zabbix_action:
+     server_url: "http://zabbix.example.com/zabbix/"
+     login_user: Admin
+     login_password: secret
+     name: "Send alerts to Admin"
+     event_source: 'trigger'
+     state: present
+     status: enabled
+     esc_period: 60
+     conditions:
+       - type: 'trigger_severity'
+         operator: '>='
+         value: 'Information'
+     operations:
+       - type: send_message
+         subject: "Something bad is happening"
+         message: "Come on, guys do something"
+         media_type: 'Email'
+         send_to_users:
+           - 'Admin'
+
+ # Trigger action with multiple conditions and operations
+ - name: Deploy trigger action
+   zabbix_action:
+     server_url: "http://zabbix.example.com/zabbix/"
+     login_user: Admin
+     login_password: secret
+     name: "Send alerts to Admin"
+     event_source: 'trigger'
+     state: present
+     status: enabled
+     esc_period: 60
+     conditions:
+       - type: 'trigger_name'
+         operator: 'like'
+         value: 'Zabbix agent is unreachable'
+         formulaid: A
+       - type: 'trigger_severity'
+         operator: '>='
+         value: 'disaster'
+         formulaid: B
+     formula: A or B
+     operations:
+       - type: send_message
+         media_type: 'Email'
+         send_to_users:
+           - 'Admin'
+       - type: remote_command
+         command: 'systemctl restart zabbix-agent'
+         command_type: custom_script
+         execute_on: server
+         run_on_hosts:
+           - 0
+
+ # Trigger action with recovery and acknowledge operations
+ - name: Deploy trigger action
+   zabbix_action:
+     server_url: "http://zabbix.example.com/zabbix/"
+     login_user: Admin
+     login_password: secret
+     name: "Send alerts to Admin"
+     event_source: 'trigger'
+     state: present
+     status: enabled
+     esc_period: 60
+     conditions:
+       - type: 'trigger_severity'
+         operator: '>='
+         value: 'Information'
+     operations:
+       - type: send_message
+         subject: "Something bad is happening"
+         message: "Come on, guys do something"
+         media_type: 'Email'
+         send_to_users:
+           - 'Admin'
+     recovery_operations:
+       - type: send_message
+         subject: "Host is down"
+         message: "Come on, guys do something"
+         media_type: 'Email'
+         send_to_users:
+           - 'Admin'
+     acknowledge_operations:
+       - type: send_message
+         media_type: 'Email'
+         send_to_users:
+           - 'Admin'
+
+RETURN VALUES                   *zabbix_action-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   msg             The result of the operation
+   string success  Sample:
+                   Action Deleted: Register webservers, ID: 0001
+
+STATUS                   *zabbix_action-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ruben Tsirunyan (@rubentsirunyan)
+     • Ruben Harutyunov (@K-DOT)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *zabbix_action-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/zabbix_action_module.html

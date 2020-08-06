@@ -1,0 +1,178 @@
+SYNOPSIS                   *bigiq_application_https_offload*
+
+     • Manages BIG-IQ applications used for load balancing an HTTPS application on port 443 with SSL offloading on BIG-IP.
+
+PARAMETERS                   *bigiq_application_https_offload-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   add_analytics         Choices:       Collects statistics of the BIG-IP that the application is deployed to.
+   boolean               • no ←         This parameter is only relevant when specifying a service_environment which is a BIG-IP; not an SSG.
+                         • yes
+   client_ssl_profile                   Specifies the SSL profile for managing client-side SSL traffic.
+   dictionary
+                                        One or more certificates and keys to associate with the SSL profile.
+                                        This option is always a list. The keys in the list dictate the details of the client/key/chain/passphrase combination.
+      cert_key_chain                    Note that BIG-IPs can only have one of each type of each certificate/key type. This means that you can only have one RSA, one DSA, and one ECDSA per profile.
+      raw                               If you attempt to assign two RSA, DSA, or ECDSA certificate/key combo, the device will reject this.
+                                        This list is a complex list that specifies a number of keys.
+                                        When creating a new profile, if this parameter is not specified, the default value of inherit will be used.
+         cert
+         string /                       Specifies a cert name for use.
+         required
+         chain                          Specifies a certificate chain that is relevant to the certificate and key mentioned earlier.
+         string                         This key is optional.
+         key
+         string /                       Specifies a key name.
+         required
+         passphrase                     Contains the passphrase of the key file, should it require one.
+         string                         Passphrases are encrypted on the remote BIG-IP device.
+      name                              The name of the client SSL profile to created and used.
+      -                                 When creating a new application, if this value is not specified, the default value of clientssl will be used.
+   description                          Description of the application.
+   string
+   inbound_virtual                      Settings to configure the virtual which will receive the inbound connection.
+   dictionary                           This virtual will be used to host the HTTPS endpoint of the application.
+                                        Traffic destined to the redirect_virtual will be offloaded to this parameter to ensure that proper redirection from insecure, to secure, occurs.
+      address                           Specifies destination IP address information to which the virtual server sends traffic.
+      string                            This parameter is required when creating a new application.
+      netmask                           Specifies the netmask to associate with the given address.
+      string                            This parameter is required when creating a new application.
+      port             Default:         The port that the virtual listens for connections on.
+      string           443              When creating a new application, if this parameter is not specified, the default value of 443 will be used.
+   name                                 Name of the new application.
+   string / required
+   provider
+   dictionary                           A dict object containing connection details.
+   added in 2.5
+      auth_provider                     Configures the auth provider for to obtain authentication tokens from the remote device.
+      string                            This option is really used when working with BIG-IQ devices.
+      password                          The password for the user account used to connect to the BIG-IP.
+      string /                          You may omit this option by setting the environment variable F5_PASSWORD.
+      required                          aliases: pass, pwd
+      server                            The BIG-IP host.
+      string /                          You may omit this option by setting the environment variable F5_SERVER.
+      required
+      server_port      Default:         The BIG-IP server port.
+      integer          443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+      ssh_keyfile                       Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+      path                              You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+      timeout                           Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+      integer                           operation is completed, the module will error.
+      transport          Choices:
+      string             • cli          Configures the transport connection to use when connecting to the remote device.
+                         • rest ←
+      user                              The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+      string /                          You may omit this option by setting the environment variable F5_USER.
+      required
+      validate_certs     Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+      boolean            • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                         • yes ←
+   redirect_virtual                     Settings to configure the virtual which will receive the connection to be redirected.
+   dictionary                           This virtual will be used to host the HTTP endpoint of the application.
+                                        Traffic destined to this parameter will be offloaded to the inbound_virtual parameter to ensure that proper redirection from insecure, to secure, occurs.
+      address                           Specifies destination IP address information to which the virtual server sends traffic.
+      string                            This parameter is required when creating a new application.
+      netmask                           Specifies the netmask to associate with the given address.
+      string                            This parameter is required when creating a new application.
+      port             Default:         The port that the virtual listens for connections on.
+      string           80               When creating a new application, if this parameter is not specified, the default value of 80 will be used.
+   servers                              A list of servers that the application is hosted on.
+   list                                 If you are familiar with other BIG-IP setting, you might also refer to this list as the list of pool members.
+                                        When creating a new application, at least one server is required.
+      address                           The IP address of the server.
+      string
+      port             Default:         The port of the server.
+      string           80
+   service_environment                  Specifies the name of service environment or the hostname of the BIG-IP that the application will be deployed to.
+   string                               When creating a new application, this parameter is required.
+   state                 Choices:       The state of the resource on the system.
+   string                • absent       When present, guarantees that the resource exists with the provided attributes.
+                         • present ←    When absent, removes the resource from the system.
+   wait                  Choices:
+   boolean               • no           If the module should wait for the application to be created, deleted or updated.
+                         • yes ←
+
+NOTES                   *bigiq_application_https_offload-notes*
+
+   Note
+
+     • This module will not work on BIGIQ version 6.1.x or greater.
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigiq_application_https_offload-examples*
+
+ - name: Load balance an HTTPS application on port 443 with SSL offloading on BIG-IP
+   bigiq_application_https_offload:
+     name: my-app
+     description: Redirect HTTP to HTTPS
+     service_environment: my-ssg
+     servers:
+       - address: 1.2.3.4
+         port: 8080
+       - address: 5.6.7.8
+         port: 8080
+     inbound_virtual:
+       address: 2.2.2.2
+       netmask: 255.255.255.255
+       port: 443
+     redirect_virtual:
+       address: 2.2.2.2
+       netmask: 255.255.255.255
+       port: 80
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+     state: present
+   delegate_to: localhost
+
+RETURN VALUES                   *bigiq_application_https_offload-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key             Returned                                                                          Description
+   description                          The new description of the application of the resource.
+   string                      changed  Sample:
+                                        My application
+   inbound_virtual_destination          The destination of the virtual that was created.
+   string                      changed  Sample:
+                                        6.7.8.9
+   inbound_virtual_netmask              The network mask of the provided inbound destination.
+   string                      changed  Sample:
+                                        255.255.255.0
+   inbound_virtual_port                 The port the inbound virtual address listens on.
+   integer                     changed  Sample:
+                                        80
+   servers                              List of servers, and their ports, that make up the application.
+   complex                     changed  Sample:
+                                        hash/dictionary of values
+              address                   The IP address of the server.
+              string           changed  Sample:
+                                        2.3.4.5
+              port                      The port that the server listens on.
+              integer          changed  Sample:
+                                        8080
+   service_environment                  The environment which the service was deployed to.
+   string                      changed  Sample:
+                                        my-ssg1
+
+STATUS                   *bigiq_application_https_offload-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigiq_application_https_offload-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigiq_application_https_offload_module.html

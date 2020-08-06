@@ -1,0 +1,105 @@
+SYNOPSIS                   *ovirt_event_info*
+
+     • Retrieve information about one or more oVirt/RHV events.
+     • This module was called ovirt_event_facts before Ansible 2.9, returning ansible_facts. Note that the ovirt_event_info module no longer returns ansible_facts!
+
+   Aliases: ovirt_event_facts
+
+REQUIREMENTS                   *ovirt_event_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • ovirt-engine-sdk-python >= 4.3.0
+
+PARAMETERS                   *ovirt_event_info-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+                                      Dictionary with values needed to create HTTP/HTTPS connection to oVirt:
+                                      username[required] - The name of the user, something like [email protected]. Default value is set by OVIRT_USERNAME environment variable.
+                                      password[required] - The password of the user. Default value is set by OVIRT_PASSWORD environment variable.
+                                      url- A string containing the API URL of the server, usually something like `https://server.example.com/ovirt-engine/api`. Default value is set by OVIRT_URL
+                                      environment variable. Either url or hostname is required.
+   auth                               hostname - A string containing the hostname of the server, usually something like `server.example.com`. Default value is set by OVIRT_HOSTNAME environment
+   dictionary /                       variable. Either url or hostname is required.
+   required                           token - Token to be used instead of login with username/password. Default value is set by OVIRT_TOKEN environment variable.
+                                      insecure - A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                                      ca_file - A PEM file containing the trusted CA certificates. The certificate presented by the server will be verified using these CA certificates. If `ca_file`
+                                      parameter is not set, system wide CA certificate store is used. Default value is set by OVIRT_CAFILE environment variable.
+                                      kerberos - A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                                      headers - Dictionary of HTTP headers to be added to each API call.
+   case_sensitive      Choices:       Indicates if the search performed using the search parameter should be performed taking case into account. The default value is true, which means that case is
+   boolean             • no           taken into account. If you want to search ignoring case set it to false.
+                       • yes ←
+   fetch_nested        Choices:       If yes the module will fetch additional data from the API.
+   boolean             • no           It will fetch only IDs of nested entity. It doesn't fetch multiple levels of nested attributes. Only the attributes of the current entity. User can configure
+                       • yes          to fetch other attributes of the nested entities by specifying nested_attributes.
+   from_                              Indicates the event index after which events should be returned. The indexes of events are strictly increasing, so when this parameter is used only the events
+   integer                            with greater indexes will be returned.
+   headers                            Additional HTTP headers.
+   string
+   max                                Sets the maximum number of events to return. If not specified all the events are returned.
+   integer
+   nested_attributes                  Specifies list of the attributes which should be fetched from the API.
+   list                               This parameter apply only when fetch_nested is true.
+   query                              Additional URL query parameters.
+   string
+   search                             Search term which is accepted by the oVirt/RHV API.
+   string                             For example to search for events of severity alert use the following pattern: severity=alert
+   wait                Choices:
+   boolean             • no           If True wait for the response.
+                       • yes ←
+
+NOTES                   *ovirt_event_info-notes*
+
+   Note
+
+     • In order to use this module you have to install oVirt Python SDK. To ensure it’s installed with correct version you can create the following task: pip: name=ovirt-engine-sdk-python
+       version=4.3.0
+
+EXAMPLES                   *ovirt_event_info-examples*
+
+ # Examples don't contain the auth parameter for simplicity,
+ # look at the ovirt_auth module to see how to reuse authentication.
+
+ - name: Return all events
+   ovirt_event_info:
+   register: result
+
+ - name: Return the last 10 events
+   ovirt_event_info:
+     max: 10
+   register: result
+
+ - name: Return all events of type alert
+   ovirt_event_info:
+     search: "severity=alert"
+   register: result
+ - debug:
+     msg: "{{ result.ovirt_events }}"
+
+RETURN VALUES                   *ovirt_event_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                  Description
+   ovirt_events On        List of dictionaries describing the events. Event attributes are mapped to dictionary keys. All event attributes can be found at the following url:
+   list         success." http://ovirt.github.io/ovirt-engine-api-model/master/#types/event
+
+STATUS                   *ovirt_event_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Keller (@nasx)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovirt_event_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovirt_event_info_module.html

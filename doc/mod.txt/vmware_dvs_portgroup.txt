@@ -1,0 +1,185 @@
+SYNOPSIS                   *vmware_dvs_portgroup*
+
+     • Create or remove a Distributed vSwitch portgroup.
+
+REQUIREMENTS                   *vmware_dvs_portgroup-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_dvs_portgroup-parameters*
+
+      Parameter               Choices/Defaults                                                                             Comments
+   hostname                                               The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                                 If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                                          Environment variable support added in Ansible 2.6.
+                   Default:                               Dictionary which configures the different security values for portgroup.
+   network_policy  {"forged_transmits": false,            Valid attributes are:
+   dictionary      "mac_changes": false, "promiscuous":   - promiscuous (bool): indicates whether promiscuous mode is allowed. (default: false)
+   added in 2.5    false}                                 - forged_transmits (bool): indicates whether forged transmits are allowed. (default: false)
+                                                          - mac_changes (bool): indicates whether mac changes are allowed. (default: false)
+   num_ports
+   integer /                                              The number of ports the portgroup should contain.
+   required
+                                                          The password of the vSphere vCenter or ESXi server.
+   password                                               If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                                 Environment variable support added in Ansible 2.6.
+                                                          aliases: pass, pwd
+   port            Default:                               The port number of the vSphere vCenter or ESXi server.
+   integer         443                                    If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                                           Environment variable support added in Ansible 2.6.
+                   Default:                               Dictionary which configures the advanced policy settings for the portgroup.
+                   {"block_override": true,               Valid attributes are:
+                   "ipfix_override": false,               - block_override (bool): indicates if the block policy can be changed per port. (default: true)
+                   "live_port_move": false,               - ipfix_override (bool): indicates if the ipfix policy can be changed per port. (default: false)
+                   "network_rp_override": false,          - live_port_move (bool): indicates if a live port can be moved in or out of the portgroup. (default: false)
+   port_policy     "port_config_reset_at_disconnect":     - network_rp_override (bool): indicates if the network resource pool can be changed per port. (default: false)
+   dictionary      true, "security_override": false,      - port_config_reset_at_disconnect (bool): indicates if the configuration of a port is reset automatically after disconnect. (default: true)
+   added in 2.5    "shaping_override": false,             - security_override (bool): indicates if the security policy can be changed per port. (default: false)
+                   "traffic_filter_override": false,      - shaping_override (bool): indicates if the shaping policy can be changed per port. (default: false)
+                   "uplink_teaming_override": false,      - traffic_filter_override (bool): indicates if the traffic filter can be changed per port. (default: false)
+                   "vendor_config_override": false,       - uplink_teaming_override (bool): indicates if the uplink teaming policy can be changed per port. (default: false)
+                   "vlan_override": false}                - vendor_config_override (bool): indicates if the vendor config can be changed per port. (default: false)
+                                                          - vlan_override (bool): indicates if the vlan can be changed per port. (default: false)
+   portgroup_name
+   string /                                               The name of the portgroup that is to be created or deleted.
+   required
+   portgroup_type    Choices:
+   string /          • earlyBinding                       See VMware KB 1022312 regarding portgroup types.
+   required          • lateBinding
+                     • ephemeral
+   proxy_host                                             Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                                 The format is a hostname or a IP.
+   added in 2.9                                           If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                                          This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                                             Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                                If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   state             Choices:
+   string /          • present                            Determines if the portgroup should be present or not.
+   required          • absent
+   added in 2.5
+   switch_name
+   string /                                               The name of the distributed vSwitch the port group should be created on.
+   required
+                                                          Dictionary which configures the different teaming values for portgroup.
+                   Default:                               Valid attributes are:
+   teaming_policy  {"inbound_policy": false,              - load_balance_policy (string): Network adapter teaming policy. (default: loadbalance_srcid)
+   dictionary      "load_balance_policy":                 - choices: [ loadbalance_ip, loadbalance_srcmac, loadbalance_srcid, loadbalance_loadbased, failover_explicit]
+   added in 2.5    "loadbalance_srcid",                   - "loadbalance_loadbased" is available from version 2.6 and onwards
+                   "notify_switches": true,               - inbound_policy (bool): Indicate whether or not the teaming policy is applied to inbound frames as well. (default: False)
+                   "rolling_order": false}                - notify_switches (bool): Indicate whether or not to notify the physical switch if a link fails. (default: True)
+                                                          - rolling_order (bool): Indicate whether or not to use a rolling policy when restoring links. (default: False)
+                                                          The username of the vSphere vCenter or ESXi server.
+   username                                               If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                                 Environment variable support added in Ansible 2.6.
+                                                          aliases: admin, user
+                     Choices:                             Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs    • no                                 If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean           • yes ←                              Environment variable support added in Ansible 2.6.
+                                                          If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+   vlan_id                                                The VLAN ID that should be configured with the portgroup, use 0 for no VLAN.
+   string /                                               If vlan_trunk is configured to be true, this can be a combination of multiple ranges and numbers, example: 1-200, 205, 400-4094.
+   required                                               The valid vlan_id range is from 0 to 4094. Overlapping ranges are allowed.
+   vlan_trunk        Choices:
+   boolean           • no ←                               Indicates whether this is a VLAN trunk or not.
+   added in 2.5      • yes
+
+NOTES                   *vmware_dvs_portgroup-notes*
+
+   Note
+
+     • Tested on vSphere 5.5
+     • Tested on vSphere 6.5
+
+EXAMPLES                   *vmware_dvs_portgroup-examples*
+
+ - name: Create vlan portgroup
+   vmware_dvs_portgroup:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     portgroup_name: vlan-123-portrgoup
+     switch_name: dvSwitch
+     vlan_id: 123
+     num_ports: 120
+     portgroup_type: earlyBinding
+     state: present
+   delegate_to: localhost
+
+ - name: Create vlan trunk portgroup
+   vmware_dvs_portgroup:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     portgroup_name: vlan-trunk-portrgoup
+     switch_name: dvSwitch
+     vlan_id: 1-1000, 1005, 1100-1200
+     vlan_trunk: True
+     num_ports: 120
+     portgroup_type: earlyBinding
+     state: present
+   delegate_to: localhost
+
+ - name: Create no-vlan portgroup
+   vmware_dvs_portgroup:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     portgroup_name: no-vlan-portrgoup
+     switch_name: dvSwitch
+     vlan_id: 0
+     num_ports: 120
+     portgroup_type: earlyBinding
+     state: present
+   delegate_to: localhost
+
+ - name: Create vlan portgroup with all security and port policies
+   vmware_dvs_portgroup:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     portgroup_name: vlan-123-portrgoup
+     switch_name: dvSwitch
+     vlan_id: 123
+     num_ports: 120
+     portgroup_type: earlyBinding
+     state: present
+     network_policy:
+       promiscuous: yes
+       forged_transmits: yes
+       mac_changes: yes
+     port_policy:
+       block_override: yes
+       ipfix_override: yes
+       live_port_move: yes
+       network_rp_override: yes
+       port_config_reset_at_disconnect: yes
+       security_override: yes
+       shaping_override: yes
+       traffic_filter_override: yes
+       uplink_teaming_override: yes
+       vendor_config_override: yes
+       vlan_override: yes
+   delegate_to: localhost
+
+STATUS                   *vmware_dvs_portgroup-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joseph Callen (@jcpowermac)
+     • Philippe Dellaert (@pdellaert) <philippe@dellaert.org>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_dvs_portgroup-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_dvs_portgroup_module.html

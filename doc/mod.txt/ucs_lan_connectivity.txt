@@ -1,0 +1,130 @@
+SYNOPSIS                   *ucs_lan_connectivity*
+
+     • Configures LAN Connectivity Policies on Cisco UCS Manager.
+     • Examples can be used with the UCS Platform Emulator https://communities.cisco.com/ucspe.
+
+REQUIREMENTS                   *ucs_lan_connectivity-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ucsmsdk
+
+PARAMETERS                   *ucs_lan_connectivity-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+                                          A description of the LAN Connectivity Policy.
+                                          Cisco recommends including information about where and when to use the policy.
+   description                            Enter up to 256 characters.
+   -                                      You can use any characters or spaces except the following:
+                                          ` (accent mark), (backslash), ^ (carat), " (double quote), = (equal sign), > (greater than), < (less than), or ' (single quote).
+                                          aliases: descr
+   hostname                               IP address or hostname of Cisco UCS Manager.
+   string / required
+   iscsi_vnic_list
+   -                                      List of iSCSI vNICs used by the LAN Connectivity Policy.
+   added in 2.8
+    iscsi_adapter_policy                  The iSCSI adapter policy associated with this iSCSI vNIC.
+    -
+    mac_address          Default:         The MAC address associated with this iSCSI vNIC.
+    -                    "derived"        If the MAC address is not set, Cisco UCS Manager uses a derived MAC address.
+    name                                  The name of the iSCSI vNIC.
+    - / required
+    overlay_vnic                          The LAN vNIC associated with this iSCSI vNIC.
+    -
+    state                  Choices:
+    -                      • present ←    If present, will verify iscsi vnic is configured within policy. If absent, will verify iscsi vnic is absent from policy.
+                           • absent
+    vlan_name            Default:         The VLAN used for the iSCSI vNIC.
+    -                    "default"
+                                          The name of the LAN Connectivity Policy.
+   name                                   This name can be between 1 and 16 alphanumeric characters.
+   - / required                           You cannot use spaces or any special characters other than - (hyphen), "_" (underscore), : (colon), and . (period).
+                                          You cannot change this name after the policy is created.
+   org_dn                Default:         Org dn (distinguished name)
+   -                     "org-root"
+   password                               Password for Cisco UCS Manager authentication.
+   string / required
+   port                                   Port number to be used during connection (by default uses 443 for https and 80 for http connection).
+   integer
+   proxy                                  If use_proxy is no, specfies proxy to be used for connection. e.g. 'http://proxy.xy.z:8080'
+   string
+   state                   Choices:       If present, will verify LAN Connectivity Policies are present and will create if needed.
+   -                       • present ←    If absent, will verify LAN Connectivity Policies are absent and will delete if needed.
+                           • absent
+   use_proxy               Choices:
+   boolean                 • no           If no, will not use the proxy as defined by system environment variable.
+                           • yes ←
+   use_ssl                 Choices:
+   boolean                 • no           If no, an HTTP connection will be used instead of the default HTTPS connection.
+                           • yes ←
+   username              Default:         Username for Cisco UCS Manager authentication.
+   string                "admin"
+   vnic_list                              List of vNICs used by the LAN Connectivity Policy.
+   -                                      vNICs used by the LAN Connectivity Policy must be created from a vNIC template.
+   added in 2.8
+    adapter_policy                        The name of the Ethernet adapter policy.
+    -                                     A user defined policy can be used, or one of the system defined policies.
+    name                                  The name of the vNIC.
+    - / required
+    order                Default:         String specifying the vNIC assignment order (e.g., '1', '2').
+    -                    "unspecified"
+    state                  Choices:
+    -                      • present ←    If present, will verify vnic is configured within policy. If absent, will verify vnic is absent from policy.
+                           • absent
+    vnic_template                         The name of the vNIC template.
+    - / required
+
+EXAMPLES                   *ucs_lan_connectivity-examples*
+
+ - name: Configure LAN Connectivity Policy
+   ucs_lan_connectivity:
+     hostname: 172.16.143.150
+     username: admin
+     password: password
+     name: Cntr-FC-Boot
+     vnic_list:
+     - name: eno1
+       vnic_template: Cntr-Template
+       adapter_policy: Linux
+     - name: eno2
+       vnic_template: Container-NFS-A
+       adapter_policy: Linux
+     - name: eno3
+       vnic_template: Container-NFS-B
+       adapter_policy: Linux
+     iscsi_vnic_list:
+     - name: iSCSIa
+       overlay_vnic: eno1
+       iscsi_adapter_policy: default
+       vlan_name: Container-MGMT-VLAN
+     - name: iSCSIb
+       overlay_vnic: eno3
+       iscsi_adapter_policy: default
+       vlan_name: Container-TNT-A-NFS
+
+ - name: Remove LAN Connectivity Policy
+   ucs_lan_connectivity:
+     hostname: 172.16.143.150
+     username: admin
+     password: password
+     name: Cntr-FC-Boot
+     state: absent
+
+STATUS                   *ucs_lan_connectivity-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • David Soper (@dsoper2)
+     • CiscoUcs (@CiscoUcs)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ucs_lan_connectivity-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ucs_lan_connectivity_module.html

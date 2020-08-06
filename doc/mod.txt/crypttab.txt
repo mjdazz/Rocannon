@@ -1,20 +1,57 @@
-SYNOPSIS                           *crypttab*
+SYNOPSIS                   *crypttab*
 
-New in version 1.8.
+     • Control Linux encrypted block devices that are set up during system boot in /etc/crypttab.
 
-Control Linux encrypted block devices that are set up during system boot in /etc/crypttab.
+PARAMETERS                   *crypttab-parameters*
 
-EXAMPLES                           *crypttab-examples*
->
-    - name: Set the options explicitly a deivce which must already exist
-      crypttab: name=luks-home state=present opts=discard,cipher=aes-cbc-essiv:sha256
-   
-    - name: Add the 'discard' option to any existing options for all devices
-      crypttab: name={{ item.device }} state=opts_present opts=discard
-      with_items: ansible_mounts
-      when: '/dev/mapper/luks-' in {{ item.device }}
-   
+     Parameter    Choices/Defaults                                                                              Comments
+   backing_device                  Path to the underlying block device or file, or the UUID of a block-device prefixed with UUID=.
+   string
+   name                            Name of the encrypted block device as it appears in the /etc/crypttab file, or optionally prefixed with /dev/mapper/, as it appears in the filesystem.
+   string /                        /dev/mapper/ will be stripped from name.
+   required
+   opts                            A comma-delimited list of options. See crypttab(5 ) for details.
+   string
+   password                        Encryption password, the path to a file containing the password, or - or unset if the password should be entered at boot.
+   path
+   path           Default:         Path to file to use instead of /etc/crypttab.
+   path           "/etc/crypttab"  This might be useful in a chroot environment.
+                    Choices:       Use present to add a line to /etc/crypttab or update its definition if already present.
+   state            • absent       Use absent to remove a line with matching name.
+   string /         • opts_absent  Use opts_present to add options to those already present; options with different values will be updated.
+   required         • opts_present Use opts_absent to remove options from the existing set.
+                    • present
+
+EXAMPLES                   *crypttab-examples*
+
+ - name: Set the options explicitly a device which must already exist
+   crypttab:
+     name: luks-home
+     state: present
+     opts: discard,cipher=aes-cbc-essiv:sha256
+
+ - name: Add the 'discard' option to any existing options for all devices
+   crypttab:
+     name: '{{ item.device }}'
+     state: opts_present
+     opts: discard
+   loop: '{{ ansible_mounts }}'
+   when: "'/dev/mapper/luks-' in {{ item.device }}"
+
+STATUS                   *crypttab-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Steve (@groks)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *crypttab-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/crypttab_module.html
+https://docs.ansible.com/ansible/latest/modules/crypttab_module.html

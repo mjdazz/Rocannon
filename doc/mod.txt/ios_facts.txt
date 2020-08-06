@@ -1,0 +1,182 @@
+SYNOPSIS                   *ios_facts*
+
+     • Collects a base set of device facts from a remote device that is running IOS. This module prepends all of the base network fact keys with ansible_net_<fact>. The facts module will always
+       collect a base set of facts from the device and can enable or disable collection of additional facts.
+
+PARAMETERS                   *ios_facts-parameters*
+
+          Parameter         Choices/Defaults                                                                         Comments
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes with become_pass.
+                                             For more information please see the IOS Platform Options guide.
+   auth_pass
+   string                                    ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                             Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the
+                                             value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes.
+                                             For more information please see the IOS Platform Options guide.
+   authorize                  Choices:
+   boolean                    • no ←         ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+                              • yes
+                                             Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+                                             commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used
+                                             instead.
+   gather_network_resources                  When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include all and the resources like
+   -                                         interfaces, vlans etc. Can specify a list of values to include a larger subset. Values can also be used with an initial ! to specify that a specific
+   added in 2.9                              subset should not be collected. Valid subsets are 'all', 'interfaces', 'l2_interfaces', 'vlans', 'lag_interfaces', 'lacp', 'lacp_interfaces',
+                                             'lldp_global', 'lldp_interfaces', 'l3_interfaces'.
+                                             When supplied, this argument restricts the facts collected to a given subset.
+   gather_subset            Default:         Possible values for this argument include all, min, hardware, config, and interfaces.
+   -                        "!config"        Specify a list of values to include a larger subset.
+                                             Use a value with an initial ! to collect all facts except that subset.
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli.
+   provider                                  For more information please see the IOS Platform Options guide.
+   dictionary
+                                             ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                             A dict object containing connection details.
+       auth_pass                             Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the
+       string                                value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+       authorize              Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+       boolean                • no ←         commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used
+                              • yes          instead.
+       host                                  Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination
+       string / required                     address for the transport.
+       password                              Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is
+       string                                not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+       port                 Default:         Specifies the port to use when building the connection to the remote device.
+       integer              22
+       ssh_keyfile                           Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH
+       path                                  session. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+       timeout              Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+       integer              10               the operation is completed, the module will error.
+       username                              Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is
+       string                                not specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+
+NOTES                   *ios_facts-notes*
+
+   Note
+
+     • Tested against IOS 15.6
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Cisco devices see the Cisco integration page.
+
+EXAMPLES                   *ios_facts-examples*
+
+ - name: Gather all legacy facts
+   ios_facts:
+     gather_subset: all
+
+ - name: Gather only the config and default facts
+   ios_facts:
+     gather_subset:
+       - config
+
+ - name: Do not gather hardware facts
+   ios_facts:
+     gather_subset:
+       - "!hardware"
+
+ - name: Gather legacy and resource facts
+   ios_facts:
+     gather_subset: all
+     gather_network_resources: all
+
+ - name: Gather only the interfaces resource facts and no legacy facts
+   ios_facts:
+     gather_subset:
+       - '!all'
+       - '!min'
+     gather_network_resources:
+       - interfaces
+
+ - name: Gather interfaces resource and minimal legacy facts
+   ios_facts:
+     gather_subset: min
+     gather_network_resources: interfaces
+
+ - name: Gather L2 interfaces resource and minimal legacy facts
+   ios_facts:
+     gather_subset: min
+     gather_network_resources: l2_interfaces
+
+ - name: Gather L3 interfaces resource and minimal legacy facts
+   ios_facts:
+     gather_subset: min
+     gather_network_resources: l3_interfaces
+
+RETURN VALUES                   *ios_facts-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                   Key                        Returned                                                                     Description
+   ansible_net_all_ipv4_addresses       when interfaces is   All IPv4 addresses configured on the device
+   list                                 configured
+   ansible_net_all_ipv6_addresses       when interfaces is   All IPv6 addresses configured on the device
+   list                                 configured
+   ansible_net_api                      always               The name of the transport
+   string
+   ansible_net_config                   when config is       The current active config from the device
+   string                               configured
+   ansible_net_filesystems              when hardware is     All file system names available on the device
+   list                                 configured
+   ansible_net_filesystems_info         when hardware is     A hash of all file systems containing info about each file system (e.g. free and total space)
+   dictionary                           configured
+   ansible_net_gather_network_resources when the resource is The list of fact for network resource subsets collected from the device
+   list                                 configured
+   ansible_net_gather_subset            always               The list of fact subsets collected from the device
+   list
+   ansible_net_hostname                 always               The configured hostname of the device
+   string
+   ansible_net_image                    always               The image file the device is running
+   string
+   ansible_net_interfaces               when interfaces is   A hash of all interfaces running on the system
+   dictionary                           configured
+   ansible_net_iostype                  always               The operating system type (IOS or IOS-XE) running on the remote device
+   string
+   ansible_net_memfree_mb               when hardware is     The available free memory on the remote device in Mb
+   integer                              configured
+   ansible_net_memtotal_mb              when hardware is     The total memory on the remote device in Mb
+   integer                              configured
+   ansible_net_model                    always               The model name returned from the device
+   string
+   ansible_net_neighbors                when interfaces is   The list of CDP and LLDP neighbors from the remote device. If both, CDP and LLDP neighbor data is present on one port, CDP is preferred.
+   dictionary                           configured
+   ansible_net_python_version           always               The Python version Ansible controller is using
+   string
+   ansible_net_serialnum                always               The serial number of the remote device
+   string
+                                        when multiple
+   ansible_net_stacked_models           devices are          The model names of each device in the stack
+   list                                 configured in a
+                                        stack
+                                        when multiple
+   ansible_net_stacked_serialnums       devices are          The serial numbers of each device in the stack
+   list                                 configured in a
+                                        stack
+   ansible_net_version                  always               The operating system version running on the remote device
+   string
+
+STATUS                   *ios_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *ios_facts-red hat support*
+
+     • Peter Sprygada (@privateip)
+     • Sumit Jaiswal (@justjais)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ios_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ios_facts_module.html

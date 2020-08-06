@@ -1,0 +1,250 @@
+SYNOPSIS                   *jenkins_plugin*
+
+     • Ansible module which helps to manage Jenkins plugins.
+
+PARAMETERS                   *jenkins_plugin-parameters*
+
+       Parameter            Choices/Defaults                                                                            Comments
+   client_cert                                     PEM formatted certificate chain file to be used for SSL client authentication.
+   path                                            This file can also include the key as well, and if the key is included, client_key is not required.
+   client_key                                      PEM formatted file that contains your private key to be used for SSL client authentication.
+   path                                            If client_cert contains both the certificate and key, this option is not required.
+   force                Choices:                   If yes do not get a cached copy.
+   boolean              • no ←                     Alias thirsty has been deprecated and will be removed in 2.13.
+                        • yes                      aliases: thirsty
+   force_basic_auth     Choices:
+   boolean              • no ←                     Credentials specified with url_username and url_password should be passed in HTTP Header.
+                        • yes
+   group              Default:                     Name of the Jenkins group on the OS.
+   -                  "jenkins"
+   http_agent         Default:                     Header to identify as, generally appears in web server logs.
+   string             "ansible-httpget"
+   jenkins_home       Default:                     Home directory of the Jenkins user.
+   -                  "/var/lib/jenkins"
+   mode               Default:                     File mode applied on versioned plugins.
+   -                  "0644"
+   name                                            Plugin name.
+   - / required
+   owner              Default:                     Name of the Jenkins user on the OS.
+   -                  "jenkins"
+                        Choices:
+                        • absent
+                        • present ←
+   state                • pinned                   Desired plugin state.
+   -                    • unpinned                 If the latest is set, the check for new version will be performed every time. This is suitable to keep the plugin up-to-date.
+                        • enabled
+                        • disabled
+                        • latest
+   timeout            Default:                     Server connection timeout in secs.
+   -                  30
+                                                   Number of seconds after which a new copy of the update-center.json file is downloaded. This is used to avoid the need to download the plugin to
+   updates_expiration Default:                     calculate its checksum when latest is specified.
+   -                  86400                        Set it to 0 if no cache file should be used. In that case, the plugin file will always be downloaded to calculate its checksum when latest is
+                                                   specified.
+   updates_url        Default:                     URL of the Update Centre.
+   -                  "https://updates.jenkins.io" Used as the base URL to download the plugins and the update-center.json JSON file.
+   url                Default:                     URL of the Jenkins server.
+   string             "http://localhost:8080"
+   url_password                                    The password for use in HTTP basic authentication.
+   string                                          If the url_username parameter is not specified, the url_password parameter will not be used.
+   url_username                                    The username for use in HTTP basic authentication.
+   string                                          This parameter can be used without url_password for sites that allow empty passwords
+   use_proxy            Choices:
+   boolean              • no                       If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                        • yes ←
+   validate_certs       Choices:                   If no, SSL certificates will not be validated.
+   boolean              • no                       This should only be used on personally controlled sites using self-signed certificates.
+                        • yes ←
+                                                   Plugin version number.
+   version                                         If this option is specified, all plugin dependencies must be installed manually.
+   -                                               It might take longer to verify that the correct version is installed. This is especially true if a specific version number is specified.
+                                                   Quote the version to prevent the value to be interpreted as float. For example if 1.20 would be unquoted, it would become 1.2.
+   with_dependencies    Choices:                   Defines whether to install plugin dependencies.
+   boolean              • no                       This option takes effect only if the version is not defined.
+                        • yes ←
+
+NOTES                   *jenkins_plugin-notes*
+
+   Note
+
+     • Plugin installation should be run under root or the same user which owns the plugin files on the disk. Only if the plugin is not installed yet and no version is specified, the API
+       installation is performed which requires only the Web UI credentials.
+     • It’s necessary to notify the handler or call the service module to restart the Jenkins service after a new plugin was installed.
+     • Pinning works only if the plugin is installed and Jenkins service was successfully restarted after the plugin installation.
+     • It is not possible to run the module remotely by changing the url parameter to point to the Jenkins server. The module must be used on the host where Jenkins runs as it needs direct access
+       to the plugin files.
+     • The params option was removed in Ansible 2.5 due to circumventing Ansible’s option handling
+
+EXAMPLES                   *jenkins_plugin-examples*
+
+ - name: Install plugin
+   jenkins_plugin:
+     name: build-pipeline-plugin
+
+ - name: Install plugin without its dependencies
+   jenkins_plugin:
+     name: build-pipeline-plugin
+     with_dependencies: no
+
+ - name: Make sure the plugin is always up-to-date
+   jenkins_plugin:
+     name: token-macro
+     state: latest
+
+ - name: Install specific version of the plugin
+   jenkins_plugin:
+     name: token-macro
+     version: "1.15"
+
+ - name: Pin the plugin
+   jenkins_plugin:
+     name: token-macro
+     state: pinned
+
+ - name: Unpin the plugin
+   jenkins_plugin:
+     name: token-macro
+     state: unpinned
+
+ - name: Enable the plugin
+   jenkins_plugin:
+     name: token-macro
+     state: enabled
+
+ - name: Disable the plugin
+   jenkins_plugin:
+     name: token-macro
+     state: disabled
+
+ - name: Uninstall plugin
+   jenkins_plugin:
+     name: build-pipeline-plugin
+     state: absent
+
+ #
+ # Example of how to authenticate
+ #
+ - name: Install plugin
+   jenkins_plugin:
+     name: build-pipeline-plugin
+     url_username: admin
+     url_password: p4ssw0rd
+     url: http://localhost:8888
+
+ #
+ # Example of a Play which handles Jenkins restarts during the state changes
+ #
+ - name: Jenkins Master play
+   hosts: jenkins-master
+   vars:
+     my_jenkins_plugins:
+       token-macro:
+         enabled: yes
+       build-pipeline-plugin:
+         version: "1.4.9"
+         pinned: no
+         enabled: yes
+   tasks:
+     - name: Install plugins without a specific version
+       jenkins_plugin:
+         name: "{{ item.key }}"
+       register: my_jenkins_plugin_unversioned
+       when: >
+         'version' not in item.value
+       with_dict: "{{ my_jenkins_plugins }}"
+
+     - name: Install plugins with a specific version
+       jenkins_plugin:
+         name: "{{ item.key }}"
+         version: "{{ item.value['version'] }}"
+       register: my_jenkins_plugin_versioned
+       when: >
+         'version' in item.value
+       with_dict: "{{ my_jenkins_plugins }}"
+
+     - name: Initiate the fact
+       set_fact:
+         jenkins_restart_required: no
+
+     - name: Check if restart is required by any of the versioned plugins
+       set_fact:
+         jenkins_restart_required: yes
+       when: item.changed
+       with_items: "{{ my_jenkins_plugin_versioned.results }}"
+
+     - name: Check if restart is required by any of the unversioned plugins
+       set_fact:
+         jenkins_restart_required: yes
+       when: item.changed
+       with_items: "{{ my_jenkins_plugin_unversioned.results }}"
+
+     - name: Restart Jenkins if required
+       service:
+         name: jenkins
+         state: restarted
+       when: jenkins_restart_required
+
+     - name: Wait for Jenkins to start up
+       uri:
+         url: http://localhost:8080
+         status_code: 200
+         timeout: 5
+       register: jenkins_service_status
+       # Keep trying for 5 mins in 5 sec intervals
+       retries: 60
+       delay: 5
+       until: >
+          'status' in jenkins_service_status and
+          jenkins_service_status['status'] == 200
+       when: jenkins_restart_required
+
+     - name: Reset the fact
+       set_fact:
+         jenkins_restart_required: no
+       when: jenkins_restart_required
+
+     - name: Plugin pinning
+       jenkins_plugin:
+         name: "{{ item.key }}"
+         state: "{{ 'pinned' if item.value['pinned'] else 'unpinned'}}"
+       when: >
+         'pinned' in item.value
+       with_dict: "{{ my_jenkins_plugins }}"
+
+     - name: Plugin enabling
+       jenkins_plugin:
+         name: "{{ item.key }}"
+         state: "{{ 'enabled' if item.value['enabled'] else 'disabled'}}"
+       when: >
+         'enabled' in item.value
+       with_dict: "{{ my_jenkins_plugins }}"
+
+RETURN VALUES                   *jenkins_plugin-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   plugin          plugin name
+   string success  Sample:
+                   build-pipeline-plugin
+   state           state of the target, after execution
+   string success  Sample:
+                   present
+
+STATUS                   *jenkins_plugin-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jiri Tyr (@jtyr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *jenkins_plugin-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/jenkins_plugin_module.html

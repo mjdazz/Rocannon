@@ -1,0 +1,136 @@
+SYNOPSIS                   *os_keystone_endpoint*
+
+     • Create, update, or delete OpenStack Identity service endpoints. If a service with the same combination of service, interface and region exist, the url and state (present or absent) will be
+       updated.
+
+REQUIREMENTS                   *os_keystone_endpoint-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk >= 0.12.0
+     • openstacksdk >= 0.13.0
+     • python >= 2.7
+
+PARAMETERS                   *os_keystone_endpoint-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   api_timeout                         How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                       Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url, username,
+   auth                                password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports them. For other
+   dictionary                          plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud is provided or OpenStack
+                                       OS_" environment variables are present.
+   auth_type                           Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and the
+   string                              contents of the auth parameter should be updated accordingly.
+   ca_cert                             A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                              aliases: cacert
+   client_cert                         A path to a client certificate to use as part of the SSL transaction.
+   string                              aliases: cert
+   client_key                          A path to a client key to use as part of the SSL transaction.
+   string                              aliases: key
+   cloud                               Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file. Provides
+   raw                                 default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are present. If cloud is a
+                                       dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   enabled              Choices:
+   boolean              • no           Is the service enabled.
+                        • yes ←
+                        Choices:
+   endpoint_interface   • admin        Interface of the service.
+   - / required         • public
+                        • internal
+                        Choices:
+   interface            • admin        Endpoint URL type to fetch from the service catalog.
+   string               • internal     aliases: endpoint_type
+                        • public ←
+   region                              Region that the service belongs to. Note that region_name is used for authentication.
+   -
+   region_name                         Name of the region.
+   string
+   service                             Name or id of the service.
+   - / required
+   state                Choices:
+   -                    • present ←    Should the resource be present or absent.
+                        • absent
+   timeout            Default:         How long should ansible wait for the requested resource.
+   integer            180
+   url                                 URL of the service.
+   - / required
+   validate_certs       Choices:       Whether or not SSL API requests should be verified.
+   boolean              • no ←         Before Ansible 2.3 this defaulted to yes.
+                        • yes          aliases: verify
+   wait                 Choices:
+   boolean              • no           Should ansible wait until the requested resource is complete.
+                        • yes ←
+
+NOTES                   *os_keystone_endpoint-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_keystone_endpoint-examples*
+
+ - name: Create a service for glance
+   os_keystone_endpoint:
+      cloud: mycloud
+      service: glance
+      endpoint_interface: public
+      url: http://controller:9292
+      region: RegionOne
+      state: present
+
+ - name: Delete a service for nova
+   os_keystone_endpoint:
+      cloud: mycloud
+      service: nova
+      endpoint_interface: public
+      region: RegionOne
+      state: absent
+
+RETURN VALUES                   *os_keystone_endpoint-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key                  Returned                                                                                 Description
+   endpoint     On success when state is present Dictionary describing the endpoint.
+   complex
+     enabled                                     Service status.
+     boolean                                     Sample:
+                                                 True
+     id                                          Endpoint ID.
+     string                                      Sample:
+                                                 3292f020780b4d5baf27ff7e1d224c44
+     interface                                   Endpoint Interface.
+     string                                      Sample:
+                                                 public
+     region                                      Region Name.
+     string                                      Sample:
+                                                 RegionOne
+     service_id                                  Service ID.
+     string                                      Sample:
+                                                 b91f1318f735494a825a55388ee118f3
+     url                                         Service URL.
+     string                                      Sample:
+                                                 http://controller:9292
+
+STATUS                   *os_keystone_endpoint-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mohammed Naser (@mnaser)
+     • Alberto Murillo (@albertomurillo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_keystone_endpoint-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_keystone_endpoint_module.html

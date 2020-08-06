@@ -1,0 +1,177 @@
+SYNOPSIS                   *eos_facts*
+
+     • Collects facts from Arista devices running the EOS operating system. This module places the facts gathered in the fact tree keyed by the respective resource name. The facts module will
+       always collect a base set of facts from the device and can enable or disable collection of additional facts.
+
+PARAMETERS                   *eos_facts-parameters*
+
+          Parameter         Choices/Defaults                                                                         Comments
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes with become_pass.
+                                             This option is only required if you are using eAPI.
+   auth_pass                                 For more information please see the EOS Platform Options guide.
+   string
+                                             ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                             Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the
+                                             value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli and become: yes.
+                                             This option is only required if you are using eAPI.
+                              Choices:       For more information please see the EOS Platform Options guide.
+   authorize                  • no ←
+   boolean                    • yes          ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                             Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+                                             commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used
+                                             instead.
+   gather_network_resources                  When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include all and the resources like
+   list                                      interfaces, vlans etc. Can specify a list of values to include a larger subset. Values can also be used with an initial ! to specify that a specific
+   added in 2.9                              subset should not be collected. Values can also be used with an initial ! to specify that a specific subset should not be collected. Valid subsets are
+                                             'all', 'interfaces', 'l2_interfaces', 'l3_interfaces', 'lacp', 'lacp_interfaces', 'lag_interfaces', 'lldp_global', 'lldp_interfaces', 'vlans'.
+   gather_subset            Default:         When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include all, hardware, config, and
+   list                     "!config"        interfaces. Can specify a list of values to include a larger subset. Values can also be used with an initial ! to specify that a specific subset should
+                                             not be collected.
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli.
+                                             This option is only required if you are using eAPI.
+   provider                                  For more information please see the EOS Platform Options guide.
+   dictionary
+                                             ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                             A dict object containing connection details.
+       auth_pass                             Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the
+       string                                value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+       authorize              Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all
+       boolean                • no ←         commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used
+                              • yes          instead.
+       host                                  Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination
+       string / required                     address for the transport.
+       password                              Specifies the password to use to authenticate the connection to the remote device. This is a common argument used for either cli or eapi transports. If
+       string                                the value is not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+       port                 Default:         Specifies the port to use when building the connection to the remote device. This value applies to either cli or eapi.
+       integer              0                The port value will default to the appropriate transport common port if none is provided in the task (cli=22, http=80, https=443).
+       ssh_keyfile                           Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports. If the value is not
+       path                                  specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+       timeout                               Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+       integer                               the operation is completed, the module will error.
+       transport              Choices:
+       string / required      • cli ←        Configures the transport connection to use when connecting to the remote device.
+                              • eapi
+       use_proxy              Choices:
+       boolean                • no           If no, the environment variables http_proxy and https_proxy will be ignored.
+       added in 2.5           • yes ←
+       use_ssl                Choices:
+       boolean                • no           Configures the transport to use SSL if set to yes only when the transport=eapi. If the transport argument is not eapi, this value is ignored.
+                              • yes ←
+       username                              Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate either the CLI login or the eAPI
+       string                                authentication depending on which transport is used. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_USERNAME
+                                             will be used instead.
+       validate_certs         Choices:       If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates. If the transport
+       boolean                • no           argument is not eapi, this value is ignored.
+                              • yes ←
+
+NOTES                   *eos_facts-notes*
+
+   Note
+
+     • For information on using CLI, eAPI and privileged mode see the EOS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Arista EOS devices see the Arista integration page.
+
+EXAMPLES                   *eos_facts-examples*
+
+ - name: Gather all legacy facts
+ - eos_facts:
+     gather_subset: all
+
+ - name: Gather only the config and default facts
+   eos_facts:
+     gather_subset:
+       - config
+
+ - name: Do not gather hardware facts
+   eos_facts:
+     gather_subset:
+       - "!hardware"
+
+ - name: Gather legacy and resource facts
+   eos_facts:
+     gather_subset: all
+     gather_network_resources: all
+
+ - name: Gather only the interfaces resource facts and no legacy facts
+ - eos_facts:
+     gather_subset:
+       - '!all'
+       - '!min'
+     gather_network_resources:
+       - interfaces
+
+ - name: Gather all resource facts and minimal legacy facts
+   eos_facts:
+     gather_subset: min
+     gather_network_resources: all
+
+RETURN VALUES                   *eos_facts-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                   Key                             Returned                                                                      Description
+   ansible_net_all_ipv4_addresses       when interfaces is configured   All IPv4 addresses configured on the device
+   list
+   ansible_net_all_ipv6_addresses       when interfaces is configured   All IPv6 addresses configured on the device
+   list
+   ansible_net_api                      always                          The name of the transport
+   string
+   ansible_net_config                   when config is configured       The current active config from the device
+   string
+   ansible_net_filesystems              when hardware is configured     All file system names available on the device
+   list
+   ansible_net_fqdn                     always                          The fully qualified domain name of the device
+   string
+   ansible_net_gather_network_resources when the resource is configured The list of fact for network resource subsets collected from the device
+   list
+   ansible_net_gather_subset            always                          The list of fact subsets collected from the device
+   list
+   ansible_net_hostname                 always                          The configured hostname of the device
+   string
+   ansible_net_image                    always                          The image file the device is running
+   string
+   ansible_net_interfaces               when interfaces is configured   A hash of all interfaces running on the system
+   dictionary
+   ansible_net_memfree_mb               when hardware is configured     The available free memory on the remote device in Mb
+   integer
+   ansible_net_memtotal_mb              when hardware is configured     The total memory on the remote device in Mb
+   integer
+   ansible_net_model                    always                          The model name returned from the device
+   string
+   ansible_net_neighbors                when interfaces is configured   The list of LLDP neighbors from the remote device
+   dictionary
+   ansible_net_python_version           always                          The Python version Ansible controller is using
+   string
+   ansible_net_serialnum                always                          The serial number of the remote device
+   string
+   ansible_net_version                  always                          The operating system version running on the remote device
+   string
+
+STATUS                   *eos_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *eos_facts-red hat support*
+
+     • Peter Sprygada (@privateip)
+     • Nathaniel Case (@Qalthos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *eos_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/eos_facts_module.html

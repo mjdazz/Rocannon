@@ -1,0 +1,154 @@
+SYNOPSIS                   *ipa_user*
+
+     • Add, modify and delete user within IPA server
+
+REQUIREMENTS                   *ipa_user-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • base64
+     • hashlib
+
+PARAMETERS                   *ipa_user-parameters*
+
+         Parameter       Choices/Defaults                                                                           Comments
+   displayname                             Display name
+   -
+   gidnumber
+   -                                       Posix Group ID
+   added in 2.5
+   givenname                               First name
+   -
+                                           IP or hostname of IPA server.
+                                           If the value is not specified in the task, the value of environment variable IPA_HOST will be used instead.
+   ipa_host              Default:          If both the environment variable IPA_HOST and the value are not specified in the task, then DNS will be used to try to discover the FreeIPA server.
+   string                "ipa.example.com" The relevant entry needed in FreeIPA is the 'ipa-ca' entry.
+                                           If neither the DNS entry, nor the environment IPA_HOST, nor the value are available in the task, then the default value will be used.
+                                           Environment variable fallback mechanism is added in Ansible 2.5.
+                                           Password of administrative user.
+                                           If the value is not specified in the task, the value of environment variable IPA_PASS will be used instead.
+   ipa_pass                                Note that if the 'urllib_gssapi' library is available, it is possible to use GSSAPI to authenticate to FreeIPA.
+   string / required                       If the environment variable KRB5CCNAME is available, the module will use this kerberos credentials cache to authenticate to the FreeIPA server.
+                                           If the environment variable KRB5_CLIENT_KTNAME is available, and KRB5CCNAME is not; the module will use this kerberos keytab to authenticate.
+                                           If GSSAPI is not available, the usage of 'ipa_pass' is required.
+                                           Environment variable fallback mechanism is added in Ansible 2.5.
+                                           Port of FreeIPA / IPA server.
+   ipa_port              Default:          If the value is not specified in the task, the value of environment variable IPA_PORT will be used instead.
+   integer               443               If both the environment variable IPA_PORT and the value are not specified in the task, then default value is set.
+                                           Environment variable fallback mechanism is added in Ansible 2.5.
+                           Choices:        Protocol used by IPA server.
+   ipa_prot                • http          If the value is not specified in the task, the value of environment variable IPA_PROT will be used instead.
+   string                  • https ←       If both the environment variable IPA_PROT and the value are not specified in the task, then default value is set.
+                                           Environment variable fallback mechanism is added in Ansible 2.5.
+   ipa_timeout                             Specifies idle timeout (in seconds) for the connection.
+   integer               Default:          For bulk operations, you may want to increase this in order to avoid timeout from IPA server.
+   added in 2.7          10                If the value is not specified in the task, the value of environment variable IPA_TIMEOUT will be used instead.
+                                           If both the environment variable IPA_TIMEOUT and the value are not specified in the task, then default value is set.
+                                           Administrative account used on IPA server.
+   ipa_user              Default:          If the value is not specified in the task, the value of environment variable IPA_USER will be used instead.
+   string                "admin"           If both the environment variable IPA_USER and the value are not specified in the task, then default value is set.
+                                           Environment variable fallback mechanism is added in Ansible 2.5.
+   krbpasswordexpiration                   Date at which the user password will expire
+   -                                       In the format YYYYMMddHHmmss
+   added in 2.5                            e.g. 20180121182022 will expire on 21 January 2018 at 18:20:22
+   loginshell                              Login shell
+   -
+   mail                                    List of mail addresses assigned to the user.
+   -                                       If an empty list is passed all assigned email addresses will be deleted.
+                                           If None is passed email addresses will not be checked or changed.
+   password                                Password for a user. Will not be set for an existing user unless update_password is set to always, which is the default.
+   -
+   sn                                      Surname
+   -
+   sshpubkey                               List of public SSH key.
+   -                                       If an empty list is passed all assigned public keys will be deleted.
+                                           If None is passed SSH public keys will not be checked or changed.
+                           Choices:
+   state                   • present ←
+   -                       • absent        State to ensure
+                           • enabled
+                           • disabled
+   telephonenumber                         List of telephone numbers assigned to the user.
+   -                                       If an empty list is passed all assigned telephone numbers will be deleted.
+                                           If None is passed telephone numbers will not be checked or changed.
+   title                                   Title
+   -
+   uid                                     uid of the user
+   - / required                            aliases: name
+   uidnumber
+   -                                       Account Settings UID/Posix User ID number
+   added in 2.5
+   update_password         Choices:
+   string                  • always ←      Set password for a user.
+   added in 2.8            • on_create
+   validate_certs          Choices:        This only applies if ipa_prot is https.
+   boolean                 • no            If set to no, the SSL certificates will not be validated.
+                           • yes ←         This should only set to no used on personally controlled sites using self-signed certificates.
+
+EXAMPLES                   *ipa_user-examples*
+
+ # Ensure pinky is present and always reset password
+ - ipa_user:
+     name: pinky
+     state: present
+     krbpasswordexpiration: 20200119235959
+     givenname: Pinky
+     sn: Acme
+     mail:
+     - [email protected]
+     telephonenumber:
+     - '+555123456'
+     sshpubkey:
+     - ssh-rsa ....
+     - ssh-dsa ....
+     uidnumber: 1001
+     gidnumber: 100
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+
+ # Ensure brain is absent
+ - ipa_user:
+     name: brain
+     state: absent
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+
+ # Ensure pinky is present but don't reset password if already exists
+ - ipa_user:
+     name: pinky
+     state: present
+     givenname: Pinky
+     sn: Acme
+     password: zounds
+     ipa_host: ipa.example.com
+     ipa_user: admin
+     ipa_pass: topsecret
+     update_password: on_create
+
+RETURN VALUES                   *ipa_user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   user       always   User as returned by IPA API
+   dictionary
+
+STATUS                   *ipa_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Thomas Krahn (@Nosmoht)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ipa_user-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ipa_user_module.html

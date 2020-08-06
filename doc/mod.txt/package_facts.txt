@@ -1,0 +1,85 @@
+SYNOPSIS                   *package_facts*
+
+     • Return information about installed packages as facts
+
+REQUIREMENTS                   *package_facts-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • For ‘portage’ support it requires the qlist utility, which is part of ‘app-portage/portage-utils’.
+     • For Debian-based systems python-apt package must be installed on targeted hosts.
+
+PARAMETERS                   *package_facts-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+               Choices:
+               • auto ←
+               • rpm
+   manager     • apt          The package manager used by the system so we can query the package information.
+   list        • portage      Since 2.8 this is a list and can support multiple package managers per system.
+               • pkg          The 'portage' and 'pkg' options were added in version 2.8.
+
+             Default:
+             ["auto"]
+   strategy    Choices:
+   -           • first ←      This option controls how the module queries the package managers on the system. first means it will return only information for the first supported package manager
+   added in    • all          available. all will return information for all supported and available package managers on the system.
+   2.8
+
+EXAMPLES                   *package_facts-examples*
+
+ - name: Gather the rpm package facts
+   package_facts:
+     manager: auto
+
+ - name: Print the rpm package facts
+   debug:
+     var: ansible_facts.packages
+
+ - name: Check whether a package called foobar is installed
+   debug:
+     msg: "{{ ansible_facts.packages['foobar'] | length }} versions of foobar are installed!"
+   when: "'foobar' in ansible_facts.packages"
+
+RETURNED FACTS                   *package_facts-returned facts*
+
+   Facts returned by this module are added/updated in the hostvars host facts and can be referenced by name just like any other host fact. They do not need to be registered in order to use them.
+
+      Fact    Returned                                                                                   Description
+              when
+              operating
+              system    Maps the package name to a non-empty list of dicts with package information.
+              level     Every dict in the list corresponds to one installed version of the package.
+   packages   package   The fields described below are present for all package managers. Depending on the package manager, there might be more fields for a package.
+   dictionary manager   Sample:
+              is        { "packages": { "kernel": [ { "name": "kernel", "source": "rpm", "version": "3.10.0", ... }, { "name": "kernel", "source": "rpm", "version": "3.10.0", ... }, ... ],
+              specified "kernel-tools": [ { "name": "kernel-tools", "source": "rpm", "version": "3.10.0", ... } ], ... } }
+              or auto
+              detected
+              manager
+     name     always    The package's name.
+     string
+     source   always    Where information on the package came from.
+     string
+     version  always    The package's version.
+     string
+
+STATUS                   *package_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Matthew Jones (@matburt)
+     • Brian Coca (@bcoca)
+     • Adam Miller (@maxamillion)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *package_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/package_facts_module.html

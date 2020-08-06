@@ -1,30 +1,95 @@
-SYNOPSIS                           *supervisorctl*
+SYNOPSIS                   *supervisorctl*
 
-Manage the state of a program or group of programs running via supervisord
+     • Manage the state of a program or group of programs running via supervisord
 
-EXAMPLES                           *supervisorctl-examples*
->
-    # Manage the state of program to be in 'started' state.
-    - supervisorctl: name=my_app state=started
-   
-    # Manage the state of program group to be in 'started' state.
-    - supervisorctl: name='my_apps:' state=started
-   
-    # Restart my_app, reading supervisorctl configuration from a specified file.
-    - supervisorctl: name=my_app state=restarted config=/var/opt/my_project/supervisord.conf
-   
-    # Restart my_app, connecting to supervisord with credentials and server URL.
-    - supervisorctl: name=my_app state=restarted username=test password=testpass server_url=http://localhost:9001
-   
-      Note
-   
-      When state = present, the module will call supervisorctl reread then supervisorctl add if the program/group does not exist.
-   
-      Note
-   
-      When state = restarted, the module will call supervisorctl update then call supervisorctl restart.
-   
+REQUIREMENTS                   *supervisorctl-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • supervisorctl
+
+PARAMETERS                   *supervisorctl-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   config                              The supervisor configuration file path
+   -
+   name                                The name of the supervisord program or group to manage.
+   - / required                        The name will be taken as group name when it ends with a colon :
+                                       Group support is only available in Ansible version 1.6 or later.
+   password                            password to use for authentication
+   -
+   server_url                          URL on which supervisord server is listening
+   -
+   signal
+   -                                   The signal to send to the program/group, when combined with the 'signalled' state. Required when l(state=signalled).
+   added in 2.8
+                        Choices:
+                        • present
+   state                • started
+   - / required         • stopped      The desired state of program/group.
+                        • restarted
+                        • absent
+                        • signalled
+   supervisorctl_path                  path to supervisorctl executable
+   -
+   username                            username to use for authentication
+   -
+
+NOTES                   *supervisorctl-notes*
+
+   Note
+
+     • When state = present, the module will call supervisorctl reread then supervisorctl add if the program/group does not exist.
+     • When state = restarted, the module will call supervisorctl update then call supervisorctl restart.
+     • When state = absent, the module will call supervisorctl reread then supervisorctl remove to remove the target program/group.
+
+EXAMPLES                   *supervisorctl-examples*
+
+ # Manage the state of program to be in 'started' state.
+ - supervisorctl:
+     name: my_app
+     state: started
+
+ # Manage the state of program group to be in 'started' state.
+ - supervisorctl:
+     name: 'my_apps:'
+     state: started
+
+ # Restart my_app, reading supervisorctl configuration from a specified file.
+ - supervisorctl:
+     name: my_app
+     state: restarted
+     config: /var/opt/my_project/supervisord.conf
+
+ # Restart my_app, connecting to supervisord with credentials and server URL.
+ - supervisorctl:
+     name: my_app
+     state: restarted
+     username: test
+     password: testpass
+     server_url: http://localhost:9001
+
+ # Send a signal to my_app via supervisorctl
+ - supervisorctl:
+     name: my_app
+     state: signalled
+     signal: USR1
+
+STATUS                   *supervisorctl-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Matt Wright (@mattupstate)
+     • Aaron Wang (@inetfuture) <inetfuture@gmail.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *supervisorctl-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/supervisorctl_module.html
+https://docs.ansible.com/ansible/latest/modules/supervisorctl_module.html

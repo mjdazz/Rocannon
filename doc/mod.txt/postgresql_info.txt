@@ -1,0 +1,305 @@
+SYNOPSIS                   *postgresql_info*
+
+     • Gathers information about PostgreSQL servers.
+
+REQUIREMENTS                   *postgresql_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_info-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   ca_cert                                  Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                                   If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                            aliases: ssl_rootcert
+   db                                       Name of database to connect.
+   string                                   aliases: login_db
+                                            Limit the collected information by comma separated string or YAML list.
+                                            Allowable values are version, databases, settings, tablespaces, roles, replications, repl_slots.
+   filter                                   By default, collects all subsets.
+   list / elements=string                   You can use shell-style (fnmatch) wildcard to pass groups of values (see Examples).
+                                            You can use '!' before value (for example, !settings) to exclude it from the information.
+                                            If you pass including and excluding values to the filter, for example, filter=!settings,ver, the excluding values will be ignored.
+   login_host                               Host running the database.
+   string
+   login_password                           The password used to authenticate with.
+   string
+   login_unix_socket                        Path to a Unix domain socket for local connections.
+   string
+   login_user             Default:          The username used to authenticate with.
+   string                 "postgres"
+   port                   Default:          Database port to connect to.
+   integer                5432              aliases: login_port
+   session_role                             Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                                   Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                            Choices:
+                            • allow
+   ssl_mode                 • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string                   • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                            • require       Default of prefer matches libpq default.
+                            • verify-ca
+                            • verify-full
+
+NOTES                   *postgresql_info-notes*
+
+   Note
+
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_info-see also*
+
+   See also
+
+   postgresql_ping – Check remote PostgreSQL server availability
+   The official documentation on the postgresql_ping module.
+
+EXAMPLES                   *postgresql_info-examples*
+
+ # Display info from postgres hosts.
+ # ansible postgres -m postgresql_info
+
+ # Display only databases and roles info from all hosts using shell-style wildcards:
+ # ansible all -m postgresql_info -a 'filter=dat",rol"'
+
+ # Display only replications and repl_slots info from standby hosts using shell-style wildcards:
+ # ansible standby -m postgresql_info -a 'filter=repl"'
+
+ # Display all info from databases hosts except settings:
+ # ansible databases -m postgresql_info -a 'filter=!settings'
+
+ - name: Collect PostgreSQL version and extensions
+   become: yes
+   become_user: postgres
+   postgresql_info:
+     filter: ver",ext"
+
+ - name: Collect all info except settings and roles
+   become: yes
+   become_user: postgres
+   postgresql_info:
+     filter: "!settings,!roles"
+
+ # On FreeBSD with PostgreSQL 9.5 version and lower use pgsql user to become
+ # and pass "postgres" as a database to connect to
+ - name: Collect tablespaces and repl_slots info
+   become: yes
+   become_user: pgsql
+   postgresql_info:
+     db: postgres
+     filter:
+     - tablesp"
+     - repl_sl"
+
+ - name: Collect all info except databases
+   become: yes
+   become_user: postgres
+   postgresql_info:
+     filter:
+     - "!databases"
+
+RETURN VALUES                   *postgresql_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key                 Returned                                                                            Description
+   databases                                    Information about databases.
+   dictionary               always              Sample:
+                                                [{'postgres': {'access_priv': '', 'collate': 'en_US.UTF-8', 'ctype': 'en_US.UTF-8', 'encoding': 'UTF8', 'owner': 'postgres', 'size': '7997 kB'}}]
+      database_name                             Database name.
+      dictionary            always              Sample:
+                                                template1
+         access_priv                            Database access privileges.
+         string             always              Sample:
+                                                =c/postgres_npostgres=CTc/postgres
+         collate                                Database collation https://www.postgresql.org/docs/current/collation.html.
+         string             always              Sample:
+                                                en_US.UTF-8
+         ctype                                  Database LC_CTYPE https://www.postgresql.org/docs/current/multibyte.html.
+         string             always              Sample:
+                                                en_US.UTF-8
+         encoding                               Database encoding https://www.postgresql.org/docs/current/multibyte.html.
+         string             always              Sample:
+                                                UTF8
+         extensions                             Extensions https://www.postgresql.org/docs/current/sql-createextension.html.
+         dictionary         always              Sample:
+                                                [{'plpgsql': {'description': 'PL/pgSQL procedural language', 'extversion': {'major': 1, 'minor': 0}}}]
+            extdescription                      Extension description.
+            string          if existent         Sample:
+                                                PL/pgSQL procedural language
+            extversion      always              Extension description.
+            dictionary
+                  major                         Extension major version.
+                  integer   always              Sample:
+                                                1
+                  minor     always              Extension minor version.
+                  integer
+            nspname                             Namespace where the extension is.
+            string          always              Sample:
+                                                pg_catalog
+         languages                              Procedural languages https://www.postgresql.org/docs/current/xplang.html.
+         dictionary         always              Sample:
+                                                {'sql': {'lanacl': '', 'lanowner': 'postgres'}}
+            lanacl                              Language access privileges https://www.postgresql.org/docs/current/catalog-pg-language.html.
+            string          always              Sample:
+                                                {postgres=UC/postgres,=U/postgres}
+            lanowner                            Language owner https://www.postgresql.org/docs/current/catalog-pg-language.html.
+            string          always              Sample:
+                                                postgres
+         namespaces                             Namespaces (schema) https://www.postgresql.org/docs/current/sql-createschema.html.
+         dictionary         always              Sample:
+                                                {'pg_catalog': {'nspacl': '{postgres=UC/postgres,=U/postgres}', 'nspowner': 'postgres'}}
+            nspacl                              Access privileges https://www.postgresql.org/docs/current/catalog-pg-namespace.html.
+            string          always              Sample:
+                                                {postgres=UC/postgres,=U/postgres}
+            nspowner                            Schema owner https://www.postgresql.org/docs/current/catalog-pg-namespace.html.
+            string          always              Sample:
+                                                postgres
+         owner                                  Database owner https://www.postgresql.org/docs/current/sql-createdatabase.html.
+         string             always              Sample:
+                                                postgres
+         size                                   Database size in bytes.
+         string             always              Sample:
+                                                8189415
+   pending_restart_settings                     List of settings that are pending restart to be set.
+   list                     always              Sample:
+                                                ['shared_buffers']
+   repl_slots                                   Replication slots (available in 9.4 and later) https://www.postgresql.org/docs/current/view-pg-replication-slots.html.
+   dictionary               if existent         Sample:
+                                                {'slot0': {'active': False, 'database': None, 'plugin': None, 'slot_type': 'physical'}}
+      active                                    True means that a receiver has connected to it, and it is currently reserving archives.
+      boolean               always              Sample:
+                                                True
+      database                                  Database name this slot is associated with, or null.
+      string                always              Sample:
+                                                acme
+      plugin                                    Base name of the shared object containing the output plugin this logical slot is using, or null for physical slots.
+      string                always              Sample:
+                                                pgoutput
+      slot_type                                 The slot type - physical or logical.
+      string                always              Sample:
+                                                logical
+                                                Information about the current replications by process PIDs
+   replications             if                  https://www.postgresql.org/docs/current/monitoring-stats.html#MONITORING-STATS-VIEWS-TABLE.
+   dictionary               pg_stat_replication Sample:
+                            view existent       [{76580: {'app_name': 'standby1', 'backend_start': '2019-02-03 00:14:33.908593+03', 'client_addr': '10.10.10.2', 'client_hostname': '', 'state':
+                                                'streaming', 'usename': 'postgres'}}]
+      app_name                                  Name of the application that is connected to this WAL sender.
+      string                if existent         Sample:
+                                                acme_srv
+      backend_start                             Time when this process was started, i.e., when the client connected to this WAL sender.
+      string                always              Sample:
+                                                2019-02-03 00:14:33.908593+03
+                                                IP address of the client connected to this WAL sender.
+      client_addr           always              If this field is null, it indicates that the client is connected via a Unix socket on the server machine.
+      string                                    Sample:
+                                                10.0.0.101
+                                                Host name of the connected client, as reported by a reverse DNS lookup of client_addr.
+      client_hostname       always              This field will only be non-null for IP connections, and only when log_hostname is enabled.
+      string                                    Sample:
+                                                dbsrv1
+      state                                     Current WAL sender state.
+      string                always              Sample:
+                                                streaming
+      usename                                   Name of the user logged into this WAL sender process ('usename' is a column name in pg_stat_replication view).
+      string                always              Sample:
+                                                replication_user
+   roles                                        Information about roles https://www.postgresql.org/docs/current/user-manag.html.
+   dictionary               always              Sample:
+                                                [{'test_role': {'canlogin': True, 'member_of': ['user_ro'], 'superuser': False, 'valid_until': '9999-12-31T23:59:59.999999+00:00'}}]
+      canlogin                                  Login privilege https://www.postgresql.org/docs/current/role-attributes.html.
+      boolean               always              Sample:
+                                                True
+      member_of                                 Role membership https://www.postgresql.org/docs/current/role-membership.html.
+      list                  always              Sample:
+                                                ['read_only_users']
+      superuser             always              User is a superuser or not.
+      boolean
+      valid_until                               Password expiration date https://www.postgresql.org/docs/current/sql-alterrole.html.
+      string                always              Sample:
+                                                9999-12-31T23:59:59.999999+00:00
+                                                Information about run-time server parameters https://www.postgresql.org/docs/current/view-pg-settings.html.
+   settings                 always              Sample:
+   dictionary                                   [{'work_mem': {'boot_val': '4096', 'context': 'user', 'max_val': '2147483647', 'min_val': '64', 'setting': '8192', 'sourcefile':
+                                                '/var/lib/pgsql/10/data/postgresql.auto.conf', 'unit': 'kB', 'vartype': 'integer', 'val_in_bytes': 4194304}}]
+      boot_val                                  Parameter value assumed at server startup if the parameter is not otherwise set.
+      string                always              Sample:
+                                                4096
+                                                Context required to set the parameter's value.
+      context               always              For more information see https://www.postgresql.org/docs/current/view-pg-settings.html.
+      string                                    Sample:
+                                                user
+      max_val                                   Maximum allowed value of the parameter (null for non-numeric values).
+      string                always              Sample:
+                                                2147483647
+      min_val                                   Minimum allowed value of the parameter (null for non-numeric values).
+      string                always              Sample:
+                                                64
+      pending_restart       always              True if the value has been changed in the configuration file but needs a restart; or false otherwise.
+      boolean                                   Returns only if settings is passed.
+      pretty_val                                Value presented in the pretty form.
+      string                always              Sample:
+                                                2MB
+      setting                                   Current value of the parameter.
+      string                always              Sample:
+                                                49152
+                                                Configuration file the current value was set in.
+                                                Null for values set from sources other than configuration files, or when examined by a user who is neither a superuser or a member of
+      sourcefile            always              pg_read_all_settings.
+      string                                    Helpful when using include directives in configuration files.
+                                                Sample:
+                                                /var/lib/pgsql/10/data/postgresql.auto.conf
+      unit                                      Implicit unit of the parameter.
+      string                always              Sample:
+                                                kB
+      val_in_bytes                              Current value of the parameter in bytes.
+      integer               if supported        Sample:
+                                                2147483647
+      vartype                                   Parameter type (bool, enum, integer, real, or string).
+      string                always              Sample:
+                                                integer
+   tablespaces                                  Information about tablespaces https://www.postgresql.org/docs/current/catalog-pg-tablespace.html.
+   dictionary               always              Sample:
+                                                [{'test': {'spcacl': '{postgres=C/postgres,andreyk=C/postgres}', 'spcoptions': ['seq_page_cost=1'], 'spcowner': 'postgres'}}]
+      spcacl                                    Tablespace access privileges.
+      string                always              Sample:
+                                                {postgres=C/postgres,andreyk=C/postgres}
+      spcoptions                                Tablespace-level options.
+      list                  always              Sample:
+                                                ['seq_page_cost=1']
+      spcowner                                  Owner of the tablespace.
+      string                always              Sample:
+                                                test_user
+   version                                      Database server version https://www.postgresql.org/support/versioning/.
+   dictionary               always              Sample:
+                                                {'version': {'major': 10, 'minor': 6}}
+      major                                     Major server version.
+      integer               always              Sample:
+                                                11
+      minor                                     Minor server version.
+      integer               always              Sample:
+                                                1
+
+STATUS                   *postgresql_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_info_module.html

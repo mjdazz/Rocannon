@@ -1,0 +1,193 @@
+SYNOPSIS                   *vmware_dvswitch*
+
+     • This module can be used to create, remove a Distributed Switch.
+
+REQUIREMENTS                   *vmware_dvswitch-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_dvswitch-parameters*
+
+          Parameter                   Choices/Defaults                                                                         Comments
+   contact                                                        Dictionary which configures administrator contact name and description for the Distributed Switch.
+   dictionary                                                     Valid attributes are:
+   added in 2.8                                                   - name (str): Administrator name.
+                                                                  - description (str): Description or other details.
+                                                                  The name of the datacenter that will contain the Distributed Switch.
+   datacenter_name                                                This parameter is optional, if folder is provided.
+   string                                                         Mutually exclusive with folder parameter.
+                                                                  aliases: datacenter
+   description
+   string                                                         Description of the Distributed Switch.
+   added in 2.8
+                              Choices:                            Select the discovery operation.
+   discovery_operation        • both                              Required parameter for state both present and absent, before Ansible 2.6 version.
+   string                     • advertise                         Required only if state is set to present, for Ansible 2.6 and onwards.
+                              • listen ←
+                                                                  Link discovery protocol between Cisco and Link Layer discovery.
+                              Choices:                            Required parameter for state both present and absent, before Ansible 2.6 version.
+   discovery_proto            • cdp ←                             Required only if state is set to present, for Ansible 2.6 and onwards.
+   string                     • lldp                              cdp: Use Cisco Discovery Protocol (CDP).
+                              • disabled                          lldp: Use Link Layer Discovery Protocol (LLDP).
+                                                                  disabled: Do not use a discovery protocol.
+                                                                  aliases: discovery_protocol
+                                                                  Destination folder, absolute path to place dvswitch in.
+                                                                  The folder should include the datacenter.
+                                                                  This parameter is case sensitive.
+                                                                  This parameter is optional, if datacenter is provided.
+   folder                                                         Examples:
+   string                                                         folder: /datacenter1/network
+   added in 2.9                                                   folder: datacenter1/network
+                                                                  folder: /datacenter1/network/folder1
+                                                                  folder: datacenter1/network/folder1
+                                                                  folder: /folder1/datacenter1/network
+                                                                  folder: folder1/datacenter1/network
+                                                                  folder: /folder1/datacenter1/network/folder2
+                                                                  Dictionary which configures Health Check for the Distributed Switch.
+                            Default:                              Valid attributes are:
+   health_check             {"teaming_failover": false,           - vlan_mtu (bool): VLAN and MTU health check. (default: False)
+   dictionary               "teaming_failover_interval": 0,       - teaming_failover (bool): Teaming and failover health check. (default: False)
+   added in 2.8             "vlan_mtu": false,                    - vlan_mtu_interval (int): VLAN and MTU health check interval (minutes). (default: 0)
+                            "vlan_mtu_interval": 0}               - The default for vlan_mtu_interval is 1 in the vSphere Client if the VLAN and MTU health check is enabled.
+                                                                  - teaming_failover_interval (int): Teaming and failover health check interval (minutes). (default: 0)
+                                                                  - The default for teaming_failover_interval is 1 in the vSphere Client if the Teaming and failover health check is enabled.
+   hostname                                                       The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                                                         If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                                                  Environment variable support added in Ansible 2.6.
+                                                                  The switch maximum transmission unit.
+   mtu                      Default:                              Required parameter for state both present and absent, before Ansible 2.6 version.
+   integer                  1500                                  Required only if state is set to present, for Ansible 2.6 and onwards.
+                                                                  Accepts value between 1280 to 9000 (both inclusive).
+   multicast_filtering_mode   Choices:                            The multicast filtering mode.
+   string                     • basic ←                           basic mode: multicast traffic for virtual machines is forwarded according to the destination MAC address of the multicast group.
+   added in 2.8               • snooping                          snooping mode: the Distributed Switch provides IGMP and MLD snooping according to RFC 4541.
+                                                                  The password of the vSphere vCenter or ESXi server.
+   password                                                       If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                                                         Environment variable support added in Ansible 2.6.
+                                                                  aliases: pass, pwd
+   port                     Default:                              The port number of the vSphere vCenter or ESXi server.
+   integer                  443                                   If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                                                   Environment variable support added in Ansible 2.6.
+   proxy_host                                                     Address of a proxy that will receive all HTTPS requests and relay them.
+   string                                                         The format is a hostname or a IP.
+   added in 2.9                                                   If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                                                  This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                                                     Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                                                        If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   state                      Choices:                            If set to present and the Distributed Switch doesn't exists then the Distributed Switch will be created.
+   string                     • present ←                         If set to absent and the Distributed Switch exists then the Distributed Switch will be deleted.
+                              • absent
+   switch_name                                                    The name of the distribute vSwitch to create or remove.
+   string / required                                              aliases: switch, dvswitch
+                              Choices:                            The version of the Distributed Switch to create.
+                              • 5.0.0                             Can be 6.0.0, 5.5.0, 5.1.0, 5.0.0 with a vCenter running vSphere 6.0 and 6.5.
+   switch_version             • 5.1.0                             Can be 6.6.0, 6.5.0, 6.0.0 with a vCenter running vSphere 6.7.
+   string                     • 5.5.0                             The version must match the version of the ESXi hosts you want to connect.
+   added in 2.5               • 6.0.0                             The version of the vCenter server is used if not specified.
+                              • 6.5.0                             Required only if state is set to present.
+                              • 6.6.0                             aliases: version
+   uplink_prefix            Default:                              The prefix used for the naming of the uplinks.
+   string                   "Uplink "                             Only valid if the Distributed Switch will be created. Not used if the Distributed Switch is already present.
+   added in 2.8                                                   Uplinks are created as Uplink 1, Uplink 2, etc. pp. by default.
+                                                                  Quantity of uplink per ESXi host added to the Distributed Switch.
+   uplink_quantity                                                The uplink quantity can be increased or decreased, but a decrease will only be successfull if the uplink isn't used by a portgroup.
+   integer                                                        Required parameter for state both present and absent, before Ansible 2.6 version.
+                                                                  Required only if state is set to present, for Ansible 2.6 and onwards.
+                                                                  The username of the vSphere vCenter or ESXi server.
+   username                                                       If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                                                         Environment variable support added in Ansible 2.6.
+                                                                  aliases: admin, user
+                              Choices:                            Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs             • no                                If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean                    • yes ←                             Environment variable support added in Ansible 2.6.
+                                                                  If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_dvswitch-notes*
+
+   Note
+
+     • Tested on vSphere 6.5 and 6.7
+
+EXAMPLES                   *vmware_dvswitch-examples*
+
+ - name: Create dvSwitch
+   vmware_dvswitch:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: '{{ datacenter }}'
+     switch: dvSwitch
+     version: 6.0.0
+     mtu: 9000
+     uplink_quantity: 2
+     discovery_protocol: lldp
+     discovery_operation: both
+     state: present
+   delegate_to: localhost
+
+ - name: Create dvSwitch with all options
+   vmware_dvswitch:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: '{{ datacenter }}'
+     switch: dvSwitch
+     version: 6.5.0
+     mtu: 9000
+     uplink_quantity: 2
+     uplink_prefix: 'Uplink_'
+     discovery_protocol: cdp
+     discovery_operation: both
+     multicast_filtering_mode: snooping
+     health_check:
+       vlan_mtu: true
+       vlan_mtu_interval: 1
+       teaming_failover: true
+       teaming_failover_interval: 1
+     state: present
+   delegate_to: localhost
+
+ - name: Delete dvSwitch
+   vmware_dvswitch:
+     hostname: '{{ vcenter_hostname }}'
+     username: '{{ vcenter_username }}'
+     password: '{{ vcenter_password }}'
+     datacenter: '{{ datacenter }}'
+     switch: dvSwitch
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_dvswitch-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+                   information about performed operation
+   result          Sample:
+   string always   {'changed': False, 'contact': None, 'contact_details': None, 'description': None, 'discovery_operation': 'both', 'discovery_protocol': 'cdp', 'dvswitch': 'test',
+                   'health_check_teaming': False, 'health_check_teaming_interval': 0, 'health_check_vlan': False, 'health_check_vlan_interval': 0, 'mtu': 9000, 'multicast_filtering_mode': 'basic',
+                   'result': 'DVS already configured properly', 'uplink_quantity': 2, 'uplinks': ['Uplink_1', 'Uplink_2'], 'version': '6.6.0'}
+
+STATUS                   *vmware_dvswitch-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Joseph Callen (@jcpowermac)
+     • Abhijeet Kasurde (@Akasurde)
+     • Christian Kotte (@ckotte)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_dvswitch-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_dvswitch_module.html

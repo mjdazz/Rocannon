@@ -1,0 +1,223 @@
+SYNOPSIS                   *meraki_switchport*
+
+     • Allows for management of switchports settings for Meraki MS switches.
+
+PARAMETERS                   *meraki_switchport-parameters*
+
+           Parameter                    Choices/Defaults                                                                        Comments
+   access_policy_number                                             Number of the access policy to apply.
+   -                                                                Only applicable to access port types.
+   allowed_vlans             Default:                               List of VLAN numbers to be allowed on switchport.
+   -                         "all"
+   auth_key                                                         Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   enabled                     Choices:
+   boolean                     • no                                 Whether a switchport should be enabled or disabled.
+                               • yes ←
+   host                      Default:                               Hostname for Meraki dashboard.
+   string                    "api.meraki.com"                       Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:                               Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   isolation_enabled           Choices:
+   boolean                     • no ←                               Isolation status of switchport.
+                               • yes
+                               Choices:
+   link_negotiation            • Auto negotiate ←                   Link speed for the switchport.
+   -                           • 100Megabit (auto)
+                               • 100 Megabit full duplex (forced)
+   name                                                             Switchport description.
+   -                                                                aliases: description
+   number                                                           Port number.
+   -
+   org_id                                                           ID of organization.
+   string
+   org_name                                                         Name of organization.
+   string                                                           aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←                        Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug                              Set amount of debug output during module execution.
+                               • normal ←
+   poe_enabled                 Choices:
+   boolean                     • no                                 Enable or disable Power Over Ethernet on a port.
+                               • yes ←
+   rate_limit_retry_time     Default:                               Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   rstp_enabled                Choices:
+   boolean                     • no                                 Enable or disable Rapid Spanning Tree Protocol on a port.
+                               • yes ←
+   serial                                                           Serial nubmer of the switch.
+   -
+   state                       Choices:
+   string                      • query ←                            Specifies whether a switchport should be queried or modified.
+                               • present
+                               Choices:
+   stp_guard                   • disabled ←
+   -                           • root guard                         Set state of STP guard.
+                               • bpdu guard
+                               • loop guard
+   tags                                                             Space delimited list of tags to assign to a port.
+   -
+   timeout                   Default:                               Time to timeout for HTTP requests.
+   integer                   30
+   type                        Choices:
+   -                           • access ←                           Set port type.
+                               • trunk
+   use_https                   Choices:                             If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no                                 Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no                                 If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no                                 Whether to validate HTTP certificates.
+                               • yes ←
+   vlan                                                             VLAN number assigned to port.
+   -                                                                If a port is of type trunk, the specified VLAN is the native VLAN.
+   voice_vlan                                                       VLAN number assigned to a port for voice traffic.
+   -                                                                Only applicable to access port type.
+
+NOTES                   *meraki_switchport-notes*
+
+   Note
+
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_switchport-examples*
+
+ - name: Query information about all switchports on a switch
+   meraki_switchport:
+     auth_key: abc12345
+     state: query
+     serial: ABC-123
+   delegate_to: localhost
+
+ - name: Query information about all switchports on a switch
+   meraki_switchport:
+     auth_key: abc12345
+     state: query
+     serial: ABC-123
+     number: 2
+   delegate_to: localhost
+
+ - name: Name switchport
+   meraki_switchport:
+     auth_key: abc12345
+     state: present
+     serial: ABC-123
+     number: 7
+     name: Test Port
+   delegate_to: localhost
+
+ - name: Configure access port with voice VLAN
+   meraki_switchport:
+     auth_key: abc12345
+     state: present
+     serial: ABC-123
+     number: 7
+     enabled: true
+     name: Test Port
+     tags: desktop
+     type: access
+     vlan: 10
+     voice_vlan: 11
+   delegate_to: localhost
+
+ - name: Check access port for idempotency
+   meraki_switchport:
+     auth_key: abc12345
+     state: present
+     serial: ABC-123
+     number: 7
+     enabled: true
+     name: Test Port
+     tags: desktop
+     type: access
+     vlan: 10
+     voice_vlan: 11
+   delegate_to: localhost
+
+ - name: Configure trunk port with specific VLANs
+   meraki_switchport:
+     auth_key: abc12345
+     state: present
+     serial: ABC-123
+     number: 7
+     enabled: true
+     name: Server port
+     tags: server
+     type: trunk
+     allowed_vlans:
+       - 10
+       - 15
+       - 20
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_switchport-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key           Returned                                                                            Description
+   data                   success  Information queried or updated switchports.
+   complex
+     access_policy_number          Number of assigned access policy. Only applicable to access ports.
+     integer              success  Sample:
+                                   1234
+     enabled                       Enabled state of port.
+     boolean              success  Sample:
+                                   True
+     isolation_enabled             Port isolation status of port.
+     boolean              success  Sample:
+                                   True
+     link_negotiation              Link speed for the port.
+     string               success  Sample:
+                                   Auto negotiate
+     name                          Human friendly description of port.
+     string               success  Sample:
+                                   Jim Phone Port
+     number                        Number of port.
+     integer              success  Sample:
+                                   1
+     poe_enabled                   Power Over Ethernet enabled state of port.
+     boolean              success  Sample:
+                                   True
+     rstp_enabled                  Enabled or disabled state of Rapid Spanning Tree Protocol (RSTP)
+     boolean              success  Sample:
+                                   True
+     stp_guard                     State of STP guard
+     string               success  Sample:
+                                   Root Guard
+     tags                          Space delimited list of tags assigned to port.
+     string               success  Sample:
+                                   phone marketing
+     type                          Type of switchport.
+     string               success  Sample:
+                                   trunk
+     vlan                          VLAN assigned to port.
+     integer              success  Sample:
+                                   10
+     voice_vlan                    VLAN assigned to port with voice VLAN enabled devices.
+     integer              success  Sample:
+                                   20
+
+STATUS                   *meraki_switchport-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_switchport-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_switchport_module.html

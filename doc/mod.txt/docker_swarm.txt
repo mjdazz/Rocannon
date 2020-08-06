@@ -1,0 +1,217 @@
+SYNOPSIS                   *docker_swarm*
+
+     • Create a new Swarm cluster.
+     • Add/Remove nodes or managers to an existing cluster.
+
+REQUIREMENTS                   *docker_swarm-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.25
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 1.10.0 (use docker-py for Python 2.6)
+
+PARAMETERS                   *docker_swarm-parameters*
+
+             Parameter                  Choices/Defaults                                                                      Comments
+                                                               Externally reachable address advertised to other nodes.
+                                                               This can either be an address/port combination in the form 192.168.1.1:4567, or an interface followed by a port number, like
+   advertise_addr                                              eth0:4567.
+   string                                                      If the port number is omitted, the port number from the listen address is used.
+                                                               If advertise_addr is not specified, it will be automatically detected when possible.
+                                                               Only used when swarm is initialised or joined. Because of this it's not considered for idempotency checking.
+                                                               The version of the Docker API running on the Docker Host.
+   api_version                    Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string                         "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the
+                                                               environment variable is not set, the default value will be used.
+                                                               aliases: docker_api_version
+   autolock_managers                Choices:                   If set, generate a key and use it to lock data stored on the managers.
+   boolean                          • no                       Docker default value is no.
+                                    • yes                      docker_swarm_info can be used to retrieve the unlock key.
+                                                               Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                                     If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory
+   path                                                        specified in the environment variable DOCKER_CERT_PATH will be used.
+                                                               aliases: tls_ca_cert, cacert_path
+   ca_force_rotate                                             An integer whose purpose is to force swarm to generate a new signing CA certificate and key, if none have been specified.
+   integer                                                     Docker default value is 0.
+                                                               Requires API version >= 1.30.
+                                                               Path to the client's TLS certificate file.
+   client_cert                                                 If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory
+   path                                                        specified in the environment variable DOCKER_CERT_PATH will be used.
+                                                               aliases: tls_client_cert, cert_path
+                                                               Path to the client's TLS key file.
+   client_key                                                  If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory
+   path                                                        specified in the environment variable DOCKER_CERT_PATH will be used.
+                                                               aliases: tls_client_key, key_path
+   debug                            Choices:
+   boolean                          • no ←                     Debug mode
+                                    • yes
+   default_addr_pool                                           Default address pool in CIDR format.
+   list / elements=string                                      Only used when swarm is initialised. Because of this it's not considered for idempotency checking.
+   added in 2.8                                                Requires API version >= 1.39.
+   dispatcher_heartbeat_period                                 The delay for an agent to send a heartbeat to the dispatcher.
+   integer                                                     Docker default value is 5s.
+                                                               The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For
+                                                               example, tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection
+   docker_host                    Default:                     URL with https.
+   string                         "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment
+                                                               variable is not set, the default value will be used.
+                                                               aliases: docker_url
+   election_tick                                               Amount of ticks (in seconds) needed without a leader to trigger a new election.
+   integer                                                     Docker default value is 10s.
+   force                            Choices:                   Use with state present to force creating a new Swarm, even if already part of one.
+   boolean                          • no ←                     Use with state absent to Leave the swarm even if this node is a manager.
+                                    • yes
+   heartbeat_tick                                              Amount of ticks (in seconds) between each heartbeat.
+   integer                                                     Docker default value is 1s.
+   join_token                                                  Swarm token used to join a swarm cluster.
+   string                                                      Used with state=join.
+   keep_old_snapshots                                          Number of snapshots to keep beyond the current snapshot.
+   integer                                                     Docker default value is 0.
+   labels                                                      User-defined key/value metadata.
+   dictionary                                                  Label operations in this module apply to the docker swarm cluster. Use docker_node module to add/modify/remove swarm node labels.
+                                                               Requires API version >= 1.32.
+                                                               Listen address used for inter-manager communication.
+   listen_addr                    Default:                     This can either be an address/port combination in the form 192.168.1.1:4567, or an interface followed by a port number, like
+   string                         "0.0.0.0:2377"               eth0:4567.
+                                                               If the port number is omitted, the default swarm listening port is used.
+                                                               Only used when swarm is initialised or joined. Because of this it's not considered for idempotency checking.
+   log_entries_for_slow_followers                              Number of log entries to keep around to sync up slow followers after a snapshot is created.
+   integer
+   name                                                        The name of the swarm.
+   string
+   node_cert_expiry                                            Automatic expiry for nodes certificates.
+   integer                                                     Docker default value is 3months.
+   node_id                                                     Swarm id of the node to remove.
+   string                                                      Used with state=remove.
+   remote_addrs                                                Remote address of one or more manager nodes of an existing Swarm to connect to.
+   list / elements=string                                      Used with state=join.
+   rotate_manager_token             Choices:
+   boolean                          • no ←                     Rotate the manager join token.
+                                    • yes
+   rotate_worker_token              Choices:
+   boolean                          • no ←                     Rotate the worker join token.
+                                    • yes
+   signing_ca_cert                                             The desired signing CA certificate for all swarm node TLS leaf certificates, in PEM format.
+   string                                                      This must not be a path to a certificate, but the contents of the certificate.
+                                                               Requires API version >= 1.30.
+   signing_ca_key                                              The desired signing CA key for all swarm node TLS leaf certificates, in PEM format.
+   string                                                      This must not be a path to a key, but the contents of the key.
+                                                               Requires API version >= 1.30.
+   snapshot_interval                                           Number of logs entries between snapshot.
+   integer                                                     Docker default value is 10000.
+   ssl_version                                                 Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                                      If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+                                    Choices:                   Set to present, to create/update a new cluster.
+                                    • present ←                Set to join, to join an existing cluster.
+   state                            • join                     Set to absent, to leave an existing cluster.
+   string                           • absent                   Set to remove, to remove an absent node from the cluster. Note that removing requires Docker SDK for Python >= 2.4.0.
+                                    • remove                   Set to inspect to display swarm informations.
+                                    • inspect
+   subnet_size                                                 Default address pool subnet mask length.
+   integer                                                     Only used when swarm is initialised. Because of this it's not considered for idempotency checking.
+   added in 2.8                                                Requires API version >= 1.39.
+   task_history_retention_limit                                Maximum number of tasks history stored.
+   integer                                                     Docker default value is 5.
+   timeout                        Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer                        60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment
+                                                               variable is not set, the default value will be used.
+                                    Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if
+   tls                              • no ←                     validate_certs is set to yes as well, it will take precedence.
+   boolean                          • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment
+                                                               variable is not set, the default value will be used.
+   tls_hostname                   Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string                         "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the
+                                                               environment variable is not set, the default value will be used.
+                                    Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs                   • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the
+   boolean                          • yes                      environment variable is not set, the default value will be used.
+                                                               aliases: tls_verify
+
+NOTES                   *docker_swarm-notes*
+
+   Note
+
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_swarm-examples*
+
+ - name: Init a new swarm with default parameters
+   docker_swarm:
+     state: present
+
+ - name: Update swarm configuration
+   docker_swarm:
+     state: present
+     election_tick: 5
+
+ - name: Add nodes
+   docker_swarm:
+     state: join
+     advertise_addr: 192.168.1.2
+     join_token: SWMTKN-1--xxxxx
+     remote_addrs: [ '192.168.1.1:2377' ]
+
+ - name: Leave swarm for a node
+   docker_swarm:
+     state: absent
+
+ - name: Remove a swarm manager
+   docker_swarm:
+     state: absent
+     force: true
+
+ - name: Remove node from swarm
+   docker_swarm:
+     state: remove
+     node_id: mynode
+
+ - name: Inspect swarm
+   docker_swarm:
+     state: inspect
+   register: swarm_info
+
+RETURN VALUES                   *docker_swarm-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key                                                          Returned                                                                            Description
+   actions                when action failed.                                                                                    Provides the actions done on the swarm.
+   list / elements=string
+   swarm_facts            success                                                                                                Informations about swarm.
+   dictionary
+         JoinTokens       success                                                                                                Tokens to connect to the Swarm.
+         dictionary
+               Manager    success                                                                                                Token to create a new "manager" node
+               string
+               Worker     success                                                                                                Token to create a new "worker" node
+               string
+         UnlockKey        on success if autolock_managers is true and swarm is initialised, or if autolock_managers has changed. The swarm unlock-key if autolock_managers is true.
+         string
+
+STATUS                   *docker_swarm-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Thierry Bouvet (@tbouvet)
+     • Piotr Wojciechowski (@WojciechowskiPiotr)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_swarm-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_swarm_module.html

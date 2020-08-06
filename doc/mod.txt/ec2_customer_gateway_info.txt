@@ -1,0 +1,101 @@
+SYNOPSIS                   *ec2_customer_gateway_info*
+
+     • Gather information about customer gateways in AWS
+     • This module was called ec2_customer_gateway_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: ec2_customer_gateway_facts
+
+REQUIREMENTS                   *ec2_customer_gateway_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ec2_customer_gateway_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   customer_gateway_ids                          Get details of a specific customer gateways using customer gateway ID/IDs. This value should be provided as a list.
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   filters                                       A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+   -                                             https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeCustomerGateways.html for possible filters.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_customer_gateway_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_customer_gateway_info-examples*
+
+ # # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - name: Gather information about all customer gateways
+   ec2_customer_gateway_info:
+
+ - name: Gather information about a filtered list of customer gateways, based on tags
+   ec2_customer_gateway_info:
+     region: ap-southeast-2
+     filters:
+       "tag:Name": test-customer-gateway
+       "tag:AltName": test-customer-gateway-alt
+   register: cust_gw_info
+
+ - name: Gather information about a specific customer gateway by specifying customer gateway ID
+   ec2_customer_gateway_info:
+     region: ap-southeast-2
+     customer_gateway_ids:
+       - 'cgw-48841a09'
+       - 'cgw-fec021ce'
+   register: cust_gw_info
+
+RETURN VALUES                   *ec2_customer_gateway_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+                              List of one or more customer gateways.
+   customer_gateways always   Sample:
+   list                       [{'bgp_asn': '65000', 'customer_gateway_id': 'cgw-fec844ce', 'customer_gateway_name': 'test-customer-gw', 'ip_address': '110.112.113.120', 'state': 'available',
+                              'tags': [{'key': 'Name', 'value': 'test-customer-gw'}], 'type': 'ipsec.1'}]
+
+STATUS                   *ec2_customer_gateway_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Madhura Naniwadekar (@Madhura-CSI)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_customer_gateway_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_customer_gateway_info_module.html

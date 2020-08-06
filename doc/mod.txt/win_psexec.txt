@@ -1,0 +1,151 @@
+SYNOPSIS                   *win_psexec*
+
+     • Run commands (remotely) through the PsExec service.
+     • Run commands as another (domain) user (with elevated privileges).
+
+REQUIREMENTS                   *win_psexec-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Microsoft PsExec
+
+PARAMETERS                   *win_psexec-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+   chdir                               Run the command from this (remote) directory.
+   path
+   command                             The command line to run through PsExec (limited to 260 characters).
+   string / required
+   elevated            Choices:
+   boolean             • no ←          Run the command with elevated privileges.
+                       • yes
+   executable        Default:          The location of the PsExec utility (in case it is not located in your PATH).
+   path              "psexec.exe"
+   extra_opts                          Specify additional options to add onto the PsExec invocation.
+   list                                This module was undocumented in older releases and will be removed in Ansible 2.10.
+   hostnames                           The hostnames to run the command.
+   list                                If not provided, the command is run locally.
+   interactive         Choices:
+   boolean             • no ←          Run the program so that it interacts with the desktop on the remote system.
+                       • yes
+   limited             Choices:
+   boolean             • no ←          Run the command as limited user (strips the Administrators group and allows only privileges assigned to the Users group).
+                       • yes
+   nobanner            Choices:        Do not display the startup banner and copyright message.
+   boolean             • no ←          This only works for specific versions of the PsExec binary.
+   added in 2.4        • yes
+   noprofile           Choices:
+   boolean             • no ←          Run the command without loading the account's profile.
+                       • yes
+   password                            The password for the (remote) user to run the command as.
+   string                              This is mandatory in order authenticate yourself.
+                       Choices:
+                       • abovenormal
+   priority            • background
+   -                   • belownormal   Used to run the command at a different priority.
+                       • high
+                       • low
+                       • realtime
+   session                             Specifies the session ID to use.
+   integer                             This parameter works in conjunction with interactive.
+   added in 2.7                        It has no effect when interactive is set to no.
+   system              Choices:
+   boolean             • no ←          Run the remote command in the System account.
+                       • yes
+   timeout                             The connection timeout in seconds
+   integer
+   username                            The (remote) user to run the command as.
+   string                              If not provided, the current user is used.
+   wait                Choices:        Wait for the application to terminate.
+   boolean             • no            Only use for non-interactive applications.
+                       • yes ←
+
+NOTES                   *win_psexec-notes*
+
+   Note
+
+     • More information related to Microsoft PsExec is available from https://technet.microsoft.com/en-us/sysinternals/bb897553.aspx
+
+SEE ALSO                   *win_psexec-see also*
+
+   See also
+
+   psexec – Runs commands on a remote Windows host based on the PsExec model
+   The official documentation on the psexec module.
+
+   raw – Executes a low-down and dirty command
+   The official documentation on the raw module.
+
+   win_command – Executes a command on a remote Windows node
+   The official documentation on the win_command module.
+
+   win_shell – Execute shell commands on target hosts
+   The official documentation on the win_shell module.
+
+EXAMPLES                   *win_psexec-examples*
+
+ - name: Test the PsExec connection to the local system (target node) with your user
+   win_psexec:
+     command: whoami.exe
+
+ - name: Run regedit.exe locally (on target node) as SYSTEM and interactively
+   win_psexec:
+     command: regedit.exe
+     interactive: yes
+     system: yes
+
+ - name: Run the setup.exe installer on multiple servers using the Domain Administrator
+   win_psexec:
+     command: E:\setup.exe /i /IACCEPTEULA
+     hostnames:
+     - remote_server1
+     - remote_server2
+     username: DOMAIN\Administrator
+     password: some_password
+     priority: high
+
+ - name: Run PsExec from custom location C:\Program Files\sysinternals\
+   win_psexec:
+     command: netsh advfirewall set allprofiles state off
+     executable: C:\Program Files\sysinternals\psexec.exe
+     hostnames: [ remote_server ]
+     password: some_password
+     priority: low
+
+RETURN VALUES                   *win_psexec-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                    Description
+   cmd                     The complete command line used by the module, including PsExec call and additional options.
+   string  always          Sample:
+                           psexec.exe -nobanner \\remote_server -u "DOMAIN\Administrator" -p "some_password" -accepteula E:\setup.exe
+   pid                     The PID of the async process created by PsExec.
+   integer when wait=False Sample:
+                           1532
+   rc      always          The return code for the command.
+   integer
+   stderr                  The error output from the command.
+   string  always          Sample:
+                           Error 15 running E:\setup.exe
+   stdout                  The standard output from the command.
+   string  always          Sample:
+                           Success.
+
+STATUS                   *win_psexec-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_psexec-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_psexec_module.html

@@ -1,0 +1,107 @@
+SYNOPSIS                   *junos_rpc*
+
+     • Sends a request to the remote device running JUNOS to execute the specified RPC using the NetConf transport. The reply is then returned to the playbook in the xml key. If an alternate output
+       format is requested, the reply is transformed to the requested output.
+
+REQUIREMENTS                   *junos_rpc-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.5.2)
+
+PARAMETERS                   *junos_rpc-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   args                          The args argument provides a set of arguments for the RPC call and are encoded in the request message. This argument accepts a set of key=value arguments.
+   -
+   attrs
+   -                             The attrs arguments defines a list of attributes and their values to set for the RPC call. This accepts a dictionary of key-values.
+   added in 2.5
+   output       Default:         The output argument specifies the desired output of the return data. This argument accepts one of xml, text, or json. For json, the JUNOS device must be running a
+   -            "xml"            version of software that supports native JSON output.
+                                 Deprecated
+                                 Starting with Ansible 2.5 we recommend using connection: network_cli or connection: netconf.
+   provider                      For more information please see the Junos OS Platform Options guide.
+   dictionary
+                                 ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                 A dict object containing connection details.
+    host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+    string /                     the transport.
+    required
+    password                     Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not specified
+    string                       in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+    port        Default:         Specifies the port to use when building the connection to the remote device. The port value will default to the well known SSH port of 22 (for transport=cli) or
+    integer     22               port 830 (for transport=netconf) device.
+    ssh_keyfile                  Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+    path                         value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    timeout     Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer     10               operation is completed, the module will error.
+    username                     Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+    string                       specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   rpc                           The rpc argument specifies the RPC call to send to the remote devices to be executed. The RPC Reply message is parsed and the contents are returned to the playbook.
+   - / required
+
+NOTES                   *junos_rpc-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+     • Recommended connection is netconf. See the Junos OS Platform Options.
+     • This module also works with local connections for legacy playbooks.
+     • For information on using CLI and netconf see the Junos OS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Juniper network devices see https://www.ansible.com/ansible-juniper.
+
+EXAMPLES                   *junos_rpc-examples*
+
+ - name: collect interface information using rpc
+   junos_rpc:
+     rpc: get-interface-information
+     args:
+       interface-name: em0
+       media: True
+
+ - name: get system information
+   junos_rpc:
+     rpc: get-system-information
+
+ - name: load configuration
+   junos_rpc:
+     rpc: load-configuration
+     attrs:
+       action: override
+       url: /tmp/config.conf
+
+RETURN VALUES                   *junos_rpc-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   output       always   The rpc rely converted to the output format.
+   string
+   output_lines always   The text output split into lines for readability.
+   list
+   xml          always   The xml return string from the rpc request.
+   string
+
+STATUS                   *junos_rpc-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_rpc-red hat support*
+
+     • Peter Sprygada (@privateip)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_rpc-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_rpc_module.html

@@ -1,0 +1,151 @@
+SYNOPSIS                   *gcp_compute_target_pool*
+
+     • Represents a TargetPool resource, used for Load Balancing.
+
+REQUIREMENTS                   *gcp_compute_target_pool-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_compute_target_pool-parameters*
+
+          Parameter          Choices/Defaults                                                                         Comments
+                              Choices:
+   auth_kind                  • application    The type of credential used.
+   string / required          • machineaccount
+                              • serviceaccount
+                                               This field is applicable only when the containing target pool is serving a forwarding rule as the primary pool, and its failoverRatio field is
+                                               properly set to a value between [0, 1].
+                                               backupPool and failoverRatio together define the fallback behavior of the primary target pool: if the ratio of the healthy instances in the primary
+                                               pool is at or below failoverRatio, traffic arriving at the load-balanced IP will be directed to the backup pool.
+   backup_pool                                 In case where failoverRatio and backupPool are not set, or all the instances in the backup pool are unhealthy, the traffic will be directed back to
+   dictionary                                  the primary pool in the "force" mode, where traffic will be spread to the healthy instances with the best effort, or to all instances when no instance
+                                               is healthy.
+                                               This field represents a link to a TargetPool resource in GCP. It can be specified in two ways. First, you can place a dictionary with key 'selfLink'
+                                               and value of your resource's selfLink Alternatively, you can add `register: name-of-resource` to a gcp_compute_target_pool task and then set this
+                                               backup_pool field to "{{ name-of-resource }}"
+   description                                 An optional description of this resource.
+   string
+   env_type                                    Specifies which Ansible environment you're running this module within.
+   string                                      This should not be set unless you know what you're doing.
+                                               This only alters the User Agent string for any API requests.
+                                               This field is applicable only when the containing target pool is serving a forwarding rule as the primary pool (i.e., not as a backup pool to some
+                                               other target pool). The value of the field must be in [0, 1].
+   failover_ratio                              If set, backupPool must also be set. They together define the fallback behavior of the primary target pool: if the ratio of the healthy instances in
+   string                                      the primary pool is at or below this number, traffic arriving at the load-balanced IP will be directed to the backup pool.
+                                               In case where failoverRatio is not set or all the instances in the backup pool are unhealthy, the traffic will be directed back to the primary pool in
+                                               the "force" mode, where traffic will be spread to the healthy instances with the best effort, or to all instances when no instance is healthy.
+                                               A reference to a HttpHealthCheck resource.
+                                               A member instance in this pool is considered healthy if and only if the health checks pass. If not specified it means all member instances will be
+   health_check                                considered healthy at all times.
+   dictionary                                  This field represents a link to a HttpHealthCheck resource in GCP. It can be specified in two ways. First, you can place a dictionary with key
+                                               'selfLink' and value of your resource's selfLink Alternatively, you can add `register: name-of-resource` to a gcp_compute_http_health_check task and
+                                               then set this health_check field to "{{ name-of-resource }}"
+   instances                                   A list of virtual machine instances serving this pool.
+   list                                        They must live in zones contained in the same region as this pool.
+   name                                        Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035.
+   string / required                           Specifically, the name must be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first character must
+                                               be a lowercase letter, and all following characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.
+   project                                     The Google Cloud Platform project to use.
+   string
+   region                                      The region where the target pool resides.
+   string / required
+   scopes                                      Array of scopes to be used.
+   list
+   service_account_contents                    The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                       An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                        The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+                                               Session affinity option. Must be one of these values: - NONE: Connections from the same client IP may go to any instance in the pool.
+   session_affinity                            - CLIENT_IP: Connections from the same client IP will go to the same instance in the pool while that instance remains healthy.
+   string                                      - CLIENT_IP_PROTO: Connections from the same client IP with the same IP protocol will go to the same instance in the pool while that instance remains
+                                               healthy.
+                                               Some valid choices include: "NONE", "CLIENT_IP", "CLIENT_IP_PROTO"
+   state                      Choices:
+   string                     • present ←      Whether the given object should exist in GCP
+                              • absent
+
+NOTES                   *gcp_compute_target_pool-notes*
+
+   Note
+
+     • API Reference: https://cloud.google.com/compute/docs/reference/rest/v1/targetPools
+     • Official Documentation: https://cloud.google.com/compute/docs/load-balancing/network/target-pools
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_compute_target_pool-examples*
+
+ - name: create a target pool
+   gcp_compute_target_pool:
+     name: test_object
+     region: us-west1
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+     state: present
+
+RETURN VALUES                   *gcp_compute_target_pool-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+                              This field is applicable only when the containing target pool is serving a forwarding rule as the primary pool, and its failoverRatio field is properly set to a value
+                              between [0, 1].
+   backupPool        success  backupPool and failoverRatio together define the fallback behavior of the primary target pool: if the ratio of the healthy instances in the primary pool is at or below
+   dictionary                 failoverRatio, traffic arriving at the load-balanced IP will be directed to the backup pool.
+                              In case where failoverRatio and backupPool are not set, or all the instances in the backup pool are unhealthy, the traffic will be directed back to the primary pool in
+                              the "force" mode, where traffic will be spread to the healthy instances with the best effort, or to all instances when no instance is healthy.
+   creationTimestamp success  Creation timestamp in RFC3339 text format.
+   string
+   description       success  An optional description of this resource.
+   string
+                              This field is applicable only when the containing target pool is serving a forwarding rule as the primary pool (i.e., not as a backup pool to some other target pool).
+                              The value of the field must be in [0, 1].
+   failoverRatio     success  If set, backupPool must also be set. They together define the fallback behavior of the primary target pool: if the ratio of the healthy instances in the primary pool
+   string                     is at or below this number, traffic arriving at the load-balanced IP will be directed to the backup pool.
+                              In case where failoverRatio is not set or all the instances in the backup pool are unhealthy, the traffic will be directed back to the primary pool in the "force"
+                              mode, where traffic will be spread to the healthy instances with the best effort, or to all instances when no instance is healthy.
+   healthCheck                A reference to a HttpHealthCheck resource.
+   dictionary        success  A member instance in this pool is considered healthy if and only if the health checks pass. If not specified it means all member instances will be considered healthy
+                              at all times.
+   id                success  The unique identifier for the resource.
+   integer
+   instances         success  A list of virtual machine instances serving this pool.
+   list                       They must live in zones contained in the same region as this pool.
+   name                       Name of the resource. Provided by the client when the resource is created. The name must be 1-63 characters long, and comply with RFC1035. Specifically, the name must
+   string            success  be 1-63 characters long and match the regular expression `[a-z]([-a-z0-9]"[a-z0-9])?` which means the first character must be a lowercase letter, and all following
+                              characters must be a dash, lowercase letter, or digit, except the last character, which cannot be a dash.
+   region            success  The region where the target pool resides.
+   string
+   sessionAffinity            Session affinity option. Must be one of these values: - NONE: Connections from the same client IP may go to any instance in the pool.
+   string            success  - CLIENT_IP: Connections from the same client IP will go to the same instance in the pool while that instance remains healthy.
+                              - CLIENT_IP_PROTO: Connections from the same client IP with the same IP protocol will go to the same instance in the pool while that instance remains healthy.
+
+STATUS                   *gcp_compute_target_pool-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_compute_target_pool-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_compute_target_pool_module.html

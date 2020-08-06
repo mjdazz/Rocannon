@@ -1,0 +1,118 @@
+SYNOPSIS                   *bigip_irule*
+
+     • Manage iRules across different modules on a BIG-IP.
+
+PARAMETERS                   *bigip_irule-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   content                          When used instead of 'src', sets the contents of an iRule directly to the specified value. This is for simple values, but can be used with lookup plugins for
+   string                           anything complex or with formatting. Either one of src or content must be provided.
+   module            Choices:
+   string /          • ltm          The BIG-IP module to add the iRule to.
+   required          • gtm
+   name
+   string /                         The name of the iRule.
+   required
+   partition       Default:
+   string          "Common"         Device partition to manage resources on.
+   added in 2.5
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   src                              The iRule file to interpret and upload to the BIG-IP. Either one of src or content must be provided.
+   path / required
+   state             Choices:
+   string            • present ←    Whether the iRule should exist or not.
+                     • absent
+
+NOTES                   *bigip_irule-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_irule-examples*
+
+ - name: Add the iRule contained in template irule.tcl to the LTM module
+   bigip_irule:
+     content: "{{ lookup('template', 'irule.tcl') }}"
+     module: ltm
+     name: MyiRule
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Add the iRule contained in static file irule.tcl to the LTM module
+   bigip_irule:
+     module: ltm
+     name: MyiRule
+     src: irule.tcl
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_irule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key                Returned                                                                                    Description
+   content                                    The content of the iRule that was managed
+   string  changed and success                Sample:
+                                              when LB_FAILED { set wipHost [LB::server addr] }
+   module                                     The module that the iRule was added to
+   string  changed and success                Sample:
+                                              gtm
+   src                                        The filename that included the iRule source
+   string  changed and success, when provided Sample:
+                                              /opt/src/irules/example1.tcl
+
+STATUS                   *bigip_irule-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_irule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_irule_module.html

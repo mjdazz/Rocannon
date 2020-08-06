@@ -1,0 +1,132 @@
+SYNOPSIS                   *github_deploy_key*
+
+     • Adds or removes deploy keys for GitHub repositories. Supports authentication using username and password, username and password and 2-factor authentication code (OTP), OAuth2 token, or
+       personal access token.
+
+REQUIREMENTS                   *github_deploy_key-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-requests
+
+PARAMETERS                   *github_deploy_key-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   force          Choices:
+   boolean        • no ←         If true, forcefully adds the deploy key by deleting any existing deploy key with the same public key or title.
+                  • yes
+   key                           The SSH public key to add to the repository as a deploy key.
+   - / required
+   name                          The name for the deploy key.
+   - / required                  aliases: title, label
+   otp                           The 6 digit One Time Password for 2-Factor Authentication. Required together with username and password.
+   -                             aliases: 2fa_token
+   owner                         The name of the individual account or organization that owns the GitHub repository.
+   - / required                  aliases: account, organization
+   password                      The password to authenticate with. Alternatively, a personal access token can be used instead of username and password combination.
+   -
+   read_only      Choices:
+   boolean        • no           If true, the deploy key will only be able to read repository contents. Otherwise, the deploy key will be able to read and write.
+                  • yes ←
+   repo                          The name of the GitHub repository.
+   - / required                  aliases: repository
+   state          Choices:
+   -              • present ←    The state of the deploy key.
+                  • absent
+   token                         The OAuth2 token or personal access token to authenticate with. Mutually exclusive with password.
+   -
+   username                      The username to authenticate with. Should not be set when using personal access token
+   -
+
+NOTES                   *github_deploy_key-notes*
+
+   Note
+
+     • Refer to GitHub’s API documentation here: https://developer.github.com/v3/repos/keys/.
+
+EXAMPLES                   *github_deploy_key-examples*
+
+ # add a new read-only deploy key to a GitHub repository using basic authentication
+ - github_deploy_key:
+     owner: "johndoe"
+     repo: "example"
+     name: "new-deploy-key"
+     key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAwXxn7kIMNWzcDfou..."
+     read_only: yes
+     username: "johndoe"
+     password: "supersecretpassword"
+
+ # remove an existing deploy key from a GitHub repository
+ - github_deploy_key:
+     owner: "johndoe"
+     repository: "example"
+     name: "new-deploy-key"
+     key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAwXxn7kIMNWzcDfou..."
+     force: yes
+     username: "johndoe"
+     password: "supersecretpassword"
+     state: absent
+
+ # add a new deploy key to a GitHub repository, replace an existing key, use an OAuth2 token to authenticate
+ - github_deploy_key:
+     owner: "johndoe"
+     repository: "example"
+     name: "new-deploy-key"
+     key: "{{ lookup('file', '~/.ssh/github.pub') }}"
+     force: yes
+     token: "ABAQDAwXxn7kIMNWzcDfo..."
+
+ # re-add a deploy key to a GitHub repository but with a different name
+ - github_deploy_key:
+     owner: "johndoe"
+     repository: "example"
+     name: "replace-deploy-key"
+     key: "{{ lookup('file', '~/.ssh/github.pub') }}"
+     username: "johndoe"
+     password: "supersecretpassword"
+
+ # add a new deploy key to a GitHub repository using 2FA
+ - github_deploy_key:
+     owner: "johndoe"
+     repo: "example"
+     name: "new-deploy-key-2"
+     key: "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDAwXxn7kIMNWzcDfou..."
+     username: "johndoe"
+     password: "supersecretpassword"
+     otp: 123456
+
+RETURN VALUES                   *github_deploy_key-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   error                     the error message returned by the GitHub API
+   string           failed   Sample:
+                             key is already in use
+   http_status_code          the HTTP status code returned by the GitHub API
+   integer          failed   Sample:
+                             400
+   id                        the key identifier assigned by GitHub for the deploy key
+   integer          changed  Sample:
+                             24381901
+   msg                       the status message describing what occurred
+   string           always   Sample:
+                             Deploy key added successfully
+
+STATUS                   *github_deploy_key-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ali (@bincyber)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *github_deploy_key-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/github_deploy_key_module.html

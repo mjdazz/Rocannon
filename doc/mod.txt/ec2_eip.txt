@@ -1,62 +1,217 @@
-SYNOPSIS                           *ec2_eip*
+SYNOPSIS                   *ec2_eip*
 
-New in version 1.4.
+     • This module can allocate or release an EIP.
+     • This module can associate/disassociate an EIP with instances or network interfaces.
 
-This module associates AWS EC2 elastic IP addresses with instances
+REQUIREMENTS                   *ec2_eip-requirements*
 
-EXAMPLES                           *ec2_eip-examples*
->
-    - name: associate an elastic IP with an instance
-      ec2_eip: instance_id=i-1212f003 ip=93.184.216.119
-   
-    - name: disassociate an elastic IP from an instance
-      ec2_eip: instance_id=i-1212f003 ip=93.184.216.119 state=absent
-   
-    - name: allocate a new elastic IP and associate it with an instance
-      ec2_eip: instance_id=i-1212f003
-   
-    - name: allocate a new elastic IP without associating it to anything
-      action: ec2_eip
-      register: eip
-    - name: output the IP
-      debug: msg="Allocated IP is {{ eip.public_ip }}"
-   
-    - name: provision new instances with ec2
-      ec2: keypair=mykey instance_type=c1.medium image=ami-40603AD1 wait=yes group=webserver count=3
-      register: ec2
-    - name: associate new elastic IPs with each of the instances
-      ec2_eip: "instance_id={{ item }}"
-      with_items: ec2.instance_ids
-   
-    - name: allocate a new elastic IP inside a VPC in us-west-2
-      ec2_eip: region=us-west-2 in_vpc=yes
-      register: eip
-    - name: output the IP
-      debug: msg="Allocated IP inside a VPC is {{ eip.public_ip }}"
-   
-      Note
-   
-      This module will return public_ip on success, which will contain the public IP address associated with the instance.
-   
-      Note
-   
-      There may be a delay between the time the Elastic IP is assigned and when the cloud instance is reachable via the new address. Use wait_for and pause to delay further playbook execution until
-      the instance is reachable, if necessary.
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *ec2_eip-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   allow_reassociation            Choices:       Specify this option to allow an Elastic IP address that is already associated with another network interface or instance to be re-associated with
+   boolean                        • no ←         the specified instance or interface.
+   added in 2.5                   • yes
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   device_id                                     The id of the device for the EIP. Can be an EC2 Instance id or Elastic Network Interface (ENI) id.
+   -                                             aliases: instance_id
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   in_vpc                         Choices:
+   boolean                        • no ←         Allocate an EIP inside a VPC or not. Required if specifying an ENI.
+                                  • yes
+   private_ip_address                            The primary or secondary private IP address to associate with the Elastic IP address.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+                                                 The IP address of a previously allocated EIP.
+   public_ip                                     If present and device is specified, the EIP is associated with the device.
+   -                                             If absent and device is specified, the EIP is disassociated from the device.
+                                                 aliases: ip
+   public_ipv4_pool             Default:         Allocates the new Elastic IP from the provided public IPv4 pool (BYOIP) only applies to newly allocated Elastic IPs, isn't validated when
+   -                            "no"             reuse_existing_ip_allowed is true.
+   added in 2.9
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   release_on_disassociation      Choices:
+   boolean                        • no ←         whether or not to automatically release the EIP when it is disassociated
+                                  • yes
+   reuse_existing_ip_allowed      Choices:
+   boolean                        • no ←         Reuse an EIP that is not associated to a device (when available), instead of allocating a new one.
+                                  • yes
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:       If present, allocate an EIP or associate an existing EIP with a device.
+   -                              • present ←    If absent, disassociate the EIP from the device and optionally release it.
+                                  • absent
+   tag_name                     Default:
+   -                            "no"             When reuse_existing_ip_allowed is true, supplement with this option to only reuse an Elastic IP if it is tagged with tag_name.
+   added in 2.9
+   tag_value                    Default:
+   -                            "no"             Supplements tag_name but also checks that the value of the tag provided in tag_name matches tag_value. matches the tag_value
+   added in 2.9
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_eip-notes*
+
+   Note
+
+     • There may be a delay between the time the EIP is assigned and when the cloud instance is reachable via the new address. Use wait_for and pause to delay further playbook execution until the
+       instance is reachable, if necessary.
+     • This module returns multiple changed statuses on disassociation or release. It returns an overall status based on any changes occurring. It also returns individual changed statuses for
+       disassociation and release.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_eip-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - name: associate an elastic IP with an instance
+   ec2_eip:
+     device_id: i-1212f003
+     ip: 93.184.216.119
+
+ - name: associate an elastic IP with a device
+   ec2_eip:
+     device_id: eni-c8ad70f3
+     ip: 93.184.216.119
+
+ - name: associate an elastic IP with a device and allow reassociation
+   ec2_eip:
+     device_id: eni-c8ad70f3
+     public_ip: 93.184.216.119
+     allow_reassociation: yes
+
+ - name: disassociate an elastic IP from an instance
+   ec2_eip:
+     device_id: i-1212f003
+     ip: 93.184.216.119
+     state: absent
+
+ - name: disassociate an elastic IP with a device
+   ec2_eip:
+     device_id: eni-c8ad70f3
+     ip: 93.184.216.119
+     state: absent
+
+ - name: allocate a new elastic IP and associate it with an instance
+   ec2_eip:
+     device_id: i-1212f003
+
+ - name: allocate a new elastic IP without associating it to anything
+   ec2_eip:
+     state: present
+   register: eip
+
+ - name: output the IP
+   debug:
+     msg: "Allocated IP is {{ eip.public_ip }}"
+
+ - name: provision new instances with ec2
+   ec2:
+     keypair: mykey
+     instance_type: c1.medium
+     image: ami-40603AD1
+     wait: yes
+     group: webserver
+     count: 3
+   register: ec2
+
+ - name: associate new elastic IPs with each of the instances
+   ec2_eip:
+     device_id: "{{ item }}"
+   loop: "{{ ec2.instance_ids }}"
+
+ - name: allocate a new elastic IP inside a VPC in us-west-2
+   ec2_eip:
+     region: us-west-2
+     in_vpc: yes
+   register: eip
+
+ - name: output the IP
+   debug:
+     msg: "Allocated IP inside a VPC is {{ eip.public_ip }}"
+
+ - name: allocate eip - reuse unallocated ips (if found) with FREE tag
+   ec2_eip:
+     region: us-east-1
+     in_vpc: yes
+     reuse_existing_ip_allowed: yes
+     tag_name: FREE
+
+ - name: allocate eip - reuse unallocted ips if tag reserved is nope
+   ec2_eip:
+     region: us-east-1
+     in_vpc: yes
+     reuse_existing_ip_allowed: yes
+     tag_name: reserved
+     tag_value: nope
+
+ - name: allocate new eip - from servers given ipv4 pool
+   ec2_eip:
+     region: us-east-1
+     in_vpc: yes
+     public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+ - name: allocate eip - from a given pool (if no free addresses where dev-servers tag is dynamic)
+   ec2_eip:
+     region: us-east-1
+     in_vpc: yes
+     reuse_existing_ip_allowed: yes
+     tag_name: dev-servers
+     public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+ - name: allocate eip from pool - check if tag reserved_for exists and value is our hostname
+   ec2_eip:
+     region: us-east-1
+     in_vpc: yes
+     reuse_existing_ip_allowed: yes
+     tag_name: reserved_for
+     tag_value: "{{ inventory_hostname }}"
+     public_ipv4_pool: ipv4pool-ec2-0588c9b75a25d1a02
+
+RETURN VALUES                   *ec2_eip-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                 Description
+   allocation_id            allocation_id of the elastic ip
+   string        on success Sample:
+                            eipalloc-51aa3a6c
+   public_ip                an elastic ip address
+   string        on success Sample:
+                            52.88.159.209
+
+STATUS                   *ec2_eip-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Rick Mendes (@rickmendes) <rmendes@illumina.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_eip-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_eip_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_eip_module.html

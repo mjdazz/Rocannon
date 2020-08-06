@@ -1,0 +1,193 @@
+SYNOPSIS                   *bigip_user*
+
+     • Manage user accounts and user attributes on a BIG-IP. Typically this module operates only on the REST API users and not the CLI users. When specifying root, you may only change the password.
+       Your other parameters will be ignored in this case. Changing the root password is not an idempotent operation. Therefore, it will change it every time this module attempts to change it.
+
+PARAMETERS                   *bigip_user-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   full_name                            Full name of the user.
+   string
+   partition           Default:
+   string              "Common"         Device partition to manage resources on.
+   added in 2.5
+                                        Specifies the administrative partition to which the user has access. partition_access is required when creating a new account. Should be in the form
+   partition_access                     "partition:role".
+   list                                 Valid roles include acceleration-policy-editor, admin, application-editor, auditor, certificate-manager, guest, irule-manager, manager, no-access, operator,
+                                        resource-admin, user-manager, web-application-security-administrator, and web-application-security-editor.
+                                        Partition portion of tuple should be an existing partition or the value 'all'.
+   password_credential                  Set the users password to this unencrypted value. password_credential is required when creating a new account.
+   string
+   provider
+   dictionary                           A dict object containing connection details.
+   added in 2.5
+      auth_provider                     Configures the auth provider for to obtain authentication tokens from the remote device.
+      string                            This option is really used when working with BIG-IQ devices.
+      password                          The password for the user account used to connect to the BIG-IP.
+      string /                          You may omit this option by setting the environment variable F5_PASSWORD.
+      required                          aliases: pass, pwd
+      server                            The BIG-IP host.
+      string /                          You may omit this option by setting the environment variable F5_SERVER.
+      required
+      server_port      Default:         The BIG-IP server port.
+      integer          443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+      ssh_keyfile                       Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+      path                              You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+      timeout                           Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+      integer                           operation is completed, the module will error.
+      transport          Choices:
+      string             • cli          Configures the transport connection to use when connecting to the remote device.
+                         • rest ←
+      user                              The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+      string /                          You may omit this option by setting the environment variable F5_USER.
+      required
+      validate_certs     Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+      boolean            • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                         • yes ←
+                         Choices:
+   shell                 • bash         Optionally set the users shell.
+   string                • none
+                         • tmsh
+   state                 Choices:
+   string                • present ←    Whether the account should exist or not, taking action if the state is different from what is stated.
+                         • absent
+   update_password       Choices:       always will allow to update passwords if the user chooses to do so. on_create will only set the password for newly created users.
+   string                • always ←     When username_credential is root, this value will be forced to always.
+                         • on_create
+   username_credential                  Name of the user to create, remove or modify.
+   string / required                    The root user may not be removed.
+                                        aliases: name
+
+NOTES                   *bigip_user-notes*
+
+   Note
+
+     • Requires BIG-IP versions >= 12.0.0
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_user-examples*
+
+ - name: Add the user 'johnd' as an admin
+   bigip_user:
+     username_credential: johnd
+     password_credential: password
+     full_name: John Doe
+     partition_access: all:admin
+     update_password: on_create
+     state: present
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Change the user "johnd's" role and shell
+   bigip_user:
+     username_credential: johnd
+     partition_access: NewPartition:manager
+     shell: tmsh
+     state: present
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Make the user 'johnd' an admin and set to advanced shell
+   bigip_user:
+     name: johnd
+     partition_access: all:admin
+     shell: bash
+     state: present
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Remove the user 'johnd'
+   bigip_user:
+     name: johnd
+     state: absent
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Update password
+   bigip_user:
+     state: present
+     username_credential: johnd
+     password_credential: newsupersecretpassword
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ # Note that the second time this task runs, it would fail because
+ # The password has been changed. Therefore, it is recommended that
+ # you either,
+ #
+ #   " Put this in its own playbook that you run when you need to
+ #   " Put this task in a `block`
+ #   " Include `ignore_errors` on this task
+ - name: Change the Admin password
+   bigip_user:
+     state: present
+     username_credential: admin
+     password_credential: NewSecretPassword
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Change the root user's password
+   bigip_user:
+     username_credential: root
+     password_credential: secret
+     state: present
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_user-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key             Returned                                                                                Description
+   full_name                            Full name of the user
+   string           changed and success Sample:
+                                        John Doe
+   partition_access                     List of strings containing the user's roles and which partitions they are applied to. They are specified in the form "partition:role".
+   list             changed and success Sample:
+                                        ['all:admin']
+   shell                                The shell assigned to the user account
+   string           changed and success Sample:
+                                        tmsh
+
+STATUS                   *bigip_user-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_user-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_user_module.html

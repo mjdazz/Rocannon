@@ -1,0 +1,250 @@
+SYNOPSIS                   *bigip_profile_client_ssl*
+
+     • Manages client SSL profiles on a BIG-IP.
+
+PARAMETERS                   *bigip_profile_client_ssl-parameters*
+
+           Parameter                      Choices/Defaults                                                                        Comments
+   advertised_cert_authority
+   string                                                               Specifies that the CAs that the system advertises to clients is being trusted by the profile.
+   added in 2.8
+   allow_expired_crl           Choices:
+   boolean                     • no                                     Instructs the system to use the specified CRL file even if it has expired.
+   added in 2.8                • yes
+   allow_non_ssl               Choices:                                 Enables or disables acceptance of non-SSL connections.
+   boolean                     • no                                     When creating a new profile, the setting is provided by the parent profile.
+   added in 2.7                • yes
+   cert_auth_depth
+   integer                                                              Specifies the maximum number of certificates to be traversed in a client certificate chain.
+   added in 2.8
+                                                                        One or more certificates and keys to associate with the SSL profile. This option is always a list. The keys in the list
+   cert_key_chain                                                       dictate the details of the client/key/chain combination. Note that BIG-IPs can only have one of each type of each
+   list                                                                 certificate/key type. This means that you can only have one RSA, one DSA, and one ECDSA per profile. If you attempt to assign
+                                                                        two RSA, DSA, or ECDSA certificate/key combo, the device will reject this.
+                                                                        This list is a complex list that specifies a number of keys.
+        cert                                                            Specifies a cert name for use.
+        string / required
+        chain                                                           Contains a certificate chain that is relevant to the certificate and key mentioned earlier.
+        string                                                          This key is optional.
+        key                                                             Contains a key name.
+        string / required
+        passphrase                                                      Contains the passphrase of the key file, should it require one.
+        string                                                          Passphrases are encrypted on the remote BIG-IP device. Therefore, there is no way to compare them when updating a client SSL
+                                                                        profile. Due to this, if you specify a passphrase, this module will always register a changed event.
+   ciphers                                                              Specifies the list of ciphers that the system supports. When creating a new profile, the default cipher list is provided by
+   string                                                               the parent profile.
+   client_auth_crl
+   string                                                               Specifies the name of a file containing a list of revoked client certificates.
+   added in 2.8
+   client_auth_frequency       Choices:                                 Specifies the frequency of client authentication for an SSL session.
+   string                      • once                                   When once, specifies that the system authenticates the client once for an SSL session.
+   added in 2.8                • always                                 When always, specifies that the system authenticates the client once for an SSL session and also upon reuse of that session.
+   client_certificate          Choices:                                 Specifies the way the system handles client certificates.
+   string                      • ignore                                 When ignore, specifies that the system ignores certificates from client systems.
+   added in 2.8                • require                                When require, specifies that the system requires a client to present a valid certificate.
+                               • request                                When request, specifies that the system requests a valid certificate from a client but always authenticate the client.
+   name                                                                 Specifies the name of the profile.
+   string / required
+                               Choices:
+                               • netscape-reuse-cipher-change-bug
+                               • microsoft-big-sslv3-buffer
+                               • msie-sslv2-rsa-padding
+                               • ssleay-080-client-dh-bug
+                               • tls-d5-bug
+                               • tls-block-padding-bug
+                               • dont-insert-empty-fragments
+                               • no-ssl
+                               • no-dtls
+                               • no-session-resumption-on-renegotiation
+                               • no-tlsv1.1
+   options                     • no-tlsv1.2                             Options that the system uses for SSL processing in the form of a list. When creating a new profile, the list is provided by
+   list                        • no-tlsv1.3                             the parent profile.
+   added in 2.7                • single-dh-use                          When a '' or none value is provided all options for SSL processing are disabled.
+                               • ephemeral-rsa
+                               • cipher-server-preference
+                               • tls-rollback-bug
+                               • no-sslv2
+                               • no-sslv3
+                               • no-tls
+                               • no-tlsv1
+                               • pkcs1-check-1
+                               • pkcs1-check-2
+                               • netscape-ca-dn-bug
+                               • netscape-demo-cipher-change-bug
+                               • none
+   parent                    Default:                                   The parent template of this monitor template. Once this value has been set, it cannot be changed. By default, this value is
+   string                    "/Common/clientssl"                        the clientssl parent on the Common partition.
+   partition                 Default:
+   string                    "Common"                                   Device partition to manage resources on.
+   added in 2.5
+   provider
+   dictionary                                                           A dict object containing connection details.
+   added in 2.5
+        auth_provider                                                   Configures the auth provider for to obtain authentication tokens from the remote device.
+        string                                                          This option is really used when working with BIG-IQ devices.
+        password                                                        The password for the user account used to connect to the BIG-IP.
+        string / required                                               You may omit this option by setting the environment variable F5_PASSWORD.
+                                                                        aliases: pass, pwd
+        server                                                          The BIG-IP host.
+        string / required                                               You may omit this option by setting the environment variable F5_SERVER.
+        server_port          Default:                                   The BIG-IP server port.
+        integer              443                                        You may omit this option by setting the environment variable F5_SERVER_PORT.
+        ssh_keyfile                                                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli
+        path                                                            transports.
+                                                                        You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+        timeout                                                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the
+        integer                                                         timeout is exceeded before the operation is completed, the module will error.
+        transport              Choices:
+        string                 • cli                                    Configures the transport connection to use when connecting to the remote device.
+                               • rest ←
+        user                                                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+        string / required                                               You may omit this option by setting the environment variable F5_USER.
+        validate_certs         Choices:                                 If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+        boolean                • no                                     You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                               • yes ←
+   renegotiation               Choices:                                 Enables or disables SSL renegotiation.
+   boolean                     • no                                     When creating a new profile, the setting is provided by the parent profile.
+   added in 2.8                • yes
+   retain_certificate          Choices:
+   boolean                     • no                                     When yes, client certificate is retained in SSL session.
+   added in 2.8                • yes
+                                                                        Specifies the method of secure renegotiations for SSL connections. When creating a new profile, the setting is provided by
+                               Choices:                                 the parent profile.
+   secure_renegotiation        • require                                When request is set the system request secure renegotation of SSL connections.
+   string                      • require-strict                         require is a default setting and when set the system permits initial SSL handshakes from clients but terminates
+   added in 2.7                • request                                renegotiations from unpatched clients.
+                                                                        The require-strict setting the system requires strict renegotiation of SSL connections. In this mode the system refuses
+                                                                        connections to insecure servers, and terminates existing SSL connections to insecure servers.
+   server_name                                                          Specifies the fully qualified DNS hostname of the server used in Server Name Indication communications. When creating a new
+   string                                                               profile, the setting is provided by the parent profile.
+   added in 2.8                                                         The server name can also be a wildcard string containing the asterisk " character.
+   sni_default                 Choices:                                 Indicates that the system uses this profile as the default SSL profile when there is no match to the server name, or when the
+   boolean                     • no                                     client provides no SNI extension support.
+   added in 2.8                • yes                                    When creating a new profile, the setting is provided by the parent profile.
+                                                                        There can be only one SSL profile with this setting enabled.
+   sni_require                 Choices:                                 Requires that the network peers also provide SNI support, this setting only takes effect when sni_default is set to true.
+   boolean                     • no                                     When creating a new profile, the setting is provided by the parent profile.
+   added in 2.8                • yes
+   state                       Choices:                                 When present, ensures that the profile exists.
+   string                      • present ←                              When absent, ensures the profile is removed.
+   added in 2.5                • absent
+   strict_resume               Choices:                                 Enables or disables the resumption of SSL sessions after an unclean shutdown.
+   boolean                     • no                                     When creating a new profile, the setting is provided by the parent profile.
+   added in 2.8                • yes
+   trusted_cert_authority
+   string                                                               Specifies a client CA that the system trusts.
+   added in 2.8
+
+NOTES                   *bigip_profile_client_ssl-notes*
+
+   Note
+
+     • Requires BIG-IP software version >= 12
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_profile_client_ssl-examples*
+
+ - name: Create client SSL profile
+   bigip_profile_client_ssl:
+     state: present
+     name: my_profile
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Create client SSL profile with specific ciphers
+   bigip_profile_client_ssl:
+     state: present
+     name: my_profile
+     ciphers: "!SSLv3:!SSLv2:ECDHE+AES-GCM+SHA256:ECDHE-RSA-AES128-CBC-SHA"
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Create client SSL profile with specific SSL options
+   bigip_profile_client_ssl:
+     state: present
+     name: my_profile
+     options:
+       - no-sslv2
+       - no-sslv3
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Create client SSL profile require secure renegotiation
+   bigip_profile_client_ssl:
+     state: present
+     name: my_profile
+     secure_renegotiation: request
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+ - name: Create a client SSL profile with a cert/key/chain setting
+   bigip_profile_client_ssl:
+     state: present
+     name: my_profile
+     cert_key_chain:
+       - cert: bigip_ssl_cert1
+         key: bigip_ssl_key1
+         chain: bigip_ssl_cert1
+     provider:
+       server: lb.mydomain.com
+       user: admin
+       password: secret
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_profile_client_ssl-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   allow_non_ssl                 Acceptance of non-SSL connections.
+   boolean              changed  Sample:
+                                 True
+   ciphers                       The ciphers applied to the profile.
+   string               changed  Sample:
+                                 !SSLv3:!SSLv2:ECDHE+AES-GCM+SHA256:ECDHE-RSA-AES128-CBC-SHA
+   options                       The list of options for SSL processing.
+   list                 changed  Sample:
+                                 ['no-sslv2', 'no-sslv3']
+   renegotiation                 Renegotiation of SSL sessions.
+   boolean              changed  Sample:
+                                 True
+   secure_renegotiation          The method of secure SSL renegotiation.
+   string               changed  Sample:
+                                 request
+   strict_resume                 Resumption of SSL sessions after an unclean shutdown.
+   boolean              changed  Sample:
+                                 True
+
+STATUS                   *bigip_profile_client_ssl-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_profile_client_ssl-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_profile_client_ssl_module.html

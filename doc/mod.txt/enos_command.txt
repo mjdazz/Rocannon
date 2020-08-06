@@ -1,0 +1,132 @@
+SYNOPSIS                   *enos_command*
+
+     • Sends arbitrary commands to an ENOS node and returns the results read from the device. The enos_command module includes an argument that will cause the module to wait for a specific
+       condition before returning or timing out if the condition is not met.
+
+PARAMETERS                   *enos_command-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   auth_pass                     Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value is not
+   -                             specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+   authorize      Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all commands in
+   boolean        • no ←         non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                  • yes
+   commands                      List of commands to send to the remote device over the configured provider. The resulting output from the command is returned. If the wait_for argument is provided,
+   - / required                  the module is not returned until the condition is satisfied or the number of retires as expired.
+   interval     Default:         Configures the interval in seconds to wait between retries of the command. If the command does not pass the specified conditions, the interval indicates how long to
+   -            1                wait before trying the command again.
+   match          Choices:       The match argument is used in conjunction with the wait_for argument to specify the match policy. Valid values are all or any. If the value is set to all then all
+   -              • any          conditionals in the wait_for must be satisfied. If the value is set to any then only one of the values must be satisfied.
+                  • all ←
+   provider                      A dict object containing connection details.
+   dictionary
+    auth_pass                    Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does nothing. If the value is not
+    string                       specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+    authorize     Choices:       Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to execute all commands in
+    boolean       • no ←         non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE will be used instead.
+                  • yes
+    host                         Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+    string /                     the transport.
+    required
+    password                     Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not specified
+    string                       in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+    port        Default:         Specifies the port to use when building the connection to the remote device.
+    integer     22
+    ssh_keyfile                  Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+    path                         value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+    timeout     Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer     10               operation is completed, the module will error.
+    username                     Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+    string                       specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   retries      Default:         Specifies the number of retries a command should by tried before it is considered failed. The command is run on the target device every retry and evaluated against
+   -            10               the wait_for conditions.
+   wait_for                      List of conditions to evaluate against the output of the command. The task will wait for each condition to be true before moving forward. If the conditional is not
+   -                             true within the configured number of retries, the task fails. See examples.
+
+EXAMPLES                   *enos_command-examples*
+
+ # Note: examples below use the following provider dict to handle
+ #       transport and authentication to the node.
+ ---
+ vars:
+   cli:
+     host: "{{ inventory_hostname }}"
+     port: 22
+     username: admin
+     password: admin
+     timeout: 30
+
+ ---
+ - name: test contains operator
+   enos_command:
+     commands:
+       - show version
+       - show system memory
+     wait_for:
+       - "result[0] contains 'Lenovo'"
+       - "result[1] contains 'MemFree'"
+     provider: "{{ cli }}"
+   register: result
+
+ - assert:
+     that:
+       - "result.changed == false"
+       - "result.stdout is defined"
+
+ - name: get output for single command
+   enos_command:
+     commands: ['show version']
+     provider: "{{ cli }}"
+   register: result
+
+ - assert:
+     that:
+       - "result.changed == false"
+       - "result.stdout is defined"
+
+ - name: get output for multiple commands
+   enos_command:
+     commands:
+       - show version
+       - show interface information
+     provider: "{{ cli }}"
+   register: result
+
+ - assert:
+     that:
+       - "result.changed == false"
+       - "result.stdout is defined"
+       - "result.stdout | length == 2"
+
+RETURN VALUES                   *enos_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   failed_conditions          the conditionals that failed
+   list              failed   Sample:
+                              ['...', '...']
+   stdout                     the set of responses from the commands
+   list              always   Sample:
+                              ['...', '...']
+   stdout_lines               The value of stdout split into a list
+   list              always   Sample:
+                              [['...', '...'], ['...'], ['...']]
+
+STATUS                   *enos_command-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Anil Kumar Muraleedharan (@amuraleedhar)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *enos_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/enos_command_module.html

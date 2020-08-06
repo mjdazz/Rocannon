@@ -1,0 +1,166 @@
+SYNOPSIS                   *bigip_routedomain*
+
+     • Manage route domains on a BIG-IP.
+
+PARAMETERS                   *bigip_routedomain-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   bwc_policy                            The bandwidth controller for the route domain.
+   string
+   connection_limit                      The maximum number of concurrent connections allowed for the route domain. Setting this to 0 turns off connection limits.
+   integer
+   description                           Specifies descriptive text that identifies the route domain.
+   string
+   flow_eviction_policy                  The eviction policy to use with this route domain. Apply an eviction policy to provide customized responses to flow overflows and slow flows on the route
+   string                                domain.
+   fw_enforced_policy
+   string                                Specifies AFM policy to be attached to route domain.
+   added in 2.8
+                                         The unique identifying integer representing the route domain.
+   id                                    This field is required when creating a new route domain.
+   integer                               In version 2.5, this value is no longer used to reference a route domain when making modifications to it (for instance during update and delete operations).
+                                         Instead, the name parameter is used. In version 2.6, the name value will become a required parameter.
+   name
+   string                                The name of the route domain.
+   added in 2.5
+   parent                                Specifies the route domain the system searches when it cannot find a route in the configured domain.
+   string
+   partition            Default:
+   string               "Common"         Partition to create the route domain on. Partitions cannot be updated once they are created.
+   added in 2.5
+   provider
+   dictionary                            A dict object containing connection details.
+   added in 2.5
+      auth_provider                      Configures the auth provider for to obtain authentication tokens from the remote device.
+      string                             This option is really used when working with BIG-IQ devices.
+      password                           The password for the user account used to connect to the BIG-IP.
+      string / required                  You may omit this option by setting the environment variable F5_PASSWORD.
+                                         aliases: pass, pwd
+      server                             The BIG-IP host.
+      string / required                  You may omit this option by setting the environment variable F5_SERVER.
+      server_port       Default:         The BIG-IP server port.
+      integer           443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+      ssh_keyfile                        Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+      path                               You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+      timeout                            Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+      integer                            operation is completed, the module will error.
+      transport           Choices:
+      string              • cli          Configures the transport connection to use when connecting to the remote device.
+                          • rest ←
+      user                               The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+      string / required                  You may omit this option by setting the environment variable F5_USER.
+      validate_certs      Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+      boolean             • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                          • yes ←
+                          Choices:
+                          • none
+                          • BFD
+                          • BGP
+   routing_protocol       • IS-IS        Dynamic routing protocols for the system to use in the route domain.
+   list                   • OSPFv2
+                          • OSPFv3
+                          • PIM
+                          • RIP
+                          • RIPng
+   service_policy                        Service policy to associate with the route domain.
+   string
+   state                  Choices:
+   string                 • present ←    Whether the route domain should exist or not.
+                          • absent
+   strict                 Choices:
+   boolean                • no           Specifies whether the system enforces cross-routing restrictions or not.
+                          • yes
+   vlans                                 VLANs for the system to use in the route domain.
+   list
+
+NOTES                   *bigip_routedomain-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_routedomain-examples*
+
+ - name: Create a route domain
+   bigip_routedomain:
+     name: foo
+     id: 1234
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Set VLANs on the route domain
+   bigip_routedomain:
+     name: bar
+     state: present
+     vlans:
+       - net1
+       - foo
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_routedomain-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   bwc_policy                    The new bandwidth controller.
+   string               changed  Sample:
+                                 /Common/foo
+   connection_limit              The new connection limit for the route domain.
+   integer              changed  Sample:
+                                 100
+   description                   The description of the route domain.
+   string               changed  Sample:
+                                 route domain foo
+   flow_eviction_policy          The new eviction policy to use with this route domain.
+   string               changed  Sample:
+                                 /Common/default-eviction-policy
+   fw_enforced_policy            Specfies AFM policy to be attached to route domain.
+   string               changed  Sample:
+                                 /Common/afm-blocking-policy
+   id                            The ID of the route domain that was changed.
+   integer              changed  Sample:
+                                 2
+   parent               changed  The new parent route domain.
+   integer
+   routing_protocol              List of routing protocols applied to the route domain.
+   list                 changed  Sample:
+                                 ['bfd', 'bgp']
+   service_policy                The new service policy to use with this route domain.
+   string               changed  Sample:
+                                 /Common-my-service-policy
+   strict                        The new strict isolation setting.
+   string               changed  Sample:
+                                 enabled
+   vlans                         List of new VLANs the route domain is applied to.
+   list                 changed  Sample:
+                                 ['/Common/http-tunnel', '/Common/socks-tunnel']
+
+STATUS                   *bigip_routedomain-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_routedomain-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_routedomain_module.html

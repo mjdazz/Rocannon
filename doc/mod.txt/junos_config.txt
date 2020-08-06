@@ -1,0 +1,195 @@
+SYNOPSIS                   *junos_config*
+
+     • This module provides an implementation for working with the active configuration running on Juniper JUNOS devices. It provides a set of arguments for loading configuration, performing
+       rollback operations and zeroing the active configuration on the device.
+
+REQUIREMENTS                   *junos_config-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.5.2)
+
+PARAMETERS                   *junos_config-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   backup           Choices:       This argument will cause the module to create a full backup of the current running-config from the remote device before any changes are made. If the
+   boolean          • no ←         backup_options value is not given, the backup file is written to the backup folder in the playbook root directory or role root directory, if playbook is part of
+                    • yes          an ansible role. If the directory does not exist, it is created.
+   backup_options                  This is a dict object containing configurable options related to backup file path. The value of this option is read only when backup is set to yes, if backup is
+   dictionary                      set to no this option will be silently ignored.
+   added in 2.8
+     dir_path                      This option provides the path ending with directory name in which the backup configuration file will be stored. If the directory does not exist it will be first
+     path                          created and the filename is either the value of filename or default filename as described in filename options description. If the path value is not given in that
+                                   case a backup directory will be created in the current working directory and backup configuration will be copied in filename within backup directory.
+     filename                      The filename to be used to store the backup configuration. If the the filename is not given it will be generated based on the hostname, current time and date in
+     -                             format defined by <hostname>_config.<current-date>@<current-time>
+   check_commit     Choices:       This argument will check correctness of syntax; do not apply changes.
+   boolean          • no ←         Note that this argument can be used to confirm verified configuration done via commit confirmed operation
+   added in 2.8     • yes
+   comment        Default:         The comment argument specifies a text string to be used when committing the configuration. If the confirm argument is set to False, this argument is silently
+   -              "configured by   ignored.
+                  junos_config"
+   confirm        Default:         The confirm argument will configure a time out value in minutes for the commit to be confirmed before it is automatically rolled back. If the confirm argument is
+   -              0                set to False, this argument is silently ignored. If the value for this argument is set to 0, the commit is confirmed immediately.
+   confirm_commit   Choices:
+   boolean          • no ←         This argument will execute commit operation on remote device. It can be used to confirm a previous commit.
+   added in 2.4     • yes
+   lines                           This argument takes a list of set or delete configuration lines to push into the remote device. Each line must start with either set or delete. This argument is
+   -                               mutually exclusive with the src argument.
+                                   Deprecated
+                                   Starting with Ansible 2.5 we recommend using connection: network_cli or connection: netconf.
+   provider                        For more information please see the Junos OS Platform Options guide.
+   dictionary
+                                   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                   A dict object containing connection details.
+     host                          Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address for
+     string /                      the transport.
+     required
+     password                      Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                        specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port         Default:         Specifies the port to use when building the connection to the remote device. The port value will default to the well known SSH port of 22 (for transport=cli) or
+     integer      22               port 830 (for transport=netconf) device.
+     ssh_keyfile                   Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+     path                          value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     timeout      Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer      10               operation is completed, the module will error.
+     username                      Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+     string                        specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+                    Choices:       The replace argument will instruct the remote device to replace the current configuration hierarchy with the one specified in the corresponding hierarchy of the
+   replace          • no ←         source configuration loaded from this module.
+   boolean          • yes          Note this argument should be considered deprecated. To achieve the equivalent, set the update argument to replace. This argument will be removed in a future
+                                   release. The replace and update argument is mutually exclusive.
+   rollback                        The rollback argument instructs the module to rollback the current configuration to the identifier specified in the argument. If the specified rollback identifier
+   -                               does not exist on the remote device, the module will fail. To rollback to the most recent commit, set the rollback argument to 0.
+   src                             The src argument provides a path to the configuration file to load into the remote system. The path can either be a full system path to the configuration file if
+   -                               the value starts with / or relative to the root of the implemented role or playbook. This argument is mutually exclusive with the lines argument.
+                    Choices:
+   src_format       • xml          The src_format argument specifies the format of the configuration found int src. If the src_format argument is not provided, the module will attempt to determine
+   -                • set          the format of the configuration file specified in src.
+                    • text
+                    • json
+                                   This argument will decide how to load the configuration data particularly when the candidate configuration and loaded configuration contain conflicting
+                    Choices:       statements. Following are accepted values. merge combines the data in the loaded configuration with the candidate configuration. If statements in the loaded
+   update           • merge ←      configuration conflict with statements in the candidate configuration, the loaded statements replace the candidate ones. override discards the entire candidate
+   -                • override     configuration and replaces it with the loaded configuration. replace substitutes each hierarchy level in the loaded configuration for the corresponding level.
+                    • replace      update is similar to the override option. The new configuration completely replaces the existing configuration. The difference comes when the configuration is
+                    • update       later committed. This option performs a 'diff' between the new candidate configuration and the existing committed configuration. It then only notifies system
+                                   processes responsible for the changed portions of the configuration, and only marks the actual configuration changes as 'changed'.
+   zeroize          Choices:       The zeroize argument is used to completely sanitize the remote device configuration back to initial defaults. This argument will effectively remove all current
+   boolean          • no           configuration statements on the remote device.
+                    • yes
+
+NOTES                   *junos_config-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Abbreviated commands are NOT idempotent, see Network FAQ.
+     • Loading JSON-formatted configuration json is supported starting in Junos OS Release 16.1 onwards.
+     • Update override not currently compatible with set notation.
+     • Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+     • Recommended connection is netconf. See the Junos OS Platform Options.
+     • This module also works with local connections for legacy playbooks.
+     • For information on using CLI and netconf see the Junos OS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Juniper network devices see https://www.ansible.com/ansible-juniper.
+
+EXAMPLES                   *junos_config-examples*
+
+ - name: load configure file into device
+   junos_config:
+     src: srx.cfg
+     comment: update config
+
+ - name: load configure lines into device
+   junos_config:
+     lines:
+       - set interfaces ge-0/0/1 unit 0 description "Test interface"
+       - set vlans vlan01 description "Test vlan"
+     comment: update config
+
+ - name: Set routed VLAN interface (RVI) IPv4 address
+   junos_config:
+     lines:
+       - set vlans vlan01 vlan-id 1
+       - set interfaces irb unit 10 family inet address 10.0.0.1/24
+       - set vlans vlan01 l3-interface irb.10
+
+ - name: Check correctness of commit configuration
+   junos_config:
+     check_commit: yes
+
+ - name: rollback the configuration to id 10
+   junos_config:
+     rollback: 10
+
+ - name: zero out the current configuration
+   junos_config:
+     zeroize: yes
+
+ - name: Set VLAN access and trunking
+   junos_config:
+     lines:
+       - set vlans vlan02 vlan-id 6
+       - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode access vlan members vlan02
+       - set interfaces ge-0/0/6.0 family ethernet-switching interface-mode trunk vlan members vlan02
+
+ - name: confirm a previous commit
+   junos_config:
+     confirm_commit: yes
+
+ - name: for idempotency, use full-form commands
+   junos_config:
+     lines:
+       # - set int ge-0/0/1 unit 0 desc "Test interface"
+       - set interfaces ge-0/0/1 unit 0 description "Test interface"
+
+ - name: configurable backup path
+   junos_config:
+     src: srx.cfg
+     backup: yes
+     backup_options:
+       filename: backup.cfg
+       dir_path: /home/user
+
+RETURN VALUES                   *junos_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key                                  Returned                                                                                  Description
+   backup_path                                                                    The full path to the backup file
+   string      when backup is yes                                                 Sample:
+                                                                                  /playbooks/ansible/backup/[email protected]:28:34
+   date                                                                           The date extracted from the backup file name
+   string      when backup is yes                                                 Sample:
+                                                                                  2016-07-16
+   filename                                                                       The name of the backup file
+   string      when backup is yes and filename is not specified in backup options Sample:
+                                                                                  [email protected]:28:34
+   shortname                                                                      The full path to the backup file excluding the timestamp
+   string      when backup is yes and filename is not specified in backup options Sample:
+                                                                                  /playbooks/ansible/backup/junos01_config
+   time                                                                           The time extracted from the backup file name
+   string      when backup is yes                                                 Sample:
+                                                                                  22:28:34
+
+STATUS                   *junos_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_config-red hat support*
+
+     • Peter Sprygada (@privateip)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_config_module.html

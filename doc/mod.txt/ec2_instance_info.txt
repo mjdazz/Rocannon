@@ -1,0 +1,327 @@
+SYNOPSIS                   *ec2_instance_info*
+
+     • Gather information about ec2 instances in AWS
+     • This module was called ec2_instance_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: ec2_instance_facts
+
+REQUIREMENTS                   *ec2_instance_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *ec2_instance_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   filters                      Default:         A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+   -                            {}               https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeInstances.html for possible filters. Filter names and values are case sensitive.
+   instance_ids
+   -                                             If you specify one or more instance IDs, only instances that have the specified IDs are returned.
+   added in 2.4
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_instance_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_instance_info-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Gather information about all instances
+ - ec2_instance_info:
+
+ # Gather information about all instances in AZ ap-southeast-2a
+ - ec2_instance_info:
+     filters:
+       availability-zone: ap-southeast-2a
+
+ # Gather information about a particular instance using ID
+ - ec2_instance_info:
+     instance_ids:
+       - i-12345678
+
+ # Gather information about any instance with a tag key Name and value Example
+ - ec2_instance_info:
+     filters:
+       "tag:Name": Example
+
+ # Gather information about any instance in states "shutting-down", "stopping", "stopped"
+ - ec2_instance_info:
+     filters:
+       instance-state-name: [ "shutting-down", "stopping", "stopped" ]
+
+RETURN VALUES                   *ec2_instance_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key                           Returned                                                                          Description
+   instances                   always                                a list of ec2 instances
+   complex
+     ami_launch_index          always                                The AMI launch index, which can be used to find this instance in the launch group.
+     integer
+     architecture                                                    The architecture of the image
+     string                    always                                Sample:
+                                                                     x86_64
+     block_device_mappings     always                                Any block device mapping entries for the instance.
+     complex
+       device_name                                                   The device name exposed to the instance (for example, /dev/sdh or xvdh).
+       string                  always                                Sample:
+                                                                     /dev/sdh
+       ebs                     always                                Parameters used to automatically set up EBS volumes when the instance is launched.
+       complex
+         attach_time                                                 The time stamp when the attachment initiated.
+         string                always                                Sample:
+                                                                     2017-03-23T22:51:24+00:00
+         delete_on_termination                                       Indicates whether the volume is deleted on instance termination.
+         boolean               always                                Sample:
+                                                                     True
+         status                                                      The attachment state.
+         string                always                                Sample:
+                                                                     attached
+         volume_id                                                   The ID of the EBS volume
+         string                always                                Sample:
+                                                                     vol-12345678
+     client_token                                                    The idempotency token you provided when you launched the instance, if applicable.
+     string                    always                                Sample:
+                                                                     mytoken
+     cpu_options               always if botocore version >= 1.10.16 The CPU options set for the instance.
+     complex
+       core_count                                                    The number of CPU cores for the instance.
+       integer                 always                                Sample:
+                                                                     1
+       threads_per_core                                              The number of threads per CPU core. On supported instance, a value of 1 means Intel Hyper-Threading Technology is disabled.
+       integer                 always                                Sample:
+                                                                     1
+     ebs_optimized             always                                Indicates whether the instance is optimized for EBS I/O.
+     boolean
+     hypervisor                                                      The hypervisor type of the instance.
+     string                    always                                Sample:
+                                                                     xen
+     iam_instance_profile      always                                The IAM instance profile associated with the instance, if applicable.
+     complex
+       arn                                                           The Amazon Resource Name (ARN) of the instance profile.
+       string                  always                                Sample:
+                                                                     arn:aws:iam::000012345678:instance-profile/myprofile
+       id                                                            The ID of the instance profile
+       string                  always                                Sample:
+                                                                     JFJ397FDG400FG9FD1N
+     image_id                                                        The ID of the AMI used to launch the instance.
+     string                    always                                Sample:
+                                                                     ami-0011223344
+     instance_id                                                     The ID of the instance.
+     string                    always                                Sample:
+                                                                     i-012345678
+     instance_type                                                   The instance type size of the running instance.
+     string                    always                                Sample:
+                                                                     t2.micro
+     key_name                                                        The name of the key pair, if this instance was launched with an associated key pair.
+     string                    always                                Sample:
+                                                                     my-key
+     launch_time                                                     The time the instance was launched.
+     string                    always                                Sample:
+                                                                     2017-03-23T22:51:24+00:00
+     monitoring                always                                The monitoring for the instance.
+     complex
+       state                                                         Indicates whether detailed monitoring is enabled. Otherwise, basic monitoring is enabled.
+       string                  always                                Sample:
+                                                                     disabled
+     network_interfaces        always                                One or more network interfaces for the instance.
+     complex
+       association             always                                The association information for an Elastic IPv4 associated with the network interface.
+       complex
+         ip_owner_id                                                 The ID of the owner of the Elastic IP address.
+         string                always                                Sample:
+                                                                     amazon
+         public_dns_name       always                                The public DNS name.
+         string
+         public_ip                                                   The public IP address or Elastic IP address bound to the network interface.
+         string                always                                Sample:
+                                                                     1.2.3.4
+       attachment              always                                The network interface attachment.
+       complex
+         attach_time                                                 The time stamp when the attachment initiated.
+         string                always                                Sample:
+                                                                     2017-03-23T22:51:24+00:00
+         attachment_id                                               The ID of the network interface attachment.
+         string                always                                Sample:
+                                                                     eni-attach-3aff3f
+         delete_on_termination                                       Indicates whether the network interface is deleted when the instance is terminated.
+         boolean               always                                Sample:
+                                                                     True
+         device_index          always                                The index of the device on the instance for the network interface attachment.
+         integer
+         status                                                      The attachment state.
+         string                always                                Sample:
+                                                                     attached
+       description                                                   The description.
+       string                  always                                Sample:
+                                                                     My interface
+       groups                  always                                One or more security groups.
+       list of complex
+         group_id                                                    The ID of the security group.
+         string                always                                Sample:
+                                                                     sg-abcdef12
+         group_name                                                  The name of the security group.
+         string                always                                Sample:
+                                                                     mygroup
+       ipv6_addresses          always                                One or more IPv6 addresses associated with the network interface.
+       complex
+         ipv6_address                                                The IPv6 address.
+         string                always                                Sample:
+                                                                     2001:0db8:85a3:0000:0000:8a2e:0370:7334
+       mac_address                                                   The MAC address.
+       string                  always                                Sample:
+                                                                     00:11:22:33:44:55
+       network_interface_id                                          The ID of the network interface.
+       string                  always                                Sample:
+                                                                     eni-01234567
+       owner_id                                                      The AWS account ID of the owner of the network interface.
+       string                  always                                Sample:
+                                                                     01234567890
+       private_ip_address                                            The IPv4 address of the network interface within the subnet.
+       string                  always                                Sample:
+                                                                     10.0.0.1
+       private_ip_addresses    always                                The private IPv4 addresses associated with the network interface.
+       list of complex
+         association           always                                The association information for an Elastic IP address (IPv4) associated with the network interface.
+         complex
+             ip_owner_id                                             The ID of the owner of the Elastic IP address.
+             string            always                                Sample:
+                                                                     amazon
+             public_dns_name   always                                The public DNS name.
+             string
+             public_ip                                               The public IP address or Elastic IP address bound to the network interface.
+             string            always                                Sample:
+                                                                     1.2.3.4
+         primary                                                     Indicates whether this IPv4 address is the primary private IP address of the network interface.
+         boolean               always                                Sample:
+                                                                     True
+         private_ip_address                                          The private IPv4 address of the network interface.
+         string                always                                Sample:
+                                                                     10.0.0.1
+       source_dest_check                                             Indicates whether source/destination checking is enabled.
+       boolean                 always                                Sample:
+                                                                     True
+       status                                                        The status of the network interface.
+       string                  always                                Sample:
+                                                                     in-use
+       subnet_id                                                     The ID of the subnet for the network interface.
+       string                  always                                Sample:
+                                                                     subnet-0123456
+       vpc_id                                                        The ID of the VPC for the network interface.
+       string                  always                                Sample:
+                                                                     vpc-0123456
+     placement                 always                                The location where the instance launched, if applicable.
+     complex
+       availability_zone                                             The Availability Zone of the instance.
+       string                  always                                Sample:
+                                                                     ap-southeast-2a
+       group_name              always                                The name of the placement group the instance is in (for cluster compute instances).
+       string
+       tenancy                                                       The tenancy of the instance (if the instance is running in a VPC).
+       string                  always                                Sample:
+                                                                     default
+     private_dns_name                                                The private DNS name.
+     string                    always                                Sample:
+                                                                     ip-10-0-0-1.ap-southeast-2.compute.internal
+     private_ip_address                                              The IPv4 address of the network interface within the subnet.
+     string                    always                                Sample:
+                                                                     10.0.0.1
+     product_codes             always                                One or more product codes.
+     list of complex
+       product_code_id                                               The product code.
+       string                  always                                Sample:
+                                                                     aw0evgkw8ef3n2498gndfgasdfsd5cce
+       product_code_type                                             The type of product code.
+       string                  always                                Sample:
+                                                                     marketplace
+     public_dns_name           always                                The public DNS name assigned to the instance.
+     string
+     public_ip_address                                               The public IPv4 address assigned to the instance
+     string                    always                                Sample:
+                                                                     52.0.0.1
+     root_device_name                                                The device name of the root device
+     string                    always                                Sample:
+                                                                     /dev/sda1
+     root_device_type                                                The type of root device used by the AMI.
+     string                    always                                Sample:
+                                                                     ebs
+     security_groups           always                                One or more security groups for the instance.
+     list of complex
+       group_id                                                      The ID of the security group.
+       string                  always                                Sample:
+                                                                     sg-0123456
+       group_name                                                    The name of the security group.
+       string                  always                                Sample:
+                                                                     my-security-group
+     source_dest_check                                               Indicates whether source/destination checking is enabled.
+     boolean                   always                                Sample:
+                                                                     True
+     state                     always                                The current state of the instance.
+     complex
+       code                                                          The low byte represents the state.
+       integer                 always                                Sample:
+                                                                     16
+       name                                                          The name of the state.
+       string                  always                                Sample:
+                                                                     running
+     state_transition_reason   always                                The reason for the most recent state transition.
+     string
+     subnet_id                                                       The ID of the subnet in which the instance is running.
+     string                    always                                Sample:
+                                                                     subnet-00abcdef
+     tags                      always                                Any tags assigned to the instance.
+     dictionary
+     virtualization_type                                             The type of virtualization of the AMI.
+     string                    always                                Sample:
+                                                                     hvm
+     vpc_id                                                          The ID of the VPC the instance is in.
+     dictionary                always                                Sample:
+                                                                     vpc-0011223344
+
+STATUS                   *ec2_instance_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Schuett (@michaeljs1990)
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_instance_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_instance_info_module.html

@@ -1,0 +1,232 @@
+SYNOPSIS                   *postgresql_sequence*
+
+     • Allows to create, drop or change the definition of a sequence generator.
+
+REQUIREMENTS                   *postgresql_sequence-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_sequence-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   ca_cert                            Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                             If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                      aliases: ssl_rootcert
+   cache                              Cache specifies how many sequence numbers are to be preallocated and stored in memory for faster access. The minimum value is 1 (only one value can be
+   integer                            generated at a time, i.e., no cache), and this is also the default.
+   cascade             Choices:       Automatically drop objects that depend on the sequence, and in turn all objects that depend on those objects.
+   boolean             • no ←         Ignored if state=present.
+                       • yes          Only used with state=absent.
+   cycle               Choices:       The cycle option allows the sequence to wrap around when the maxvalue or minvalue has been reached by an ascending or descending sequence respectively. If the
+   boolean             • no ←         limit is reached, the next number generated will be the minvalue or maxvalue, respectively.
+                       • yes          If false (NO CYCLE) is specified, any calls to nextval after the sequence has reached its maximum value will return an error. False (NO CYCLE) is the default.
+                       Choices:       Specifies the data type of the sequence. Valid types are bigint, integer, and smallint. bigint is the default. The data type determines the default minimum and
+   data_type           • bigint       maximum values of the sequence. For more info see the documentation https://www.postgresql.org/docs/current/sql-createsequence.html.
+   string              • integer      Supported from PostgreSQL 10.
+                       • smallint
+   db                                 Name of database to connect to and run queries against.
+   string                             aliases: database, login_db
+   increment                          Increment specifies which value is added to the current sequence value to create a new value.
+   integer                            A positive value will make an ascending sequence, a negative one a descending sequence. The default value is 1.
+   login_host                         Host running the database.
+   string
+   login_password                     The password used to authenticate with.
+   string
+   login_unix_socket                  Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:         The username used to authenticate with.
+   string            "postgres"
+   maxvalue                           Maxvalue determines the maximum value for the sequence. The default for an ascending sequence is the maximum value of the data type. The default for a
+   integer                            descending sequence is -1.
+                                      aliases: max
+   minvalue                           Minvalue determines the minimum value a sequence can generate. The default for an ascending sequence is 1. The default for a descending sequence is the minimum
+   integer                            value of the data type.
+                                      aliases: min
+   newschema                          The new schema for the sequence. Will be used for moving a sequence to another schema.
+   string                             Works only for existing sequences.
+   owner                              Set the owner for the sequence.
+   string
+   port              Default:         Database port to connect to.
+   integer           5432             aliases: login_port
+   rename_to                          The new name for the sequence.
+   string                             Works only for existing sequences.
+   schema            Default:         The schema of the sequence. This is be used to create and relocate a sequence in the given schema.
+   string            "public"
+   sequence                           The name of the sequence.
+   string / required                  aliases: name
+   session_role                       Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                             Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                       Choices:
+                       • allow
+   ssl_mode            • disable      Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←     See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                       • require      Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+   start                              Start allows the sequence to begin anywhere. The default starting value is minvalue for ascending sequences and maxvalue for descending ones.
+   integer
+   state               Choices:       The sequence state.
+   string              • absent       If state=absent other options will be ignored except of name and schema.
+                       • present ←
+
+NOTES                   *postgresql_sequence-notes*
+
+   Note
+
+     • If you do not pass db parameter, sequence will be created in the database named postgres.
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_sequence-see also*
+
+   See also
+
+   postgresql_table – Create, drop, or modify a PostgreSQL table
+   The official documentation on the postgresql_table module.
+
+   postgresql_owner – Change an owner of PostgreSQL database object
+   The official documentation on the postgresql_owner module.
+
+   postgresql_privs – Grant or revoke privileges on PostgreSQL database objects
+   The official documentation on the postgresql_privs module.
+
+   postgresql_tablespace – Add or remove PostgreSQL tablespaces from remote hosts
+   The official documentation on the postgresql_tablespace module.
+
+   CREATE SEQUENCE reference
+   Complete reference of the CREATE SEQUENCE command documentation.
+
+   ALTER SEQUENCE reference
+   Complete reference of the ALTER SEQUENCE command documentation.
+
+   DROP SEQUENCE reference
+   Complete reference of the DROP SEQUENCE command documentation.
+
+EXAMPLES                   *postgresql_sequence-examples*
+
+ - name: Create an ascending bigint sequence called foobar in the default
+         database
+   postgresql_sequence:
+     name: foobar
+
+ - name: Create an ascending integer sequence called foobar, starting at 101
+   postgresql_sequence:
+     name: foobar
+     data_type: integer
+     start: 101
+
+ - name: Create an descending sequence called foobar, starting at 101 and
+         preallocated 10 sequence numbers in cache
+   postgresql_sequence:
+     name: foobar
+     increment: -1
+     cache: 10
+     start: 101
+
+ - name: Create an ascending sequence called foobar, which cycle between 1 to 10
+   postgresql_sequence:
+     name: foobar
+     cycle: yes
+     min: 1
+     max: 10
+
+ - name: Create an ascending bigint sequence called foobar in the default
+         database with owner foobar
+   postgresql_sequence:
+     name: foobar
+     owner: foobar
+
+ - name: Rename an existing sequence named foo to bar
+   postgresql_sequence:
+     name: foo
+     rename_to: bar
+
+ - name: Change the schema of an existing sequence to foobar
+   postgresql_sequence:
+     name: foobar
+     newschema: foobar
+
+ - name: Change the owner of an existing sequence to foobar
+   postgresql_sequence:
+     name: foobar
+     owner: foobar
+
+ - name: Drop a sequence called foobar
+   postgresql_sequence:
+     name: foobar
+     state: absent
+
+ - name: Drop a sequence called foobar with cascade
+   postgresql_sequence:
+     name: foobar
+     cascade: yes
+     state: absent
+
+RETURN VALUES                   *postgresql_sequence-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                   Description
+   cycle                Shows if the sequence cycle or not.
+   string    always     Sample:
+                        NO
+   data_type            Shows the current data type of the sequence.
+   string    always     Sample:
+                        bigint
+   increment            The value of increment of the sequence. A positive value will make an ascending sequence, a negative one a descending sequence.
+   integer   always     Sample:
+                        -1
+   maxvalue             The value of maxvalue of the sequence.
+   integer   always     Sample:
+                        9223372036854775807
+   minvalue             The value of minvalue of the sequence.
+   integer   always     Sample:
+                        1
+   newname              Shows the new sequence name after rename.
+   string    on success Sample:
+                        barfoo
+   newschema            Shows the new schema of the sequence after schema change.
+   string    on success Sample:
+                        foobar
+   owner                Shows the current owner of the sequence after the successful run of the task.
+   string    always     Sample:
+                        postgres
+   queries              List of queries that was tried to be executed.
+   string    always     Sample:
+                        ['CREATE SEQUENCE "foo"']
+   schema               Name of the schema of the sequence
+   string    always     Sample:
+                        foo
+   sequence             Sequence name.
+   string    always     Sample:
+                        foobar
+   start                The value of start of the sequence.
+   integer   always     Sample:
+                        12
+   state                Sequence state at the end of execution.
+   string    always     Sample:
+                        present
+
+STATUS                   *postgresql_sequence-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Tobias Birkefeld (@tcraxs)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_sequence-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_sequence_module.html

@@ -1,0 +1,157 @@
+SYNOPSIS                   *aws_glue_job*
+
+     • Manage an AWS Glue job. See https://aws.amazon.com/glue/ for details.
+
+REQUIREMENTS                   *aws_glue_job-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *aws_glue_job-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   allocated_capacity                            The number of AWS Glue data processing units (DPUs) to allocate to this Job. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a
+   -                                             relative measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory.
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   command_name                 Default:         The name of the job command. This must be 'glueetl'.
+   -                            "glueetl"
+   command_script_location                       The S3 path to a script that executes a job.
+   - / required
+   connections                                   A list of Glue connections used for this job.
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   default_arguments                             A dict of default arguments for this job. You can specify arguments here that your own job-execution script consumes, as well as arguments that AWS
+   -                                             Glue itself consumes.
+   description                                   Description of the job being defined.
+   -
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   max_concurrent_runs                           The maximum number of concurrent runs allowed for the job. The default is 1. An error is returned when this threshold is reached. The maximum value
+   -                                             you can specify is controlled by a service limit.
+   max_retries                                   The maximum number of times to retry this job if it fails.
+   -
+   name                                          The name you assign to this job definition. It must be unique in your account.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   role                                          The name or ARN of the IAM role associated with this job.
+   - / required
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   - / required                   • present      Create or delete the AWS Glue job.
+                                  • absent
+   timeout                                       The job timeout in minutes.
+   -
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *aws_glue_job-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_glue_job-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Create an AWS Glue job
+ - aws_glue_job:
+     command_script_location: s3bucket/script.py
+     name: my-glue-job
+     role: my-iam-role
+     state: present
+
+ # Delete an AWS Glue job
+ - aws_glue_job:
+     name: my-glue-job
+     state: absent
+
+RETURN VALUES                   *aws_glue_job-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key          Returned                                                                             Description
+                         when     The number of AWS Glue data processing units (DPUs) allocated to runs of this job. From 2 to 100 DPUs can be allocated; the default is 10. A DPU is a relative
+   allocated_capacity    state is measure of processing power that consists of 4 vCPUs of compute capacity and 16 GB of memory.
+   integer               present  Sample:
+                                  10
+   command               when
+   complex               state is The JobCommand that executes this job.
+                         present
+     name                when     The name of the job command.
+     string              state is Sample:
+                         present  glueetl
+     script_location     when     Specifies the S3 path to a script that executes a job.
+     string              state is Sample:
+                         present  mybucket/myscript.py
+   connections           when     The connections used for this job.
+   dictionary            state is Sample:
+                         present  { Connections: [ 'list', 'of', 'connections' ] }
+   created_on            when     The time and date that this job definition was created.
+   string                state is Sample:
+                         present  2018-04-21T05:19:58.326000+00:00
+   default_arguments     when     The default arguments for this job, specified as name-value pairs.
+   dictionary            state is Sample:
+                         present  { 'mykey1': 'myvalue1' }
+   description           when     Description of the job being defined.
+   string                state is Sample:
+                         present  My first Glue job
+   execution_property    always   An ExecutionProperty specifying the maximum number of concurrent runs allowed for this job.
+   complex
+                         when     The maximum number of concurrent runs allowed for the job. The default is 1. An error is returned when this threshold is reached. The maximum value you can specify
+     max_concurrent_runs state is is controlled by a service limit.
+     integer             present  Sample:
+                                  1
+   job_name                       The name of the AWS Glue job.
+   string                always   Sample:
+                                  my-glue-job
+   last_modified_on      when     The last point in time when this job definition was modified.
+   string                state is Sample:
+                         present  2018-04-21T05:19:58.326000+00:00
+   max_retries           when     The maximum number of times to retry this job after a JobRun fails.
+   integer               state is Sample:
+                         present  5
+   name                  when     The name assigned to this job definition.
+   string                state is Sample:
+                         present  my-glue-job
+   role                  when     The name or ARN of the IAM role associated with this job.
+   string                state is Sample:
+                         present  my-iam-role
+   timeout               when     The job timeout in minutes.
+   integer               state is Sample:
+                         present  300
+
+STATUS                   *aws_glue_job-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_glue_job-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_glue_job_module.html

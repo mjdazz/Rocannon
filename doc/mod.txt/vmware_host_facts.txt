@@ -1,0 +1,104 @@
+SYNOPSIS                   *vmware_host_facts*
+
+     • This module can be used to gathers facts like CPU, memory, datastore, network and system etc. about ESXi host system.
+     • Please specify hostname or IP address of ESXi host system as hostname.
+     • If hostname or IP address of vCenter is provided as hostname and esxi_hostname is not specified, then the module will throw an error.
+     • VSAN facts added in 2.7 version.
+
+REQUIREMENTS                   *vmware_host_facts-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_host_facts-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+   esxi_hostname                   ESXi hostname.
+   string                          Host facts about the specified ESXi server will be returned.
+   added in 2.8                    By specifying this option, you can select which ESXi hostsystem is returned if connecting to a vCenter.
+   hostname                        The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                          If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                   Environment variable support added in Ansible 2.6.
+                                   The password of the vSphere vCenter or ESXi server.
+   password                        If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: pass, pwd
+   port           Default:         The port number of the vSphere vCenter or ESXi server.
+   integer        443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                    Environment variable support added in Ansible 2.6.
+   proxy_host                      Address of a proxy that will receive all HTTPS requests and relay them.
+   string                          The format is a hostname or a IP.
+   added in 2.9                    If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                   This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                      Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                         If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   show_tag         Choices:
+   boolean          • no ←         Tags related to Host are shown if set to True.
+   added in 2.9     • yes
+                                   The username of the vSphere vCenter or ESXi server.
+   username                        If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                          Environment variable support added in Ansible 2.6.
+                                   aliases: admin, user
+                    Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs   • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean          • yes ←        Environment variable support added in Ansible 2.6.
+                                   If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+EXAMPLES                   *vmware_host_facts-examples*
+
+ - name: Gather vmware host facts
+   vmware_host_facts:
+     hostname: "{{ esxi_server }}"
+     username: "{{ esxi_username }}"
+     password: "{{ esxi_password }}"
+   register: host_facts
+   delegate_to: localhost
+
+ - name: Gather vmware host facts from vCenter
+   vmware_host_facts:
+     hostname: "{{ vcenter_server }}"
+     username: "{{ vcenter_user }}"
+     password: "{{ vcenter_pass }}"
+     esxi_hostname: "{{ esxi_hostname }}"
+   register: host_facts
+   delegate_to: localhost
+
+ - name: Gather vmware host facts from vCenter with tag information
+   vmware_host_facts:
+     hostname: "{{ vcenter_server }}"
+     username: "{{ vcenter_user }}"
+     password: "{{ vcenter_pass }}"
+     esxi_hostname: "{{ esxi_hostname }}"
+     show_tag: True
+   register: host_facts_tag
+   delegate_to: localhost
+
+ - name: Get VSAN Cluster UUID from host facts
+   vmware_host_facts:
+     hostname: "{{ esxi_server }}"
+     username: "{{ esxi_username }}"
+     password: "{{ esxi_password }}"
+   register: host_facts
+ - set_fact:
+     cluster_uuid: "{{ host_facts['ansible_facts']['vsan_cluster_uuid'] }}"
+
+STATUS                   *vmware_host_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Wei Gao (@woshihaoren)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_host_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_host_facts_module.html

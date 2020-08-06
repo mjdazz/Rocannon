@@ -1,0 +1,189 @@
+SYNOPSIS                   *cs_network_offering*
+
+     • Create, update, enable, disable and remove network offerings.
+
+REQUIREMENTS                   *cs_network_offering-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_network_offering-parameters*
+
+         Parameter         Choices/Defaults                                                                          Comments
+                           Choices:           HTTP method used to query the API endpoint.
+   api_http_method         • get              If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                  • post             As the last option, the value is taken from the ini config file, also see the notes.
+                                              Fallback value is get if not specified.
+   api_key                                    API key of the CloudStack API.
+   string                                     If not given, the CLOUDSTACK_KEY env variable is considered.
+                                              As the last option, the value is taken from the ini config file, also see the notes.
+   api_region            Default:             Name of the ini section in the cloustack.ini file.
+   string                "cloudstack"         If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                                 Secret key of the CloudStack API.
+   string                                     If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                              As the last option, the value is taken from the ini config file, also see the notes.
+                                              HTTP timeout in seconds.
+   api_timeout                                If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                                    As the last option, the value is taken from the ini config file, also see the notes.
+                                              Fallback value is 10 seconds if not specified.
+   api_url                                    URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                                     If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                              As the last option, the value is taken from the ini config file, also see the notes.
+   availability                               The availability of network offering. Default value is Optional
+   string
+   conserve_mode           Choices:
+   boolean                 • no               Whether the network offering has IP conserve mode enabled.
+                           • yes
+   details                                    Network offering details in key/value pairs.
+   list                                       with service provider as a value
+   display_text                               Display text of the network offerings.
+   string
+   egress_default_policy   Choices:
+   string                  • allow            Whether the default egress policy is allow or to deny.
+                           • deny
+   for_vpc                 Choices:
+   boolean                 • no               Whether the offering is meant to be used for VPC or not.
+   added in 2.8            • yes
+   guest_ip_type           Choices:
+   string                  • Shared           Guest type of the network offering.
+                           • Isolated
+   keepalive_enabled       Choices:           If true keepalive will be turned on in the loadbalancer.
+   boolean                 • no               At the time of writing this has only an effect on haproxy.
+                           • yes              the mode http and httpclose options are unset in the haproxy conf file.
+   max_connections                            Maximum number of concurrent connections supported by the network offering.
+   integer
+   name                                       The name of the network offering.
+   string / required
+   network_rate                               Data transfer rate in megabits per second allowed.
+   integer
+   persistent              Choices:           True if network offering supports persistent networks
+   boolean                 • no               defaulted to false if not specified
+                           • yes
+   service_capabilities                       Desired service capabilities as part of network offering.
+   list                                       aliases: service_capability
+   service_offering                           The service offering name or ID used by virtual router provider.
+   string
+   service_providers                          Provider to service mapping.
+   list                                       If not specified, the provider for the service will be mapped to the default provider on the physical network.
+                                              aliases: service_provider
+   specify_ip_ranges       Choices:           Whether the network offering supports specifying IP ranges.
+   boolean                 • no               Defaulted to no by the API if not specified.
+                           • yes
+   specify_vlan            Choices:
+   boolean                 • no               Whether the network offering supports vlans or not.
+                           • yes
+                           Choices:
+   state                   • enabled
+   string                  • present ←        State of the network offering.
+                           • disabled
+                           • absent
+                           Choices:
+                           • Dns
+                           • PortForwarding
+                           • Dhcp             Services supported by the network offering.
+   supported_services      • SourceNat        A list of one or more items from the choice list.
+   list                    • UserData         aliases: supported_service
+                           • Firewall
+                           • StaticNat
+                           • Vpn
+                           • Lb
+   traffic_type          Default:             The traffic type for the network offering.
+   string                "Guest"
+
+NOTES                   *cs_network_offering-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_network_offering-examples*
+
+ - name: Create a network offering and enable it
+   cs_network_offering:
+     name: my_network_offering
+     display_text: network offering description
+     state: enabled
+     guest_ip_type: Isolated
+     supported_services: [ Dns, PortForwarding, Dhcp, SourceNat, UserData, Firewall, StaticNat, Vpn, Lb ]
+     service_providers:
+       - { service: 'dns', provider: 'virtualrouter' }
+       - { service: 'dhcp', provider: 'virtualrouter' }
+   delegate_to: localhost
+
+
+ - name: Remove a network offering
+   cs_network_offering:
+     name: my_network_offering
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_network_offering-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key          Returned                                                                             Description
+   availability                   The availability of network offering.
+   string                success  Sample:
+                                  Optional
+   display_text                   The display text of the network offering.
+   string                success  Sample:
+                                  My network offering
+   egress_default_policy          Default egress policy.
+   string                success  Sample:
+                                  allow
+   for_vpc
+   boolean               success  Whether the offering is meant to be used for VPC or not.
+   added in 2.8
+   guest_ip_type                  Guest type of the network offering.
+   string                success  Sample:
+                                  Isolated
+   id                             UUID of the network offering.
+   string                success  Sample:
+                                  a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   is_default            success  Whether network offering is the default offering or not.
+   boolean
+   is_persistent         success  Whether persistent networks are supported or not.
+   boolean
+   max_connections                The maximum number of concurrent connections to be handled by LB.
+   integer               success  Sample:
+                                  300
+   name                           The name of the network offering.
+   string                success  Sample:
+                                  MyCustomNetworkOffering
+   network_rate                   The network traffic transfer ate in Mbit/s.
+   integer               success  Sample:
+                                  200
+   service_offering_id            The service offering ID.
+   string                success  Sample:
+                                  c5f7a5fc-43f8-11e5-a151-feff819cdc9f
+   state                          The state of the network offering.
+   string                success  Sample:
+                                  Enabled
+   traffic_type                   The traffic type.
+   string                success  Sample:
+                                  Guest
+
+STATUS                   *cs_network_offering-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Passante (@dpassante)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_network_offering-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_network_offering_module.html

@@ -1,0 +1,258 @@
+SYNOPSIS                   *vyos_lldp_global*
+
+     • This module manages link layer discovery protocol (LLDP) attributes on VyOS devices.
+
+PARAMETERS                   *vyos_lldp_global-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   config                             The provided link layer discovery protocol (LLDP) configuration.
+   dictionary
+    address                           This argument defines management-address.
+    string
+    enable             Choices:
+    boolean            • no           This argument is a boolean value to enable or disable LLDP.
+                       • yes
+                       Choices:
+    legacy_protocols   • cdp
+    list               • edp          List of the supported legacy protocols.
+                       • fdp
+                       • sonmp
+    snmp                              This argument enable the SNMP queries to LLDP database.
+    string
+                       Choices:
+   state               • merged ←     The state of the configuration after module completion.
+   string              • replaced
+                       • deleted
+
+NOTES                   *vyos_lldp_global-notes*
+
+   Note
+
+     • Tested against VyOS 1.1.8 (helium).
+     • This module works with connection network_cli. See the VyOS OS Platform Options.
+
+EXAMPLES                   *vyos_lldp_global-examples*
+
+ # Using merged
+ #
+ # Before state:
+ # -------------
+ #
+ # [email protected]:~$ show configuration commands|grep lldp
+ # [email protected]:~$
+ #
+ - name: Merge provided configuration with device configuration
+   vyos_lldp_global:
+     config:
+       legacy_protocols:
+         - 'fdp'
+         - 'cdp'
+       snmp: 'enable'
+       address: 192.0.2.11
+     state: merged
+ #
+ #
+ # ------------------------
+ # Module Execution Results
+ # ------------------------
+ #
+ # "before": []
+ #
+ # "commands": [
+ #        "set service lldp legacy-protocols fdp",
+ #        "set service lldp legacy-protocols cdp",
+ #        "set service lldp snmp enable",
+ #        "set service lldp management-address '192.0.2.11'"
+ #    ]
+ #
+ # "after": [
+ #        {
+ #            "snmp": "enable"
+ #        },
+ #        {
+ #            "address": "192.0.2.11"
+ #        },
+ #        {
+ #            "legacy_protocols": [
+ #                "cdp",
+ #                "fdp"
+ #            ]
+ #        }
+ #        {
+ #            "enable": true
+ #        }
+ #    ]
+ #
+ # After state:
+ # -------------
+ #
+ # set service lldp legacy-protocols cdp
+ # set service lldp legacy-protocols fdp
+ # set service lldp management-address '192.0.2.11'
+ # set service lldp snmp enable
+
+
+ # Using replaced
+ #
+ # Before state:
+ # -------------
+ #
+ # [email protected]:~$ show configuration commands | grep lldp
+ # set service lldp legacy-protocols cdp
+ # set service lldp legacy-protocols fdp
+ # set service lldp management-address '192.0.2.11'
+ # set service lldp snmp enable
+ #
+ - name: Replace device configurations with provided configurations
+   vyos_lldp_global:
+     config:
+       legacy_protocols:
+         - 'edp'
+         - 'sonmp'
+         - 'cdp'
+       address: 192.0.2.14
+     state: replaced
+ #
+ #
+ # ------------------------
+ # Module Execution Results
+ # ------------------------
+ #
+ #
+ # "before": [
+ #        {
+ #            "snmp": "enable"
+ #        },
+ #        {
+ #            "address": "192.0.2.11"
+ #        },
+ #        {
+ #            "legacy_protocols": [
+ #                "cdp",
+ #                "fdp"
+ #            ]
+ #        }
+ #        {
+ #            "enable": true
+ #        }
+ #    ]
+ # "commands": [
+ #        "delete service lldp snmp",
+ #        "delete service lldp legacy-protocols fdp",
+ #        "set service lldp management-address '192.0.2.14'",
+ #        "set service lldp legacy-protocols edp",
+ #        "set service lldp legacy-protocols sonmp"
+ #    ]
+ #
+ # "after": [
+ #        {
+ #            "address": "192.0.2.14"
+ #        },
+ #        {
+ #            "legacy_protocols": [
+ #                "cdp",
+ #                "edp",
+ #                "sonmp"
+ #            ]
+ #        }
+ #        {
+ #            "enable": true
+ #        }
+ #    ]
+ #
+ # After state:
+ # -------------
+ #
+ # [email protected]:~$ show configuration commands|grep lldp
+ # set service lldp legacy-protocols cdp
+ # set service lldp legacy-protocols edp
+ # set service lldp legacy-protocols sonmp
+ # set service lldp management-address '192.0.2.14'
+
+
+ # Using deleted
+ #
+ # Before state
+ # -------------
+ # [email protected]:~$ show configuration commands|grep lldp
+ # set service lldp legacy-protocols cdp
+ # set service lldp legacy-protocols edp
+ # set service lldp legacy-protocols sonmp
+ # set service lldp management-address '192.0.2.14'
+ #
+ - name: Delete attributes of given lldp service (This won't delete the LLDP service itself)
+   vyos_lldp_global:
+     config:
+     state: deleted
+ #
+ #
+ # ------------------------
+ # Module Execution Results
+ # ------------------------
+ #
+ # "before": [
+ #        {
+ #            "address": "192.0.2.14"
+ #        },
+ #        {
+ #            "legacy_protocols": [
+ #                "cdp",
+ #                "edp",
+ #                "sonmp"
+ #            ]
+ #        }
+ #        {
+ #            "enable": true
+ #        }
+ #    ]
+ #
+ #  "commands": [
+ #       "delete service lldp management-address",
+ #        "delete service lldp legacy-protocols"
+ #    ]
+ #
+ # "after": [
+ #        {
+ #            "enable": true
+ #        }
+ #          ]
+ #
+ # After state
+ # ------------
+ # [email protected]:~$ show configuration commands | grep lldp
+ # set service lldp
+
+RETURN VALUES                   *vyos_lldp_global-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['set service lldp legacy-protocols sonmp', "set service lldp management-address '192.0.2.14'"]
+
+STATUS                   *vyos_lldp_global-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *vyos_lldp_global-red hat support*
+
+     • Rohit Thakur (@rohitthakur2590)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vyos_lldp_global-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vyos_lldp_global_module.html

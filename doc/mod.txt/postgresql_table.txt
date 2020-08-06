@@ -1,0 +1,229 @@
+SYNOPSIS                   *postgresql_table*
+
+     • Allows to create, drop, rename, truncate a table, or change some table attributes.
+
+REQUIREMENTS                   *postgresql_table-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_table-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   ca_cert                            Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                             If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+                                      aliases: ssl_rootcert
+   cascade             Choices:
+   boolean             • no ←         Automatically drop objects that depend on the table (such as views). Used with state=absent only.
+   added in 2.9        • yes
+   columns
+   list /                             Columns that are needed.
+   elements=string
+   db                                 Name of database to connect and where the table will be created.
+   string                             aliases: login_db
+   including                          Keywords that are used with like parameter, may be DEFAULTS, CONSTRAINTS, INDEXES, STORAGE, COMMENTS or ALL. Needs like specified. Mutually exclusive with
+   string                             columns, rename, and truncate.
+   like                               Create a table like another table (with similar DDL). Mutually exclusive with columns, rename, and truncate.
+   string
+   login_host                         Host running the database.
+   string
+   login_password                     The password used to authenticate with.
+   string
+   login_unix_socket                  Path to a Unix domain socket for local connections.
+   string
+   login_user        Default:         The username used to authenticate with.
+   string            "postgres"
+   owner                              Set a table owner.
+   string
+   port              Default:         Database port to connect to.
+   integer           5432             aliases: login_port
+   rename                             New table name. Mutually exclusive with tablespace, owner, unlogged, like, including, columns, truncate, and storage_params.
+   string
+   session_role                       Switch to session_role after connecting. The specified session_role must be a role that the current login_user is a member of.
+   string                             Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                       Choices:
+                       • allow
+   ssl_mode            • disable      Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←     See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+                       • require      Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+   state               Choices:
+   string              • absent       The table state. state=absent is mutually exclusive with tablespace, owner, unlogged, like, including, columns, truncate, storage_params and, rename.
+                       • present ←
+   storage_params
+   list /                             Storage parameters like fillfactor, autovacuum_vacuum_treshold, etc. Mutually exclusive with rename and truncate.
+   elements=string
+   table                              Table name.
+   string / required                  aliases: name
+   tablespace                         Set a tablespace for the table.
+   string
+   truncate            Choices:
+   boolean             • no ←         Truncate a table. Mutually exclusive with tablespace, owner, unlogged, like, including, columns, rename, and storage_params.
+                       • yes
+   unlogged            Choices:
+   boolean             • no ←         Create an unlogged table.
+                       • yes
+
+NOTES                   *postgresql_table-notes*
+
+   Note
+
+     • If you do not pass db parameter, tables will be created in the database named postgres.
+     • PostgreSQL allows to create columnless table, so columns param is optional.
+     • Unlogged tables are available from PostgreSQL server version 9.1.
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_table-see also*
+
+   See also
+
+   postgresql_sequence – Create, drop, or alter a PostgreSQL sequence
+   The official documentation on the postgresql_sequence module.
+
+   postgresql_info – Gather information about PostgreSQL servers
+   The official documentation on the postgresql_info module.
+
+   postgresql_tablespace – Add or remove PostgreSQL tablespaces from remote hosts
+   The official documentation on the postgresql_tablespace module.
+
+   postgresql_owner – Change an owner of PostgreSQL database object
+   The official documentation on the postgresql_owner module.
+
+   postgresql_privs – Grant or revoke privileges on PostgreSQL database objects
+   The official documentation on the postgresql_privs module.
+
+   postgresql_copy – Copy data between a file/program and a PostgreSQL table
+   The official documentation on the postgresql_copy module.
+
+   CREATE TABLE reference
+   Complete reference of the CREATE TABLE command documentation.
+
+   ALTER TABLE reference
+   Complete reference of the ALTER TABLE command documentation.
+
+   DROP TABLE reference
+   Complete reference of the DROP TABLE command documentation.
+
+   PostgreSQL data types
+   Complete reference of the PostgreSQL data types documentation.
+
+EXAMPLES                   *postgresql_table-examples*
+
+ - name: Create tbl2 in the acme database with the DDL like tbl1 with testuser as an owner
+   postgresql_table:
+     db: acme
+     name: tbl2
+     like: tbl1
+     owner: testuser
+
+ - name: Create tbl2 in the acme database and tablespace ssd with the DDL like tbl1 including comments and indexes
+   postgresql_table:
+     db: acme
+     table: tbl2
+     like: tbl1
+     including: comments, indexes
+     tablespace: ssd
+
+ - name: Create test_table with several columns in ssd tablespace with fillfactor=10 and autovacuum_analyze_threshold=1
+   postgresql_table:
+     name: test_table
+     columns:
+     - id bigserial primary key
+     - num bigint
+     - stories text
+     tablespace: ssd
+     storage_params:
+     - fillfactor=10
+     - autovacuum_analyze_threshold=1
+
+ - name: Create an unlogged table in schema acme
+   postgresql_table:
+     name: acme.useless_data
+     columns: waste_id int
+     unlogged: true
+
+ - name: Rename table foo to bar
+   postgresql_table:
+     table: foo
+     rename: bar
+
+ - name: Rename table foo from schema acme to bar
+   postgresql_table:
+     name: acme.foo
+     rename: bar
+
+ - name: Set owner to someuser
+   postgresql_table:
+     name: foo
+     owner: someuser
+
+ - name: Change tablespace of foo table to new_tablespace and set owner to new_user
+   postgresql_table:
+     name: foo
+     tablespace: new_tablespace
+     owner: new_user
+
+ - name: Truncate table foo
+   postgresql_table:
+     name: foo
+     truncate: yes
+
+ - name: Drop table foo from schema acme
+   postgresql_table:
+     name: acme.foo
+     state: absent
+
+ - name: Drop table bar cascade
+   postgresql_table:
+     name: bar
+     state: absent
+     cascade: yes
+
+RETURN VALUES                   *postgresql_table-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   owner                   Table owner.
+   string         always   Sample:
+                           postgres
+   queries                 List of executed queries.
+   string         always   Sample:
+                           ['CREATE TABLE "test_table" (id bigint)']
+   state                   Table state.
+   string         always   Sample:
+                           present
+   storage_params          Storage parameters.
+   list           always   Sample:
+                           ['fillfactor=100', 'autovacuum_analyze_threshold=1']
+   table                   Name of a table.
+   string         always   Sample:
+                           foo
+   tablespace              Tablespace.
+   string         always   Sample:
+                           ssd_tablespace
+
+STATUS                   *postgresql_table-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrei Klychkov (@Andersson007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_table-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_table_module.html

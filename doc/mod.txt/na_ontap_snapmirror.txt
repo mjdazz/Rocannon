@@ -1,0 +1,197 @@
+SYNOPSIS                   *na_ontap_snapmirror*
+
+     • Create/Delete/Initialize SnapMirror volume/vserver relationships for ONTAP/ONTAP
+     • Create/Delete/Initialize SnapMirror volume relationship between ElementSW and ONTAP
+     • Modify schedule for a SnapMirror relationship for ONTAP/ONTAP and ElementSW/ONTAP
+     • Pre-requisite for ElementSW to ONTAP relationship or vice-versa is an established SnapMirror endpoint for ONTAP cluster with ElementSW UI
+     • Pre-requisite for ElementSW to ONTAP relationship or vice-versa is to have SnapMirror enabled in the ElementSW volume
+     • For creating a SnapMirror ElementSW/ONTAP relationship, an existing ONTAP/ElementSW relationship should be present
+
+REQUIREMENTS                   *na_ontap_snapmirror-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_snapmirror-parameters*
+
+        Parameter             Choices/Defaults                                                                           Comments
+   connection_type       Choices:                     Type of SnapMirror relationship.
+   -                     • ontap_ontap ←              Pre-requisite for either elementsw_ontap or ontap_elementsw the ElementSW volume should have enableSnapmirror option set to true.
+   added in 2.9          • elementsw_ontap            For using ontap_elementsw, elementsw_ontap snapmirror relationship should exist.
+                         • ontap_elementsw
+   destination_path                                   Specifies the destination endpoint of the SnapMirror relationship.
+   -
+   destination_volume                                 Specifies the name of the destination volume for the SnapMirror.
+   -
+   destination_vserver                                Name of the destination vserver for the SnapMirror.
+   -
+   hostname                                           The hostname or IP address of the ONTAP instance.
+   string / required
+   http_port                                          Override the default port (80 or 443) with this port
+   integer
+   https                 Choices:
+   boolean               • no ←                       Enable and disable https
+                         • yes
+   identity_preserve     Choices:                     Specifies whether or not the identity of the source Vserver is replicated to the destination Vserver.
+   boolean               • no                         If this parameter is set to true, the source Vserver's configuration will additionally be replicated to the destination.
+   added in 2.9          • yes                        If the parameter is set to false, then only the source Vserver's volumes and RBAC configuration are replicated to the destination.
+   max_transfer_rate                                  Specifies the upper bound, in kilobytes per second, at which data is transferred.
+   integer                                            Default is unlimited, it can be explicitly set to 0 as unlimited.
+   added in 2.9
+   ontapi                                             The ontap api version to use
+   integer
+   password                                           Password for the specified user.
+   string / required                                  aliases: pass
+   policy
+   -                                                  Specify the name of the SnapMirror policy that applies to this relationship.
+   added in 2.8
+                         Choices:
+                         • data_protection
+   relationship_type     • load_sharing
+   -                     • vault                      Specify the type of SnapMirror relationship.
+                         • restore
+                         • transition_data_protection
+                         • extended_data_protection
+   schedule                                           Specify the name of the current schedule, which is used to update the SnapMirror relationship.
+   -                                                  Optional for create, modifiable.
+   source_hostname                                    Source hostname or management IP address for ONTAP or ElementSW cluster.
+   -                                                  Required for SnapMirror delete
+   source_password                                    Source password for ONTAP or ElementSW cluster.
+   -                                                  Optional if this is same as destination password.
+                                                      Specifies the source endpoint of the SnapMirror relationship.
+   source_path                                        If the source is an ONTAP volume, format should be <[vserver:][volume]> or <[[cluster:]//vserver/]volume>
+   -                                                  If the source is an ElementSW volume, format should be <[Element_SVIP]:/lun/[Element_VOLUME_ID]>
+                                                      If the source is an ElementSW volume, the volume should have SnapMirror enabled.
+   source_username                                    Source username for ONTAP or ElementSW cluster.
+   -                                                  Optional if this is same as destination username.
+   source_volume                                      Specifies the name of the source volume for the SnapMirror.
+   -
+   source_vserver                                     Name of the source vserver for the SnapMirror.
+   -
+   state                 Choices:
+   -                     • present ←                  Whether the specified relationship should exist or not.
+                         • absent
+                         Choices:                     REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest              • Never                      Always -- will always use the REST API
+   string                • Always                     Never -- will always use the ZAPI
+                         • Auto ←                     Auto -- will try to use the REST Api
+   username                                           This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information,
+   string / required                                  please read the documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+                                                      aliases: user
+   validate_certs        Choices:                     If set to no, the SSL certificates will not be validated.
+   boolean               • no                         This should only set to False used on personally controlled sites using self-signed certificates.
+                         • yes ←
+
+NOTES                   *na_ontap_snapmirror-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_snapmirror-examples*
+
+ # creates and initializes the snapmirror
+ - name: Create ONTAP/ONTAP SnapMirror
+   na_ontap_snapmirror:
+     state: present
+     source_volume: test_src
+     destination_volume: test_dest
+     source_vserver: ansible_src
+     destination_vserver: ansible_dest
+     schedule: hourly
+     policy: MirrorAllSnapshots
+     max_transfer_rate: 1000
+     hostname: "{{ destination_cluster_hostname }}"
+     username: "{{ destination_cluster_username }}"
+     password: "{{ destination_cluster_password }}"
+
+ # creates and initializes the snapmirror between vservers
+ - name: Create ONTAP/ONTAP vserver SnapMirror
+   na_ontap_snapmirror:
+     state: present
+     source_vserver: ansible_src
+     destination_vserver: ansible_dest
+     identity_preserve: true
+     hostname: "{{ destination_cluster_hostname }}"
+     username: "{{ destination_cluster_username }}"
+     password: "{{ destination_cluster_password }}"
+
+ # existing snapmirror relation with status 'snapmirrored' will be initialized
+ - name: Initialize ONTAP/ONTAP SnapMirror
+   na_ontap_snapmirror:
+     state: present
+     source_path: 'ansible:test'
+     destination_path: 'ansible:dest'
+     hostname: "{{ destination_cluster_hostname }}"
+     username: "{{ destination_cluster_username }}"
+     password: "{{ destination_cluster_password }}"
+
+ - name: Delete SnapMirror
+   na_ontap_snapmirror:
+     state: absent
+     destination_path: <path>
+     source_hostname: "{{ source_hostname }}"
+     hostname: "{{ destination_cluster_hostname }}"
+     username: "{{ destination_cluster_username }}"
+     password: "{{ destination_cluster_password }}"
+
+ - name: Set schedule to NULL
+   na_ontap_snapmirror:
+     state: present
+     destination_path: <path>
+     schedule: ""
+     hostname: "{{ destination_cluster_hostname }}"
+     username: "{{ destination_cluster_username }}"
+     password: "{{ destination_cluster_password }}"
+
+ - name: Create SnapMirror from ElementSW to ONTAP
+   na_ontap_snapmirror:
+     state: present
+     connection_type: elementsw_ontap
+     source_path: '10.10.10.10:/lun/300'
+     destination_path: 'ansible_test:ansible_dest_vol'
+     schedule: hourly
+     policy: MirrorLatest
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+     source_hostname: " {{ Element_cluster_mvip }}"
+     source_username: "{{ Element_cluster_username }}"
+     source_password: "{{ Element_cluster_password }}"
+
+ - name: Create SnapMirror from ONTAP to ElementSW
+   na_ontap_snapmirror:
+     state: present
+     connection_type: ontap_elementsw
+     destination_path: '10.10.10.10:/lun/300'
+     source_path: 'ansible_test:ansible_dest_vol'
+     policy: MirrorLatest
+     hostname: "{{ Element_cluster_mvip }}"
+     username: "{{ Element_cluster_username }}"
+     password: "{{ Element_cluster_password }}"
+     source_hostname: " {{ netapp_hostname }}"
+     source_username: "{{ netapp_username }}"
+     source_password: "{{ netapp_password }}"
+
+STATUS                   *na_ontap_snapmirror-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_snapmirror-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_snapmirror_module.html

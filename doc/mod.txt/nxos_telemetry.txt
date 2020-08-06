@@ -1,0 +1,203 @@
+SYNOPSIS                   *nxos_telemetry*
+
+     • Manages Telemetry Monitoring Service (TMS) configuration
+
+PARAMETERS                   *nxos_telemetry-parameters*
+
+        Parameter      Choices/Defaults                                                                           Comments
+   config                               The provided configuration
+   dictionary
+    certificate                         Certificate SSL/TLS and hostname values.
+    dictionary                          Value must be a dict defining values for keys (key and hostname).
+     hostname                           Certificate hostname
+     string
+     key                                Certificate key
+     string
+    compression          Choices:       Destination profile compression method.
+    string               • gzip
+    destination_groups                  List of telemetry destination groups.
+    list
+     destination                        Group destination ipv4, port, protocol and encoding values.
+     dictionary                         Value must be a dict defining values for keys (ip, port, protocol, encoding).
+      encoding           Choices:
+      string             • GPB          Destination group encoding.
+                         • JSON
+      ip                                Destination group IP address.
+      string
+      port                              Destination group port number.
+      integer
+                         Choices:
+      protocol           • HTTP
+      string             • TCP          Destination group protocol.
+                         • UDP
+                         • gRPC
+     id                                 Destination group identifier.
+     integer                            Value must be a int representing the destination group identifier.
+    sensor_groups                       List of telemetry sensor groups.
+    list
+                         Choices:
+     data_source         • NX-API       Telemetry data source.
+     string              • DME
+                         • YANG
+     id                                 Sensor group identifier.
+     integer                            Value must be a int representing the sensor group identifier.
+                                        Telemetry sensor path.
+     path                               Value must be a dict defining values for keys (name, depth, filter_condition, query_condition).
+     dictionary                         Mandatory Keys (name)
+                                        Optional Keys (depth, filter_condition, query_condition)
+      depth                             Sensor group depth.
+      string
+      filter_condition                  Sensor group filter condition.
+      string
+      name                              Sensor group path name.
+      string
+      query_condition                   Sensor group query condition.
+      string
+    source_interface                    Destination profile source interface.
+    string                              Valid value is a str representing the source interface name.
+    subscriptions                       List of telemetry subscriptions.
+    list
+     destination_group                  Associated destination group.
+     integer
+     id                                 Subscription identifier.
+     integer                            Value must be a int representing the subscription identifier.
+     sensor_group                       Associated sensor group.
+     dictionary                         Value must be a dict defining values for keys (id, sample_interval).
+      id                                Associated sensor group id.
+      integer
+      sample_interval                   Associated sensor group id sample interval.
+      integer
+    vrf                                 Destination profile vrf.
+    string                              Valid value is a str representing the vrf name.
+                         Choices:
+   state                 • merged ←     Final configuration state
+   string                • replaced
+                         • deleted
+
+NOTES                   *nxos_telemetry-notes*
+
+   Note
+
+     • Supported on N9k Version 7.0(3)I7(5) and later.
+
+EXAMPLES                   *nxos_telemetry-examples*
+
+ # Using deleted
+ # This action will delete all telemetry configuration on the device
+
+ - name: Delete Telemetry Configuration
+   nxos_telemetry:
+     state: deleted
+
+
+ # Using merged
+ # This action will merge telemetry configuration defined in the playbook with
+ # telemetry configuration that is already on the device.
+
+ - name: Merge Telemetry Configuration
+   nxos_telemetry:
+     config:
+       certificate:
+         key: /bootflash/server.key
+         hostname: localhost
+       compression: gzip
+       source_interface: Ethernet1/1
+       vrf: management
+       destination_groups:
+         - id: 2
+           destination:
+             ip: 192.168.0.2
+             port: 50001
+             protocol: gPRC
+             encoding: GPB
+         - id: 55
+           destination:
+             ip: 192.168.0.55
+             port: 60001
+             protocol: gPRC
+             encoding: GPB
+       sensor_groups:
+         - id: 1
+           data_source: NX-API
+           path:
+             name: '"show lldp neighbors detail"'
+             depth: 0
+         - id: 55
+           data_source: DME
+           path:
+             name: 'sys/ch'
+             depth: unbounded
+             filter_condition: 'ne(eqptFt.operSt,"ok")'
+       subscriptions:
+         - id: 5
+           destination_group: 55
+           sensor_group:
+             id: 1
+             sample_interval: 1000
+         - id: 6
+           destination_group: 2
+           sensor_group:
+             id: 55
+             sample_interval: 2000
+     state: merged
+
+
+ # Using replaced
+ # This action will replace telemetry configuration on the device with the
+ # telemetry configuration defined in the playbook.
+
+ - name: Override Telemetry Configuration
+   nxos_telemetry:
+     config:
+       certificate:
+         key: /bootflash/server.key
+         hostname: localhost
+       compression: gzip
+       source_interface: Ethernet1/1
+       vrf: management
+       destination_groups:
+         - id: 2
+           destination:
+             ip: 192.168.0.2
+             port: 50001
+             protocol: gPRC
+             encoding: GPB
+       subscriptions:
+         - id: 5
+           destination_group: 55
+     state: replaced
+
+RETURN VALUES                   *nxos_telemetry-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                  Description
+   after                   The configuration as structured data after module completion.
+   dictionary when changed Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   before                  The configuration as structured data prior to module invocation.
+   dictionary always       Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   commands                The set of commands pushed to the remote device.
+   list       always       Sample:
+                           ['command 1', 'command 2', 'command 3']
+
+STATUS                   *nxos_telemetry-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_telemetry-red hat support*
+
+     • Mike Wiebe (@mikewiebe)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_telemetry-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_telemetry_module.html

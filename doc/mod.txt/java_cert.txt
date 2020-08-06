@@ -1,0 +1,119 @@
+SYNOPSIS                   *java_cert*
+
+     • This is a wrapper module around keytool, which can be used to import/remove certificates from a given java keystore.
+
+PARAMETERS                   *java_cert-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   cert_alias                         Imported certificate alias.
+   string                             The alias is used when checking for the presence of a certificate in the keystore.
+   cert_path                          Local path to load certificate from.
+   path                               One of cert_url or cert_path is required to load certificate.
+   cert_port         Default:         Port to connect to URL.
+   integer           443              This will be used to create server URL:PORT.
+   cert_url                           Basic URL to fetch SSL certificate from.
+   string                             One of cert_url or cert_path is required to load certificate.
+   executable        Default:         Path to keytool binary if not used we search in PATH for it.
+   string            "keytool"
+   keystore_create     Choices:
+   boolean             • no           Create keystore if it does not exist.
+                       • yes
+   keystore_pass                      Keystore password.
+   string / required
+   keystore_path                      Path to keystore.
+   path
+   keystore_type
+   string                             Keystore type (JCEKS, JKS).
+   added in 2.8
+   pkcs12_alias
+   string                             Alias in the PKCS12 keystore.
+   added in 2.4
+   pkcs12_password   Default:
+   string            ""               Password for importing from PKCS12 keystore.
+   added in 2.4
+   pkcs12_path
+   path                               Local path to load PKCS12 keystore from.
+   added in 2.4
+   state               Choices:
+   string              • absent       Defines action which can be either certificate import or removal.
+                       • present ←
+
+EXAMPLES                   *java_cert-examples*
+
+ - name: Import SSL certificate from google.com to a given cacerts keystore
+   java_cert:
+     cert_url: google.com
+     cert_port: 443
+     keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
+     keystore_pass: changeit
+     state: present
+
+ - name: Remove certificate with given alias from a keystore
+   java_cert:
+     cert_url: google.com
+     keystore_path: /usr/lib/jvm/jre7/lib/security/cacerts
+     keystore_pass: changeit
+     executable: /usr/lib/jvm/jre7/bin/keytool
+     state: absent
+
+ - name: Import SSL certificate from google.com to a keystore, create it if it doesn't exist
+   java_cert:
+     cert_url: google.com
+     keystore_path: /tmp/cacerts
+     keystore_pass: changeit
+     keystore_create: yes
+     state: present
+
+ - name: Import a pkcs12 keystore with a specified alias, create it if it doesn't exist
+   java_cert:
+     pkcs12_path: "/tmp/importkeystore.p12"
+     cert_alias: default
+     keystore_path: /opt/wildfly/standalone/configuration/defaultkeystore.jks
+     keystore_pass: changeit
+     keystore_create: yes
+     state: present
+
+ - name: Import SSL certificate to JCEKS keystore
+   java_cert:
+     pkcs12_path: "/tmp/importkeystore.p12"
+     pkcs12_alias: default
+     pkcs12_password: somepass
+     cert_alias: default
+     keystore_path: /opt/someapp/security/keystore.jceks
+     keystore_type: "JCEKS"
+     keystore_pass: changeit
+     keystore_create: yes
+     state: present
+
+RETURN VALUES                   *java_cert-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key   Returned                                                                                    Description
+   cmd              Executed command to get action done.
+   string  success  Sample:
+                    keytool -importcert -noprompt -keystore
+   msg              Output from stdout of keytool command after execution of given command.
+   string  success  Sample:
+                    Module require existing keystore at keystore_path '/tmp/test/cacerts'
+   rc               Keytool command execution return value.
+   integer success  Sample:
+                    0
+
+STATUS                   *java_cert-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Adam Hamsik (@haad)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *java_cert-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/java_cert_module.html

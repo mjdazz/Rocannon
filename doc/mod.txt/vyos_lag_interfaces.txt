@@ -1,0 +1,478 @@
+SYNOPSIS                   *vyos_lag_interfaces*
+
+     • This module manages attributes of link aggregation groups on VyOS network devices.
+
+PARAMETERS                   *vyos_lag_interfaces-parameters*
+
+       Parameter           Choices/Defaults                                                                            Comments
+   config                                         A list of link aggregation group configurations.
+   list
+    arp_monitor                                   ARP Link monitoring parameters.
+    dictionary
+         interval                                 ARP link monitoring frequency in milliseconds.
+         integer
+         target                                   IP address to use for ARP monitoring.
+         list
+                        Choices:
+    hash_policy         • layer2                  LAG or bonding transmit hash policy.
+    string              • layer2+3
+                        • layer3+4
+    members                                       List of member interfaces for the LAG (bond).
+    list
+         member                                   Name of the member interface.
+         string
+                        Choices:
+                        • 802.3ad
+                        • active-backup
+    mode                • broadcast               LAG or bond mode.
+    string              • round-robin
+                        • transmit-load-balance
+                        • adaptive-load-balance
+                        • xor-hash
+    name                                          Name of the link aggregation group (LAG) or bond.
+    string / required
+    primary                                       Primary device interfaces for the LAG (bond).
+    string
+                        Choices:
+   state                • merged ←
+   string               • replaced                The state of the configuration after module completion.
+                        • overridden
+                        • deleted
+
+NOTES                   *vyos_lag_interfaces-notes*
+
+   Note
+
+     • Tested against VyOS 1.1.8 (helium).
+     • This module works with connection network_cli. See the VyOS OS Platform Options.
+
+EXAMPLES                   *vyos_lag_interfaces-examples*
+
+ # Using merged
+ #
+ # Before state:
+ # -------------
+ #
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2
+ # set interfaces bonding bond3
+ #
+ - name: Merge provided configuration with device configuration
+   vyos_lag_interfaces:
+     config:
+       - name: bond2
+         mode: active-backup
+         members:
+          - member: eth2
+          - member: eth1
+         hash_policy: layer2
+         primary: eth2
+
+       - name: 'bond3'
+         mode: 'active-backup'
+         hash_policy: 'layer2+3'
+         members:
+          - member: eth3
+         primary: 'eth3'
+     state: merged
+ #
+ #
+ # -------------------------
+ # Module Execution Result
+ # -------------------------
+ #
+ #    "before": [
+ #        {
+ #            "name": "bond2"
+ #        },
+ #        {
+ #            "name": "bond3"
+ #        }
+ #    ],
+ #
+ # "commands": [
+ #        "set interfaces bonding bond2 hash-policy 'layer2'",
+ #        "set interfaces bonding bond2 mode 'active-backup'",
+ #        "set interfaces ethernet eth2 bond-group bond2",
+ #        "set interfaces ethernet eth1 bond-group bond2",
+ #        "set interfaces bonding bond2 primary 'eth2'",
+ #        "set interfaces bonding bond3 hash-policy 'layer2+3'",
+ #        "set interfaces bonding bond3 mode 'active-backup'",
+ #        "set interfaces ethernet eth3 bond-group bond3",
+ #        "set interfaces bonding bond3 primary 'eth3'"
+ #    ]
+ #
+ #     "after": [
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth1"
+ #                },
+ #                {
+ #                    "member": "eth2"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond2",
+ #            "primary": "eth2"
+ #        },
+ #        {
+ #            "hash_policy": "layer2+3",
+ #            "members": [
+ #                {
+ #                    "member": "eth3"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond3",
+ #            "primary": "eth3"
+ #        }
+ #    ]
+ #
+ # After state:
+ # -------------
+ #
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2 hash-policy 'layer2'
+ # set interfaces bonding bond2 mode 'active-backup'
+ # set interfaces bonding bond2 primary 'eth2'
+ # set interfaces bonding bond3 hash-policy 'layer2+3'
+ # set interfaces bonding bond3 mode 'active-backup'
+ # set interfaces bonding bond3 primary 'eth3'
+ # set interfaces ethernet eth1 bond-group 'bond2'
+ # set interfaces ethernet eth2 bond-group 'bond2'
+ # set interfaces ethernet eth3 bond-group 'bond3'
+
+
+ # Using replaced
+ #
+ # Before state:
+ # -------------
+ #
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2 hash-policy 'layer2'
+ # set interfaces bonding bond2 mode 'active-backup'
+ # set interfaces bonding bond2 primary 'eth2'
+ # set interfaces bonding bond3 hash-policy 'layer2+3'
+ # set interfaces bonding bond3 mode 'active-backup'
+ # set interfaces bonding bond3 primary 'eth3'
+ # set interfaces ethernet eth1 bond-group 'bond2'
+ # set interfaces ethernet eth2 bond-group 'bond2'
+ # set interfaces ethernet eth3 bond-group 'bond3'
+ #
+ - name: Replace device configurations of listed LAGs with provided configurations
+   vyos_lag_interfaces:
+     config:
+       - name: bond3
+         mode: '802.3ad'
+         hash_policy: 'layer2'
+         members:
+          - member: eth3
+     state: replaced
+ #
+ #
+ # -------------------------
+ # Module Execution Result
+ # -------------------------
+ #
+ #    "before": [
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth1"
+ #                },
+ #                {
+ #                    "member": "eth2"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond2",
+ #            "primary": "eth2"
+ #        },
+ #        {
+ #            "hash_policy": "layer2+3",
+ #            "members": [
+ #                {
+ #                    "member": "eth3"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond3",
+ #            "primary": "eth3"
+ #        }
+ #    ],
+ #
+ # "commands": [
+ #        "delete interfaces bonding bond3 primary",
+ #        "set interfaces bonding bond3 hash-policy 'layer2'",
+ #        "set interfaces bonding bond3 mode '802.3ad'"
+ #    ],
+ #
+ # "after": [
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth1"
+ #                },
+ #                {
+ #                    "member": "eth2"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond2",
+ #            "primary": "eth2"
+ #        },
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth3"
+ #                }
+ #            ],
+ #            "mode": "802.3ad",
+ #            "name": "bond3"
+ #        }
+ #    ],
+ #
+ # After state:
+ # -------------
+ #
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2 hash-policy 'layer2'
+ # set interfaces bonding bond2 mode 'active-backup'
+ # set interfaces bonding bond2 primary 'eth2'
+ # set interfaces bonding bond3 hash-policy 'layer2'
+ # set interfaces bonding bond3 mode '802.3ad'
+ # set interfaces ethernet eth1 bond-group 'bond2'
+ # set interfaces ethernet eth2 bond-group 'bond2'
+ # set interfaces ethernet eth3 bond-group 'bond3'
+
+
+ # Using overridden
+ #
+ # Before state
+ # --------------
+ #
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2 hash-policy 'layer2'
+ # set interfaces bonding bond2 mode 'active-backup'
+ # set interfaces bonding bond2 primary 'eth2'
+ # set interfaces bonding bond3 hash-policy 'layer2'
+ # set interfaces bonding bond3 mode '802.3ad'
+ # set interfaces ethernet eth1 bond-group 'bond2'
+ # set interfaces ethernet eth2 bond-group 'bond2'
+ # set interfaces ethernet eth3 bond-group 'bond3'
+ #
+ - name: Overrides all device configuration with provided configuration
+   vyos_lag_interfaces:
+     config:
+       - name: bond3
+         mode: active-backup
+         members:
+          - member: eth1
+          - member: eth2
+          - member: eth3
+         primary: eth3
+         hash_policy: layer2
+     state: overridden
+ #
+ #
+ # -------------------------
+ # Module Execution Result
+ # -------------------------
+ #
+ #    "before": [
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth1"
+ #                },
+ #                {
+ #                    "member": "eth2"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond2",
+ #            "primary": "eth2"
+ #        },
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth3"
+ #                }
+ #            ],
+ #            "mode": "802.3ad",
+ #            "name": "bond3"
+ #        }
+ #    ],
+ #
+ #    "commands": [
+ #        "delete interfaces bonding bond2 hash-policy",
+ #        "delete interfaces ethernet eth1 bond-group bond2",
+ #        "delete interfaces ethernet eth2 bond-group bond2",
+ #        "delete interfaces bonding bond2 mode",
+ #        "delete interfaces bonding bond2 primary",
+ #        "set interfaces bonding bond3 mode 'active-backup'",
+ #        "set interfaces ethernet eth1 bond-group bond3",
+ #        "set interfaces ethernet eth2 bond-group bond3",
+ #        "set interfaces bonding bond3 primary 'eth3'"
+ #    ],
+ #
+ # "after": [
+ #        {
+ #            "name": "bond2"
+ #        },
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth1"
+ #                },
+ #                {
+ #                    "member": "eth2"
+ #                },
+ #                {
+ #                    "member": "eth3"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond3",
+ #            "primary": "eth3"
+ #        }
+ #    ],
+ #
+ #
+ # After state
+ # ------------
+ #
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2
+ # set interfaces bonding bond3 hash-policy 'layer2'
+ # set interfaces bonding bond3 mode 'active-backup'
+ # set interfaces bonding bond3 primary 'eth3'
+ # set interfaces ethernet eth1 bond-group 'bond3'
+ # set interfaces ethernet eth2 bond-group 'bond3'
+ # set interfaces ethernet eth3 bond-group 'bond3'
+
+
+ # Using deleted
+ #
+ # Before state
+ # -------------
+ #
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2 hash-policy 'layer2'
+ # set interfaces bonding bond2 mode 'active-backup'
+ # set interfaces bonding bond2 primary 'eth2'
+ # set interfaces bonding bond3 hash-policy 'layer2+3'
+ # set interfaces bonding bond3 mode 'active-backup'
+ # set interfaces bonding bond3 primary 'eth3'
+ # set interfaces ethernet eth1 bond-group 'bond2'
+ # set interfaces ethernet eth2 bond-group 'bond2'
+ # set interfaces ethernet eth3 bond-group 'bond3'
+ #
+ - name: Delete LAG attributes of given interfaces (Note This won't delete the interface itself)
+   vyos_lag_interfaces:
+     config:
+       - name: bond2
+       - name: bond3
+     state: deleted
+ #
+ #
+ # ------------------------
+ # Module Execution Results
+ # ------------------------
+ #
+ # "before": [
+ #        {
+ #            "hash_policy": "layer2",
+ #            "members": [
+ #                {
+ #                    "member": "eth1"
+ #                },
+ #                {
+ #                    "member": "eth2"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond2",
+ #            "primary": "eth2"
+ #        },
+ #        {
+ #            "hash_policy": "layer2+3",
+ #            "members": [
+ #                {
+ #                    "member": "eth3"
+ #                }
+ #            ],
+ #            "mode": "active-backup",
+ #            "name": "bond3",
+ #            "primary": "eth3"
+ #        }
+ #    ],
+ # "commands": [
+ #        "delete interfaces bonding bond2 hash-policy",
+ #        "delete interfaces ethernet eth1 bond-group bond2",
+ #        "delete interfaces ethernet eth2 bond-group bond2",
+ #        "delete interfaces bonding bond2 mode",
+ #        "delete interfaces bonding bond2 primary",
+ #        "delete interfaces bonding bond3 hash-policy",
+ #        "delete interfaces ethernet eth3 bond-group bond3",
+ #        "delete interfaces bonding bond3 mode",
+ #        "delete interfaces bonding bond3 primary"
+ #    ],
+ #
+ # "after": [
+ #        {
+ #            "name": "bond2"
+ #        },
+ #        {
+ #            "name": "bond3"
+ #        }
+ #    ],
+ #
+ # After state
+ # ------------
+ # [email protected]:~$ show configuration  commands | grep bond
+ # set interfaces bonding bond2
+ # set interfaces bonding bond3
+
+RETURN VALUES                   *vyos_lag_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['set interfaces bonding bond2', 'set interfaces bonding bond2 hash-policy layer2']
+
+STATUS                   *vyos_lag_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *vyos_lag_interfaces-red hat support*
+
+     • Rohit Thakur (@rohitthakur2590)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vyos_lag_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vyos_lag_interfaces_module.html

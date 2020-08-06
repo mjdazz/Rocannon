@@ -1,0 +1,150 @@
+SYNOPSIS                   *ec2_vpc_subnet_info*
+
+     • Gather information about ec2 VPC subnets in AWS
+     • This module was called ec2_vpc_subnet_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: ec2_vpc_subnet_facts
+
+REQUIREMENTS                   *ec2_vpc_subnet_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_subnet_info-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   filters                                       A dict of filters to apply. Each dict item consists of a filter key and a filter value. See
+   -                                             https://docs.aws.amazon.com/AWSEC2/latest/APIReference/API_DescribeSubnets.html for possible filters.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   subnet_ids                                    A list of subnet IDs to gather information for.
+   -                                             aliases: subnet_id
+   added in 2.5
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_vpc_subnet_info-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_subnet_info-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Gather information about all VPC subnets
+ - ec2_vpc_subnet_info:
+
+ # Gather information about a particular VPC subnet using ID
+ - ec2_vpc_subnet_info:
+     subnet_ids: subnet-00112233
+
+ # Gather information about any VPC subnet with a tag key Name and value Example
+ - ec2_vpc_subnet_info:
+     filters:
+       "tag:Name": Example
+
+ # Gather information about any VPC subnet within VPC with ID vpc-abcdef00
+ - ec2_vpc_subnet_info:
+     filters:
+       vpc-id: vpc-abcdef00
+
+ # Gather information about a set of VPC subnets, publicA, publicB and publicC within a
+ # VPC with ID vpc-abcdef00 and then use the jinja map function to return the
+ # subnet_ids as a list.
+
+ - ec2_vpc_subnet_info:
+     filters:
+       vpc-id: vpc-abcdef00
+       "tag:Name": "{{ item }}"
+   loop:
+     - publicA
+     - publicB
+     - publicC
+   register: subnet_info
+
+ - set_fact:
+     subnet_ids: "{{ subnet_info.subnets|map(attribute='id')|list }}"
+
+RETURN VALUES                   *ec2_vpc_subnet_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                  Key                Returned                                                                       Description
+   subnets                           success  Returns an array of complex objects as described below.
+   complex
+     assign_ipv6_address_on_creation always   True/False depending on attribute setting for IPv6 address assignment.
+     boolean
+     availability_zone               always   The availability zone where the subnet exists.
+     string
+     available_ip_address_count      always   Count of available IPs in subnet.
+     string
+     cidr_block                      always   The IPv4 CIDR block assigned to the subnet.
+     string
+     default_for_az                  always   True if this is the default subnet for AZ.
+     boolean
+     id                              always   The ID of the Subnet (for backwards compatibility).
+     string
+     ipv6_cidr_block_association_set always   An array of IPv6 cidr block association set information.
+     complex
+          association_id             always   The association ID
+          string
+          ipv6_cidr_block            always   The IPv6 CIDR block that is associated with the subnet.
+          string
+          ipv6_cidr_block_state      always   A hash/dict that contains a single item. The state of the cidr block association.
+          dictionary
+                      state          always   The CIDR block association state.
+                      string
+     map_public_ip_on_launch         always   True/False depending on attribute setting for public IP mapping.
+     boolean
+     state                           always   The state of the subnet.
+     string
+     subnet_id                       always   The ID of the Subnet.
+     string
+     tags                            always   A dict of tags associated with the Subnet.
+     dictionary
+     vpc_id                          always   The ID of the VPC .
+     string
+
+STATUS                   *ec2_vpc_subnet_info-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *ec2_vpc_subnet_info-red hat support*
+
+     • Rob White (@wimnat)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_subnet_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_subnet_info_module.html

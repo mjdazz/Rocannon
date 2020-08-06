@@ -1,0 +1,208 @@
+SYNOPSIS                   *nxos_logging*
+
+     • This module provides declarative management of logging on Cisco NX-OS devices.
+
+PARAMETERS                   *nxos_logging-parameters*
+
+        Parameter             Choices/Defaults                                                                           Comments
+   aggregate                                          List of logging definitions.
+   -
+                          Choices:
+                          • console
+   dest                   • logfile                   Destination of the logs.
+   -                      • module
+                          • monitor
+                          • server
+   dest_level                                         Set logging severity levels.
+   -                                                  aliases: level
+                          Choices:
+   event                  • link-enable
+   -                      • link-default              Link/trunk enable/default interface configuration logging
+   added in 2.8           • trunk-enable
+                          • trunk-default
+   facility                                           Facility name for logging.
+   -
+   facility_level                                     Set logging severity levels for facility based log messages.
+   -
+                          Choices:
+   facility_link_status   • link-down-notif
+   -                      • link-down-error           Set logging facility ethpm link status. Not idempotent with version 6.0 images.
+   added in 2.8           • link-up-notif
+                          • link-up-error
+   file_size
+   -                                                  Set logfile size
+   added in 2.8
+   interface
+   -                                                  Interface to be used while configuring source-interface for logging (e.g., 'Ethernet1/2', 'mgmt0')
+   added in 2.7
+   interface_message      Choices:
+   -                      • add-interface-description Add interface description to interface syslogs. Does not work with version 6.0 images using nxapi as a transport.
+   added in 2.8
+   name                                               If value of dest is logfile it indicates file-name.
+   -
+                                                      Deprecated
+                                                      Starting with Ansible 2.5 we recommend using connection: network_cli.
+                                                      This option is only required if you are using NX-API.
+   provider                                           For more information please see the NXOS Platform Options guide.
+   dictionary
+                                                      ═══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                                      A dict object containing connection details.
+     auth_pass                                        Specifies the password to use if required to enter privileged mode on the remote device. If authorize is false, then this argument does
+     string                                           nothing. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTH_PASS will be used instead.
+     added in 2.5.3
+     authorize            Choices:                    Instructs the module to enter privileged mode on the remote device before sending any commands. If not specified, the device will attempt to
+     boolean              • no ←                      execute all commands in non-privileged mode. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_AUTHORIZE
+     added in 2.5.3       • yes                       will be used instead.
+     host                                             Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the
+     string / required                                destination address for the transport.
+     password                                         Specifies the password to use to authenticate the connection to the remote device. This is a common argument used for either cli or nxapi
+     string                                           transports. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+     port               Default:                      Specifies the port to use when building the connection to the remote device. This value applies to either cli or nxapi. The port value will
+     integer            "0 (use common port)"         default to the appropriate transport common port if none is provided in the task. (cli=22, http=80, https=443).
+     ssh_keyfile                                      Specifies the SSH key to use to authenticate the connection to the remote device. This argument is only used for the cli transport. If the
+     string                                           value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+     timeout            Default:                      Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is
+     integer            10                            exceeded before the operation is completed, the module will error. NX-API can be slow to return on long-running commands (sh mac, sh bgp, etc).
+     transport            Choices:                    Configures the transport connection to use when connecting to the remote device. The transport argument supports connectivity to the device
+     string / required    • cli ←                     over cli (ssh) or nxapi.
+                          • nxapi
+     use_proxy            Choices:
+     boolean              • no                        If no, the environment variables http_proxy and https_proxy will be ignored.
+     added in 2.5         • yes ←
+     use_ssl              Choices:
+     boolean              • no ←                      Configures the transport to use SSL if set to yes only when the transport=nxapi, otherwise this value is ignored.
+                          • yes
+     username                                         Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate either the CLI login or
+     string                                           the nxapi authentication depending on which transport is used. If the value is not specified in the task, the value of environment variable
+                                                      ANSIBLE_NET_USERNAME will be used instead.
+     validate_certs       Choices:                    If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates. If the
+     boolean              • no                        transport argument is not nxapi, this value is ignored.
+                          • yes ←
+   purge                  Choices:                    Remove any switch logging configuration that does not match what has been configured Not supported for ansible_connection local. All
+   boolean                • no ←                      nxos_logging tasks must use the same ansible_connection type.
+   added in 2.8           • yes
+   remote_server
+   -                                                  Hostname or IP Address for remote logging (when dest is 'server').
+   added in 2.7
+   state                  Choices:
+   -                      • present ←                 State of the logging configuration.
+                          • absent
+   timestamp              Choices:
+   -                      • microseconds              Set logging timestamp format
+   added in 2.8           • milliseconds
+                          • seconds
+   use_vrf
+   -                                                  VRF to be used while configuring remote logging (when dest is 'server').
+   added in 2.7
+
+NOTES                   *nxos_logging-notes*
+
+   Note
+
+     • For information on using CLI and NX-API see the NXOS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Cisco devices see the Cisco integration page.
+
+EXAMPLES                   *nxos_logging-examples*
+
+ - name: configure console logging with level
+   nxos_logging:
+     dest: console
+     level: 2
+     state: present
+ - name: remove console logging configuration
+   nxos_logging:
+     dest: console
+     level: 2
+     state: absent
+ - name: configure file logging with level
+   nxos_logging:
+     dest: logfile
+     name: testfile
+     dest_level: 3
+     state: present
+ - name: Configure logging logfile with size
+   nxos_logging:
+     dest: logfile
+     name: testfile
+     dest_level: 3
+     file_size: 16384
+ - name: configure facility level logging
+   nxos_logging:
+     facility: daemon
+     facility_level: 0
+     state: present
+ - name: remove facility level logging
+   nxos_logging:
+     facility: daemon
+     facility_level: 0
+     state: absent
+ - name: Configure Remote Logging
+   nxos_logging:
+     dest: server
+     remote_server: test-syslogserver.com
+     facility: auth
+     facility_level: 1
+     use_vrf: management
+     state: present
+ - name: Configure Source Interface for Logging
+   nxos_logging:
+     interface: mgmt0
+     state: present
+ - name: Purge nxos_logging configuration not managed by this playbook
+   nxos_logging:
+     purge: true
+ - name: Configure logging timestamp
+   nxos_logging:
+     timestamp: milliseconds
+     state: present
+ - name: Configure logging facility ethpm link status
+   nxos_logging:
+     facility: ethpm
+     facility_link_status: link-up-notif
+     state: present
+ - name: Configure logging message ethernet description
+   nxos_logging:
+     interface_message: add-interface-description
+     state: present
+ - name: Configure logging event link enable
+   nxos_logging:
+     event: link-enable
+     state: present
+ - name: Configure logging using aggregate
+   nxos_logging:
+     aggregate:
+       - { dest: console, dest_level: 2 }
+       - { dest: logfile, dest_level: 2, name: testfile }
+       - { facility: daemon, facility_level: 0 }
+     state: present
+
+RETURN VALUES                   *nxos_logging-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+   commands          The list of configuration mode commands to send to the device
+   list     always   Sample:
+                     ['logging console 2', 'logging logfile testfile 3', 'logging level daemon 0']
+
+STATUS                   *nxos_logging-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_logging-red hat support*
+
+     • Trishna Guha (@trishnaguha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_logging-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_logging_module.html

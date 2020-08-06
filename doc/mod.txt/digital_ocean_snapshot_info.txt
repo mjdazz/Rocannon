@@ -1,0 +1,94 @@
+SYNOPSIS                   *digital_ocean_snapshot_info*
+
+     • This module can be used to gather information about snapshot information based upon provided values such as droplet, volume and snapshot id.
+     • This module was called digital_ocean_snapshot_facts before Ansible 2.9. The usage did not change.
+
+   Aliases: digital_ocean_snapshot_facts
+
+REQUIREMENTS                   *digital_ocean_snapshot_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+
+PARAMETERS                   *digital_ocean_snapshot_info-parameters*
+
+     Parameter    Choices/Defaults                                                                              Comments
+                                   DigitalOcean OAuth token.
+   oauth_token                     There are several other environment variables which can be used to provide this value.
+   string                          i.e., - 'DO_API_TOKEN', 'DO_API_KEY', 'DO_OAUTH_TOKEN' and 'OAUTH_TOKEN'
+                                   aliases: api_token
+   snapshot_id                     To retrieve information about a snapshot, please specify this as a snapshot id.
+   -                               If set to actual snapshot id, then information are gathered related to that particular snapshot only.
+                                   This is required parameter, if snapshot_type is set to by_id.
+                    Choices:       Specifies the type of snapshot information to be retrived.
+   snapshot_type    • all ←        If set to droplet, then information are gathered related to snapshots based on Droplets only.
+   -                • droplet      If set to volume, then information are gathered related to snapshots based on volumes only.
+                    • volume       If set to by_id, then information are gathered related to snapshots based on snapshot id only.
+                    • by_id        If not set to any of the above, then information are gathered related to all snapshots.
+   timeout        Default:         The timeout in seconds used for polling DigitalOcean's API.
+   integer        30
+   validate_certs   Choices:       If set to no, the SSL certificates will not be validated.
+   boolean          • no           This should only set to no used on personally controlled sites using self-signed certificates.
+                    • yes ←
+
+EXAMPLES                   *digital_ocean_snapshot_info-examples*
+
+ - name: Gather information about all snapshots
+   digital_ocean_snapshot_info:
+     snapshot_type: all
+     oauth_token: "{{ oauth_token }}"
+
+ - name: Gather information about droplet snapshots
+   digital_ocean_snapshot_info:
+     snapshot_type: droplet
+     oauth_token: "{{ oauth_token }}"
+
+ - name: Gather information about volume snapshots
+   digital_ocean_snapshot_info:
+     snapshot_type: volume
+     oauth_token: "{{ oauth_token }}"
+
+ - name: Gather information about snapshot by snapshot id
+   digital_ocean_snapshot_info:
+     snapshot_type: by_id
+     snapshot_id: 123123123
+     oauth_token: "{{ oauth_token }}"
+
+ - name: Get information about snapshot named big-data-snapshot1
+   digital_ocean_snapshot_info:
+   register: resp_out
+ - set_fact:
+     snapshot_id: "{{ item.id }}"
+   loop: "{{ resp_out.data|json_query(name) }}"
+   vars:
+     name: "[?name=='big-data-snapshot1']"
+ - debug: var=snapshot_id
+
+RETURN VALUES                   *digital_ocean_snapshot_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+   Key  Returned                                                                                     Description
+                 DigitalOcean snapshot information
+   data success  Sample:
+   list          [{'id': '4f60fc64-85d1-11e6-a004-000f53315871', 'name': 'big-data-snapshot1', 'regions': ['nyc1'], 'created_at': '2016-09-28T23:14:30Z', 'resource_id':
+                 '89bcc42f-85cf-11e6-a004-000f53315871', 'resource_type': 'volume', 'min_disk_size': 10, 'size_gigabytes': 0}]
+
+STATUS                   *digital_ocean_snapshot_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *digital_ocean_snapshot_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/digital_ocean_snapshot_info_module.html

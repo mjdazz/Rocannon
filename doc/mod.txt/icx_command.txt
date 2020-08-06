@@ -1,0 +1,107 @@
+SYNOPSIS                   *icx_command*
+
+     • Sends arbitrary commands to an ICX node and returns the results read from the device. This module includes an argument that will cause the module to wait for a specific condition before
+       returning or timing out if the condition is not met.
+
+PARAMETERS                   *icx_command-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   commands                   List of commands to send to the remote ICX device over the configured provider. The resulting output from the command is returned. If the wait_for argument is
+   list /                     provided, the module is not returned until the condition is satisfied or the number of retries has expired. If a command sent to the device requires answering a
+   required                   prompt, checkall and newline if multiple prompts, it is possible to pass a dict containing command, answer, prompt, check_all and newline.Common answers are 'y' or
+                              "\r" (carriage return, must be double quotes). See examples.
+   interval  Default:         Configures the interval in seconds to wait between retries of the command. If the command does not pass the specified conditions, the interval indicates how long to
+   integer   1                wait before trying the command again.
+   match       Choices:       The match argument is used in conjunction with the wait_for argument to specify the match policy. Valid values are all or any. If the value is set to all then all
+   string      • any          conditionals in the wait_for must be satisfied. If the value is set to any then only one of the values must be satisfied.
+               • all ←
+   retries   Default:         Specifies the number of times a command should by tried before it is considered failed. The command is run on the target device every retry and evaluated against the
+   integer   10               wait_for conditions.
+   wait_for                   List of conditions to evaluate against the output of the command. The task will wait for each condition to be true before moving forward. If the conditional is not
+   list                       true within the configured number of retries, the task fails. See examples.
+                              aliases: waitfor
+
+NOTES                   *icx_command-notes*
+
+   Note
+
+     • Tested against ICX 10.1
+
+EXAMPLES                   *icx_command-examples*
+
+ tasks:
+   - name: run show version on remote devices
+     icx_command:
+       commands: show version
+
+   - name: run show version and check to see if output contains ICX
+     icx_command:
+       commands: show version
+       wait_for: result[0] contains ICX
+
+   - name: run multiple commands on remote nodes
+     icx_command:
+       commands:
+         - show version
+         - show interfaces
+
+   - name: run multiple commands and evaluate the output
+     icx_command:
+       commands:
+         - show version
+         - show interfaces
+       wait_for:
+         - result[0] contains ICX
+         - result[1] contains GigabitEthernet1/1/1
+   - name: run commands that require answering a prompt
+     icx_command:
+       commands:
+         - command: 'service password-encryption sha1'
+           prompt: 'Warning: Moving to higher password-encryption type,."'
+           answer: 'y'
+   - name: run commands that require answering multiple prompt
+     icx_command:
+       commands:
+         - command: 'username qqq password qqq'
+           prompt:
+             - 'User already exists. Do you want to modify:."'
+             - 'To modify or remove user, enter current password:'
+           answer:
+             - 'y'
+             - 'qqq\
+ '
+           check_all: True
+           newline: False
+
+RETURN VALUES                   *icx_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                     Returned                                                                               Description
+   failed_conditions                                    The list of conditionals that have failed
+   list              failed                             Sample:
+                                                        ['...', '...']
+   stdout                                               The set of responses from the commands
+   list              always apart from low level errors Sample:
+                                                        ['...', '...']
+   stdout_lines                                         The value of stdout split into a list
+   list              always apart from low level errors Sample:
+                                                        [['...', '...'], ['...'], ['...']]
+
+STATUS                   *icx_command-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ruckus Wireless (@Commscope)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *icx_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/icx_command_module.html

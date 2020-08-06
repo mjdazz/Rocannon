@@ -1,0 +1,142 @@
+SYNOPSIS                   *consul*
+
+     • Registers services and checks for an agent with a consul cluster. A service is some process running on the agent node that should be advertised by consul’s discovery mechanism. It may
+       optionally supply a check definition, a periodic service test to notify the consul cluster of service’s health.
+     • Checks may also be registered per node e.g. disk usage, or cpu usage and notify the health of the entire node to the cluster. Service level checks do not require a check name or id as these
+       are derived by Consul from the Service name and id respectively by appending ‘service:’ Node level checks require a check_name and optionally a check_id.
+     • Currently, there is no complete way to retrieve the script, interval or ttl metadata for a registered check. Without this metadata it is not possible to tell if the data supplied with
+       ansible represents a change to a check. As a result this does not attempt to determine changes and will always report a changed occurred. An API method is planned to supply this metadata so
+       at that stage change management will be added.
+     • See http://consul.io for more details.
+
+REQUIREMENTS                   *consul-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python-consul
+     • requests
+
+PARAMETERS                   *consul-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   check_id                         an ID for the service check. If state=absent, defaults to check_name. Ignored if part of a service definition.
+   string
+   check_name                       a name for the service check. Required if standalone, ignored if part of service definition.
+   string
+   host            Default:         host of the consul agent defaults to localhost
+   string          "localhost"
+   http                             checks can be registered with an HTTP endpoint. This means that consul will check that the http endpoint returns a successful HTTP status. interval must also be
+   string                           provided with this option.
+   interval                         the interval at which the service check will be run. This is a number with a s or m suffix to signify the units of seconds or minutes e.g 15s or 1m. If no suffix
+   string                           is supplied, m will be used by default e.g. 1 will be 1m. Required if the script parameter is specified.
+   notes                            Notes to attach to check when registering it.
+   string
+   port            Default:         the port on which the consul agent is running
+   integer         8500
+   scheme          Default:         the protocol scheme on which the consul agent is running
+   string          "http"
+   script                           the script/command that will be run periodically to check the health of the service. Scripts require interval and vice versa.
+   string
+   service_address                  the address to advertise that the service will be listening on. This value will be passed as the address parameter to Consul's /v1/agent/service/register API
+   string                           method, so refer to the Consul API documentation for further details.
+   service_id                       the ID for the service, must be unique per node. If state=absent, defaults to the service name if supplied.
+   string
+   service_name                     Unique name for the service on a node, must be unique per node, required if registering a service. May be omitted if registering a node level check
+   string
+   service_port                     the port on which the service is listening. Can optionally be supplied for registration of a service, i.e. if service_name or service_id is set
+   integer
+   state             Choices:
+   -                 • present ←    register or deregister the consul service, defaults to present
+                     • absent
+   tags                             tags that will be attached to the service registration.
+   list
+   timeout                          A custom HTTP check timeout. The consul default is 10 seconds. Similar to the interval this is a number with a s or m suffix to signify the units of seconds or
+   string                           minutes, e.g. 15s or 1m.
+   token                            the token key identifying an ACL rule set. May be required to register services.
+   string
+   ttl                              checks can be registered with a ttl instead of a script and interval this means that the service will check in with the agent before the ttl expires. If it
+   string                           doesn't the check will be considered failed. Required if registering a check and the script an interval are missing Similar to the interval this is a number with
+                                    a s or m suffix to signify the units of seconds or minutes e.g 15s or 1m. If no suffix is supplied, m will be used by default e.g. 1 will be 1m
+   validate_certs    Choices:
+   boolean           • no           whether to verify the TLS certificate of the consul agent
+                     • yes ←
+
+EXAMPLES                   *consul-examples*
+
+ - name: register nginx service with the local consul agent
+   consul:
+     service_name: nginx
+     service_port: 80
+
+ - name: register nginx service with curl check
+   consul:
+     service_name: nginx
+     service_port: 80
+     script: curl http://localhost
+     interval: 60s
+
+ - name: register nginx with an http check
+   consul:
+     service_name: nginx
+     service_port: 80
+     interval: 60s
+     http: http://localhost:80/status
+
+ - name: register external service nginx available at 10.1.5.23
+   consul:
+     service_name: nginx
+     service_port: 80
+     service_address: 10.1.5.23
+
+ - name: register nginx with some service tags
+   consul:
+     service_name: nginx
+     service_port: 80
+     tags:
+       - prod
+       - webservers
+
+ - name: remove nginx service
+   consul:
+     service_name: nginx
+     state: absent
+
+ - name: register celery worker service
+   consul:
+     service_name: celery-worker
+     tags:
+       - prod
+       - worker
+
+ - name: create a node level check to test disk usage
+   consul:
+     check_name: Disk usage
+     check_id: disk_usage
+     script: /opt/disk_usage.py
+     interval: 5m
+
+ - name: register an http check against a service that's already registered
+   consul:
+     check_name: nginx-check2
+     check_id: nginx-check2
+     service_id: nginx
+     interval: 60s
+     http: http://localhost:80/morestatus
+
+STATUS                   *consul-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Steve Gargan (@sgargan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *consul-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/consul_module.html

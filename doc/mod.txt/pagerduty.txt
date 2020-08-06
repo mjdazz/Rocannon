@@ -1,47 +1,117 @@
-SYNOPSIS                           *pagerduty*
+SYNOPSIS                   *pagerduty*
 
-New in version 1.2.
+     • This module will let you create PagerDuty maintenance windows
 
-This module will let you create PagerDuty maintenance windows
+REQUIREMENTS                   *pagerduty-requirements*
 
-EXAMPLES                           *pagerduty-examples*
->
-    # List ongoing maintenance windows using a user/passwd
-    - pagerduty: name=companyabc user=[email protected] passwd=password123 state=ongoing
-   
-    # List ongoing maintenance windows using a token
-    - pagerduty: name=companyabc token=xxxxxxxxxxxxxx state=ongoing
-   
-    # Create a 1 hour maintenance window for service FOO123, using a user/passwd
-    - pagerduty: name=companyabc
-                 user=[email protected]
-                 passwd=password123
-                 state=running
-                 service=FOO123
-   
-    # Create a 5 minute maintenance window for service FOO123, using a token
-    - pagerduty: name=companyabc
-                 token=xxxxxxxxxxxxxx
-                 hours=0
-                 minutes=5
-                 state=running
-                 service=FOO123
-   
-   
-    # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
-    - pagerduty: name=companyabc
-                 user=[email protected]
-                 passwd=password123
-                 state=running
-                 service=FOO123
-                 hours=4
-                 desc=deployment
-   
-      Note
-   
-      This module does not yet have support to end maintenance windows.
-   
+   The below requirements are needed on the host that executes this module.
+
+     • PagerDuty API access
+
+PARAMETERS                   *pagerduty-parameters*
+
+     Parameter      Choices/Defaults                                                                              Comments
+   desc           Default:             Short description of maintenance window.
+   -              "Created by Ansible"
+   hours          Default:             Length of maintenance window in hours.
+   -              1
+   minutes        Default:             Maintenance window in minutes (this is added to the hours).
+   -              0
+   name                                PagerDuty unique subdomain. Obsolete. It is not used with PagerDuty REST v2 API.
+   -
+   requester_id                        ID of user making the request. Only needed when creating a maintenance_window.
+   -
+   service                             A comma separated list of PagerDuty service IDs.
+   -                                   aliases: services
+                    Choices:
+   state            • running
+   - / required     • started          Create a maintenance window or get a list of ongoing windows.
+                    • ongoing
+                    • absent
+   token                               A pagerduty token, generated on the pagerduty site. It is used for authorization.
+   - / required
+   user                                PagerDuty user ID. Obsolete. Please, use token for authorization.
+   -
+   validate_certs   Choices:
+   boolean          • no               If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+                    • yes ←
+   window_id
+   -                                   ID of maintenance window. Only needed when absent a maintenance_window.
+   added in 2.7
+
+EXAMPLES                   *pagerduty-examples*
+
+ # List ongoing maintenance windows using a token
+ - pagerduty:
+     name: companyabc
+     token: xxxxxxxxxxxxxx
+     state: ongoing
+
+ # Create a 1 hour maintenance window for service FOO123
+ - pagerduty:
+     name: companyabc
+     user: [email protected]
+     token: yourtoken
+     state: running
+     service: FOO123
+
+ # Create a 5 minute maintenance window for service FOO123
+ - pagerduty:
+     name: companyabc
+     token: xxxxxxxxxxxxxx
+     hours: 0
+     minutes: 5
+     state: running
+     service: FOO123
+
+
+ # Create a 4 hour maintenance window for service FOO123 with the description "deployment".
+ - pagerduty:
+     name: companyabc
+     user: [email protected]
+     state: running
+     service: FOO123
+     hours: 4
+     desc: deployment
+   register: pd_window
+
+ # Delete the previous maintenance window
+ - pagerduty:
+     name: companyabc
+     user: [email protected]
+     state: absent
+     window_id: '{{ pd_window.result.maintenance_window.id }}'
+
+ # Delete a maintenance window from a separate playbook than its creation, and if it is the only existing maintenance window.
+ - pagerduty:
+     requester_id: XXXXXXX
+     token: yourtoken
+     state: ongoing
+   register: pd_window
+
+ - pagerduty:
+     requester_id: XXXXXXX
+     token: yourtoken
+     state: absent
+     window_id: "{{ pd_window.result.maintenance_windows[0].id }}"
+
+STATUS                   *pagerduty-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Andrew Newdigate (@suprememoocow)
+     • Dylan Silva (@thaumos)
+     • Justin Johns (!UNKNOWN)
+     • Bruce Pennypacker (@bpennypacker)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *pagerduty-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/pagerduty_module.html
+https://docs.ansible.com/ansible/latest/modules/pagerduty_module.html

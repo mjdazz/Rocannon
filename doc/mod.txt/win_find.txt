@@ -1,0 +1,249 @@
+SYNOPSIS                   *win_find*
+
+     • Return a list of files based on specified criteria.
+     • Multiple criteria are AND’d together.
+     • For non-Windows targets, use the find module instead.
+
+PARAMETERS                   *win_find-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   age                                 Select files or folders whose age is equal to or greater than the specified time.
+   string                              Use a negative age to find files equal to or less than the specified time.
+                                       You can choose seconds, minutes, hours, days or weeks by specifying the first letter of an of those words (e.g., "2s", "10d", 1w").
+                        Choices:
+   age_stamp            • atime        Choose the file property against which we compare age.
+   string               • ctime        The default attribute we compare with is the last modification time.
+                        • mtime ←
+                        Choices:
+                        • md5
+   checksum_algorithm   • sha1 ←       Algorithm to determine the checksum of a file.
+   string               • sha256       Will throw an error if the host is unable to use specified algorithm.
+                        • sha384
+                        • sha512
+   file_type            Choices:
+   string               • directory    Type of file to search for.
+                        • file ←
+   follow               Choices:       Set this to yes to follow symlinks in the path.
+   boolean              • no ←         This needs to be used in conjunction with recurse.
+                        • yes
+   get_checksum         Choices:
+   boolean              • no           Whether to return a checksum of the file in the return info (default sha1), use checksum_algorithm to change from the default.
+                        • yes ←
+   hidden               Choices:
+   boolean              • no ←         Set this to include hidden files or folders.
+                        • yes
+   paths                               List of paths of directories to search for files or folders in.
+   list / required                     This can be supplied as a single path or a list of paths.
+                                       One or more (powershell or regex) patterns to compare filenames with.
+   patterns                            The type of pattern matching is controlled by use_regex option.
+   list                                The patterns restrict the list of files or folders to be returned based on the filenames.
+                                       For a file to be matched it only has to match with one pattern in a list provided.
+                                       aliases: regex, regexp
+   recurse              Choices:
+   boolean              • no ←         Will recursively descend into the directory looking for files or folders.
+                        • yes
+                                       Select files or folders whose size is equal to or greater than the specified size.
+   size                                Use a negative value to find files equal to or less than the specified size.
+   string                              You can specify the size with a suffix of the byte type i.e. kilo = k, mega = m...
+                                       Size is not evaluated for symbolic links.
+   use_regex            Choices:
+   boolean              • no ←         Will set patterns to run as a regex check if set to yes.
+                        • yes
+
+EXAMPLES                   *win_find-examples*
+
+ - name: Find files in path
+   win_find:
+     paths: D:\Temp
+
+ - name: Find hidden files in path
+   win_find:
+     paths: D:\Temp
+     hidden: yes
+
+ - name: Find files in multiple paths
+   win_find:
+     paths:
+     - C:\Temp
+     - D:\Temp
+
+ - name: Find files in directory while searching recursively
+   win_find:
+     paths: D:\Temp
+     recurse: yes
+
+ - name: Find files in directory while following symlinks
+   win_find:
+     paths: D:\Temp
+     recurse: yes
+     follow: yes
+
+ - name: Find files with .log and .out extension using powershell wildcards
+   win_find:
+     paths: D:\Temp
+     patterns: [ '".log', '".out' ]
+
+ - name: Find files in path based on regex pattern
+   win_find:
+     paths: D:\Temp
+     patterns: out_\d{8}-\d{6}.log
+
+ - name: Find files older than 1 day
+   win_find:
+     paths: D:\Temp
+     age: 86400
+
+ - name: Find files older than 1 day based on create time
+   win_find:
+     paths: D:\Temp
+     age: 86400
+     age_stamp: ctime
+
+ - name: Find files older than 1 day with unit syntax
+   win_find:
+     paths: D:\Temp
+     age: 1d
+
+ - name: Find files newer than 1 hour
+   win_find:
+     paths: D:\Temp
+     age: -3600
+
+ - name: Find files newer than 1 hour with unit syntax
+   win_find:
+     paths: D:\Temp
+     age: -1h
+
+ - name: Find files larger than 1MB
+   win_find:
+     paths: D:\Temp
+     size: 1048576
+
+ - name: Find files larger than 1GB with unit syntax
+   win_find:
+     paths: D:\Temp
+     size: 1g
+
+ - name: Find files smaller than 1MB
+   win_find:
+     paths: D:\Temp
+     size: -1048576
+
+ - name: Find files smaller than 1GB with unit syntax
+   win_find:
+     paths: D:\Temp
+     size: -1g
+
+ - name: Find folders/symlinks in multiple paths
+   win_find:
+     paths:
+     - C:\Temp
+     - D:\Temp
+     file_type: directory
+
+ - name: Find files and return SHA256 checksum of files found
+   win_find:
+     paths: C:\Temp
+     get_checksum: yes
+     checksum_algorithm: sha256
+
+ - name: Find files and do not return the checksum
+   win_find:
+     paths: C:\Temp
+     get_checksum: no
+
+RETURN VALUES                   *win_find-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key          Returned                                                                               Description
+   examined                      The number of files/folders that was checked.
+   integer          always       Sample:
+                                 10
+   files            success      Information on the files/folders that match the criteria returned as a list of dictionary elements for each file matched. The entries are sorted by the path value
+   complex                       alphabetically.
+     attributes     success,     attributes of the file at path in raw form.
+     string         path exists  Sample:
+                                 Archive, Hidden
+                    success,
+                    path exists, The checksum of a file based on checksum_algorithm specified.
+     checksum       path is a    Sample:
+     string         file,        09cb79e8fc7453c84a07f644e441fd81623b7f98
+                    get_checksum
+                    == True
+     creationtime   success,     The create time of the file represented in seconds since epoch.
+     float          path exists  Sample:
+                                 1477984205.15
+                    success,     The extension of the file at path.
+     extension      path exists, Sample:
+     string         path is a    .ps1
+                    file
+     filename       success,     The name of the file.
+     string         path exists  Sample:
+                                 temp
+     isarchive      success,     If the path is ready for archiving or not.
+     boolean        path exists  Sample:
+                                 True
+     isdir          success,     If the path is a directory or not.
+     boolean        path exists  Sample:
+                                 True
+     ishidden       success,     If the path is hidden or not.
+     boolean        path exists  Sample:
+                                 True
+     islnk          success,     If the path is a symbolic link or junction or not.
+     boolean        path exists  Sample:
+                                 True
+     isreadonly     success,     If the path is read only or not.
+     boolean        path exists  Sample:
+                                 True
+     isshared       success,     If the path is shared or not.
+     boolean        path exists  Sample:
+                                 True
+     lastaccesstime success,     The last access time of the file represented in seconds since epoch.
+     float          path exists  Sample:
+                                 1477984205.15
+     lastwritetime  success,     The last modification time of the file represented in seconds since epoch.
+     float          path exists  Sample:
+                                 1477984205.15
+                    success,
+     lnk_source     path exists, The target of the symbolic link, will return null if not a link or the link is broken.
+     string         path is a    Sample:
+                    symbolic     C:\temp
+                    link
+     owner          success,     The owner of the file.
+     string         path exists  Sample:
+                                 BUILTIN\Administrators
+     path           success,     The full absolute path to the file.
+     string         path exists  Sample:
+                                 BUILTIN\Administrators
+                    success,
+                    path exists, The name of share if folder is shared.
+     sharename      path is a    Sample:
+     string         directory    file-share
+                    and isshared
+                    == True
+                    success,     The size in bytes of a file or folder.
+     size           path exists, Sample:
+     integer        path is not  1024
+                    a link
+   matched                       The number of files/folders that match the criteria.
+   integer          always       Sample:
+                                 2
+
+STATUS                   *win_find-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_find-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_find_module.html

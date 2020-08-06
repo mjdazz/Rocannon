@@ -1,0 +1,302 @@
+SYNOPSIS                   *iosxr_interfaces*
+
+     • This module manages the interface attributes on Cisco IOS-XR network devices.
+
+PARAMETERS                   *iosxr_interfaces-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   config                                      A dictionary of interface options
+   list / elements=dictionary
+        description                            Interface description.
+        string
+        duplex                  Choices:
+        string                  • full         Configures the interface duplex mode. Default is auto-negotiation when not configured.
+                                • half
+        enabled                 Choices:       Administrative state of the interface.
+        boolean                 • no           Set the value to True to administratively enable the interface or False to disable it.
+                                • yes ←
+        mtu                                    Sets the MTU value for the interface. Applicable for Ethernet interfaces only.
+        integer                                Refer to vendor documentation for valid values.
+        name                                   Full name of the interface to configure in type + path format. e.g. GigabitEthernet0/0/0/0
+        string / required
+        speed                                  Configure the speed for an interface. Default is auto-negotiation when not configured.
+        integer
+                                Choices:
+   state                        • merged ←
+   string                       • replaced     The state of the configuration after module completion
+                                • overridden
+                                • deleted
+
+NOTES                   *iosxr_interfaces-notes*
+
+   Note
+
+     • Tested against Cisco IOS-XRv Version 6.1.3 on VIRL.
+     • This module works with connection network_cli. See the IOS-XR Platform Options.
+
+EXAMPLES                   *iosxr_interfaces-examples*
+
+ ---
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  description Replaced by Ansible Team
+ #  mtu 2000
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  dot1q native vlan 1021
+ # !
+
+ - name: Configure Ethernet interfaces
+   iosxr_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/2
+         description: 'Configured by Ansible'
+         enabled: True
+       - name: GigabitEthernet0/0/0/3
+         description: 'Configured by Ansible Network'
+         enabled: False
+         duplex: full
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  description Configured and Merged by Ansible Network
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  description Configured and Merged by Ansible Network
+ #  mtu 2600
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  duplex full
+ #  shutdown
+ #  dot1q native vlan 1021
+ # !
+
+ # Using replaced
+
+ # Before state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  description Configured by Ansible
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  description Test
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  dot1q native vlan 1021
+ # !
+
+ - name: Configure following interfaces and replace their existing config
+   iosxr_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/2
+         description: Configured by Ansible
+         enabled: True
+         mtu: 2000
+       - name: GigabitEthernet0/0/0/3
+         description: 'Configured by Ansible Network'
+         enabled: False
+         duplex: auto
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  description Configured by Ansible
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  description Configured and Replaced by Ansible
+ #  mtu 2000
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  description Configured and Replaced by Ansible Network
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  duplex half
+ #  shutdown
+ #  dot1q native vlan 1021
+ # !
+
+ # Using overridden
+
+ # Before state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  description Configured by Ansible
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  description Configured by Ansible
+ #  mtu 2600
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  duplex full
+ #  shutdown
+ #  dot1q native vlan 1021
+ # !
+
+ - name: Override interfaces
+   iosxr_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/2
+         description: 'Configured by Ansible'
+         enabled: True
+         duplex: auto
+       - name: GigabitEthernet0/0/0/3
+         description: 'Configured by Ansible Network'
+         enabled: False
+         speed: 1000
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  description Configured and Overridden by Ansible Network
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  speed 1000
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  description Configured and Overridden by Ansible Network
+ #  mtu 2000
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  duplex full
+ #  shutdown
+ #  dot1q native vlan 1021
+ # !
+
+ # Using deleted
+
+ # Before state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  description Configured and Overridden by Ansible Network
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  speed 1000
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  description Configured and Overridden by Ansible Network
+ #  mtu 2000
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  duplex full
+ #  shutdown
+ #  dot1q native vlan 1021
+ # !
+
+ - name: Delete IOSXR interfaces as in given arguments
+   iosxr_interfaces:
+     config:
+       - name: GigabitEthernet0/0/0/2
+       - name: GigabitEthernet0/0/0/3
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # viosxr#show running-config interface
+ # interface GigabitEthernet0/0/0/1
+ #  shutdown
+ # !
+ # interface GigabitEthernet0/0/0/2
+ #  vrf custB
+ #  ipv4 address 178.18.169.23 255.255.255.0
+ #  dot1q native vlan 30
+ # !
+ # interface GigabitEthernet0/0/0/3
+ #  vrf custB
+ #  ipv4 address 10.10.0.2 255.255.255.0
+ #  dot1q native vlan 1021
+ # !
+
+RETURN VALUES                   *iosxr_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device
+   list     always       Sample:
+                         ['interface GigabitEthernet0/0/0/2', 'description: Configured by Ansible', 'shutdown']
+
+STATUS                   *iosxr_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *iosxr_interfaces-red hat support*
+
+     • Sumit Jaiswal (@justjais)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iosxr_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iosxr_interfaces_module.html

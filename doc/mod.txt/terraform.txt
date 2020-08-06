@@ -1,0 +1,109 @@
+SYNOPSIS                   *terraform*
+
+     • Provides support for deploying resources with Terraform and pulling resource information back into Ansible.
+
+REQUIREMENTS                   *terraform-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • terraform
+
+PARAMETERS                   *terraform-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   backend_config
+   -                                A group of key-values to provide at init stage to the -backend-config parameter.
+   added in 2.7
+   binary_path                      The path of a terraform binary to use, relative to the 'service_path' unless you supply an absolute path.
+   -
+   force_init        Choices:       To avoid duplicating infra, if a state file can't be found this will force a `terraform init`. Generally, this should be turned off unless you intend to
+   boolean           • no ←         provision an entirely new Terraform deployment.
+                     • yes
+   lock              Choices:
+   boolean           • no           Enable statefile locking, if you use a service that accepts locks (such as S3+DynamoDB) to store your statefile.
+                     • yes
+   lock_timeout                     How long to maintain the lock on the statefile, if you use a service that accepts locks (such as S3+DynamoDB).
+   -
+   plan_file                        The path to an existing Terraform plan file to apply. If this is not specified, Ansible will build a new TF plan and execute it. Note that this option is
+   -                                required if 'state' has the 'planned' value.
+   project_path                     The path to the root of the Terraform directory with the vars.tf/main.tf/etc to use.
+   - / required
+   purge_workspace   Choices:       Only works with state = absent
+   boolean           • no ←         If true, the workspace will be deleted after the "terraform destroy" action.
+   added in 2.7      • yes          The 'default' workspace will not be deleted.
+                     Choices:
+   state             • planned      Goal state of given stage/project
+   -                 • present ←
+                     • absent
+   state_file                       The path to an existing Terraform state file to use when building plan. If this is not specified, the default `terraform.tfstate` will be used.
+   -                                This option is ignored when plan is specified.
+   targets                          A list of specific resources to target in this plan/application. The resources selected here will also auto-include any dependencies.
+   -
+   variables                        A group of key-values to override template variables or those in variables files.
+   -
+   variables_file                   The path to a variables file for Terraform to fill into the TF configurations.
+   -
+   workspace       Default:
+   -               "default"        The terraform workspace to work with.
+   added in 2.7
+
+NOTES                   *terraform-notes*
+
+   Note
+
+     • To just run a terraform plan, use check mode.
+
+EXAMPLES                   *terraform-examples*
+
+ # Basic deploy of a service
+ - terraform:
+     project_path: '{{ project_dir }}'
+     state: present
+
+ # Define the backend configuration at init
+ - terraform:
+     project_path: 'project/'
+     state: "{{ state }}"
+     force_init: true
+     backend_config:
+       region: "eu-west-1"
+       bucket: "some-bucket"
+       key: "random.tfstate"
+
+RETURN VALUES                   *terraform-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                  Description
+   command                Full `terraform` command built by this module, in case you want to re-run the command outside the module or debug a problem.
+   string      always     Sample:
+                          terraform apply ...
+   outputs                A dictionary of all the TF outputs by their assigned name. Use `.outputs.MyOutputName.value` to access the value.
+   complex     on success Sample:
+                          {"bukkit_arn": {"sensitive": false, "type": "string", "value": "arn:aws:s3:::tf-test-bukkit"}
+     sensitive always     Whether Terraform has marked this value as sensitive
+     boolean
+     type      always     The type of the value (string, int, etc)
+     string
+     value     always     The value of the output as interpolated by Terraform
+     -
+   stdout      always     Full `terraform` command stdout, in case you want to display it or examine the event log
+   string
+
+STATUS                   *terraform-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ryan Scott Brown (@ryansb)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *terraform-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/terraform_module.html

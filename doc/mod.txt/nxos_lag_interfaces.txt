@@ -1,0 +1,167 @@
+SYNOPSIS                   *nxos_lag_interfaces*
+
+     • This module manages attributes of link aggregation groups of NX-OS Interfaces.
+
+PARAMETERS                   *nxos_lag_interfaces-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   config                              A list of link aggregation group configurations.
+   list
+    members                            The list of interfaces that are part of the group.
+    list
+          force         Choices:
+          boolean       • no           When true it forces link aggregation group members to match what is declared in the members param. This can be used to remove members.
+                        • yes
+          member                       The interface name.
+          string
+                        Choices:
+          mode          • active       Link aggregation group (LAG).
+          string        • yes
+                        • passive
+    name                               Name of the link aggregation group (LAG).
+    string / required
+                        Choices:
+   state                • merged ←
+   string               • replaced     The state of the configuration after module completion.
+                        • overridden
+                        • deleted
+
+NOTES                   *nxos_lag_interfaces-notes*
+
+   Note
+
+     • Tested against NXOS 7.3.(0)D1(1) on VIRL.
+     • This module works with connection network_cli.
+
+EXAMPLES                   *nxos_lag_interfaces-examples*
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/4
+
+ - name: Merge provided configuration with device configuration.
+   nxos_lag_interfaces:
+     config:
+       - name: port-channel99
+         members:
+           - member: Ethernet1/4
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/4
+ #   channel-group 99
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/4
+ #   channel-group 99 mode active
+
+ - name: Replace device configuration of specified LAG attributes of given interfaces with provided configuration.
+   nxos_lag_interfaces:
+     config:
+       - name: port-channel10
+         members:
+           - member: Ethernet1/4
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/4
+ #   channel-group 10
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/4
+ #   channel-group 10
+ # interface Ethernet1/2
+ #   channel-group 99 mode passive
+
+ - name: Override device configuration of all LAG attributes of given interfaces on device with provided configuration.
+   nxos_lag_interfaces:
+     config:
+       - name: port-channel20
+         members:
+           - member: Ethernet1/6
+             force: True
+     state: overridden
+
+ # After state:
+ # ------------
+ # interface Ethernet1/2
+ # interface Ethernet1/4
+ # interface Ethernet1/6
+ #   channel-group 20 force
+
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/4
+ #   channel-group 99 mode active
+
+ - name: Delete LAG attributes of given interface (This won't delete the port-channel itself).
+   nxos_lag_interfaces:
+     config:
+       - port-channel: port-channel99
+     state: deleted
+
+ - name: Delete LAG attributes of all the interfaces
+   nxos_lag_interfaces:
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/4
+ #   no channel-group 99
+
+RETURN VALUES                   *nxos_lag_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['command 1', 'command 2', 'command 3']
+
+STATUS                   *nxos_lag_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_lag_interfaces-red hat support*
+
+     • Trishna Guha (@trishnaguha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_lag_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_lag_interfaces_module.html

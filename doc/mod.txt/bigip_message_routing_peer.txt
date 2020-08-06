@@ -1,0 +1,171 @@
+SYNOPSIS                   *bigip_message_routing_peer*
+
+     • Manage peers for routing generic message protocol messages.
+
+PARAMETERS                   *bigip_message_routing_peer-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+                                          If yes, the BIGIP will automatically create outbound connections to the active pool members in the specified pool using the configuration of the specified
+                           Choices:       transport_config.
+   auto_init               • no           For auto-initialization to attempt to create a connection, the peer must be included in a route that is attached to a router instance. For each router
+   boolean                 • yes          instance that the peer is contained in, a connection will be initiated.
+                                          The auto_init logic will verify at auto_init_interval if the a connection exists between the BIG-IP and the pool members of the pool. If a connection does
+                                          not exist, it will attempt to reestablish one.
+   auto_init_interval                     Specifies the interval that attempts to initiate a connection occur.
+   integer                                The default value upon peer object creation, that supplied by the system is 5000 milliseconds.
+                                          The accepted range is between 0 and 4294967295 inclusive.
+                           Choices:
+   connection_mode         • per-blade
+   string                  • per-client   Specifies how the number of connections per host are to be limited.
+                           • per-peer
+                           • per-tmm
+   description                            The user defined description of the peer.
+   string
+   name                                   Specifies the name of the peer to manage.
+   string / required
+   number_of_connections                  Specifies the distribution of connections between the BIG-IP and a remote host.
+   integer                                The accepted range is between 0 and 65535 inclusive.
+   partition             Default:         Device partition to create peer object on.
+   string                "Common"
+   pool                                   Specifies the name of the pool that messages will be routed towards.
+   string                                 The specified pool must be on the same partition as the peer.
+   provider
+   dictionary                             A dict object containing connection details.
+   added in 2.5
+      auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+      string                              This option is really used when working with BIG-IQ devices.
+      password                            The password for the user account used to connect to the BIG-IP.
+      string / required                   You may omit this option by setting the environment variable F5_PASSWORD.
+                                          aliases: pass, pwd
+      server                              The BIG-IP host.
+      string / required                   You may omit this option by setting the environment variable F5_SERVER.
+      server_port        Default:         The BIG-IP server port.
+      integer            443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+      ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+      path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+      timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+      integer                             operation is completed, the module will error.
+      transport            Choices:
+      string               • cli          Configures the transport connection to use when connecting to the remote device.
+                           • rest ←
+      user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+      string / required                   You may omit this option by setting the environment variable F5_USER.
+      validate_certs       Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+      boolean              • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                           • yes ←
+   ratio                                  Specifies the ratio to be used for selection of a peer within a list of peers in a ltm route.
+   integer                                The accepted range is between 0 and 4294967295 inclusive.
+   state                   Choices:       When present, ensures that the peer exists.
+   string                  • present ←    When absent, ensures the peer is removed.
+                           • absent
+   transport_config                       The name of the ltm virtual or ltm transport-config to use for creating an outgoing connection.
+   string                                 The resource must exist on the same partition as the peer object.
+   type                    Choices:       Parameter used to specify the type of the peer to manage.
+   string                  • generic ←    Default setting is generic with more options added in future.
+
+NOTES                   *bigip_message_routing_peer-notes*
+
+   Note
+
+     • Requires BIG-IP >= 14.0.0
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_message_routing_peer-examples*
+
+ - name: Create a simple peer
+   bigip_message_routing_peer:
+     name: foobar
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create message routing peer with additional settings
+   bigip_message_routing_peer:
+     name: foobar
+     connection_mode: per-blade
+     pool: /baz/bar
+     partition: baz
+     transport_config: foovirtual
+     ratio: 10
+     auto_init: yes
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify message routing peer settings
+   bigip_message_routing_peer:
+     name: foobar
+     partition: baz
+     ratio: 20
+     auto_init_interval: 2000
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove message routing peer
+   bigip_message_routing_peer:
+     name: foobar
+     partition: baz
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_message_routing_peer-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key          Returned                                                                             Description
+   auto_init                      Enables creation of outbound connections to the active pool members.
+   boolean               changed  Sample:
+                                  True
+   auto_init_interval             The interval that attempts to initiate a connection occur.
+   integer               changed  Sample:
+                                  2000
+   connection_mode                Specifies how the number of connections per host are to be limited.
+   string                changed  Sample:
+                                  per-peer
+   description                    The user defined description of the peer.
+   string                changed  Sample:
+                                  Some description
+   number_of_connections          The distribution of connections between the BIG-IP and a remote host.
+   integer               changed  Sample:
+                                  2000
+   pool                           The name of the pool that messages will be routed towards.
+   string                changed  Sample:
+                                  /Bazbar/foobar
+   ratio                          The ratio to be used for selection of a peer within a list of peers in a ltm route.
+   integer               changed  Sample:
+                                  500
+   transport_config               The ltm virtual or ltm transport-config to use for creating an outgoing connection.
+   string                changed  Sample:
+                                  /Common/foobar
+
+STATUS                   *bigip_message_routing_peer-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_message_routing_peer-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_message_routing_peer_module.html

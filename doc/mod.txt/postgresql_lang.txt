@@ -1,0 +1,154 @@
+SYNOPSIS                   *postgresql_lang*
+
+     • Adds, removes or changes procedural languages with a PostgreSQL database.
+     • This module allows you to add a language, remote a language or change the trust relationship with a PostgreSQL database.
+     • The module can be used on the machine where executed or on a remote host.
+     • When removing a language from a database, it is possible that dependencies prevent the database from being removed. In that case, you can specify cascade=yes to automatically drop objects
+       that depend on the language (such as functions in the language).
+     • In case the language can’t be deleted because it is required by the database system, you can specify fail_on_drop=no to ignore the error.
+     • Be careful when marking a language as trusted since this could be a potential security breach. Untrusted languages allow only users with the PostgreSQL superuser privilege to use this
+       language to create new functions.
+
+REQUIREMENTS                   *postgresql_lang-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • psycopg2
+
+PARAMETERS                   *postgresql_lang-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+   ca_cert                             Specifies the name of a file containing SSL certificate authority (CA) certificate(s).
+   string                              If the file exists, the server's certificate will be verified to be signed by one of these authorities.
+   added in 2.8                        aliases: ssl_rootcert
+   cascade             Choices:        When dropping a language, also delete object that depend on this language.
+   boolean             • no ←          Only used when state=absent.
+                       • yes
+   db                                  Name of database to connect to and where the language will be added, removed or changed.
+   string                              aliases: login_db
+   fail_on_drop        Choices:        If yes, fail when removing a language. Otherwise just log and continue.
+   boolean             • no            In some cases, it is not possible to remove a language (used by the db-system).
+                       • yes ←         When dependencies block the removal, consider using cascade.
+   force_trust         Choices:        Marks the language as trusted, even if it's marked as untrusted in pg_pltemplate.
+   boolean             • no ←          Use with care!
+                       • yes
+   lang                                Name of the procedural language to add, remove or change.
+   string / required                   aliases: name
+   login_host                          Host running the database.
+   string
+   login_password                      The password used to authenticate with.
+   string
+   login_unix_socket
+   string                              Path to a Unix domain socket for local connections.
+   added in 2.8
+   login_user        Default:          The username used to authenticate with.
+   string            "postgres"
+   port              Default:          Database port to connect to.
+   integer           5432              aliases: login_port
+   session_role                        Switch to session_role after connecting.
+   string                              The specified session_role must be a role that the current login_user is a member of.
+   added in 2.8                        Permissions checking for SQL commands is carried out as though the session_role were the one that had logged in originally.
+                       Choices:
+                       • allow
+   ssl_mode            • disable       Determines whether or with what priority a secure SSL TCP/IP connection will be negotiated with the server.
+   string              • prefer ←      See https://www.postgresql.org/docs/current/static/libpq-ssl.html for more information on the modes.
+   added in 2.8        • require       Default of prefer matches libpq default.
+                       • verify-ca
+                       • verify-full
+   state               Choices:
+   string              • absent        The state of the language for the selected database.
+                       • present ←
+   trust               Choices:
+   boolean             • no ←          Make this language trusted for the selected db.
+                       • yes
+
+NOTES                   *postgresql_lang-notes*
+
+   Note
+
+     • The default authentication assumes that you are either logging in as or sudo’ing to the postgres account on the host.
+     • To avoid “Peer authentication failed for user postgres” error, use postgres user as a become_user.
+     • This module uses psycopg2, a Python PostgreSQL database adapter. You must ensure that psycopg2 is installed on the host before using this module.
+     • If the remote host is the PostgreSQL server (which is the default case), then PostgreSQL must also be installed on the remote host.
+     • For Ubuntu-based systems, install the postgresql, libpq-dev, and python-psycopg2 packages on the remote host before using this module.
+     • The ca_cert parameter requires at least Postgres version 8.4 and psycopg2 version 2.4.3.
+
+SEE ALSO                   *postgresql_lang-see also*
+
+   See also
+
+   PostgreSQL languages
+   General information about PostgreSQL languages.
+
+   CREATE LANGUAGE reference
+   Complete reference of the CREATE LANGUAGE command documentation.
+
+   ALTER LANGUAGE reference
+   Complete reference of the ALTER LANGUAGE command documentation.
+
+   DROP LANGUAGE reference
+   Complete reference of the DROP LANGUAGE command documentation.
+
+EXAMPLES                   *postgresql_lang-examples*
+
+ - name: Add language pltclu to database testdb if it doesn't exist
+   postgresql_lang: db=testdb lang=pltclu state=present
+
+ # Add language pltclu to database testdb if it doesn't exist and mark it as trusted.
+ # Marks the language as trusted if it exists but isn't trusted yet.
+ # force_trust makes sure that the language will be marked as trusted
+ - name: Add language pltclu to database testdb if it doesn't exist and mark it as trusted
+   postgresql_lang:
+     db: testdb
+     lang: pltclu
+     state: present
+     trust: yes
+     force_trust: yes
+
+ - name: Remove language pltclu from database testdb
+   postgresql_lang:
+     db: testdb
+     lang: pltclu
+     state: absent
+
+ - name: Remove language pltclu from database testdb and remove all dependencies
+   postgresql_lang:
+     db: testdb
+     lang: pltclu
+     state: absent
+     cascade: yes
+
+ - name: Remove language c from database testdb but ignore errors if something prevents the removal
+   postgresql_lang:
+     db: testdb
+     lang: pltclu
+     state: absent
+     fail_on_drop: no
+
+RETURN VALUES                   *postgresql_lang-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   queries               List of executed queries.
+   list         always   Sample:
+   added in 2.8          ['CREATE LANGUAGE "acme"']
+
+STATUS                   *postgresql_lang-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jens Depuydt (@jensdepuydt)
+     • Thomas O’Donnell (@andytom)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *postgresql_lang-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/postgresql_lang_module.html

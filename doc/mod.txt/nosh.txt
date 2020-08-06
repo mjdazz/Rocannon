@@ -1,0 +1,190 @@
+SYNOPSIS                   *nosh*
+
+     • Control running and enabled state for system-wide or user services.
+     • BSD and Linux systems are supported.
+
+REQUIREMENTS                   *nosh-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A system with an active nosh service manager, see Notes for further information.
+
+PARAMETERS                   *nosh-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   enabled     Choices:
+   boolean     • no           Enable or disable the service, independently of ".preset file preference or running state. Mutually exclusive with preset. Will take effect prior to state=reset.
+               • yes
+   name
+   - /                        Name of the service to manage.
+   required
+   preset      Choices:       Enable or disable the service according to local preferences in ".preset files. Mutually exclusive with enabled. Only has an effect if set to true. Will take effect
+   boolean     • no           prior to state=reset.
+               • yes
+               Choices:
+               • started
+   state       • stopped      started/stopped are idempotent actions that will not run commands unless necessary. restarted will always bounce the service. reloaded will send a SIGHUP or start the
+   -           • reset        service. reset will start or stop the service according to whether it is enabled or not.
+               • restarted
+               • reloaded
+   user        Choices:
+   boolean     • no ←         Run system-control talking to the calling user's service manager, rather than the system-wide service manager.
+               • yes
+
+NOTES                   *nosh-notes*
+
+   Note
+
+     • Information on the nosh utilities suite may be found at https://jdebp.eu/Softwares/nosh/.
+
+EXAMPLES                   *nosh-examples*
+
+ - name: start dnscache if not running
+   nosh: name=dnscache state=started
+
+ - name: stop mpd, if running
+   nosh: name=mpd state=stopped
+
+ - name: restart unbound or start it if not already running
+   nosh:
+     name: unbound
+     state: restarted
+
+ - name: reload fail2ban or start it if not already running
+   nosh:
+     name: fail2ban
+     state: reloaded
+
+ - name: disable nsd
+   nosh: name=nsd enabled=no
+
+ - name: for package installers, set nginx running state according to local enable settings, preset and reset
+   nosh: name=nginx preset=True state=reset
+
+ - name: reboot the host if nosh is the system manager, would need a "wait_for"" task at least, not recommended as-is
+   nosh: name=reboot state=started
+
+ - name: using conditionals with the module facts
+   tasks:
+     - name: obtain information on tinydns service
+       nosh: name=tinydns
+       register: result
+
+     - name: fail if service not loaded
+       fail: msg="The {{ result.name }} service is not loaded"
+       when: not result.status
+
+     - name: fail if service is running
+       fail: msg="The {{ result.name }} service is running"
+       when: result.status and result.status['DaemontoolsEncoreState'] == "running"
+
+RETURN VALUES                   *nosh-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key                   Returned                                                                           Description
+   enabled                                           whether the service is enabled at system bootstrap
+   boolean                   success                 Sample:
+                                                     True
+   name                                              name used to find the service
+   string                    success                 Sample:
+                                                     sshd
+   preset                                            whether the enabled status reflects the one set in the relevant ".preset file
+   boolean                   success                 Sample:
+                                                     False
+   service_path                                      resolved path for the service
+   string                    success                 Sample:
+                                                     /var/sv/sshd
+   state                                             service process run state, None if the service is not loaded and will not be started
+   string                    if state option is used Sample:
+                                                     reloaded
+   status                    success                 a dictionary with the key=value pairs returned by `system-control show-json` or None if the service is not loaded
+   complex
+     After                   success                 Sample:
+     list                                            ['/etc/service-bundles/targets/basic', '../sshdgenkeys', 'log']
+     Before                  success                 Sample:
+     list                                            ['/etc/service-bundles/targets/shutdown']
+     Conflicts               success                 Sample:
+     list                                            []
+     DaemontoolsEncoreState  success                 Sample:
+     string                                          running
+     DaemontoolsState        success                 Sample:
+     string                                          up
+     Enabled                 success                 Sample:
+     boolean                                         True
+     LogService              success                 Sample:
+     string                                          ../[email protected]
+     MainPID                 success                 Sample:
+     integer                                         661
+     Paused                  success                 Sample:
+     boolean                                         False
+     ReadyAfterRun           success                 Sample:
+     boolean                                         False
+     RemainAfterExit         success                 Sample:
+     boolean                                         False
+     Required-By             success                 Sample:
+     list                                            []
+     RestartExitStatusCode   success                 Sample:
+     integer                                         0
+     RestartExitStatusNumber success                 Sample:
+     integer                                         0
+     RestartTimestamp        success                 Sample:
+     integer                                         4611686019935648081
+     RestartUTCTimestamp     success                 Sample:
+     integer                                         1508260140
+     RunExitStatusCode       success                 Sample:
+     integer                                         0
+     RunExitStatusNumber     success                 Sample:
+     integer                                         0
+     RunTimestamp            success                 Sample:
+     integer                                         4611686019935648081
+     RunUTCTimestamp         success                 Sample:
+     integer                                         1508260140
+     StartExitStatusCode     success                 Sample:
+     integer                                         1
+     StartExitStatusNumber   success                 Sample:
+     integer                                         0
+     StartTimestamp          success                 Sample:
+     integer                                         4611686019935648081
+     StartUTCTimestamp       success                 Sample:
+     integer                                         1508260140
+     StopExitStatusCode      success                 Sample:
+     integer                                         0
+     StopExitStatusNumber    success                 Sample:
+     integer                                         0
+     Stopped-By              success                 Sample:
+     list                                            ['/etc/service-bundles/targets/shutdown']
+     StopTimestamp           success                 Sample:
+     integer                                         4611686019935648081
+     StopUTCTimestamp        success                 Sample:
+     integer                                         1508260140
+     Timestamp               success                 Sample:
+     integer                                         4611686019935648081
+     UTCTimestamp            success                 Sample:
+     integer                                         1508260140
+     Want                    success                 Sample:
+     string                                          nothing
+     Wanted-By               success                 Sample:
+     list                                            ['/etc/service-bundles/targets/server', '/etc/service-bundles/targets/sockets']
+     Wants                   success                 Sample:
+     list                                            ['/etc/service-bundles/targets/basic', '../sshdgenkeys']
+   user                      success                 whether the user-level service manager is called
+   boolean
+
+STATUS                   *nosh-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Thomas Caravia (@tacatac)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nosh-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nosh_module.html

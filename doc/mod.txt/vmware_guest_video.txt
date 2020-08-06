@@ -1,0 +1,152 @@
+SYNOPSIS                   *vmware_guest_video*
+
+     • This module is used to reconfigure video card settings of given virtual machine.
+     • All parameters and VMware object names are case sensitive.
+
+REQUIREMENTS                   *vmware_guest_video-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_guest_video-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   datacenter         Default:         The datacenter name to which virtual machine belongs to.
+   string             "ha-datacenter"  This parameter is case sensitive.
+   display_number                      The number of display. Valid value from 1 to 10. The maximum display number is 4 on vCenter 6.0, 6.5 web UI.
+   integer
+   enable_3D            Choices:
+   boolean              • no           Enable 3D for guest operating systems on which VMware supports 3D.
+                        • yes
+                                       Destination folder, absolute or relative path to find an existing guest.
+                                       This is a required parameter, only if multiple VMs are found with same name.
+                                       The folder should include the datacenter. ESXi server's datacenter is ha-datacenter.
+                                       Examples:
+                                       folder: /ha-datacenter/vm
+   folder                              folder: ha-datacenter/vm
+   string                              folder: /datacenter1/vm
+                                       folder: datacenter1/vm
+                                       folder: /datacenter1/vm/folder1
+                                       folder: datacenter1/vm/folder1
+                                       folder: /folder1/datacenter1/vm
+                                       folder: folder1/datacenter1/vm
+                                       folder: /folder1/datacenter1/vm/folder2
+   gather_video_facts   Choices:       If set to True, return settings of the video card, other attributes are ignored.
+   boolean              • no ←         If set to False, will do reconfiguration and return video card settings.
+                        • yes
+   hostname                            The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                              If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                       Environment variable support added in Ansible 2.6.
+   memory_3D_mb                        The value of 3D Memory must be power of 2 and valid value is from 32 MB to 2048 MB.
+   integer
+   moid                                Managed Object ID of the instance to manage if known, this is a unique identifier only within a single vCenter instance.
+   string                              This is required if name or uuid is not supplied.
+   added in 2.9
+   name                                Name of the virtual machine.
+   string                              This is a required parameter, if parameter uuid or moid is not supplied.
+                                       The password of the vSphere vCenter or ESXi server.
+   password                            If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                              Environment variable support added in Ansible 2.6.
+                                       aliases: pass, pwd
+   port               Default:         The port number of the vSphere vCenter or ESXi server.
+   integer            443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                        Environment variable support added in Ansible 2.6.
+   proxy_host                          Address of a proxy that will receive all HTTPS requests and relay them.
+   string                              The format is a hostname or a IP.
+   added in 2.9                        If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                       This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                          Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                             If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+                        Choices:       If set to automatic, selects the appropriate option (software or hardware) for this virtual machine automatically.
+   renderer_3D          • automatic    If set to software, uses normal CPU processing for 3D calculations.
+   string               • software     If set to hardware, requires graphics hardware (GPU) for faster 3D calculations.
+                        • hardware
+   use_auto_detect      Choices:       If set to True, applies common video settings to the guest operating system, attributes display_number and video_memory_mb are ignored.
+   boolean              • no           If set to False, the number of display and the total video memory will be reconfigured using display_number and video_memory_mb.
+                        • yes
+                                       The username of the vSphere vCenter or ESXi server.
+   username                            If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                              Environment variable support added in Ansible 2.6.
+                                       aliases: admin, user
+   uuid                                UUID of the instance to gather facts if known, this is VMware's unique identifier.
+   string                              This is a required parameter, if parameter name or moid is not supplied.
+                        Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs       • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean              • yes ←        Environment variable support added in Ansible 2.6.
+                                       If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+   video_memory_mb                     Valid total MB of video memory range of virtual machine is from 1.172 MB to 256 MB on ESXi 6.7U1, from 1.172 MB to 128 MB on ESXi 6.7 and previous versions.
+   float                               For specific guest OS, supported minimum and maximum video memory are different, please be careful on setting this.
+
+NOTES                   *vmware_guest_video-notes*
+
+   Note
+
+     • Tested on vSphere 6.0, 6.5 and 6.7
+
+EXAMPLES                   *vmware_guest_video-examples*
+
+ - name: Change video card settings of virtual machine
+   vmware_guest_video:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter_name }}"
+     validate_certs: no
+     name: test-vm
+     gather_video_facts: false
+     use_auto_detect: false
+     display_number: 2
+     video_memory_mb: 8.0
+     enable_3D: true
+     renderer_3D: automatic
+     memory_3D_mb: 512
+   delegate_to: localhost
+   register: video_facts
+
+ - name: Change video card settings of virtual machine using MoID
+   vmware_guest_video:
+     hostname: "{{ vcenter_hostname }}"
+     username: "{{ vcenter_username }}"
+     password: "{{ vcenter_password }}"
+     datacenter: "{{ datacenter_name }}"
+     validate_certs: no
+     moid: vm-42
+     gather_video_facts: false
+     use_auto_detect: false
+     display_number: 2
+     video_memory_mb: 8.0
+     enable_3D: true
+     renderer_3D: automatic
+     memory_3D_mb: 512
+   delegate_to: localhost
+   register: video_facts
+
+RETURN VALUES                   *vmware_guest_video-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   video_status          metadata about the virtual machine's video card after managing them
+   dictionary   always   Sample:
+                         {'auto_detect': False, 'display_number': 2, 'enable_3D_support': True, 'memory_3D': 524288, 'renderer_3D': 'automatic', 'video_memory': 8192}
+
+STATUS                   *vmware_guest_video-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Diane Wang (@Tomorrow9) <dianew@vmware.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_guest_video-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_guest_video_module.html

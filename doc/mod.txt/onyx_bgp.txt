@@ -1,0 +1,101 @@
+SYNOPSIS                   *onyx_bgp*
+
+     • This module provides declarative management of BGP router and neighbors on Mellanox ONYX network devices.
+
+PARAMETERS                   *onyx_bgp-parameters*
+
+         Parameter        Choices/Defaults                                                                          Comments
+   as_number                               Local AS number.
+   - / required
+   ecmp_bestpath            Choices:
+   boolean                  • no           Enables ECMP across AS paths.
+   added in 2.9             • yes
+   evpn                     Choices:
+   boolean                  • no           Configure evpn peer-group.
+   added in 2.9             • yes
+   fast_external_fallover   Choices:
+   boolean                  • no           will configure fast_external_fallover when it is True.
+   added in 2.9             • yes
+   max_paths
+   -                                       Maximum bgp paths.
+   added in 2.9
+   neighbors                               List of neighbors. Required if state=present.
+   -
+         multihop                          multihop number.
+         -
+         neighbor                          Neighbor IP address.
+         - / required
+         remote_as                         Remote AS number.
+         - / required
+   networks                                List of advertised networks.
+   -
+   purge                    Choices:
+   boolean                  • no ←         will remove all neighbors when it is True.
+   added in 2.8             • yes
+   router_id                               Router IP address.
+   -
+   state                    Choices:
+   -                        • present ←    BGP state.
+                            • absent
+   vrf
+   -                                       vrf name.
+   added in 2.9
+
+NOTES                   *onyx_bgp-notes*
+
+   Note
+
+     • Tested on ONYX 3.6.4000
+
+EXAMPLES                   *onyx_bgp-examples*
+
+ - name: configure bgp
+   onyx_bgp:
+     as_number: 320
+     router_id: 10.3.3.3
+     neighbors:
+       - remote_as: 321
+         neighbor: 10.3.3.4
+       - remote_as: 322
+         neighbor: 10.3.3.5
+         multihop: 250
+     purge: True
+     state: present
+     networks:
+       - 172.16.1.0/24
+     vrf: default
+     evpn: yes
+     fast_external_fallover: yes
+     max_paths: 32
+     ecmp_bestpath: yes
+
+RETURN VALUES                   *onyx_bgp-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key    Returned                                                                                   Description
+                     The list of configuration mode commands to send to the device.
+                     Sample:
+   commands          ['router bgp 320 vrf default', 'exit', 'router bgp 320 router-id 10.3.3.3 force', 'router bgp 320 vrf default bgp fast-external-fallover', 'router bgp 320 vrf default
+   list     always   maximum-paths 32', 'router bgp 320 vrf default bestpath as-path multipath-relax force', 'router bgp 320 vrf default neighbor evpn peer-group', 'router bgp 320 vrf default
+                     neighbor evpn send-community extended', 'router bgp 320 vrf default address-family l2vpn-evpn neighbor evpn next-hop-unchanged', 'router bgp 320 vrf default address-family
+                     l2vpn-evpn neighbor evpn activate', 'router bgp 320 vrf default address-family l2vpn-evpn auto-create', 'router bgp 320 vrf default neighbor 10.3.3.4 remote-as 321', 'router
+                     bgp 320 vrf default neighbor 10.3.3.4 ebgp-multihop 250', 'router bgp 320 vrf default neighbor 10.3.3.5 remote-as 322', 'router bgp 320 vrf default network 172.16.1.0 /24']
+
+STATUS                   *onyx_bgp-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Samer Deeb (@samerd), Anas Badaha (@anasb)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *onyx_bgp-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/onyx_bgp_module.html

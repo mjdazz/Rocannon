@@ -1,0 +1,173 @@
+SYNOPSIS                   *efs*
+
+     • Module allows create, search and destroy Amazon EFS file systems
+
+REQUIREMENTS                   *efs-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *efs-parameters*
+
+              Parameter              Choices/Defaults                                                                      Comments
+   aws_access_key                                        AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                                aliases: ec2_access_key, access_key
+   aws_secret_key                                        AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                                aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs      Choices:            Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to
+   boolean                           • no ←              the resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                      • yes               ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                               Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is
+   string                                                required. Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if
+                                                         any, is used.
+   encrypt                           Choices:
+   boolean                           • no ←              A boolean value that, if true, creates an encrypted file system. This can not be modified after the file system is created.
+   added in 2.5                      • yes
+   id                                                    ID of Amazon EFS. Either name or ID required for delete.
+   -
+   kms_key_id                                            The id of the AWS KMS CMK that will be used to protect the encrypted file system. This parameter is only required if you want to use a
+   -                                                     non-default CMK. If this parameter is not specified, the default CMK for Amazon EFS is used. The key id can be Key ID, Key ID ARN, Key Alias
+   added in 2.5                                          or Key Alias ARN.
+   name                                                  Creation Token of Amazon EFS file system. Required for create and update. Either name or ID required for delete.
+   -
+   performance_mode                  Choices:
+   -                                 • general_purpose ← File system's performance mode to use. Only takes effect during creation.
+                                     • max_io
+   profile                                               Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   provisioned_throughput_in_mibps                       If the throughput_mode is provisioned, select the amount of throughput to provisioned in Mibps.
+   float                                                 Requires botocore >= 1.10.57
+   added in 2.8
+   purge_tags                        Choices:            If yes, existing tags will be purged from the resource to match exactly what is defined by tags parameter. If the tags parameter is not set
+   boolean                           • no                then tags will not be modified.
+   added in 2.5                      • yes ←
+   region                                                The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                                http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                         aliases: aws_region, ec2_region
+   security_token                                        AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                                aliases: access_token
+   state                             Choices:
+   -                                 • present ←         Allows to create, search and destroy Amazon EFS file system
+                                     • absent
+   tags                                                  List of tags of Amazon EFS. Should be defined as dictionary In case of 'present' state with list of tags and existing EFS (matched by
+   -                                                     'name'), tags of EFS will be replaced with provided data.
+                                                         List of mounted targets. It should be a list of dictionaries, every dictionary should include next attributes: - subnet_id - Mandatory. The
+   targets                                               ID of the subnet to add the mount target in. - ip_address - Optional. A valid IPv4 address within the address range of the specified subnet.
+   -                                                     - security_groups - Optional. List of security group IDs, of the form 'sg-xxxxxxxx'. These must be for the same VPC as subnet specified This
+                                                         data may be modified for existing EFS using state 'present' and new list of mount targets.
+   throughput_mode                   Choices:            The throughput_mode for the file system to be created.
+   -                                 • bursting          Requires botocore >= 1.10.57
+   added in 2.8                      • provisioned
+   validate_certs                    Choices:
+   boolean                           • no                When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                     • yes ←
+   wait                              Choices:            In case of 'present' state should wait for EFS 'available' life cycle state (of course, if current state not 'deleting' or 'deleted') In
+   boolean                           • no ←              case of 'absent' state should wait for EFS 'deleted' life cycle state
+                                     • yes
+   wait_timeout                    Default:              How long the module should wait (in seconds) for desired state before returning. Zero means wait as long as necessary.
+   -                               0
+
+NOTES                   *efs-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *efs-examples*
+
+ # EFS provisioning
+ - efs:
+     state: present
+     name: myTestEFS
+     tags:
+         name: myTestNameTag
+         purpose: file-storage
+     targets:
+         - subnet_id: subnet-748c5d03
+           security_groups: [ "sg-1a2b3c4d" ]
+
+ # Modifying EFS data
+ - efs:
+     state: present
+     name: myTestEFS
+     tags:
+         name: myAnotherTestTag
+     targets:
+         - subnet_id: subnet-7654fdca
+           security_groups: [ "sg-4c5d6f7a" ]
+
+ # Deleting EFS
+ - efs:
+     state: absent
+     name: myTestEFS
+
+RETURN VALUES                   *efs-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key           Returned                                                                            Description
+   creation_time                    timestamp of creation date
+   string                  always   Sample:
+                                    2015-11-16 07:30:57-05:00
+   creation_token                   EFS creation token
+   string                  always   Sample:
+                                    console-88609e04-9a0e-4a2e-912c-feaa99509961
+   file_system_id                   ID of the file system
+   string                  always   Sample:
+                                    fs-xxxxxxxx
+   filesystem_address               url of file system valid for use with mount
+   string                  always   Sample:
+                                    fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
+   life_cycle_state                 state of the EFS file system
+   string                  always   Sample:
+                                    creating, available, deleting, deleted
+   mount_point                      url of file system with leading dot from the time when AWS EFS required to add a region suffix to the address
+   string                  always   Sample:
+                                    .fs-xxxxxxxx.efs.us-west-2.amazonaws.com:/
+                                    list of mount targets
+   mount_targets           always   Sample:
+   list                             [{'file_system_id': 'fs-a7ad440e', 'ip_address': '172.31.17.173', 'life_cycle_state': 'available', 'mount_target_id': 'fsmt-d8907871', 'network_interface_id':
+                                    'eni-6e387e26', 'owner_id': '740748460359', 'security_groups': ['sg-a30b22c6'], 'subnet_id': 'subnet-e265c895'}, '...']
+   name                             name of the file system
+   string                  always   Sample:
+                                    my-efs
+   number_of_mount_targets          the number of targets mounted
+   integer                 always   Sample:
+                                    3
+   owner_id                         AWS account ID of EFS owner
+   string                  always   Sample:
+                                    XXXXXXXXXXXX
+   performance_mode                 performance mode of the file system
+   string                  always   Sample:
+                                    generalPurpose
+   size_in_bytes                    size of the file system in bytes as of a timestamp
+   dictionary              always   Sample:
+                                    {'timestamp': '2015-12-21 13:59:59-05:00', 'value': 12288}
+   tags                             tags on the efs instance
+   dictionary              always   Sample:
+                                    {'name': 'my-efs', 'key': 'Value'}
+
+STATUS                   *efs-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ryan Sydnor (@ryansydnor)
+     • Artem Kazakov (@akazakov)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *efs-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/efs_module.html

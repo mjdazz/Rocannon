@@ -1,0 +1,244 @@
+DEPRECATED                   *gcdns_record*
+
+                            Removed in Ansible:
+                  version: 2.12
+        Why:      Updated modules released with increased functionality
+    Alternative:  Use gcp_dns_resource_record_set instead.
+
+SYNOPSIS                   *gcdns_record-synopsis*
+
+     • Creates or removes resource records in Google Cloud DNS.
+
+REQUIREMENTS                   *gcdns_record-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • apache-libcloud >= 0.19.0
+
+PARAMETERS                   *gcdns_record-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   credentials_file                       The path to the JSON file associated with the service account email.
+   -
+                                          Whether an attempt to overwrite an existing record should succeed or fail. The behavior of this option depends on state.
+   overwrite               Choices:       If state is present and overwrite is True, this module will replace an existing resource record of the same name with the provided record_data. If state is
+   boolean                 • no ←         present and overwrite is False, this module will fail if there is an existing resource record with the same name and type, but different resource data.
+                           • yes          If state is absent and overwrite is True, this module will remove the given resource record unconditionally. If state is absent and overwrite is False,
+                                          this module will fail if the provided record_data do not match exactly with the existing resource record's record_data.
+   pem_file                               The path to the PEM file associated with the service account email.
+   -                                      This option is deprecated and may be removed in a future release. Use credentials_file instead.
+   project_id                             The Google Cloud Platform project ID to use.
+   -
+   record                                 The fully-qualified domain name of the resource record.
+   - / required                           aliases: name
+                                          The record_data to use for the resource record.
+                                          record_data must be specified if state is present or overwrite is True, or the module will fail.
+                                          Valid record_data vary based on the record's type. In addition, resource records that contain a DNS domain name in the value field (e.g., CNAME, PTR, SRV,
+   record_data                            .etc) MUST include a trailing dot in the value.
+   -                                      Individual string record_data for TXT records must be enclosed in double quotes.
+                                          For resource records that have the same name but different record_data (e.g., multiple A records), they must be defined as multiple list entries in a
+                                          single record.
+                                          aliases: value
+   service_account_email                  The e-mail address for a service account with access to Google Cloud DNS.
+   -
+   state                   Choices:
+   -                       • present ←    Whether the given resource record should or should not be present.
+                           • absent
+   ttl                   Default:         The amount of time in seconds that a resource record will remain cached by a caching resolver.
+   -                     300
+                           Choices:
+                           • A
+                           • AAAA
+                           • CNAME
+   type                    • SRV
+   - / required            • TXT          The type of resource record to add.
+                           • SOA
+                           • NS
+                           • MX
+                           • SPF
+                           • PTR
+   zone                                   The DNS domain name of the zone (e.g., example.com).
+   -                                      One of either zone or zone_id must be specified as an option, or the module will fail.
+                                          If both zone and zone_id are specified, zone_id will be used.
+                                          The Google Cloud ID of the zone (e.g., example-com).
+   zone_id                                One of either zone or zone_id must be specified as an option, or the module will fail.
+   -                                      These usually take the form of domain names with the dots replaced with dashes. A zone ID will never have any dots in it.
+                                          zone_id can be faster than zone in projects with a large number of zones.
+                                          If both zone and zone_id are specified, zone_id will be used.
+
+NOTES                   *gcdns_record-notes*
+
+   Note
+
+     • See also gcdns_zone.
+     • This modules’s underlying library does not support in-place updates for DNS resource records. Instead, resource records are quickly deleted and recreated.
+     • SOA records are technically supported, but their functionality is limited to verifying that a zone’s existing SOA record matches a pre-determined value. The SOA record cannot be updated.
+     • Root NS records cannot be updated.
+     • NAPTR records are not supported.
+
+EXAMPLES                   *gcdns_record-examples*
+
+ # Create an A record.
+ - gcdns_record:
+     record: 'www1.example.com'
+     zone: 'example.com'
+     type: A
+     value: '1.2.3.4'
+
+ # Update an existing record.
+ - gcdns_record:
+     record: 'www1.example.com'
+     zone: 'example.com'
+     type: A
+     overwrite: true
+     value: '5.6.7.8'
+
+ # Remove an A record.
+ - gcdns_record:
+     record: 'www1.example.com'
+     zone_id: 'example-com'
+     state: absent
+     type: A
+     value: '5.6.7.8'
+
+ # Create a CNAME record.
+ - gcdns_record:
+     record: 'www.example.com'
+     zone_id: 'example-com'
+     type: CNAME
+     value: 'www.example.com.'    # Note the trailing dot
+
+ # Create an MX record with a custom TTL.
+ - gcdns_record:
+     record: 'example.com'
+     zone: 'example.com'
+     type: MX
+     ttl: 3600
+     value: '10 mail.example.com.'    # Note the trailing dot
+
+ # Create multiple A records with the same name.
+ - gcdns_record:
+     record: 'api.example.com'
+     zone_id: 'example-com'
+     type: A
+     record_data:
+       - '192.0.2.23'
+       - '10.4.5.6'
+       - '198.51.100.5'
+       - '203.0.113.10'
+
+ # Change the value of an existing record with multiple record_data.
+ - gcdns_record:
+     record: 'api.example.com'
+     zone: 'example.com'
+     type: A
+     overwrite: true
+     record_data:           # WARNING: All values in a record will be replaced
+       - '192.0.2.23'
+       - '192.0.2.42'    # The changed record
+       - '198.51.100.5'
+       - '203.0.113.10'
+
+ # Safely remove a multi-line record.
+ - gcdns_record:
+     record: 'api.example.com'
+     zone_id: 'example-com'
+     state: absent
+     type: A
+     record_data:           # NOTE: All of the values must match exactly
+       - '192.0.2.23'
+       - '192.0.2.42'
+       - '198.51.100.5'
+       - '203.0.113.10'
+
+ # Unconditionally remove a record.
+ - gcdns_record:
+     record: 'api.example.com'
+     zone_id: 'example-com'
+     state: absent
+     overwrite: true   # overwrite is true, so no values are needed
+     type: A
+
+ # Create an AAAA record
+ - gcdns_record:
+     record: 'www1.example.com'
+     zone: 'example.com'
+     type: AAAA
+     value: 'fd00:db8::1'
+
+ # Create a PTR record
+ - gcdns_record:
+     record: '10.5.168.192.in-addr.arpa'
+     zone: '5.168.192.in-addr.arpa'
+     type: PTR
+     value: 'api.example.com.'    # Note the trailing dot.
+
+ # Create an NS record
+ - gcdns_record:
+     record: 'subdomain.example.com'
+     zone: 'example.com'
+     type: NS
+     ttl: 21600
+     record_data:
+       - 'ns-cloud-d1.googledomains.com.'    # Note the trailing dots on values
+       - 'ns-cloud-d2.googledomains.com.'
+       - 'ns-cloud-d3.googledomains.com.'
+       - 'ns-cloud-d4.googledomains.com.'
+
+ # Create a TXT record
+ - gcdns_record:
+     record: 'example.com'
+     zone_id: 'example-com'
+     type: TXT
+     record_data:
+       - '"v=spf1 include:_spf.google.com -all"'   # A single-string TXT value
+       - '"hello " "world"'    # A multi-string TXT value
+
+RETURN VALUES                   *gcdns_record-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+   overwrite            Whether to the module was allowed to overwrite the record
+   boolean     success  Sample:
+                        True
+   record               Fully-qualified domain name of the resource record
+   string      success  Sample:
+                        mail.example.com.
+   record_data          The resource record values
+   list        success  Sample:
+                        ['5.6.7.8', '9.10.11.12']
+   state                Whether the record is present or absent
+   string      success  Sample:
+                        present
+   ttl                  The time-to-live of the resource record
+   integer     success  Sample:
+                        300
+   type                 The type of the resource record
+   string      success  Sample:
+                        A
+   zone                 The dns name of the zone
+   string      success  Sample:
+                        example.com.
+   zone_id              The Google Cloud DNS ID of the zone
+   string      success  Sample:
+                        example-com
+
+STATUS                   *gcdns_record-status*
+
+     • This module will be removed in version 2.12. [deprecated]
+     • For more information see DEPRECATED.
+
+     • William Albert (@walbert947)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcdns_record-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcdns_record_module.html

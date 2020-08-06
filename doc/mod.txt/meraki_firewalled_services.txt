@@ -1,0 +1,139 @@
+SYNOPSIS                   *meraki_firewalled_services*
+
+     • Allows for setting policy firewalled services for Meraki network devices.
+
+PARAMETERS                   *meraki_firewalled_services-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+                               Choices:
+   access                      • blocked        Network service to query or modify.
+   string                      • restricted
+                               • unrestricted
+   allowed_ips                                  List of IP addresses allowed to access a service.
+   list                                         Only used when access is set to restricted.
+   auth_key                                     Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   host                      Default:           Hostname for Meraki dashboard.
+   string                    "api.meraki.com"   Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:           Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   net_id                                       ID number of a network.
+   string
+   net_name                                     Name of a network.
+   string                                       aliases: network
+   org_id                                       ID of organization associated to a network.
+   string
+   org_name                                     Name of organization associated to a network.
+   string                                       aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←    Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug          Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:           Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+                               Choices:
+   service                     • ICMP           Network service to query or modify.
+   string                      • SNMP
+                               • web
+   state                       Choices:
+   string                      • present ←      States that a policy should be created or modified.
+                               • query
+   timeout                   Default:           Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:         If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no             Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no             If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no             Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_firewalled_services-notes*
+
+   Note
+
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_firewalled_services-examples*
+
+ - name: Set icmp service to blocked
+   meraki_firewalled_services:
+     auth_key: '{{ auth_key }}'
+     state: present
+     org_name: '{{test_org_name}}'
+     net_name: IntTestNetworkAppliance
+     service: ICMP
+     access: blocked
+   delegate_to: localhost
+
+ - name: Set icmp service to restricted
+   meraki_firewalled_services:
+     auth_key: abc123
+     state: present
+     org_name: YourOrg
+     net_name: YourNet
+     service: web
+     access: restricted
+     allowed_ips:
+       - 192.0.1.1
+       - 192.0.1.2
+   delegate_to: localhost
+
+ - name: Query appliance services
+   meraki_firewalled_services:
+     auth_key: abc123
+     state: query
+     org_name: YourOrg
+     net_name: YourNet
+   delegate_to: localhost
+
+ - name: Query services
+   meraki_firewalled_services:
+     auth_key: abc123
+     state: query
+     org_name: YourOrg
+     net_name: YourNet
+     service: ICMP
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_firewalled_services-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   data          info     List of network services.
+   complex
+     access               Access assigned to a service type.
+     string      success  Sample:
+                          unrestricted
+     allowed_ips          List of IP addresses to have access to service.
+     string      success  Sample:
+                          192.0.1.0
+     service              Service to apply policy to.
+     string      success  Sample:
+                          ICMP
+
+STATUS                   *meraki_firewalled_services-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_firewalled_services-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_firewalled_services_module.html

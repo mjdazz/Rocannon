@@ -1,0 +1,232 @@
+SYNOPSIS                   *eos_interfaces*
+
+     • This module manages the interface attributes of Arista EOS interfaces.
+
+PARAMETERS                   *eos_interfaces-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   config                              The provided configuration
+   list
+    description                        Interface description
+    string
+    duplex                             Interface link status. Applicable for Ethernet interfaces only.
+    string                             Values other than auto must also set speed.
+                                       Ignored when speed is set above 1000.
+    enabled             Choices:       Administrative state of the interface.
+    boolean             • no           Set the value to true to administratively enable the interface or false to disable it.
+                        • yes ←
+    mtu                                MTU for a specific interface. Must be an even number between 576 and 9216. Applicable for Ethernet interfaces only.
+    integer
+    name                               Full name of the interface, e.g. GigabitEthernet1.
+    string / required
+    speed                              Interface link speed. Applicable for Ethernet interfaces only.
+    string
+                        Choices:
+   state                • merged ←
+   string               • replaced     The state of the configuration after module completion.
+                        • overridden
+                        • deleted
+
+NOTES                   *eos_interfaces-notes*
+
+   Note
+
+     • Tested against Arista EOS 4.20.10M
+     • This module works with connection network_cli. See the EOS Platform Options.
+
+EXAMPLES                   *eos_interfaces-examples*
+
+ ---
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    description "Interface 1"
+ # !
+ # interface Ethernet2
+ # !
+ # interface Management1
+ #    description "Management interface"
+ #    ip address dhcp
+ # !
+
+ - name: Merge provided configuration with device configuration
+   eos_interfaces:
+     config:
+       - name: Ethernet1
+         enabled: True
+       - name: Ethernet2
+         description: 'Configured by Ansible'
+         enable: False
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    description "Interface 1"
+ # !
+ # interface Ethernet2
+ #    description "Configured by Ansible"
+ #    shutdown
+ # !
+ # interface Management1
+ #    description "Management interface"
+ #    ip address dhcp
+ # !
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    description "Interface 1"
+ # !
+ # interface Ethernet2
+ # !
+ # interface Management1
+ #    description "Management interface"
+ #    ip address dhcp
+ # !
+
+ - name: Replaces device configuration of listed interfaces with provided configuration
+   eos_interfaces:
+     config:
+       - name: Ethernet1
+         enabled: True
+       - name: Ethernet2
+         description: 'Configured by Ansible'
+         enabled: False
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ # !
+ # interface Ethernet2
+ #    description "Configured by Ansible"
+ #    shutdown
+ # !
+ # interface Management1
+ #    description "Management interface"
+ #    ip address dhcp
+ # !
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    description "Interface 1"
+ # !
+ # interface Ethernet2
+ # !
+ # interface Management1
+ #    description "Management interface"
+ #    ip address dhcp
+ # !
+
+ - name: Overrides all device configuration with provided configuration
+   eos_interfaces:
+     config:
+       - name: Ethernet1
+         enabled: True
+       - name: Ethernet2
+         description: 'Configured by Ansible'
+         enabled: False
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ # !
+ # interface Ethernet2
+ #    description "Configured by Ansible"
+ #    shutdown
+ # !
+ # interface Management1
+ #    ip address dhcp
+ # !
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ #    description "Interface 1"
+ # !
+ # interface Ethernet2
+ # !
+ # interface Management1
+ #    description "Management interface"
+ #    ip address dhcp
+ # !
+
+ - name: Delete or return interface parameters to default settings
+   eos_interfaces:
+     config:
+       - name: Ethernet1
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # veos#show running-config | section interface
+ # interface Ethernet1
+ # !
+ # interface Ethernet2
+ # !
+ # interface Management1
+ #    description "Management interface"
+ #    ip address dhcp
+ # !
+
+RETURN VALUES                   *eos_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key       Returned                                                                                  Description
+   after                   The configuration as structured data after module completion.
+   dictionary when changed Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   before                  The configuration as structured data prior to module invocation.
+   dictionary always       Sample:
+                           The configuration returned will always be in the same format of the parameters above.
+   commands                The set of commands pushed to the remote device.
+   list       always       Sample:
+                           ['interface Ethernet2', 'shutdown', 'speed 10full']
+
+STATUS                   *eos_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *eos_interfaces-red hat support*
+
+     • Nathaniel Case (@qalthos)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *eos_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/eos_interfaces_module.html

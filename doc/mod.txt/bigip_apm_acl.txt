@@ -1,0 +1,299 @@
+SYNOPSIS                   *bigip_apm_acl*
+
+     • Manage user-defined APM ACLs.
+
+PARAMETERS                   *bigip_apm_acl-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+                                    Specifies a number that indicates the order of this ACL relative to other ACLs.
+   acl_order                        When not set, the device will always place the ACL after the last one created.
+   integer                          The lower number the higher the ACL will be in the general order, with lowest number 0 being the topmost one.
+                                    Valid range of values is between 0 and 65535 inclusive.
+   description                      User created ACL description.
+   string
+   entries                          Access control entries that define the ACL matching and its respective behavior.
+   list                             The order in which the rules are placed as arguments to this parameter, determines their order in the ACL, in other words changing the order of the same elements
+                                    will cause a change on the unit.
+                     Choices:
+    action           • allow
+    string /         • reject       Specifies the action that the access control entry takes when a match for this access control entry is encountered.
+    required         • discard
+                     • continue
+    dst_addr                        Specifies the destination IP address for the access control entry.
+    string                          When set to any the ACL will match any destination address, dst_mask is ignored in this case.
+    dst_mask                        Optional parameter that specifies the destination network mask for the access control entry.
+    string                          If not specified and dst_addr is not any the dst_addr is deemed to be host address.
+    dst_port                        Specifies the destination port for the access control entry.
+    string                          Can be set to " to indicate all ports.
+                                    Parameter is mutually exclusive with dst_port_range.
+    dst_port_range                  Specifies the destination port range for the access control entry.
+    string                          Parameter is mutually exclusive with dst_port_range.
+                                    To indicate all ports the dst_port parameter must be used and set to ".
+    host_name                       This parameter applies to Layer 7 access control entries only.
+    string                          Specifies a host to which the access control entry applies.
+    log              Choices:       Specifies the log level that is logged when actions of this type occur.
+    string           • none         When none it will log nothing, which is a default action.
+                     • packet       When packet it will log the matched packet.
+    paths                           This parameter applies to Layer 7 access control entries only.
+    string                          Specifies the path or paths to which the access control entry applies.
+                     Choices:
+    protocol         • tcp          This parameter applies to Layer 4 access control entries only.
+    string           • icmp         Specifies the protocol: tcp, udp, icmp or all protocols, to which the access control entry applies.
+                     • udp
+                     • all
+                     Choices:
+    scheme           • http         This parameter applies to Layer 7 access control entries only.
+    string           • https        Specifies the URI scheme: http, https or any on which the access control entry operates.
+                     • any
+    src_addr                        Specifies the source IP address for the access control entry.
+    string                          When set to any the ACL will match any source address, src_mask is ignored in this case.
+    src_mask                        Optional parameter that specifies the source network mask for the access control entry.
+    string                          If not specified and src_addr is not any the src_addr is deemed to be host address.
+    src_port                        Specifies the source port for the access control entry.
+    string                          Can be set to " to indicate all ports.
+                                    Parameter is mutually exclusive with src_port_range.
+    src_port_range                  Specifies the source port range for the access control entry.
+    string                          Parameter is mutually exclusive with src_port_range.
+                                    To indicate all ports the src_port parameter must be used and set to ".
+   name
+   string /                         Specifies the name of the ACL to manage.
+   required
+   partition       Default:         Device partition to manage resources on.
+   string          "Common"
+   path_match_case   Choices:
+   boolean           • no           Specifies whether alphabetic case is considered when matching paths in an access control entry.
+                     • yes
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:       When state is present, ensures that the ACL exists.
+   string            • present ←    When state is absent, ensures that the ACL is removed.
+                     • absent
+   type              Choices:       Specifies the type of ACL to create.
+   string            • static       Once the type is set it cannot be changed.
+                     • dynamic
+
+NOTES                   *bigip_apm_acl-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_apm_acl-examples*
+
+ - name: Create a static ACL with L4 entries
+   bigip_apm_acl:
+     name: L4foo
+     acl_order: 0
+     type: static
+     entries:
+       - action: allow
+         dst_port: '80'
+         dst_addr: '192.168.1.1'
+         src_port: '443'
+         src_addr: '10.10.10.0'
+         src_mask: '255.255.255.128'
+         protocol: tcp
+       - action: reject
+         dst_port: '"'
+         dst_addr: '192.168.1.1'
+         src_port: '"'
+         src_addr: '10.10.10.0'
+         src_mask: '255.255.255.128'
+         protocol: tcp
+         log: packet
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create a static ACL with L7 entries
+   bigip_apm_acl:
+     name: L7foo
+     acl_order: 1
+     type: static
+     path_match_case: no
+     entries:
+       - action: allow
+         host_name: 'foobar.com'
+         paths: '/shopfront'
+         scheme: https
+       - action: reject
+         host_name: 'internal_foobar.com'
+         paths: '/admin'
+         scheme: any
+         log: packet
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create a static ACL with L7/L4 entries
+   bigip_apm_acl:
+     name: L7L4foo
+     acl_order: 2
+     type: static
+     path_match_case: no
+     entries:
+       - action: allow
+         host_name: 'foobar.com'
+         paths: '/shopfront'
+         scheme: https
+         dst_port: '8181'
+         dst_addr: '192.168.1.1'
+         protocol: tcp
+       - action: reject
+         dst_addr: '192.168.1.1'
+         host_name: 'internal_foobar.com'
+         paths: '/admin'
+         scheme: any
+         protocol: all
+         log: packet
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify a static ACL entries
+   bigip_apm_acl:
+     name: L4foo
+     entries:
+       - action: allow
+         dst_port: '80'
+         dst_addr: '192.168.1.1'
+         src_port: '443'
+         src_addr: '10.10.10.0'
+         src_mask: '255.255.255.128'
+         protocol: tcp
+       - action: discard
+         dst_port: '"'
+         dst_addr: 192.168.1.1
+         src_port: '"'
+         src_addr: '10.10.10.0'
+         src_mask: '255.2155.255.128'
+         protocol: all
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove static ACL
+   bigip_apm_acl:
+     name: L4foo
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_apm_acl-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   acl_order                 The order of this ACL relative to other ACLs.
+   integer          changed  Sample:
+                             10
+   description               The new description of the ACL.
+   string           changed  Sample:
+                             My ACL
+   entries                   Access control entries that define the ACL matching and its respective behavior.
+   complex          changed  Sample:
+                             hash/dictionary of values
+     action                  Action that the access control entry takes when a match for this access control entry is encountered.
+     string         changed  Sample:
+                             allow
+     dst_addr                The destination IP address for the access control entry.
+     string         changed  Sample:
+                             192.168.0.1
+     dst_mask                The destination network mask for the access control entry.
+     string         changed  Sample:
+                             255.255.255.128
+     dst_port                The destination port for the access control entry.
+     string         changed  Sample:
+                             80
+     dst_port_range          The destination port range for the access control entry.
+     string         changed  Sample:
+                             80-81
+     host_name               The host to which the access control entry applies.
+     string         changed  Sample:
+                             foobar.com
+     log                     The log level that is logged when actions of this type occur.
+     string         changed  Sample:
+                             packet
+     paths                   The path or paths to which the access control entry applies.
+     string         changed  Sample:
+                             /fooshop
+     protocol                The protocol to which the access control entry applies.
+     string         changed  Sample:
+                             tcp
+     scheme                  The URI scheme on which the access control entry operates.
+     string         changed  Sample:
+                             https
+     src_addr                The source IP address for the access control entry.
+     string         changed  Sample:
+                             192.168.0.1
+     src_mask                The source network mask for the access control entry.
+     string         changed  Sample:
+                             255.255.255.128
+     src_port                The source port for the access control entry.
+     string         changed  Sample:
+                             80
+     src_port_range          The source port range for the access control entry.
+     string         changed  Sample:
+                             80-81
+   path_match_case           Specifies whether alphabetic case is considered when matching paths in an access control entry.
+   boolean          changed  Sample:
+                             True
+   type                      The type of ACL to create.
+   string           changed  Sample:
+                             static
+
+STATUS                   *bigip_apm_acl-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_apm_acl-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_apm_acl_module.html

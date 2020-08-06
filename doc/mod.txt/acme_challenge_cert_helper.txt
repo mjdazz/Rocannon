@@ -22,7 +22,7 @@ PARAMETERS                   *acme_challenge_cert_helper-parameters*
    private_key_src                         Path to a file containing the private key file to use for this challenge certificate.
    path                                    Mutually exclusive with private_key_content.
 
-See Also¶
+SEE ALSO                   *acme_challenge_cert_helper-see also*
 
    See also
 
@@ -31,83 +31,6 @@ See Also¶
 
    ACME TLS ALPN Challenge Extension
    The specification of the tls-alpn-01 challenge (RFC 8737).
-
-Examples¶
-
- - name: Create challenges for a given CRT for sample.com
-   acme_certificate:
-     account_key_src: /etc/pki/cert/private/account.key
-     challenge: tls-alpn-01
-     csr: /etc/pki/cert/csr/sample.com.csr
-     dest: /etc/httpd/ssl/sample.com.crt
-   register: sample_com_challenge
-
- - name: Create certificates for challenges
-   acme_challenge_cert_helper:
-     challenge: tls-alpn-01
-     challenge_data: "{{ item.value['tls-alpn-01'] }}"
-     private_key_src: /etc/pki/cert/key/sample.com.key
-   loop: "{{ sample_com_challenge.challenge_data | dictsort }}"
-   register: sample_com_challenge_certs
-
- - name: Install challenge certificates
-   # We need to set up HTTPS such that for the domain,
-   # regular_certificate is delivered for regular connections,
-   # except if ALPN selects the "acme-tls/1"; then, the
-   # challenge_certificate must be delivered.
-   # This can for example be achieved with very new versions
-   # of NGINX; search for ssl_preread and
-   # ssl_preread_alpn_protocols for information on how to
-   # route by ALPN protocol.
-   ...:
-     domain: "{{ item.domain }}"
-     challenge_certificate: "{{ item.challenge_certificate }}"
-     regular_certificate: "{{ item.regular_certificate }}"
-     private_key: /etc/pki/cert/key/sample.com.key
-   loop: "{{ sample_com_challenge_certs.results }}"
-
- - name: Create certificate for a given CSR for sample.com
-   acme_certificate:
-     account_key_src: /etc/pki/cert/private/account.key
-     challenge: tls-alpn-01
-     csr: /etc/pki/cert/csr/sample.com.csr
-     dest: /etc/httpd/ssl/sample.com.crt
-     data: "{{ sample_com_challenge }}"
-
-Return Values¶
-
-   Common return values are documented here, the following are the fields unique to this module:
-
-            Key          Returned                                                                             Description
-   challenge_certificate always   The challenge certificate in PEM format.
-   string
-   domain                always   The domain the challenge is for. The certificate should be provided if this is specified in the request's the Host header.
-   string
-   identifier
-   string                always   The identifier for the actual resource. Will be a domain name if the type is dns, or an IP address if the type is ip.
-   added in 2.8
-   identifier_type
-   string                always   The identifier type for the actual resource identifier. Will be dns or ip.
-   added in 2.8
-   regular_certificate   always   A self-signed certificate for the challenge domain.
-   string                         If no existing certificate exists, can be used to set-up https in the first place if that is needed for providing the challenge.
-
-Status¶
-
-     • This module is not guaranteed to have a backwards compatible interface. [preview]
-     • This module is maintained by the Ansible Community. [community]
-
-  Authors¶
-
-     • Felix Fontein (@felixfontein)
-
-   Hint
-
-   If you notice any issues in this documentation, you can edit this document to improve it.
-
-   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
-
-NOTES                   *acme_challenge_cert_helper-notes*
 
 EXAMPLES                   *acme_challenge_cert_helper-examples*
 

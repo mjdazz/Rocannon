@@ -1,0 +1,288 @@
+SYNOPSIS                   *cs_service_offering*
+
+     • Create and delete service offerings for guest and system VMs.
+     • Update display_text of existing service offering.
+
+REQUIREMENTS                   *cs_service_offering-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_service_offering-parameters*
+
+            Parameter              Choices/Defaults                                                                       Comments
+                                 Choices:               HTTP method used to query the API endpoint.
+   api_http_method               • get                  If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string                        • post                 As the last option, the value is taken from the ini config file, also see the notes.
+                                                        Fallback value is get if not specified.
+   api_key                                              API key of the CloudStack API.
+   string                                               If not given, the CLOUDSTACK_KEY env variable is considered.
+                                                        As the last option, the value is taken from the ini config file, also see the notes.
+   api_region                  Default:                 Name of the ini section in the cloustack.ini file.
+   string                      "cloudstack"             If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                                           Secret key of the CloudStack API.
+   string                                               If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                                        As the last option, the value is taken from the ini config file, also see the notes.
+                                                        HTTP timeout in seconds.
+   api_timeout                                          If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                                              As the last option, the value is taken from the ini config file, also see the notes.
+                                                        Fallback value is 10 seconds if not specified.
+   api_url                                              URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                                               If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                                        As the last option, the value is taken from the ini config file, also see the notes.
+   cpu_number                                           The number of CPUs of the service offering.
+   integer
+   cpu_speed                                            The CPU speed of the service offering in MHz.
+   integer
+   deployment_planner                                   The deployment planner heuristics used to deploy a VM of this offering.
+   string                                               If not set, the value of global config vm.deployment.planner is used.
+   disk_bytes_read_rate                                 Bytes read rate of the disk offering.
+   integer                                              aliases: bytes_read_rate
+   disk_bytes_write_rate                                Bytes write rate of the disk offering.
+   integer                                              aliases: bytes_write_rate
+   disk_iops_max                                        Max. iops of the compute offering.
+   integer
+   disk_iops_min                                        Min. iops of the compute offering.
+   integer
+   disk_iops_read_rate                                  IO requests read rate of the disk offering.
+   integer
+   disk_iops_write_rate                                 IO requests write rate of the disk offering.
+   integer
+   display_text                                         Display text of the service offering.
+   string                                               If not set, name will be used as display_text while creating.
+   domain                                               Domain the service offering is related to.
+   string                                               Public for all domains and subdomains if not set.
+   host_tags                                            The host tags for this service offering.
+   list                                                 aliases: host_tag
+   hypervisor_snapshot_reserve                          Hypervisor snapshot reserve space as a percent of a volume.
+   integer                                              Only for managed storage using Xen or VMware.
+   is_customized                 Choices:
+   boolean                       • no                   Whether the offering is customizable or not.
+   added in 2.8                  • yes
+   is_iops_customized            Choices:               Whether compute offering iops is custom or not.
+   boolean                       • no                   aliases: disk_iops_customized
+                                 • yes
+   is_system                     Choices:
+   boolean                       • no ←                 Whether it is a system VM offering or not.
+                                 • yes
+   is_volatile                   Choices:               Whether the virtual machine needs to be volatile or not.
+   boolean                       • no                   Every reboot of VM the root disk is detached then destroyed and a fresh root disk is created and attached to VM.
+                                 • yes
+   limit_cpu_usage               Choices:
+   boolean                       • no                   Restrict the CPU usage to committed service offering.
+                                 • yes
+   memory                                               The total memory of the service offering in MB.
+   integer
+   name                                                 Name of the service offering.
+   string / required
+   network_rate                                         Data transfer rate in Mb/s allowed.
+   integer                                              Supported only for non-system offering and system offerings having system_vm_type=domainrouter.
+   offer_ha                      Choices:
+   boolean                       • no ←                 Whether HA is set for the service offering.
+                                 • yes
+                                 Choices:
+   provisioning_type             • thin                 Provisioning type used to create volumes.
+   string                        • sparse
+                                 • fat
+   service_offering_details                             Details for planner, used to store specific parameters.
+   list                                                 A list of dictionaries having keys key and value.
+   state                         Choices:
+   string                        • present ←            State of the service offering.
+                                 • absent
+   storage_tags                                         The storage tags for this service offering.
+   list                                                 aliases: storage_tag
+   storage_type                  Choices:
+   string                        • local                The storage type of the service offering.
+                                 • shared
+                                 Choices:
+   system_vm_type                • domainrouter         The system VM type.
+   string                        • consoleproxy         Required if is_system=yes.
+                                 • secondarystoragevm
+
+NOTES                   *cs_service_offering-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_service_offering-examples*
+
+ - name: Create a non-volatile compute service offering with local storage
+   cs_service_offering:
+     name: Micro
+     display_text: Micro 512mb 1cpu
+     cpu_number: 1
+     cpu_speed: 2198
+     memory: 512
+     host_tags: eco
+     storage_type: local
+   delegate_to: localhost
+
+ - name: Create a volatile compute service offering with shared storage
+   cs_service_offering:
+     name: Tiny
+     display_text: Tiny 1gb 1cpu
+     cpu_number: 1
+     cpu_speed: 2198
+     memory: 1024
+     storage_type: shared
+     is_volatile: yes
+     host_tags: eco
+     storage_tags: eco
+   delegate_to: localhost
+
+ - name: Create or update a volatile compute service offering with shared storage
+   cs_service_offering:
+     name: Tiny
+     display_text: Tiny 1gb 1cpu
+     cpu_number: 1
+     cpu_speed: 2198
+     memory: 1024
+     storage_type: shared
+     is_volatile: yes
+     host_tags: eco
+     storage_tags: eco
+   delegate_to: localhost
+
+ - name: Create or update a custom compute service offering
+   cs_service_offering:
+     name: custom
+     display_text: custom compute offer
+     is_customized: yes
+     storage_type: shared
+     host_tags: eco
+     storage_tags: eco
+   delegate_to: localhost
+
+ - name: Remove a compute service offering
+   cs_service_offering:
+     name: Tiny
+     state: absent
+   delegate_to: localhost
+
+ - name: Create or update a system offering for the console proxy
+   cs_service_offering:
+     name: System Offering for Console Proxy 2GB
+     display_text: System Offering for Console Proxy 2GB RAM
+     is_system: yes
+     system_vm_type: consoleproxy
+     cpu_number: 1
+     cpu_speed: 2198
+     memory: 2048
+     storage_type: shared
+     storage_tags: perf
+   delegate_to: localhost
+
+ - name: Remove a system offering
+   cs_service_offering:
+     name: System Offering for Console Proxy 2GB
+     is_system: yes
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_service_offering-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key            Returned                                                                           Description
+   cpu_number                        Number of CPUs in the service offering
+   integer                  success  Sample:
+                                     4
+   cpu_speed                         Speed of CPUs in MHz in the service offering
+   integer                  success  Sample:
+                                     2198
+   created                           Date the offering was created
+   string                   success  Sample:
+                                     2017-11-19T10:48:59+0000
+   disk_bytes_read_rate              Bytes read rate of the service offering
+   integer                  success  Sample:
+                                     1000
+   disk_bytes_write_rate             Bytes write rate of the service offering
+   integer                  success  Sample:
+                                     1000
+   disk_iops_max                     Max iops of the disk offering
+   integer                  success  Sample:
+                                     1000
+   disk_iops_min                     Min iops of the disk offering
+   integer                  success  Sample:
+                                     500
+   disk_iops_read_rate               IO requests per second read rate of the service offering
+   integer                  success  Sample:
+                                     1000
+   disk_iops_write_rate              IO requests per second write rate of the service offering
+   integer                  success  Sample:
+                                     1000
+   display_text                      Display text of the offering
+   string                   success  Sample:
+                                     Micro 512mb 1cpu
+   domain                            Domain the offering is into
+   string                   success  Sample:
+                                     ROOT
+   host_tags                         List of host tags
+   list                     success  Sample:
+                                     ['eco']
+   id                                UUID of the service offering
+   string                   success  Sample:
+                                     a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   is_customized
+   boolean                  success  Whether the offering is customizable or not
+   added in 2.8
+   is_iops_customized       success  Whether the offering uses custom IOPS or not
+   boolean
+   is_system                success  Whether the offering is for system VMs or not
+   boolean
+   is_volatile              success  Whether the offering is volatile or not
+   boolean
+   limit_cpu_usage          success  Whether the CPU usage is restricted to committed service offering
+   boolean
+   memory                            Memory of the system offering
+   integer                  success  Sample:
+                                     512
+   name                              Name of the system offering
+   string                   success  Sample:
+                                     Micro
+   network_rate                      Data transfer rate in megabits per second allowed
+   integer                  success  Sample:
+                                     1000
+   offer_ha                 success  Whether HA support is enabled in the offering or not
+   boolean
+   provisioning_type                 Provisioning type used to create volumes
+   string                   success  Sample:
+                                     thin
+   service_offering_details          Additioanl service offering details
+   dictionary               success  Sample:
+                                     {'vgpuType': 'GRID K180Q','pciDevice':'Group of NVIDIA Corporation GK107GL [GRID K1] GPUs'}
+   storage_tags                      List of storage tags
+   list                     success  Sample:
+                                     ['eco']
+   storage_type                      Storage type used to create volumes
+   string                   success  Sample:
+                                     shared
+   system_vm_type                    System VM type of this offering
+   string                   success  Sample:
+                                     consoleproxy
+
+STATUS                   *cs_service_offering-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_service_offering-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_service_offering_module.html

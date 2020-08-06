@@ -1,0 +1,144 @@
+SYNOPSIS                   *bigip_timer_policy*
+
+     • Manage timer policies on a BIG-IP.
+
+PARAMETERS                   *bigip_timer_policy-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   description                         Specifies descriptive text that identifies the timer policy.
+   string
+   name                                Specifies the name of the timer policy.
+   string / required
+   partition          Default:         Device partition to manage resources on.
+   string             "Common"
+   provider
+   dictionary                          A dict object containing connection details.
+   added in 2.5
+    auth_provider                      Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                             This option is really used when working with BIG-IQ devices.
+    password                           The password for the user account used to connect to the BIG-IP.
+    string / required                  You may omit this option by setting the environment variable F5_PASSWORD.
+                                       aliases: pass, pwd
+    server                             The BIG-IP host.
+    string / required                  You may omit this option by setting the environment variable F5_SERVER.
+    server_port       Default:         The BIG-IP server port.
+    integer           443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                        Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                               You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                            Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                            operation is completed, the module will error.
+    transport           Choices:
+    string              • cli          Configures the transport connection to use when connecting to the remote device.
+                        • rest ←
+    user                               The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string / required                  You may omit this option by setting the environment variable F5_USER.
+    validate_certs      Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean             • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                        • yes ←
+   rules                               Rules that you want assigned to the timer policy
+   list
+    destination_ports                  The list of destination ports to match the rule on.
+    list                               Specify a port range by specifying start and end ports separated by a dash (-).
+                                       This field is only available if you have selected the sctp, tcp, or udp protocol.
+    idle_timeout                       Specifies an idle timeout, in seconds, for protocol and port pairs that match the timer policy rule.
+    string                             When infinite, specifies that the protocol and port pairs that match the timer policy rule have no idle timeout.
+                                       When specifying rules, if this parameter is not specified, the default of unspecified will be used.
+    name                               The name of the rule.
+    string / required
+                        Choices:
+                        • all-other
+                        • ah
+                        • bna
+                        • esp
+                        • etherip
+                        • gre
+                        • icmp
+                        • ipencap      Specifies the IP protocol entry for which the timer policy rule is being configured. This could be a layer-4 protocol (such as tcp, udp or sctp.
+    protocol            • ipv6         Only flows matching the configured protocol will make use of this rule.
+    string              • ipv6-auth    When all-other is specified, if there are no specific ip-protocol rules that match the flow, the flow matches all the other ip-protocol rules.
+                        • ipv6-crypt   When specifying rules, if this parameter is not specified, the default of all-other will be used.
+                        • ipv6-icmp
+                        • isp-ip
+                        • mux
+                        • ospf
+                        • sctp
+                        • tcp
+                        • udp
+                        • udplite
+   state                Choices:       When present, ensures that the resource exists.
+   string               • present ←    When absent, ensures the resource is removed.
+                        • absent
+
+NOTES                   *bigip_timer_policy-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_timer_policy-examples*
+
+ - name: Create a timer policy
+   bigip_timer_policy:
+     name: timer1
+     description: My timer policy
+     rules:
+       - name: rule1
+         protocol: tcp
+         idle_timeout: indefinite
+         destination_ports:
+           - 443
+           - 80
+       - name: rule2
+         protocol: 200
+       - name: rule3
+         protocol: sctp
+         idle_timeout: 200
+         destination_ports:
+           - 21
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove a timer policy and all its associated rules
+   bigip_timer_policy:
+     name: timer1
+     description: My timer policy
+     state: absent
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_timer_policy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+   description          The new description of the timer policy.
+   string      changed  Sample:
+                        True
+
+STATUS                   *bigip_timer_policy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_timer_policy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_timer_policy_module.html

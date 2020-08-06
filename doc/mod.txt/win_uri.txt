@@ -1,0 +1,174 @@
+SYNOPSIS                   *win_uri*
+
+     • Interacts with FTP, HTTP and HTTPS web services.
+     • Supports Digest, Basic and WSSE HTTP authentication mechanisms.
+     • For non-Windows targets, use the uri module instead.
+
+PARAMETERS                   *win_uri-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   body                                           The body of the HTTP request/response to the web service.
+   raw
+   client_cert                                    The path to the client certificate (.pfx) that is used for X509 authentication. This path can either be the path to the pfx on the filesystem or
+   string                                         the PowerShell certificate path Cert:\CurrentUser\My\<thumbprint>.
+   added in 2.4                                   The WinRM connection must be authenticated with CredSSP or become is used on the task if the certificate file is not password protected.
+                                                  Other authentication types can set client_cert_password when the cert is password protected.
+   client_cert_password
+   string                                         The password for client_cert if the cert is password protected.
+   added in 2.5
+   content_type                                   Sets the "Content-Type" header.
+   string
+   creates
+   path                                           A filename, when it already exists, this step will be skipped.
+   added in 2.4
+   dest                                           Output the response body to a file.
+   path
+   follow_redirects               Choices:        Whether or the module should follow redirects.
+   string                         • all           all will follow all redirect.
+   added in 2.4                   • none          none will not follow any redirect.
+                                  • safe ←        safe will follow only "safe" redirects, where "safe" means that the client is only doing a GET or HEAD on the URI to which it is being redirected.
+   force_basic_auth               Choices:        By default the authentication header is only sent when a webservice responses to an initial request with a 401 status. Since some basic auth
+   boolean                        • no ←          services do not properly send a 401, logins will fail.
+   added in 2.5                   • yes           This option forces the sending of the Basic authentication header upon the original request.
+   headers                                        Extra headers to set on the request.
+   dictionary                                     This should be a dictionary where the key is the header name and the value is the value for that header.
+   http_agent                   Default:          Header to identify as, generally appears in web server logs.
+   string                       "ansible-httpget" This is set to the User-Agent header on a HTTP request.
+   added in 2.9
+   maximum_redirection          Default:          Specify how many times the module will redirect a connection to an alternative URI before the connection fails.
+   integer                      50                If set to 0 or follow_redirects is set to none, or safe when not doing a GET or HEAD it prevents all redirection.
+   added in 2.4
+   method                       Default:          The HTTP Method of the request or response.
+   string                       "GET"
+   proxy_password
+   string                                         The password for proxy_username.
+   added in 2.9
+   proxy_url                                      An explicit proxy to use for the request.
+   string                                         By default, the request will use the IE defined proxy unless use_proxy is set to no.
+   added in 2.9
+                                                  Uses the current user's credentials when authenticating with a proxy host protected with NTLM, Kerberos, or Negotiate authentication.
+   proxy_use_default_credential   Choices:        Proxies that use Basic auth will still require explicit credentials through the proxy_username and proxy_password options.
+   boolean                        • no ←          The module will only have access to the user's credentials if using become with a password, you are connecting with SSH using a password, or
+   added in 2.9                   • yes           connecting with WinRM using CredSSP or Kerberos with delegation.
+                                                  If not using become or a different auth method to the ones stated above, there will be no default credentials available and no proxy authentication
+                                                  will occur.
+   proxy_username
+   string                                         The username to use for proxy authentication.
+   added in 2.9
+   removes
+   path                                           A filename, when it does not exist, this step will be skipped.
+   added in 2.4
+   return_content                 Choices:        Whether or not to return the body of the response as a "content" key in the dictionary result. If the reported Content-type is "application/json",
+   boolean                        • no ←          then the JSON is additionally loaded into a key called json in the dictionary results.
+   added in 2.4                   • yes
+   status_code                  Default:          A valid, numeric, HTTP status code that signifies success of the request.
+   list                         [200]             Can also be comma separated list of status codes.
+   added in 2.4
+   timeout                      Default:          Specifies how long the request can be pending before it times out (in seconds).
+   integer                      30                Set to 0 to specify an infinite timeout.
+   added in 2.4
+   url                                            Supports FTP, HTTP or HTTPS URLs in the form of (ftp|http|https)://host.domain:port/path.
+   string / required
+   url_password                                   The password for url_username.
+   string                                         Was originally called password but was changed to url_password in Ansible 2.9.
+   added in 2.4                                   aliases: password
+   url_username                                   The username to use for authentication.
+   string                                         Was originally called user but was changed to url_username in Ansible 2.9.
+   added in 2.4                                   aliases: user, username
+                                                  Uses the current user's credentials when authenticating with a server protected with NTLM, Kerberos, or Negotiate authentication.
+   use_default_credential         Choices:        Sites that use Basic auth will still require explicit credentials through the url_username and url_password options.
+   boolean                        • no ←          The module will only have access to the user's credentials if using become with a password, you are connecting with SSH using a password, or
+   added in 2.9                   • yes           connecting with WinRM using CredSSP or Kerberos with delegation.
+                                                  If not using become or a different auth method to the ones stated above, there will be no default credentials available and no authentication will
+                                                  occur.
+   use_proxy                      Choices:
+   boolean                        • no            If no, it will not use the proxy defined in IE for the current user.
+   added in 2.9                   • yes ←
+   validate_certs                 Choices:        If no, SSL certificates will not be validated.
+   boolean                        • no            This should only be used on personally controlled sites using self-signed certificates.
+   added in 2.4                   • yes ←
+
+SEE ALSO                   *win_uri-see also*
+
+   See also
+
+   uri – Interacts with webservices
+   The official documentation on the uri module.
+
+   win_get_url – Downloads file from HTTP, HTTPS, or FTP to node
+   The official documentation on the win_get_url module.
+
+   win_inet_proxy – Manages proxy settings for WinINet and Internet Explorer
+   The official documentation on the win_inet_proxy module.
+
+EXAMPLES                   *win_uri-examples*
+
+ - name: Perform a GET and Store Output
+   win_uri:
+     url: http://example.com/endpoint
+   register: http_output
+
+ # Set a HOST header to hit an internal webserver:
+ - name: Hit a Specific Host on the Server
+   win_uri:
+     url: http://example.com/
+     method: GET
+     headers:
+       host: www.somesite.com
+
+ - name: Perform a HEAD on an Endpoint
+   win_uri:
+     url: http://www.example.com/
+     method: HEAD
+
+ - name: POST a Body to an Endpoint
+   win_uri:
+     url: http://www.somesite.com/
+     method: POST
+     body: "{ 'some': 'json' }"
+
+RETURN VALUES                   *win_uri-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                                                       Returned                                                                               Description
+   content                                                                                                                  The raw content of the HTTP response.
+   string             success and return_content is True                                                                    Sample:
+                                                                                                                            {"foo": "bar"}
+   content_length                                                                                                           The byte size of the response.
+   integer            success                                                                                               Sample:
+                                                                                                                            54447
+   elapsed                                                                                                                  The number of seconds that elapsed while performing the download.
+   float              always                                                                                                Sample:
+                                                                                                                            23.2
+   json                                                                                                                     The json structure returned under content as a dictionary.
+   dictionary         success and Content-Type is "application/json" or "application/javascript" and return_content is True Sample:
+                                                                                                                            {'this-is-dependent': 'on the actual return content'}
+   status_code                                                                                                              The HTTP Status Code of the response.
+   integer            success                                                                                               Sample:
+                                                                                                                            200
+   status_description                                                                                                       A summary of the status.
+   string             success                                                                                               Sample:
+                                                                                                                            OK
+   url                                                                                                                      The Target URL.
+   string             always                                                                                                Sample:
+                                                                                                                            https://www.ansible.com
+
+STATUS                   *win_uri-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Corwin Brown (@blakfeld)
+     • Dag Wieers (@dagwieers)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_uri-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_uri_module.html

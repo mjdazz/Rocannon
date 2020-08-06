@@ -1,0 +1,131 @@
+SYNOPSIS                   *manageiq_alerts*
+
+     • The manageiq_alerts module supports adding, updating and deleting alerts in ManageIQ.
+
+REQUIREMENTS                   *manageiq_alerts-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • manageiq-client https://github.com/ManageIQ/manageiq-api-client-python/
+
+PARAMETERS                   *manageiq_alerts-parameters*
+
+         Parameter           Choices/Defaults                                                                           Comments
+   description                                     The unique alert description in ManageIQ.
+   -                                               Required when state is "absent" or "present".
+   enabled                 Choices:
+   boolean                 • no                    Enable or disable the alert. Required if state is "present".
+                           • yes
+   expression                                      The alert expression for ManageIQ.
+   -                                               Can either be in the "Miq Expression" format or the "Hash Expression format".
+                                                   Required if state is "present".
+   expression_type         Choices:
+   -                       • hash ←                Expression type.
+                           • miq
+   manageiq_connection                             ManageIQ connection configuration information.
+   dictionary / required
+      ca_cert                                      The path to a CA bundle file or directory with certificates. defaults to None.
+      path                                         aliases: ca_bundle_path
+      password                                     ManageIQ password. MIQ_PASSWORD env var if set. otherwise, required if no token is passed in.
+      string
+      token                                        ManageIQ token. MIQ_TOKEN env var if set. otherwise, required if no username or password is passed in.
+      string
+      url                                          ManageIQ environment url. MIQ_URL env var if set. otherwise, it is required to pass it.
+      string / required
+      username                                     ManageIQ username. MIQ_USERNAME env var if set. otherwise, required if no token is passed in.
+      string
+      validate_certs       Choices:                Whether SSL certificates should be verified for HTTPS requests. defaults to True.
+      boolean              • no                    aliases: verify_ssl
+                           • yes ←
+   options                                         Additional alert options, such as notification type and frequency
+   -
+                           Choices:
+                           • Vm
+                           • ContainerNode
+   resource_type           • MiqServer
+   -                       • Host                  The entity type for the alert in ManageIQ. Required when state is "present".
+                           • Storage
+                           • EmsCluster
+                           • ExtManagementSystem
+                           • MiddlewareServer
+   state                   Choices:                absent - alert should not exist,
+   -                       • absent                present - alert should exist,
+                           • present ←
+
+EXAMPLES                   *manageiq_alerts-examples*
+
+ - name: Add an alert with a "hash expression" to ManageIQ
+   manageiq_alerts:
+     state: present
+     description: Test Alert 01
+     options:
+       notifications:
+         email:
+           to: ["[email protected]"]
+           from: "[email protected]"
+     resource_type: ContainerNode
+     expression:
+         eval_method: hostd_log_threshold
+         mode: internal
+         options: {}
+     enabled: true
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name: Add an alert with a "miq expression" to ManageIQ
+   manageiq_alerts:
+     state: present
+     description: Test Alert 02
+     options:
+       notifications:
+         email:
+           to: ["[email protected]"]
+           from: "[email protected]"
+     resource_type: Vm
+     expression_type: miq
+     expression:
+         and:
+           - CONTAINS:
+               tag: Vm.managed-environment
+               value: prod
+           - not:
+             CONTAINS:
+               tag: Vm.host.managed-environment
+               value: prod
+     enabled: true
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name: Delete an alert from ManageIQ
+   manageiq_alerts:
+     state: absent
+     description: Test Alert 01
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+STATUS                   *manageiq_alerts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Elad Alfassa (@elad661) <ealfassa@redhat.com
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *manageiq_alerts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/manageiq_alerts_module.html

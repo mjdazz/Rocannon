@@ -1,56 +1,131 @@
-SYNOPSIS                           *ec2_key*
+SYNOPSIS                   *ec2_key*
 
-New in version 1.5.
+     • create or delete an ec2 key pair.
 
-maintains ec2 key pairs. This module has a dependency on python-boto >= 2.5
+REQUIREMENTS                   *ec2_key-requirements*
 
-EXAMPLES                           *ec2_key-examples*
->
-    # Note: None of these examples set aws_access_key, aws_secret_key, or region.
-    # It is assumed that their matching environment variables are set.
-   
-    # Creates a new ec2 key pair named `example` if not present, returns generated
-    # private key
-    - name: example ec2 key
-      ec2_key:
-        name: example
-   
-    # Creates a new ec2 key pair named `example` if not present using provided key
-    # material.  This could use the 'file' lookup plugin to pull this off disk.
-    - name: example2 ec2 key
-      ec2_key:
-        name: example2
-        key_material: 'ssh-rsa AAAAxyz...== [email protected]'
-        state: present
-   
-    # Creates a new ec2 key pair named `example` if not present using provided key
-    # material
-    - name: example3 ec2 key
-      ec2_key:
-        name: example3
-        key_material: "{{ item }}"
-      with_file: /path/to/public_key.id_rsa.pub
-   
-    # Removes ec2 key pair by name
-    - name: remove example key
-      ec2_key:
-        name: example
-        state: absent
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ec2_key-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   force                          Choices:
+   boolean                        • no           Force overwrite of already existing key pair if key has changed.
+                                  • yes ←
+   key_material                                  Public key material.
+   -
+   name                                          Name of the key pair.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    create or delete keypair
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   wait                           Choices:
+   boolean                        • no ←         Wait for the specified action to complete before returning. This option has no effect since version 2.5.
+                                  • yes
+   wait_timeout                 Default:         How long before wait gives up, in seconds. This option has no effect since version 2.5.
+   -                            300
+
+NOTES                   *ec2_key-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_key-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - name: create a new ec2 key pair, returns generated private key
+   ec2_key:
+     name: my_keypair
+
+ - name: create key pair using provided key_material
+   ec2_key:
+     name: my_keypair
+     key_material: 'ssh-rsa AAAAxyz...== [email protected]'
+
+ - name: create key pair using key_material obtained using 'file' lookup plugin
+   ec2_key:
+     name: my_keypair
+     key_material: "{{ lookup('file', '/path/to/public_key/id_rsa.pub') }}"
+
+ # try creating a key pair with the name of an already existing keypair
+ # but don't overwrite it even if the key is different (force=false)
+ - name: try creating a key pair with name of an already existing keypair
+   ec2_key:
+     name: my_existing_keypair
+     key_material: 'ssh-rsa AAAAxyz...== [email protected]'
+     force: false
+
+ - name: remove key pair by name
+   ec2_key:
+     name: my_keypair
+     state: absent
+
+RETURN VALUES                   *ec2_key-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key                                   Returned                                                                                 Description
+   changed                                                                           whether a keypair was created/deleted
+   boolean       always                                                              Sample:
+                                                                                     True
+   key           always                                                              details of the keypair (this is set to null when state is absent)
+   complex
+     fingerprint                                                                     fingerprint of the key
+     string      when state is present                                               Sample:
+                                                                                     b0:22:49:61:d9:44:9d:0c:7e:ac:8a:32:93:21:6c:e8:fb:59:62:43
+     name                                                                            name of the keypair
+     string      when state is present                                               Sample:
+                                                                                     my_keypair
+     private_key                                                                     private key of a newly created keypair
+     string      when a new keypair is created by AWS (key_material is not provided) Sample:
+                                                                                     -----BEGIN RSA PRIVATE KEY----- MIIEowIBAAKC... -----END RSA PRIVATE KEY-----
+   msg                                                                               short message describing the action taken
+   string        always                                                              Sample:
+                                                                                     key pair created
+
+STATUS                   *ec2_key-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Vincent Viallet (@zbal)
+     • Prasad Katti (@prasadkatti)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_key-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_key_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_key_module.html

@@ -1,0 +1,142 @@
+SYNOPSIS                   *k8s_service*
+
+     • Use Openshift Python SDK to manage Services on Kubernetes
+
+REQUIREMENTS                   *k8s_service-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • openshift >= 0.6.2
+
+PARAMETERS                   *k8s_service-parameters*
+
+        Parameter       Choices/Defaults                                                                            Comments
+   api_key                                 Token used to authenticate with the API. Can also be specified via K8S_AUTH_API_KEY environment variable.
+   string
+   ca_cert                                 Path to a CA certificate used to authenticate with the API. The full certificate chain must be provided to avoid certificate validation errors. Can also
+   path                                    be specified via K8S_AUTH_SSL_CA_CERT environment variable.
+                                           aliases: ssl_ca_cert
+   client_cert                             Path to a certificate used to authenticate with the API. Can also be specified via K8S_AUTH_CERT_FILE environment variable.
+   path                                    aliases: cert_file
+   client_key                              Path to a key file used to authenticate with the API. Can also be specified via K8S_AUTH_KEY_FILE environment variable.
+   path                                    aliases: key_file
+   context                                 The name of a context found in the config file. Can also be specified via K8S_AUTH_CONTEXT environment variable.
+   string
+   force                 Choices:
+   boolean               • no ←            If set to True, and state is present, an existing object will be replaced.
+                         • yes
+   host                                    Provide a URL for accessing the API. Can also be specified via K8S_AUTH_HOST environment variable.
+   string
+   kubeconfig                              Path to an existing Kubernetes config file. If not provided, and no other connection options are provided, the openshift client will attempt to load the
+   path                                    default configuration file from ~/.kube/config.json. Can also be specified via K8S_AUTH_KUBECONFIG environment variable.
+                                           Whether to override the default patch merge approach with a specific type. By default, the strategic merge will typically be used.
+                                           For example, Custom Resource Definitions typically aren't updatable by the usual strategic merge. You may want to use merge if you see "strategic merge
+                         Choices:          patch format is not supported"
+   merge_type            • json            See https://kubernetes.io/docs/tasks/run-application/update-api-object-kubectl-patch/#use-a-json-merge-patch-to-update-a-deployment
+   list                  • merge           Requires openshift >= 0.6.2
+                         • strategic-merge If more than one merge_type is given, the merge_types will be tried in order
+                                           If openshift >= 0.6.2, this defaults to ['strategic-merge', 'merge'], which is ideal for using the same parameters on resource kinds that combine Custom
+                                           Resources and built-in resources. For openshift < 0.6.2, the default is simply strategic-merge.
+   name                                    Use to specify a Service object name.
+   string / required
+   namespace                               Use to specify a Service object namespace.
+   string / required
+   password                                Provide a password for authenticating with the API. Can also be specified via K8S_AUTH_PASSWORD environment variable.
+   string                                  Please read the description of the username option for a discussion of when this option is applicable.
+   ports                                   A list of ports to expose.
+   list                                    https://kubernetes.io/docs/concepts/services-networking/service/#multi-port-services
+   proxy                                   The URL of an HTTP proxy to use for the connection. Can also be specified via K8S_AUTH_PROXY environment variable.
+   -                                       Please note that this module does not pick up typical proxy settings from the environment (e.g. HTTP_PROXY).
+   added in 2.9
+                                           A partial YAML definition of the Service object being created/updated. Here you can define Kubernetes Service Resource parameters not covered by this
+   resource_definition                     module's parameters.
+   dictionary                              NOTE: resource_definition has lower priority than module parameters. If you try to define e.g. metadata.namespace here, that value will be ignored and
+                                           metadata used instead.
+                                           aliases: definition, inline
+   selector                                Label selectors identify objects this Service should apply to.
+   dictionary                              https://kubernetes.io/docs/concepts/overview/working-with-objects/labels/
+   state                 Choices:          Determines if an object should be created, patched, or deleted. When set to present, an object will be created, if it does not already exist. If set to
+   -                     • present ←       absent, an existing object will be deleted. If set to present, an existing object will be patched, if its attributes differ from those specified using
+                         • absent          module options and resource_definition.
+                         Choices:
+   type                  • NodePort        Specifies the type of Service to create.
+   -                     • ClusterIP       See https://kubernetes.io/docs/concepts/services-networking/service/#publishing-services-service-types
+                         • LoadBalancer
+                         • ExternalName
+   username                                Provide a username for authenticating with the API. Can also be specified via K8S_AUTH_USERNAME environment variable.
+   string                                  Please note that this only works with clusters configured to use HTTP Basic Auth. If your cluster has a different form of authentication (e.g. OAuth2 in
+                                           OpenShift), this option will not work as expected and you should look into the k8s_auth module, as that might do what you need.
+   validate_certs        Choices:          Whether or not to verify the API server's SSL certificates. Can also be specified via K8S_AUTH_VERIFY_SSL environment variable.
+   boolean               • no              aliases: verify_ssl
+                         • yes
+
+NOTES                   *k8s_service-notes*
+
+   Note
+
+     • The OpenShift Python client wraps the K8s Python client, providing full access to all of the APIS and models available on both platforms. For API version details and additional information
+       visit https://github.com/openshift/openshift-restclient-python
+     • To avoid SSL certificate validation errors when validate_certs is True, the full certificate chain for the API server must be provided via ca_cert or in the kubeconfig file.
+
+EXAMPLES                   *k8s_service-examples*
+
+ - name: Expose https port with ClusterIP
+   k8s_service:
+     state: present
+     name: test-https
+     namespace: default
+     ports:
+     - port: 443
+       protocol: TCP
+     selector:
+       key: special
+
+ - name: Expose https port with ClusterIP using spec
+   k8s_service:
+     state: present
+     name: test-https
+     namespace: default
+     inline:
+       spec:
+         ports:
+         - port: 443
+           protocol: TCP
+         selector:
+           key: special
+
+RETURN VALUES                   *k8s_service-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   result        success  The created, patched, or otherwise present Service object. Will be empty in the case of a deletion.
+   complex
+     api_version success  The versioned schema of this representation of an object.
+     string
+     kind        success  Always 'Service'.
+     string
+     metadata    success  Standard object metadata. Includes name, namespace, annotations, labels, etc.
+     complex
+     spec        success  Specific attributes of the object. Will vary based on the api_version and kind.
+     complex
+     status      success  Current status details for the object.
+     complex
+
+STATUS                   *k8s_service-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • KubeVirt Team (@kubevirt)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *k8s_service-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/k8s_service_module.html

@@ -1,0 +1,124 @@
+SYNOPSIS                   *vyos_facts*
+
+     • Collects facts from network devices running the vyos operating system. This module places the facts gathered in the fact tree keyed by the respective resource name. The facts module will
+       always collect a base set of facts from the device and can enable or disable collection of additional facts.
+
+PARAMETERS                   *vyos_facts-parameters*
+
+          Parameter         Choices/Defaults                                                                         Comments
+   gather_network_resources                  When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include all and the resources like
+   -                                         interfaces. Can specify a list of values to include a larger subset. Values can also be used with an initial ! to specify that a specific subset should
+   added in 2.9                              not be collected. Valid subsets are 'all', 'interfaces', 'l3_interfaces', 'lag_interfaces', 'lldp_global', 'lldp_interfaces'.
+   gather_subset            Default:         When supplied, this argument will restrict the facts collected to a given subset. Possible values for this argument include all, default, config, and
+   -                        "!config"        neighbors. Can specify a list of values to include a larger subset. Values can also be used with an initial ! to specify that a specific subset should
+                                             not be collected.
+                                             Deprecated
+                                             Starting with Ansible 2.5 we recommend using connection: network_cli.
+   provider                                  For more information please see the Network Guide.
+   dictionary
+                                             ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                             A dict object containing connection details.
+       host                                  Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination
+       string / required                     address for the transport.
+       password                              Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is
+       string                                not specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+       port                 Default:         Specifies the port to use when building the connection to the remote device.
+       integer              22
+       ssh_keyfile                           Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH
+       path                                  session. If the value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+       timeout              Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before
+       integer              10               the operation is completed, the module will error.
+       username                              Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is
+       string                                not specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+
+NOTES                   *vyos_facts-notes*
+
+   Note
+
+     • Tested against VyOS 1.1.8 (helium).
+     • This module works with connection network_cli. See the VyOS OS Platform Options.
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+
+EXAMPLES                   *vyos_facts-examples*
+
+ # Gather all facts
+ - vyos_facts:
+     gather_subset: all
+     gather_network_resources: all
+
+ # collect only the config and default facts
+ - vyos_facts:
+     gather_subset: config
+
+ # collect everything exception the config
+ - vyos_facts:
+     gather_subset: "!config"
+
+ # Collect only the interfaces facts
+ - vyos_facts:
+     gather_subset:
+       - '!all'
+       - '!min'
+     gather_network_resources:
+       - interfaces
+
+ # Do not collect interfaces facts
+ - vyos_facts:
+     gather_network_resources:
+       - "!interfaces"
+
+ # Collect interfaces and minimal default facts
+ - vyos_facts:
+     gather_subset: min
+     gather_network_resources: interfaces
+
+RETURN VALUES                   *vyos_facts-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                   Key                            Returned                                                                     Description
+   ansible_net_api                      always                       The name of the transport
+   string
+   ansible_net_commits                  when present                 The set of available configuration revisions
+   list
+   ansible_net_config                   when config is configured    The running-config from the device
+   string
+   ansible_net_gather_network_resources always                       The list of fact resource subsets collected from the device
+   list
+   ansible_net_gather_subset            always                       The list of subsets gathered by the module
+   list
+   ansible_net_hostname                 always                       The configured system hostname
+   string
+   ansible_net_model                    always                       The device model string
+   string
+   ansible_net_neighbors                when interface is configured The set of LLDP neighbors
+   list
+   ansible_net_python_version           always                       The Python version Ansible controller is using
+   string
+   ansible_net_serialnum                always                       The serial number of the device
+   string
+   ansible_net_version                  always                       The version of the software running
+   string
+
+STATUS                   *vyos_facts-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *vyos_facts-red hat support*
+
+     • Nathaniel Case (@qalthos)
+     • Nilashish Chakraborty (@Nilashishc)
+     • Rohit Thakur (@rohitthakur2590)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vyos_facts-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vyos_facts_module.html

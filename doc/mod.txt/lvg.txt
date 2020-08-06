@@ -1,29 +1,93 @@
-SYNOPSIS                           *lvg*
+SYNOPSIS                   *lvg*
 
-New in version 1.1.
+     • This module creates, removes or resizes volume groups.
 
-This module creates, removes or resizes volume groups.
+PARAMETERS                   *lvg-parameters*
 
-EXAMPLES                           *lvg-examples*
->
-    # Create a volume group on top of /dev/sda1 with physical extent size = 32MB.
-    - lvg:  vg=vg.services pvs=/dev/sda1 pesize=32
-   
-    # Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5.
-    # If, for example, we already have VG vg.services on top of /dev/sdb1,
-    # this VG will be extended by /dev/sdc5.  Or if vg.services was created on
-    # top of /dev/sda5, we first extend it with /dev/sdb1 and /dev/sdc5,
-    # and then reduce by /dev/sda5.
-    - lvg: vg=vg.services pvs=/dev/sdb1,/dev/sdc5
-   
-    # Remove a volume group with name vg.services.
-    - lvg: vg=vg.services state=absent
-   
-      Note
-   
-      module does not modify PE size for already present volume group
-   
+   Parameter  Choices/Defaults                                                                                Comments
+   force        Choices:
+   boolean      • no ←         If yes, allows to remove volume group with logical volumes.
+                • yes
+   pesize     Default:         The size of the physical extent. pesize must be a power of 2 of at least 1 sector (where the sector size is the largest sector size of the PVs currently used in the
+   string     "4"              VG), or at least 128KiB.
+                               Since Ansible 2.6, pesize can be optionally suffixed by a UNIT (k/K/m/M/g/G), default unit is megabyte.
+   pv_options
+   string                      Additional options to pass to pvcreate when creating the volume group.
+   added in
+   2.4
+   pvs                         List of comma-separated devices to use as physical devices in this volume group.
+   list                        Required when creating or resizing volume group.
+                               The module will take care of running pvcreate if needed.
+   state        Choices:
+   string       • absent       Control if the volume group exists.
+                • present ←
+   vg
+   string /                    The name of the volume group.
+   required
+   vg_options                  Additional options to pass to vgcreate when creating the volume group.
+   string
+
+NOTES                   *lvg-notes*
+
+   Note
+
+     • This module does not modify PE size for already present volume group.
+
+SEE ALSO                   *lvg-see also*
+
+   See also
+
+   filesystem – Makes a filesystem
+   The official documentation on the filesystem module.
+
+   lvol – Configure LVM logical volumes
+   The official documentation on the lvol module.
+
+   parted – Configure block device partitions
+   The official documentation on the parted module.
+
+EXAMPLES                   *lvg-examples*
+
+ - name: Create a volume group on top of /dev/sda1 with physical extent size = 32MB
+   lvg:
+     vg: vg.services
+     pvs: /dev/sda1
+     pesize: 32
+
+ - name: Create a volume group on top of /dev/sdb with physical extent size = 128KiB
+   lvg:
+     vg: vg.services
+     pvs: /dev/sdb
+     pesize: 128K
+
+ # If, for example, we already have VG vg.services on top of /dev/sdb1,
+ # this VG will be extended by /dev/sdc5.  Or if vg.services was created on
+ # top of /dev/sda5, we first extend it with /dev/sdb1 and /dev/sdc5,
+ # and then reduce by /dev/sda5.
+ - name: Create or resize a volume group on top of /dev/sdb1 and /dev/sdc5.
+   lvg:
+     vg: vg.services
+     pvs: /dev/sdb1,/dev/sdc5
+
+ - name: Remove a volume group with name vg.services
+   lvg:
+     vg: vg.services
+     state: absent
+
+STATUS                   *lvg-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Alexander Bulimov (@abulimov)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *lvg-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/lvg_module.html
+https://docs.ansible.com/ansible/latest/modules/lvg_module.html

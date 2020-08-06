@@ -1,0 +1,119 @@
+SYNOPSIS                   *ftd_install*
+
+     • Provisioning module for FTD devices that installs ROMMON image (if needed) and FTD pkg image on the firewall.
+     • Can be used with httpapi and local connection types. The httpapi is preferred, the local connection should be used only when the device cannot be accessed via REST API.
+
+REQUIREMENTS                   *ftd_install-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 3.5
+     • firepower-kickstart
+
+PARAMETERS                   *ftd_install-parameters*
+
+        Parameter                   Choices/Defaults                                                                           Comments
+   console_ip                                                     IP address of a terminal server.
+   string / required                                              Used to set up an SSH connection with device's console port through the terminal server.
+   console_password                                               Password to login on a terminal server.
+   string / required
+   console_port                                                   Device's port on a terminal server.
+   string / required
+   console_username                                               Username to login on a terminal server.
+   string / required
+   device_gateway                                                 Device gateway of management interface.
+   string                                                         If not specified and connection is 'httpapi`, the module tries to fetch the existing value via REST API.
+                                                                  For 'local' connection type, this parameter is mandatory.
+   device_hostname                                                Hostname of the device as appears in the prompt (e.g., 'firepower-5516').
+   string / required
+   device_ip                                                      Device IP address of management interface.
+   string                                                         If not specified and connection is 'httpapi`, the module tries to fetch the existing value via REST API.
+                                                                  For 'local' connection type, this parameter is mandatory.
+                          Choices:
+                          • Cisco ASA5506-X Threat Defense
+                          • Cisco ASA5508-X Threat Defense        Platform model of the device (e.g., 'Cisco ASA5506-X Threat Defense').
+   device_model           • Cisco ASA5516-X Threat Defense        If not specified and connection is 'httpapi`, the module tries to fetch the device model via REST API.
+   string                 • Cisco Firepower 2110 Threat Defense   For 'local' connection type, this parameter is mandatory.
+                          • Cisco Firepower 2120 Threat Defense
+                          • Cisco Firepower 2130 Threat Defense
+                          • Cisco Firepower 2140 Threat Defense
+   device_netmask                                                 Device netmask of management interface.
+   string                                                         If not specified and connection is 'httpapi`, the module tries to fetch the existing value via REST API.
+                                                                  For 'local' connection type, this parameter is mandatory.
+   device_new_password                                            New device password to set after image installation.
+   string                                                         If not specified, current password from `device_password` property is reused.
+                                                                  Not applicable for ASA5500-X series devices.
+   device_password                                                Password to login on the device.
+   string / required
+   device_sudo_password                                           Root password for the device. If not specified, `device_password` is used.
+   string
+   device_username      Default:                                  Username to login on the device.
+   string               "admin"                                   Defaulted to 'admin' if not specified.
+   dns_server                                                     DNS IP address of management interface.
+   string                                                         If not specified and connection is 'httpapi`, the module tries to fetch the existing value via REST API.
+                                                                  For 'local' connection type, this parameter is mandatory.
+   force_install          Choices:                                Forces the FTD image to be installed even when the same version is already installed on the firewall.
+   boolean                • no ←                                  By default, the module stops execution when the target version is installed in the device.
+                          • yes
+   image_file_location                                            Path to the FTD pkg image on the server to be downloaded.
+   string / required                                              FTP, SCP, SFTP, TFTP, or HTTP protocols are usually supported, but may depend on the device model.
+   image_version                                                  Version of FTD image to be installed.
+   string / required                                              Helps to compare target and current FTD versions to prevent unnecessary reinstalls.
+   rommon_file_location                                           Path to the boot (ROMMON) image on TFTP server.
+   string / required                                              Only TFTP is supported.
+   search_domains       Default:                                  Search domains delimited by comma.
+   string               "cisco.com"                               Defaulted to 'cisco.com' if not specified.
+
+NOTES                   *ftd_install-notes*
+
+   Note
+
+     • Requires firepower-kickstart library that should be installed separately and requires Python >= 3.5.
+     • On localhost, Ansible can be still run with Python >= 2.7, but the interpreter for this particular module must be Python >= 3.5.
+     • Python interpreter for the module can overwritten in ansible_python_interpreter variable.
+
+EXAMPLES                   *ftd_install-examples*
+
+ - name: Install image v6.3.0 on FTD 5516
+   ftd_install:
+     device_hostname: firepower
+     device_password: pass
+     device_ip: 192.168.0.1
+     device_netmask: 255.255.255.0
+     device_gateway: 192.168.0.254
+     dns_server: 8.8.8.8
+
+     console_ip: 10.89.0.0
+     console_port: 2004
+     console_username: console_user
+     console_password: console_pass
+
+     rommon_file_location: 'tftp://10.89.0.11/installers/ftd-boot-9.10.1.3.lfbff'
+     image_file_location: 'https://10.89.0.11/installers/ftd-6.3.0-83.pkg'
+     image_version: 6.3.0-83
+
+RETURN VALUES                   *ftd_install-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   msg    always   The message saying whether the image was installed or explaining why the installation failed.
+   string
+
+STATUS                   *ftd_install-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Cisco Systems, Inc. (@annikulin)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ftd_install-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ftd_install_module.html

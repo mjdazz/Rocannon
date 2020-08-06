@@ -1,0 +1,129 @@
+SYNOPSIS                   *cs_role_permission*
+
+     • Create, update and remove CloudStack role permissions.
+     • Managing role permissions only supported in CloudStack >= 4.9.
+
+REQUIREMENTS                   *cs_role_permission-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_role_permission-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+                       Choices:       HTTP method used to query the API endpoint.
+   api_http_method     • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string              • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is get if not specified.
+   api_key                            API key of the CloudStack API.
+   string                             If not given, the CLOUDSTACK_KEY env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   api_region        Default:         Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                         Secret key of the CloudStack API.
+   string                             If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+                                      HTTP timeout in seconds.
+   api_timeout                        If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                            As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is 10 seconds if not specified.
+   api_url                            URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                             If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   description                        The description of the role permission.
+   string
+   name                               The API name of the permission.
+   string / required
+   parent                             The parent role permission uuid. use 0 to move this rule at the top of the list.
+   string
+   permission          Choices:
+   string              • allow        The rule permission, allow or deny. Defaulted to deny.
+                       • deny ←
+   role                               Name or ID of the role.
+   string / required
+   state               Choices:
+   string              • present ←    State of the role permission.
+                       • absent
+
+NOTES                   *cs_role_permission-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_role_permission-examples*
+
+ - name: Create a role permission
+   cs_role_permission:
+     role: My_Custom_role
+     name: createVPC
+     permission: allow
+     description: My comments
+   delegate_to: localhost
+
+ - name: Remove a role permission
+   cs_role_permission:
+     state: absent
+     role: My_Custom_role
+     name: createVPC
+   delegate_to: localhost
+
+ - name: Update a system role permission
+   cs_role_permission:
+     role: Domain Admin
+     name: createVPC
+     permission: deny
+   delegate_to: localhost
+
+ - name: Update rules order. Move the rule at the top of list
+   cs_role_permission:
+     role: Domain Admin
+     name: createVPC
+     parent: 0
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_role_permission-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+   description          The description of the role permission
+   string      success  Sample:
+                        Deny createVPC for users
+   id                   The ID of the role permission.
+   string      success  Sample:
+                        a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   name                 The API name of the permission.
+   string      success  Sample:
+                        createVPC
+   permission           The permission type of the api name.
+   string      success  Sample:
+                        allow
+   role_id              The ID of the role to which the role permission belongs.
+   string      success  Sample:
+                        c6f7a5fc-43f8-11e5-a151-feff819cdc7f
+
+STATUS                   *cs_role_permission-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • David Passante (@dpassante)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_role_permission-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_role_permission_module.html

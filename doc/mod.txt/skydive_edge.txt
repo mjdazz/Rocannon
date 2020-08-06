@@ -1,0 +1,169 @@
+SYNOPSIS                   *skydive_edge*
+
+     • This module handles setting up edges between two nodes based on the relationship type to the Skydive topology.
+
+REQUIREMENTS                   *skydive_edge-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • skydive-client
+
+PARAMETERS                   *skydive_edge-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   child_node                        To defined the second node of the link, it can be either an ID or a gremlin expression
+   - / required
+   host             Default:         To define the host of the node.
+   -                ""
+   metadata                          To define metadata for the edge.
+   -
+   parent_node                       To defined the first node of the link, it can be either an ID or a gremlin expression
+   - / required
+   provider                          A dict object containing connection details.
+   -
+       endpoint                      Specifies the hostname/address along with the port as localhost:8082for connecting to the remote instance of SKYDIVE client over the REST API.
+       - / required
+       insecure       Choices:
+       boolean        • no ←         Ignore SSL certification verification.
+                      • yes
+       password                      Specifies the password to use to authenticate the connection to the remote instance of SKYDIVE client.
+       -
+       ssl            Choices:
+       boolean        • no ←         Specifies the ssl parameter that decides if the connection type shall be http or https.
+                      • yes
+       user                          Configures the username to use to authenticate the connection to the remote instance of SKYDIVE client.
+       -
+   relation_type                     To define relation type of the node ownership, layer2, layer3.
+   - / required
+   state              Choices:
+   -                  • present ←    State of the Skydive Edge. If value is present new edge will be created else if it is absent it will be deleted.
+                      • absent
+
+NOTES                   *skydive_edge-notes*
+
+   Note
+
+     • This module must be run locally, which can be achieved by specifying connection: local.
+
+EXAMPLES                   *skydive_edge-examples*
+
+ - name: create tor
+   skydive_node:
+     name: 'TOR'
+     node_type: "fabric"
+     seed: TOR
+     metadata:
+       Model: Cisco xxxx
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+   register: tor_result
+
+ - name: create port 1
+   skydive_node:
+     name: 'PORT1'
+     node_type: 'fabric'
+     seed: PORT1
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+   register: port1_result
+
+ - name: create port 2
+   skydive_node:
+     name: 'PORT2'
+     node_type: 'fabric'
+     seed: PORT2
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+   register: port2_result
+
+ - name: link node tor and port 1
+   skydive_edge:
+     parent_node: "{{ tor_result.UUID }}"
+     child_node: "{{ port1_result.UUID }}"
+     relation_type: ownership
+     state: present
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+
+ - name: link node tor and port 2
+   skydive_edge:
+     parent_node: "{{ tor_result.UUID }}"
+     child_node: "{{ port2_result.UUID }}"
+     relation_type: ownership
+     state: present
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+
+ - name: update link node tor and port 1 relation
+   skydive_edge:
+     parent_node: "{{ tor_result.UUID }}"
+     child_node: "{{ port2_result.UUID }}"
+     relation_type: layer2
+     state: upadte
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+
+ - name: Unlink tor and port 2
+   skydive_edge:
+     parent_node: "{{ tor_result.UUID }}"
+     child_node: "{{ port2_result.UUID }}"
+     relation_type: ownership
+     state: absent
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+
+ - name: link tor and port 2 via Gremlin expression
+   skydive_edge:
+     parent_node: G.V().Has('Name', 'TOR')
+     child_node: G.V().Has('Name', 'PORT2')
+     relation_type: ownership
+     state: present
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+
+ - name: Unlink tor and port 2 via Gremlin expression
+   skydive_edge:
+     parent_node: G.V().Has('Name', 'TOR')
+     child_node: G.V().Has('Name', 'PORT2')
+     relation_type: ownership
+     state: absent
+     provider:
+       endpoint: localhost:8082
+       username: admin
+       password: admin
+
+STATUS                   *skydive_edge-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *skydive_edge-red hat support*
+
+     • Sumit Jaiswal (@sjaiswal)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *skydive_edge-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/skydive_edge_module.html

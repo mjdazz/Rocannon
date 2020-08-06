@@ -1,0 +1,135 @@
+SYNOPSIS                   *docker_image_info*
+
+     • Provide one or more image names, and the module will inspect each, returning an array of inspection results.
+     • If an image does not exist locally, it will not appear in the results. If you want to check whether an image exists locally, you can call the module with the image name, then check whether
+       the result list is empty (image does not exist) or has one element (the image exists locally).
+     • The module will not attempt to pull images from registries. Use docker_image with source set to pull to ensure an image is pulled.
+
+   Aliases: docker_image_facts
+
+REQUIREMENTS                   *docker_image_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • Docker API >= 1.20
+     • Docker SDK for Python: Please note that the docker-py Python module has been superseded by docker (see here for details). For Python 2.6, docker-py must be used. Otherwise, it is recommended
+       to install the docker Python module. Note that both modules should not be installed at the same time. Also note that when both modules are installed and one of them is uninstalled, the other
+       might no longer function and a reinstall of it is required.
+     • Docker SDK for Python >= 1.8.0 (use docker-py for Python 2.6)
+
+PARAMETERS                   *docker_image_info-parameters*
+
+      Parameter          Choices/Defaults                                                                             Comments
+                                                The version of the Docker API running on the Docker Host.
+   api_version     Default:                     Defaults to the latest version of the API supported by Docker SDK for Python and the docker daemon.
+   string          "auto"                       If the value is not specified in the task, the value of environment variable DOCKER_API_VERSION will be used instead. If the environment variable is
+                                                not set, the default value will be used.
+                                                aliases: docker_api_version
+                                                Use a CA certificate when performing server verification by providing the path to a CA certificate file.
+   ca_cert                                      If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file ca.pem from the directory specified in the
+   path                                         environment variable DOCKER_CERT_PATH will be used.
+                                                aliases: tls_ca_cert, cacert_path
+                                                Path to the client's TLS certificate file.
+   client_cert                                  If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file cert.pem from the directory specified in the
+   path                                         environment variable DOCKER_CERT_PATH will be used.
+                                                aliases: tls_client_cert, cert_path
+                                                Path to the client's TLS key file.
+   client_key                                   If the value is not specified in the task and the environment variable DOCKER_CERT_PATH is set, the file key.pem from the directory specified in the
+   path                                         environment variable DOCKER_CERT_PATH will be used.
+                                                aliases: tls_client_key, key_path
+   debug             Choices:
+   boolean           • no ←                     Debug mode
+                     • yes
+                                                The URL or Unix socket path used to connect to the Docker API. To connect to a remote host, provide the TCP connection string. For example,
+   docker_host     Default:                     tcp://192.0.2.23:2376. If TLS is used to encrypt the connection, the module will automatically replace tcp in the connection URL with https.
+   string          "unix://var/run/docker.sock" If the value is not specified in the task, the value of environment variable DOCKER_HOST will be used instead. If the environment variable is not
+                                                set, the default value will be used.
+                                                aliases: docker_url
+   name                                         An image name or a list of image names. Name format will be name[:tag] or repository/name[:tag], where tag is optional. If a tag is not provided,
+   list /                                       latest will be used. Instead of image names, also image IDs can be used.
+   elements=string                              If no name is provided, a list of all images will be returned.
+   ssl_version                                  Provide a valid SSL version number. Default value determined by ssl.py module.
+   string                                       If the value is not specified in the task, the value of environment variable DOCKER_SSL_VERSION will be used instead.
+   timeout         Default:                     The maximum amount of time in seconds to wait on a response from the API.
+   integer         60                           If the value is not specified in the task, the value of environment variable DOCKER_TIMEOUT will be used instead. If the environment variable is not
+                                                set, the default value will be used.
+                     Choices:                   Secure the connection to the API by using TLS without verifying the authenticity of the Docker host server. Note that if validate_certs is set to yes
+   tls               • no ←                     as well, it will take precedence.
+   boolean           • yes                      If the value is not specified in the task, the value of environment variable DOCKER_TLS will be used instead. If the environment variable is not set,
+                                                the default value will be used.
+   tls_hostname    Default:                     When verifying the authenticity of the Docker Host server, provide the expected name of the server.
+   string          "localhost"                  If the value is not specified in the task, the value of environment variable DOCKER_TLS_HOSTNAME will be used instead. If the environment variable is
+                                                not set, the default value will be used.
+                     Choices:                   Secure the connection to the API by using TLS and verifying the authenticity of the Docker host server.
+   validate_certs    • no ←                     If the value is not specified in the task, the value of environment variable DOCKER_TLS_VERIFY will be used instead. If the environment variable is
+   boolean           • yes                      not set, the default value will be used.
+                                                aliases: tls_verify
+
+NOTES                   *docker_image_info-notes*
+
+   Note
+
+     • This module was called docker_image_facts before Ansible 2.8. The usage did not change.
+     • Connect to the Docker daemon by providing parameters with each task or by defining environment variables. You can define DOCKER_HOST, DOCKER_TLS_HOSTNAME, DOCKER_API_VERSION,
+       DOCKER_CERT_PATH, DOCKER_SSL_VERSION, DOCKER_TLS, DOCKER_TLS_VERIFY and DOCKER_TIMEOUT. If you are using docker machine, run the script shipped with the product that sets up the environment.
+       It will set these variables for you. See https://docs.docker.com/machine/reference/env/ for more details.
+     • When connecting to Docker daemon with TLS, you might need to install additional Python packages. For the Docker SDK for Python, version 2.4 or newer, this can be done by installing
+       docker[tls] with pip.
+     • Note that the Docker SDK for Python only allows to specify the path to the Docker configuration for very few functions. In general, it will use $HOME/.docker/config.json if the DOCKER_CONFIG
+       environment variable is not specified, and use $DOCKER_CONFIG/config.json otherwise.
+
+EXAMPLES                   *docker_image_info-examples*
+
+ - name: Inspect a single image
+   docker_image_info:
+     name: pacur/centos-7
+
+ - name: Inspect multiple images
+   docker_image_info:
+     name:
+       - pacur/centos-7
+       - sinatra
+   register: result
+
+ - name: Make sure that both images pacur/centos-7 and sinatra exist locally
+   assert:
+     that:
+       - result.images | length == 2
+
+RETURN VALUES                   *docker_image_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key         Returned                                                                              Description
+                                Inspection results for the selected images.
+                                The list only contains inspection results of images existing locally.
+                                Sample:
+                                [{'Architecture': 'amd64', 'Author': '', 'Comment': '', 'Config': {'AttachStderr': False, 'AttachStdin': False, 'AttachStdout': False, 'Cmd':
+                                ['/etc/docker/registry/config.yml'], 'Domainname': '', 'Entrypoint': ['/bin/registry'], 'Env': ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'],
+   images                       'ExposedPorts': {'5000/tcp': {}}, 'Hostname': 'e5c68db50333', 'Image': 'c72dce2618dc8f7b794d2b2c2b1e64e0205ead5befc294f8111da23bd6a2c799', 'Labels': {}, 'OnBuild':
+   list /              always   [], 'OpenStdin': False, 'StdinOnce': False, 'Tty': False, 'User': '', 'Volumes': {'/var/lib/registry': {}}, 'WorkingDir': ''}, 'Container':
+   elements=dictionary          'e83a452b8fb89d78a25a6739457050131ca5c863629a47639530d9ad2008d610', 'ContainerConfig': {'AttachStderr': False, 'AttachStdin': False, 'AttachStdout': False, 'Cmd':
+                                ['/bin/sh', '-c', '#(nop) CMD ["/etc/docker/registry/config.yml"]'], 'Domainname': '', 'Entrypoint': ['/bin/registry'], 'Env':
+                                ['PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin'], 'ExposedPorts': {'5000/tcp': {}}, 'Hostname': 'e5c68db50333', 'Image':
+                                'c72dce2618dc8f7b794d2b2c2b1e64e0205ead5befc294f8111da23bd6a2c799', 'Labels': {}, 'OnBuild': [], 'OpenStdin': False, 'StdinOnce': False, 'Tty': False, 'User': '',
+                                'Volumes': {'/var/lib/registry': {}}, 'WorkingDir': ''}, 'Created': '2016-03-08T21:08:15.399680378Z', 'DockerVersion': '1.9.1', 'GraphDriver': {'Data': None, 'Name':
+                                'aufs'}, 'Id': '53773d8552f07b730f3e19979e32499519807d67b344141d965463a950a66e08', 'Name': 'registry:2', 'Os': 'linux', 'Parent':
+                                'f0b1f729f784b755e7bf9c8c2e65d8a0a35a533769c2588f02895f6781ac0805', 'RepoDigests': [], 'RepoTags': ['registry:2'], 'Size': 0, 'VirtualSize': 165808884}]
+
+STATUS                   *docker_image_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Houseknecht (@chouseknecht)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *docker_image_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/docker_image_info_module.html

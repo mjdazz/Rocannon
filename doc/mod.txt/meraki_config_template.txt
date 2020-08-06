@@ -1,0 +1,128 @@
+SYNOPSIS                   *meraki_config_template*
+
+     • Allows for querying, deleting, binding, and unbinding of configuration templates.
+
+PARAMETERS                   *meraki_config_template-parameters*
+
+           Parameter         Choices/Defaults                                                                         Comments
+   auth_key                                    Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   auto_bind                   Choices:        Optional boolean indicating whether the network's switches should automatically bind to profiles of the same model.
+   boolean                     • no            This option only affects switch networks and switch templates.
+                               • yes           Auto-bind is not valid unless the switch template has at least one profile and has at most one profile per switch model.
+   config_template                             Name of the configuration template within an organization to manipulate.
+   -                                           aliases: name
+   host                      Default:          Hostname for Meraki dashboard.
+   string                    "api.meraki.com"  Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:          Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   net_id                                      ID of the network to bind or unbind configuration template to.
+   string
+   net_name                                    Name of the network to bind or unbind configuration template to.
+   string
+   org_id                                      ID of organization associated to a configuration template.
+   string
+   org_name                                    Name of organization containing the configuration template.
+   string                                      aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←   Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug         Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:          Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+                               Choices:
+   state                       • absent        Specifies whether configuration template information should be queried, modified, or deleted.
+   -                           • query ←
+                               • present
+   timeout                   Default:          Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:        If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no            Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no            Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_config_template-notes*
+
+   Note
+
+     • Module is not idempotent as the Meraki API is limited in what information it provides about configuration templates.
+     • Meraki’s API does not support creating new configuration templates.
+     • To use the configuration template, simply pass its ID via net_id parameters in Meraki modules.
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_config_template-examples*
+
+ - name: Query configuration templates
+   meraki_config_template:
+     auth_key: abc12345
+     org_name: YourOrg
+     state: query
+   delegate_to: localhost
+
+ - name: Bind a template from a network
+   meraki_config_template:
+     auth_key: abc123
+     state: present
+     org_name: YourOrg
+     net_name: YourNet
+     config_template: DevConfigTemplate
+   delegate_to: localhost
+
+ - name: Unbind a template from a network
+   meraki_config_template:
+     auth_key: abc123
+     state: absent
+     org_name: YourOrg
+     net_name: YourNet
+     config_template: DevConfigTemplate
+   delegate_to: localhost
+
+ - name: Delete a configuration template
+   meraki_config_template:
+     auth_key: abc123
+     state: absent
+     org_name: YourOrg
+     config_template: DevConfigTemplate
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_config_template-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key    Returned                                                                                   Description
+   data      success  Information about queried object.
+   complex
+     id               Unique identification number of organization
+     integer success  Sample:
+                      L_2930418
+     name             Name of configuration template
+     string  success  Sample:
+                      YourTemplate
+
+STATUS                   *meraki_config_template-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_config_template-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_config_template_module.html

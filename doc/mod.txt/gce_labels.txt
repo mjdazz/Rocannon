@@ -1,0 +1,114 @@
+SYNOPSIS                   *gce_labels*
+
+     • Create, Update or Destroy GCE Labels on instances, disks, snapshots, etc. When specifying the GCE resource, users may specify the full URL for the resource (its ‘self_link’), or the
+       individual parameters of the resource (type, location, name). Examples for the two options can be seen in the documentation. See https://cloud.google.com/compute/docs/label-or-tag-resources
+       for more information about GCE Labels. Labels are gradually being added to more GCE resources, so this module will need to be updated as new resources are added to the GCE (v1) API.
+
+REQUIREMENTS                   *gce_labels-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • google-api-python-client >= 1.6.2
+     • google-auth >= 1.0.0
+     • google-auth-httplib2 >= 0.0.2
+
+PARAMETERS                   *gce_labels-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   labels                             A list of labels (key/value pairs) to add or remove for the resource.
+   -
+   resource_location                  The location of resource (global, us-central1-f, etc.)
+   -
+   resource_name                      The name of resource.
+   -
+   resource_type                      The type of resource (instances, disks, snapshots, images)
+   -
+   resource_url                       The 'self_link' for the resource (instance, disk, snapshot, etc)
+   -
+
+NOTES                   *gce_labels-notes*
+
+   Note
+
+     • Labels support resources such as instances, disks, images, etc. See https://cloud.google.com/compute/docs/labeling-resources for the list of resources available in the GCE v1 API (not alpha
+       or beta).
+
+EXAMPLES                   *gce_labels-examples*
+
+ - name: Add labels on an existing instance (using resource_url)
+   gce_labels:
+     service_account_email: "{{ service_account_email }}"
+     credentials_file: "{{ credentials_file }}"
+     project_id: "{{ project_id }}"
+     labels:
+       webserver-frontend: homepage
+       environment: test
+       experiment-name: kennedy
+     resource_url: https://www.googleapis.com/compute/beta/projects/myproject/zones/us-central1-f/instances/example-instance
+     state: present
+ - name: Add labels on an image (using resource params)
+   gce_labels:
+     service_account_email: "{{ service_account_email }}"
+     credentials_file: "{{ credentials_file }}"
+     project_id: "{{ project_id }}"
+     labels:
+       webserver-frontend: homepage
+       environment: test
+       experiment-name: kennedy
+     resource_type: images
+     resource_location: global
+     resource_name: my-custom-image
+     state: present
+ - name: Remove specified labels from the GCE instance
+   gce_labels:
+     service_account_email: "{{ service_account_email }}"
+     credentials_file: "{{ credentials_file }}"
+     project_id: "{{ project_id }}"
+     labels:
+       environment: prod
+       experiment-name: kennedy
+     resource_url: https://www.googleapis.com/compute/beta/projects/myproject/zones/us-central1-f/instances/example-instance
+     state: absent
+
+RETURN VALUES                   *gce_labels-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   labels                     List of labels that exist on the resource.
+   dictionary        Always.  Sample:
+                              [{'webserver-frontend': 'homepage', 'environment': 'test', 'environment-name': 'kennedy'}]
+   resource_location          The location of the GCE resource.
+   string            Always.  Sample:
+                              us-central1-f
+   resource_name              The name of the GCE resource.
+   string            Always.  Sample:
+                              my-happy-little-instance
+   resource_type              The type of the GCE resource.
+   string            Always.  Sample:
+                              instances
+   resource_url               The 'self_link' of the GCE resource.
+   string            Always.  Sample:
+                              https://www.googleapis.com/compute/beta/projects/myproject/zones/us-central1-f/instances/example-instance
+   state                      state of the labels
+   string            Always.  Sample:
+                              present
+
+STATUS                   *gce_labels-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Eric Johnson (@erjohnso) <erjohnso@google.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gce_labels-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gce_labels_module.html

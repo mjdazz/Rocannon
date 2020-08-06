@@ -1,0 +1,142 @@
+SYNOPSIS                   *bigip_firewall_address_list*
+
+     • Manages the AFM address lists on a BIG-IP. This module can be used to add and remove address list entries.
+
+   Aliases: bigip_security_address_list
+
+PARAMETERS                   *bigip_firewall_address_list-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   address_lists                    Simple list of existing address lists to add to this list. Address lists can be specified in either their fully qualified name (/Common/foo) or their short name
+   list                             (foo). If a short name is used, the partition argument will automatically be prepended to the short name.
+   address_ranges                   A list of address ranges where the range starts with a port number, is followed by a dash (-) and then a second number.
+   list                             If the first address is greater than the second number, the numbers will be reversed so-as to be properly formatted. ie, 2.2.2.2-1.1.1. would become
+                                    1.1.1.1-2.2.2.2.
+   addresses                        Individual addresses that you want to add to the list. These addresses differ from ranges, and lists of lists such as what can be used in address_ranges and
+   list                             address_lists respectively.
+                                    This list can also include networks that have CIDR notation.
+   description                      Description of the address list
+   string
+                                    A list of fully qualified domain names (FQDNs).
+   fqdns                            An FQDN has at least one decimal point in it, separating the host from the domain.
+   list                             To add FQDNs to a list requires that a global FQDN resolver be configured. At the moment, this must either be done via bigip_command, or, in the GUI of BIG-IP.
+                                    If using bigip_command, this can be done with tmsh modify security firewall global-fqdn-policy FOO where FOO is a DNS resolver configured at tmsh create net
+                                    dns-resolver FOO.
+   geo_locations                    List of geolocations specified by their country and region.
+   list
+                     Choices:
+                     • Any valid 2
+    country            character    The country name, or code, of the geolocation to use.
+    string /           ISO country  In addition to the country full names, you may also specify their abbreviated form, such as US instead of United States.
+    required           code.        Valid country codes can be found here https://countrycode.org/.
+                     • Any valid
+                       country
+                       name.
+    region                          Region name of the country to use.
+    string
+   name
+   string /                         Specifies the name of the address list.
+   required
+   partition       Default:         Device partition to manage resources on.
+   string          "Common"
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:       When present, ensures that the address list and entries exists.
+   string            • present ←    When absent, ensures the address list is removed.
+                     • absent
+
+NOTES                   *bigip_firewall_address_list-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_firewall_address_list-examples*
+
+ - name: Create an address list
+   bigip_firewall_address_list:
+     name: foo
+     addresses:
+       - 3.3.3.3
+       - 4.4.4.4
+       - 5.5.5.5
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_firewall_address_list-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   address_lists           The new list of address list names applied to the address list.
+   list           changed  Sample:
+                           ['/Common/list1', '/Common/list2']
+   address_ranges          The new list of address ranges applied to the address list.
+   list           changed  Sample:
+                           ['1.1.1.1-2.2.2.2', '3.3.3.3-4.4.4.4']
+   addresses               The new list of addresses applied to the address list.
+   list           changed  Sample:
+                           ['1.1.1.1', '2.2.2.2']
+   description             The new description of the address list.
+   string         changed  Sample:
+                           My address list
+   fqdns                   The new list of FQDN names applied to the address list.
+   list           changed  Sample:
+                           ['google.com', 'mit.edu']
+   geo_locations  changed  The new list of geo locations applied to the address list.
+   complex
+        country            Country of the geo location.
+        string    changed  Sample:
+                           US
+        region             Region of the geo location.
+        string    changed  Sample:
+                           California
+
+STATUS                   *bigip_firewall_address_list-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_firewall_address_list-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_firewall_address_list_module.html

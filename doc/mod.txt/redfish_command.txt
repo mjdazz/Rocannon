@@ -1,0 +1,158 @@
+SYNOPSIS                   *redfish_command*
+
+     • Builds Redfish URIs locally and sends them to remote OOB controllers to perform an action.
+     • Manages OOB controller ex. reboot, log management.
+     • Manages OOB controller users ex. add, remove, update.
+     • Manages system power ex. on, off, graceful and forced reboot.
+
+PARAMETERS                   *redfish_command-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   baseuri                            Base URI of OOB controller
+   string / required
+   boot_next
+   string                             BootNext target when bootdevice is "UefiBootNext"
+   added in 2.9
+   bootdevice                         bootdevice when setting boot configuration
+   string
+   category                           Category to execute on OOB controller
+   string / required
+   command                            List of commands to execute on OOB controller
+   list / required
+   id
+   string                             ID of user to add/delete/modify
+   added in 2.8
+   new_password
+   string                             password of user to add/delete/modify
+   added in 2.8
+   new_username
+   string                             name of user to add/delete/modify
+   added in 2.8
+   password                           Password for authentication with OOB controller
+   string / required
+   roleid
+   string                             role of user to add/delete/modify
+   added in 2.8
+   timeout           Default:
+   integer           10               Timeout in seconds for URL requests to OOB controller
+   added in 2.8
+   uefi_target
+   string                             UEFI target when bootdevice is "UefiTarget"
+   added in 2.9
+   username
+   string / required                  User for authentication with OOB controller
+   added in 2.8
+
+EXAMPLES                   *redfish_command-examples*
+
+ - name: Restart system power gracefully
+   redfish_command:
+     category: Systems
+     command: PowerGracefulRestart
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Set one-time boot device to {{ bootdevice }}
+   redfish_command:
+     category: Systems
+     command: SetOneTimeBoot
+     bootdevice: "{{ bootdevice }}"
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Set one-time boot device to UefiTarget of "/0x31/0x33/0x01/0x01"
+   redfish_command:
+     category: Systems
+     command: SetOneTimeBoot
+     bootdevice: "UefiTarget"
+     uefi_target: "/0x31/0x33/0x01/0x01"
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Set one-time boot device to BootNext target of "Boot0001"
+   redfish_command:
+     category: Systems
+     command: SetOneTimeBoot
+     bootdevice: "UefiBootNext"
+     boot_next: "Boot0001"
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Set chassis indicator LED to blink
+   redfish_command:
+     category: Chassis
+     command: IndicatorLedBlink
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+
+ - name: Add and enable user
+   redfish_command:
+     category: Accounts
+     command: AddUser,EnableUser
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     id: "{{ id }}"
+     new_username: "{{ new_username }}"
+     new_password: "{{ new_password }}"
+     roleid: "{{ roleid }}"
+
+ - name: Disable and delete user
+   redfish_command:
+     category: Accounts
+     command: ["DisableUser", "DeleteUser"]
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     id: "{{ id }}"
+
+ - name: Update user password
+   redfish_command:
+     category: Accounts
+     command: UpdateUserPassword
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     id: "{{ id }}"
+     new_password: "{{ new_password }}"
+
+ - name: Clear Manager Logs with a timeout of 20 seconds
+   redfish_command:
+     category: Manager
+     command: ClearLogs
+     baseuri: "{{ baseuri }}"
+     username: "{{ username }}"
+     password: "{{ password }}"
+     timeout: 20
+
+RETURN VALUES                   *redfish_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   msg             Message with action result or error description
+   string always   Sample:
+                   Action was successful
+
+STATUS                   *redfish_command-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jose Delarosa (@jose-delarosa)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *redfish_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/redfish_command_module.html

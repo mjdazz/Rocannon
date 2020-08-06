@@ -1,0 +1,119 @@
+SYNOPSIS                   *na_ontap_lun_map*
+
+     • Map and unmap LUNs on NetApp ONTAP.
+
+REQUIREMENTS                   *na_ontap_lun_map-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • A physical or virtual clustered Data ONTAP system. The modules support Data ONTAP 9.1 and onward
+     • Ansible 2.6
+     • Python2 netapp-lib (2017.10.30) or later. Install using ‘pip install netapp-lib’
+     • Python3 netapp-lib (2018.11.13) or later. Install using ‘pip install netapp-lib’
+     • To enable http on the cluster you must run the following commands ‘set -privilege advanced;’ ‘system services web modify -http-enabled true;’
+
+PARAMETERS                   *na_ontap_lun_map-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   hostname                              The hostname or IP address of the ONTAP instance.
+   string / required
+   http_port                             Override the default port (80 or 443) with this port
+   integer
+   https                  Choices:
+   boolean                • no ←         Enable and disable https
+                          • yes
+   initiator_group_name                  Initiator group to map to the given LUN.
+   - / required
+   lun_id                                LUN ID assigned for the map.
+   -
+   ontapi                                The ontap api version to use
+   integer
+   password                              Password for the specified user.
+   string / required                     aliases: pass
+   path                                  Path of the LUN..
+   - / required
+   state                  Choices:
+   -                      • present ←    Whether the specified LUN should exist or not.
+                          • absent
+                          Choices:       REST API if supported by the target system for all the resources and attributes the module requires. Otherwise will revert to ZAPI.
+   use_rest               • Never        Always -- will always use the REST API
+   string                 • Always       Never -- will always use the ZAPI
+                          • Auto ←       Auto -- will try to use the REST Api
+   username                              This can be a Cluster-scoped or SVM-scoped account, depending on whether a Cluster-level or SVM-level API is required. For more information, please read the
+   string / required                     documentation https://mysupport.netapp.com/NOW/download/software/nmsdk/9.4/.
+                                         aliases: user
+   validate_certs         Choices:       If set to no, the SSL certificates will not be validated.
+   boolean                • no           This should only set to False used on personally controlled sites using self-signed certificates.
+                          • yes ←
+   vserver                               The name of the vserver to use.
+   - / required
+
+NOTES                   *na_ontap_lun_map-notes*
+
+   Note
+
+     • The modules prefixed with na\_ontap are built to support the ONTAP storage platform.
+
+EXAMPLES                   *na_ontap_lun_map-examples*
+
+ - name: Create LUN mapping
+   na_ontap_lun_map:
+     state: present
+     initiator_group_name: ansibleIgroup3234
+     path: /vol/iscsi_path/iscsi_lun
+     vserver: ci_dev
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+ - name: Unmap LUN
+   na_ontap_lun_map:
+     state: absent
+     initiator_group_name: ansibleIgroup3234
+     path: /vol/iscsi_path/iscsi_lun
+     vserver: ci_dev
+     hostname: "{{ netapp_hostname }}"
+     username: "{{ netapp_username }}"
+     password: "{{ netapp_password }}"
+
+RETURN VALUES                   *na_ontap_lun_map-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   lun_naa_id          The Network Address Authority (NAA) identifier for the LUN.
+   string     success  Sample:
+                       600a0980383045372f5d4c5a70315474
+   lun_node            NetApp controller that is hosting the LUN.
+   string     success  Sample:
+                       node01
+   lun_ostype          Specifies the OS of the host accessing the LUN.
+   string     success  Sample:
+                       vmware
+   lun_serial          A unique, 12-byte, ASCII string used to identify the LUN.
+   string     success  Sample:
+                       80E7/]LZp1Tt
+   lun_size            Size of the LUN in bytes.
+   integer    success  Sample:
+                       2199023255552
+   lun_state           Online or offline status of the LUN.
+   string     success  Sample:
+                       online
+
+STATUS                   *na_ontap_lun_map-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • NetApp Ansible Team (@carchi8py) <ng-ansibleteam@netapp.com>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *na_ontap_lun_map-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/na_ontap_lun_map_module.html

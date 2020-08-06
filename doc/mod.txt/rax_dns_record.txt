@@ -1,67 +1,126 @@
-SYNOPSIS                           *rax_dns_record*
+SYNOPSIS                   *rax_dns_record*
 
-New in version 1.5.
+     • Manage DNS records on Rackspace Cloud DNS
 
-Manage DNS records on Rackspace Cloud DNS
+REQUIREMENTS                   *rax_dns_record-requirements*
 
-EXAMPLES                           *rax_dns_record-examples*
->
-    - name: Create DNS Records
-      hosts: all
-      gather_facts: False
-      tasks:
-        - name: Create A record
-          local_action:
-            module: rax_dns_record
-            credentials: ~/.raxpub
-            domain: example.org
-            name: www.example.org
-            data: "{{ rax_accessipv4 }}"
-            type: A
-          register: a_record
-   
-        - name: Create PTR record
-          local_action:
-            module: rax_dns_record
-            credentials: ~/.raxpub
-            server: "{{ rax_id }}"
-            name: "{{ inventory_hostname }}"
-            region: DFW
-          register: ptr_record
-   
-      Note
-   
-      It is recommended that plays utilizing this module be run with serial: 1 to avoid exceeding the API request limit imposed by the Rackspace CloudDNS API
-   
-      Note
-   
-      To manipulate a PTR record either loadbalancer or server must be supplied
-   
-      Note
-   
-      As of version 1.7, the type field is required and no longer defaults to an A record.
-   
-      Note
-   
-      PTR record support was added in version 1.7
-   
-      Note
-   
-      The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
-   
-      Note
-   
-      RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
-   
-      Note
-   
-      RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
-   
-      Note
-   
-      RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, ...)
-   
+   The below requirements are needed on the host that executes this module.
+
+     • pyrax
+     • python >= 2.6
+
+PARAMETERS                   *rax_dns_record-parameters*
+
+     Parameter                   Choices/Defaults                                                                              Comments
+   api_key                                                        Rackspace API key, overrides credentials.
+   string                                                         aliases: password
+   auth_endpoint  Default:                                        The URI of the authentication service.
+   -              "https://identity.api.rackspacecloud.com/v2.0/"
+   comment                                                        Brief description of the domain. Maximum length of 160 characters
+   -
+   credentials                                                    File to find the Rackspace credentials in. Ignored if api_key and username are provided.
+   path                                                           aliases: creds_file
+   data                                                           IP address for A/AAAA record, FQDN for CNAME/MX/NS, or text data for SRV/TXT
+   - / required
+   domain                                                         Domain name to create the record in. This is an invalid option when type=PTR
+   -
+   env                                                            Environment as configured in ~/.pyrax.cfg, see
+   string                                                         https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#pyrax-configuration.
+   identity_type  Default:                                        Authentication mechanism to use, such as rackspace or keystone.
+   -              "rackspace"
+   loadbalancer                                                   Load Balancer ID to create a PTR record for. Only used with type=PTR
+   -
+   name                                                           FQDN record name to create
+   - / required
+   overwrite        Choices:                                      Add new records if data doesn't match, instead of updating existing record with matching name. If there are already multiple
+   boolean          • no                                          records with matching name and overwrite=true, this module will fail.
+                    • yes ←
+   priority                                                       Required for MX and SRV records, but forbidden for other record types. If specified, must be an integer from 0 to 65535.
+   -
+   region         Default:                                        Region to create an instance in.
+   string         "DFW"
+   server                                                         Server ID to create a PTR record for. Only used with type=PTR
+   -
+   state            Choices:
+   -                • present ←                                   Indicate desired state of the resource
+                    • absent
+   tenant_id                                                      The tenant ID used for authentication.
+   -
+   tenant_name                                                    The tenant name used for authentication.
+   -
+   ttl            Default:                                        Time to live of record in seconds
+   -              3600
+                    Choices:
+                    • A
+                    • AAAA
+   type             • CNAME
+   - / required     • MX                                          DNS record type
+                    • NS
+                    • SRV
+                    • TXT
+                    • PTR
+   username                                                       Rackspace username, overrides credentials.
+   string
+   validate_certs   Choices:                                      Whether or not to require SSL validation of API endpoints.
+   boolean          • no                                          aliases: verify_ssl
+                    • yes
+
+NOTES                   *rax_dns_record-notes*
+
+   Note
+
+     • It is recommended that plays utilizing this module be run with serial: 1 to avoid exceeding the API request limit imposed by the Rackspace CloudDNS API
+     • To manipulate a PTR record either loadbalancer or server must be supplied
+     • As of version 1.7, the type field is required and no longer defaults to an A record.
+     • PTR record support was added in version 1.7
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+     • The following environment variables can be used, RAX_USERNAME, RAX_API_KEY, RAX_CREDS_FILE, RAX_CREDENTIALS, RAX_REGION.
+     • RAX_CREDENTIALS and RAX_CREDS_FILE points to a credentials file appropriate for pyrax. See https://github.com/rackspace/pyrax/blob/master/docs/getting_started.md#authenticating
+     • RAX_USERNAME and RAX_API_KEY obviate the use of a credentials file
+     • RAX_REGION defines a Rackspace Public Cloud region (DFW, ORD, LON, …)
+
+EXAMPLES                   *rax_dns_record-examples*
+
+ - name: Create DNS Records
+   hosts: all
+   gather_facts: False
+   tasks:
+     - name: Create A record
+       local_action:
+         module: rax_dns_record
+         credentials: ~/.raxpub
+         domain: example.org
+         name: www.example.org
+         data: "{{ rax_accessipv4 }}"
+         type: A
+       register: a_record
+
+     - name: Create PTR record
+       local_action:
+         module: rax_dns_record
+         credentials: ~/.raxpub
+         server: "{{ rax_id }}"
+         name: "{{ inventory_hostname }}"
+         region: DFW
+       register: ptr_record
+
+STATUS                   *rax_dns_record-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Matt Martz (@sivel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *rax_dns_record-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/rax_dns_record_module.html
+https://docs.ansible.com/ansible/latest/modules/rax_dns_record_module.html

@@ -1,0 +1,98 @@
+SYNOPSIS                   *proxysql_manage_config*
+
+     • The proxysql_global_variables module writes the proxysql configuration settings between layers. Currently this module will always report a changed state, so should typically be used with
+       WHEN however this will change in a future version when the CHECKSUM table commands are available for all tables in proxysql.
+
+REQUIREMENTS                   *proxysql_manage_config-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyMySQL (Python 2.7 and Python 3.X), or
+     • MySQLdb (Python 2.x)
+
+PARAMETERS                   *proxysql_manage_config-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   action            Choices:
+   - / required      • LOAD         The supplied action combines with the supplied direction to provide the semantics of how we want to move the config_settings between the config_layers.
+                     • SAVE
+   config_file     Default:         Specify a config file from which login_user and login_password are to be read.
+   path            ""
+                     Choices:
+   config_layer      • MEMORY       RUNTIME - represents the in-memory data structures of ProxySQL used by the threads that are handling the requests. MEMORY - (sometimes also referred as main)
+   - / required      • DISK         represents the in-memory SQLite3 database. DISK - represents the on-disk SQLite3 database. CONFIG - is the classical config file. You can only LOAD FROM the
+                     • RUNTIME      config file.
+                     • CONFIG
+                     Choices:
+                     • MYSQL USERS
+                     • MYSQL
+                       SERVERS
+   config_settings   • MYSQL QUERY
+   - / required        RULES        The config_settings specifies which configuration we're writing.
+                     • MYSQL
+                       VARIABLES
+                     • ADMIN
+                       VARIABLES
+                     • SCHEDULER
+   direction         Choices:       FROM - denotes we're reading values FROM the supplied config_layer and writing to the next layer. TO - denotes we're reading from the previous layer and writing
+   - / required      • FROM         TO the supplied config_layer."
+                     • TO
+   login_host      Default:         The host used to connect to ProxySQL admin interface.
+   string          "127.0.0.1"
+   login_password                   The password used to authenticate to ProxySQL admin interface.
+   string
+   login_port      Default:         The port used to connect to ProxySQL admin interface.
+   integer         6032
+   login_user                       The username used to authenticate to ProxySQL admin interface.
+   string
+
+EXAMPLES                   *proxysql_manage_config-examples*
+
+ ---
+ # This example saves the mysql users config from memory to disk. It uses
+ # supplied credentials to connect to the proxysql admin interface.
+
+ - proxysql_manage_config:
+     login_user: 'admin'
+     login_password: 'admin'
+     action: "SAVE"
+     config_settings: "MYSQL USERS"
+     direction: "FROM"
+     config_layer: "MEMORY"
+
+ # This example loads the mysql query rules config from memory to to runtime. It
+ # uses supplied credentials to connect to the proxysql admin interface.
+
+ - proxysql_manage_config:
+     config_file: '~/proxysql.cnf'
+     action: "LOAD"
+     config_settings: "MYSQL QUERY RULES"
+     direction: "TO"
+     config_layer: "RUNTIME"
+
+RETURN VALUES                   *proxysql_manage_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key                             Returned                                                                                   Description
+   stdout                                                               Simply reports whether the action reported a change.
+   dictionary Currently the returned value with always be changed=True. Sample:
+                                                                        {'changed': True}
+
+STATUS                   *proxysql_manage_config-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ben Mildren (@bmildren)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *proxysql_manage_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/proxysql_manage_config_module.html

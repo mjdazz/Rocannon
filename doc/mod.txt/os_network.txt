@@ -1,0 +1,162 @@
+SYNOPSIS                   *os_network*
+
+     • Add or remove network from OpenStack.
+
+REQUIREMENTS                   *os_network-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_network-parameters*
+
+           Parameter         Choices/Defaults                                                                        Comments
+   admin_state_up              Choices:
+   boolean                     • no           Whether the state should be marked as up or down.
+                               • yes ←
+   api_timeout                                How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                              Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url,
+   auth                                       username, password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports
+   dictionary                                 them. For other plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud
+                                              is provided or OpenStack OS_" environment variables are present.
+   auth_type                                  Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and the
+   string                                     contents of the auth parameter should be updated accordingly.
+   availability_zone                          Ignored. Present for backwards compatibility
+   -
+   ca_cert                                    A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                                     aliases: cacert
+   client_cert                                A path to a client certificate to use as part of the SSL transaction.
+   string                                     aliases: cert
+   client_key                                 A path to a client key to use as part of the SSL transaction.
+   string                                     aliases: key
+   cloud                                      Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file.
+   raw                                        Provides default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are
+                                              present. If cloud is a dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   dns_domain
+   -                                          The DNS domain value to set. Network will use Openstack defaults if this option is not provided.
+   added in 2.9
+   external                    Choices:
+   boolean                     • no ←         Whether this network is externally accessible.
+                               • yes
+                               Choices:
+   interface                   • admin        Endpoint URL type to fetch from the service catalog.
+   string                      • internal     aliases: endpoint_type
+                               • public ←
+   mtu                                        The maximum transmission unit (MTU) value to address fragmentation. Network will use OpenStack defaults if this option is not provided. Requires
+   integer                                    openstacksdk>=0.18.
+   added in 2.9
+   name                                       Name to be assigned to the network.
+   - / required
+   port_security_enabled       Choices:       Whether port security is enabled on the network or not. Network will use OpenStack defaults if this option is not utilised. Requires
+   boolean                     • no           openstacksdk>=0.18.
+   added in 2.8                • yes
+   project                                    Project name or ID containing the network (name admin-only)
+   -
+   provider_network_type                      The type of physical network that maps to this network resource.
+   -
+   provider_physical_network                  The physical network where this network object is implemented.
+   -
+   provider_segmentation_id                   An isolated segment on the physical network. The network_type attribute defines the segmentation model. For example, if the network_type value is vlan,
+   -                                          this ID is a vlan identifier. If the network_type value is gre, this ID is a gre key.
+   region_name                                Name of the region.
+   string
+   shared                      Choices:
+   boolean                     • no ←         Whether this network is shared or not.
+                               • yes
+   state                       Choices:
+   -                           • present ←    Indicate desired state of the resource.
+                               • absent
+   timeout                   Default:         How long should ansible wait for the requested resource.
+   integer                   180
+   validate_certs              Choices:       Whether or not SSL API requests should be verified.
+   boolean                     • no ←         Before Ansible 2.3 this defaulted to yes.
+                               • yes          aliases: verify
+   wait                        Choices:
+   boolean                     • no           Should ansible wait until the requested resource is complete.
+                               • yes ←
+
+NOTES                   *os_network-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_network-examples*
+
+ # Create an externally accessible network named 'ext_network'.
+ - os_network:
+     cloud: mycloud
+     state: present
+     name: ext_network
+     external: true
+
+RETURN VALUES                   *os_network-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key                          Returned                                                                          Description
+   network                     On success when state is 'present'. Dictionary describing the network.
+   complex
+     admin_state_up                                                The administrative state of the network.
+     boolean                                                       Sample:
+                                                                   True
+     dns_domain                                                    The DNS domain of a network resource. Requires openstacksdk>=0.29.
+     string                                                        Sample:
+                                                                   sample.openstack.org.
+     id                                                            Network ID.
+     string                                                        Sample:
+                                                                   4bb4f9a5-3bd2-4562-bf6a-d17a6341bb56
+     mtu                                                           The MTU of a network resource.
+     integer
+     name                                                          Network name.
+     string                                                        Sample:
+                                                                   ext_network
+     port_security_enabled                                         The port security status
+     boolean                                                       Sample:
+                                                                   True
+     provider:network_type                                         The type of physical network that maps to this network resource.
+     string                                                        Sample:
+                                                                   vlan
+     provider:physical_network                                     The physical network where this network object is implemented.
+     string                                                        Sample:
+                                                                   my_vlan_net
+     provider:segmentation_id                                      An isolated segment on the physical network.
+     string                                                        Sample:
+                                                                   101
+     router:external                                               Indicates whether this network is externally accessible.
+     boolean                                                       Sample:
+                                                                   True
+     shared                                                        Indicates whether this network is shared across all tenants.
+     boolean
+     status                                                        Network status.
+     string                                                        Sample:
+                                                                   ACTIVE
+     subnets                                                       The associated subnets.
+     list
+     tenant_id                                                     The tenant ID.
+     string                                                        Sample:
+                                                                   06820f94b9f54b119636be2728d216fc
+
+STATUS                   *os_network-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Monty Taylor (@emonty)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_network-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_network_module.html

@@ -1,0 +1,151 @@
+SYNOPSIS                   *cs_vmsnapshot*
+
+     • Create, remove and revert VM from snapshots.
+
+REQUIREMENTS                   *cs_vmsnapshot-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_vmsnapshot-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   account                            Account the VM snapshot is related to.
+   string
+                       Choices:       HTTP method used to query the API endpoint.
+   api_http_method     • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string              • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is get if not specified.
+   api_key                            API key of the CloudStack API.
+   string                             If not given, the CLOUDSTACK_KEY env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   api_region        Default:         Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                         Secret key of the CloudStack API.
+   string                             If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+                                      HTTP timeout in seconds.
+   api_timeout                        If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                            As the last option, the value is taken from the ini config file, also see the notes.
+                                      Fallback value is 10 seconds if not specified.
+   api_url                            URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                             If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                      As the last option, the value is taken from the ini config file, also see the notes.
+   description                        Description of the snapshot.
+   string
+   domain                             Domain the VM snapshot is related to.
+   string
+   name                               Unique Name of the snapshot. In CloudStack terms display name.
+   string / required                  aliases: display_name
+   poll_async          Choices:
+   boolean             • no           Poll async jobs until job has finished.
+                       • yes ←
+   project                            Name of the project the VM is assigned to.
+   string
+   snapshot_memory     Choices:
+   boolean             • no ←         Snapshot memory if set to true.
+                       • yes
+                       Choices:
+   state               • present ←    State of the snapshot.
+   string              • absent
+                       • revert
+   tags                               List of tags. Tags are a list of dictionaries having keys key and value.
+   list                               To delete all tags, set a empty list e.g. tags: [].
+   added in 2.4                       aliases: tag
+   vm                                 Name of the virtual machine.
+   string / required
+   zone                               Name of the zone in which the VM is in. If not set, default zone is used.
+   string
+
+NOTES                   *cs_vmsnapshot-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_vmsnapshot-examples*
+
+ - name: Create a VM snapshot of disk and memory before an upgrade
+   cs_vmsnapshot:
+     name: Snapshot before upgrade
+     vm: web-01
+     snapshot_memory: yes
+   delegate_to: localhost
+
+ - name: Revert a VM to a snapshot after a failed upgrade
+   cs_vmsnapshot:
+     name: Snapshot before upgrade
+     vm: web-01
+     state: revert
+   delegate_to: localhost
+
+ - name: Remove a VM snapshot after successful upgrade
+   cs_vmsnapshot:
+     name: Snapshot before upgrade
+     vm: web-01
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_vmsnapshot-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key      Returned                                                                                 Description
+   account               Account the vm snapshot is related to.
+   string       success  Sample:
+                         example account
+   created               date of the snapshot.
+   string       success  Sample:
+                         2015-03-29T14:57:06+0200
+   current               true if the snapshot is current
+   boolean      success  Sample:
+                         True
+   description           description of vm snapshot
+   string       success  Sample:
+                         snapshot brought to you by Ansible
+   display_name          Display name of the snapshot.
+   string       success  Sample:
+                         snapshot before update
+   domain                Domain the vm snapshot is related to.
+   string       success  Sample:
+                         example domain
+   id                    UUID of the snapshot.
+   string       success  Sample:
+                         a6f7a5fc-43f8-11e5-a151-feff819cdc9f
+   name                  Name of the snapshot.
+   string       success  Sample:
+                         snapshot before update
+   project               Name of project the vm snapshot is related to.
+   string       success  Sample:
+                         Production
+   state                 state of the vm snapshot
+   string       success  Sample:
+                         Allocated
+   type                  type of vm snapshot
+   string       success  Sample:
+                         DiskAndMemory
+
+STATUS                   *cs_vmsnapshot-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_vmsnapshot-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_vmsnapshot_module.html

@@ -1,0 +1,151 @@
+SYNOPSIS                   *openssl_csr_info*
+
+     • This module allows one to query information on OpenSSL Certificate Signing Requests (CSR).
+     • In case the CSR signature cannot be validated, the module will fail. In this case, all return variables are still returned.
+     • It uses the pyOpenSSL or cryptography python library to interact with OpenSSL. If both the cryptography and PyOpenSSL libraries are available (and meet the minimum version requirements)
+       cryptography will be preferred as a backend over PyOpenSSL (unless the backend is forced with select_crypto_backend). Please note that the PyOpenSSL backend was deprecated in Ansible 2.9 and
+       will be removed in Ansible 2.13.
+
+REQUIREMENTS                   *openssl_csr_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyOpenSSL >= 0.15 or cryptography >= 1.3
+
+PARAMETERS                   *openssl_csr_info-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   path                                   Remote absolute path where the CSR file is loaded from.
+   path / required
+                                          Determines which crypto backend to use.
+                           Choices:       The default choice is auto, which tries to use cryptography if available, and falls back to pyopenssl.
+   select_crypto_backend   • auto ←       If set to pyopenssl, will try to use the pyOpenSSL library.
+   string                  • cryptography If set to cryptography, will try to use the cryptography library.
+                           • pyopenssl    Please note that the pyopenssl backend has been deprecated in Ansible 2.9, and will be removed in Ansible 2.13. From that point on, only the cryptography
+                                          backend will be available.
+
+SEE ALSO                   *openssl_csr_info-see also*
+
+   See also
+
+   openssl_csr – Generate OpenSSL Certificate Signing Request (CSR)
+   The official documentation on the openssl_csr module.
+
+EXAMPLES                   *openssl_csr_info-examples*
+
+ - name: Generate an OpenSSL Certificate Signing Request
+   openssl_csr:
+     path: /etc/ssl/csr/www.ansible.com.csr
+     privatekey_path: /etc/ssl/private/ansible.com.pem
+     common_name: www.ansible.com
+
+ - name: Get information on the CSR
+   openssl_csr_info:
+     path: /etc/ssl/csr/www.ansible.com.csr
+   register: result
+
+ - name: Dump information
+   debug:
+     var: result
+
+RETURN VALUES                   *openssl_csr_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key              Returned                                                                          Description
+                                success
+                                and if    The CSR's authority cert issuer as a list of general names.
+   authority_cert_issuer        the       Is none if the AuthorityKeyIdentifier extension is not present.
+   list / elements=string       pyOpenSSL Sample:
+   added in 2.9                 backend   [DNS:www.ansible.com, IP:1.2.3.4]
+                                is not
+                                used
+                                success
+                                and if    The CSR's authority cert serial number.
+   authority_cert_serial_number the       Is none if the AuthorityKeyIdentifier extension is not present.
+   integer                      pyOpenSSL Sample:
+   added in 2.9                 backend   12345
+                                is not
+                                used
+                                success
+                                and if    The CSR's authority key identifier.
+   authority_key_identifier     the       The identifier is returned in hexadecimal, with : used to separate bytes.
+   string                       pyOpenSSL Is none if the AuthorityKeyIdentifier extension is not present.
+   added in 2.9                 backend   Sample:
+                                is not    00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33
+                                used
+   basic_constraints                      Entries in the basic_constraints extension, or none if extension is not present.
+   list / elements=string       success   Sample:
+                                          [CA:TRUE, pathlen:1]
+   basic_constraints_critical   success   Whether the basic_constraints extension is critical.
+   boolean
+   extended_key_usage                     Entries in the extended_key_usage extension, or none if extension is not present.
+   list / elements=string       success   Sample:
+                                          [Biometric Info, DVCS, Time Stamping]
+   extended_key_usage_critical  success   Whether the extended_key_usage extension is critical.
+   boolean
+   extensions_by_oid                      Returns a dictionary for every extension OID
+   dictionary                   success   Sample:
+                                          {"1.3.6.1.5.5.7.1.24": { "critical": false, "value": "MAMCAQU="}}
+              critical          success   Whether the extension is critical.
+              boolean
+              value                       The Base64 encoded value (in DER format) of the extension
+              string            success   Sample:
+                                          MAMCAQU=
+   key_usage                              Entries in the key_usage extension, or none if extension is not present.
+   string                       success   Sample:
+                                          [Key Agreement, Data Encipherment]
+   key_usage_critical           success   Whether the key_usage extension is critical.
+   boolean
+   ocsp_must_staple             success   yes if the OCSP Must Staple extension is present, none otherwise.
+   boolean
+   ocsp_must_staple_critical    success   Whether the ocsp_must_staple extension is critical.
+   boolean
+   public_key                             CSR's public key in PEM format
+   string                       success   Sample:
+                                          -----BEGIN PUBLIC KEY----- MIICIjANBgkqhkiG9w0BAQEFAAOCAg8A...
+                                          Fingerprints of CSR's public key.
+   public_key_fingerprints                For every hash algorithm available, the fingerprint is computed.
+   dictionary                   success   Sample:
+                                          {'sha256': 'd4:b3:aa:6d:c8:04:ce:4e:ba:f6:29:4d:92:a3:94:b0:c2:ff:bd:bf:33:63:11:43:34:0f:51:b0:95:09:2f:63', 'sha512':
+                                          'f7:07:4a:f0:b0:f0:e6:8b:95:5f:f9:e6:61:0a:32:68:f1...
+   signature_valid              success   Whether the CSR's signature is valid.
+   boolean                                In case the check returns no, the module will fail.
+                                          The CSR's subject as a dictionary.
+   subject                      success   Note that for repeated values, only the last one will be returned.
+   dictionary                             Sample:
+                                          {"commonName": "www.example.com", "emailAddress": "[email protected]"}
+   subject_alt_name                       Entries in the subject_alt_name extension, or none if extension is not present.
+   list / elements=string       success   Sample:
+                                          [DNS:www.ansible.com, IP:1.2.3.4]
+   subject_alt_name_critical    success   Whether the subject_alt_name extension is critical.
+   boolean
+                                success
+                                and if    The CSR's subject key identifier.
+   subject_key_identifier       the       The identifier is returned in hexadecimal, with : used to separate bytes.
+   string                       pyOpenSSL Is none if the SubjectKeyIdentifier extension is not present.
+   added in 2.9                 backend   Sample:
+                                is not    00:11:22:33:44:55:66:77:88:99:aa:bb:cc:dd:ee:ff:00:11:22:33
+                                used
+   subject_ordered                        The CSR's subject as an ordered list of tuples.
+   list / elements=list         success   Sample:
+   added in 2.9                           [["commonName", "www.example.com"], ["emailAddress": "[email protected]"]]
+
+STATUS                   *openssl_csr_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Felix Fontein (@felixfontein)
+     • Yanis Guenane (@Spredzy)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *openssl_csr_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/openssl_csr_info_module.html

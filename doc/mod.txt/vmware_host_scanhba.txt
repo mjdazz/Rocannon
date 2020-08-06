@@ -1,0 +1,111 @@
+SYNOPSIS                   *vmware_host_scanhba*
+
+     • This module can force a rescan of the hosts HBA subsystem which is needed when wanting to mount a new datastore.
+     • You could use this before using vmware_host_datastore to mount a new datastore to ensure your device/volume is ready.
+     • You can also optionally force a Refresh of the Storage System in vCenter/ESXi Web Client.
+     • All parameters and VMware object names are case sensitive.
+     • You can supply an esxi_hostname or a cluster_name
+
+REQUIREMENTS                   *vmware_host_scanhba-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_host_scanhba-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   cluster_name                     Cluster name to Rescan the storage subsystem on (this will run the rescan task on each host in the cluster).
+   string
+   esxi_hostname                    ESXi hostname to Rescan the storage subsystem on.
+   string
+   hostname                         The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                           If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                    Environment variable support added in Ansible 2.6.
+                                    The password of the vSphere vCenter or ESXi server.
+   password                         If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                           Environment variable support added in Ansible 2.6.
+                                    aliases: pass, pwd
+   port            Default:         The port number of the vSphere vCenter or ESXi server.
+   integer         443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                     Environment variable support added in Ansible 2.6.
+   proxy_host                       Address of a proxy that will receive all HTTPS requests and relay them.
+   string                           The format is a hostname or a IP.
+   added in 2.9                     If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                    This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                       Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                          If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   refresh_storage   Choices:
+   boolean           • no ←         Refresh the storage system in vCenter/ESXi Web Client for each host found
+                     • yes
+                                    The username of the vSphere vCenter or ESXi server.
+   username                         If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                           Environment variable support added in Ansible 2.6.
+                                    aliases: admin, user
+                     Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs    • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean           • yes ←        Environment variable support added in Ansible 2.6.
+                                    If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+
+NOTES                   *vmware_host_scanhba-notes*
+
+   Note
+
+     • Tested on vSphere 6.0
+
+EXAMPLES                   *vmware_host_scanhba-examples*
+
+ - name: Recan HBA's for a given ESXi host and refresh storage system objects
+   vmware_host_scanhba:
+       hostname: '{{ vcenter_hostname }}'
+       username: '{{ vcenter_username }}'
+       password: '{{ vcenter_password }}'
+       esxi_hostname: '{{ inventory_hostname }}'
+       refresh_storage: true
+   delegate_to: localhost
+
+ - name: Rescan HBA's for a given cluster - all found hosts will be scanned
+   vmware_host_scanhba:
+       hostname: '{{ vcenter_hostname }}'
+       username: '{{ vcenter_username }}'
+       password: '{{ vcenter_password }}'
+       esxi_hostname: '{{ inventory_hostname }}'
+       refresh_storage: true
+   delegate_to: localhost
+
+ - name: Recan HBA's for a given ESXi host and don't refresh storage system objects
+   vmware_host_scanhba:
+       hostname: '{{ vcenter_hostname }}'
+       username: '{{ vcenter_username }}'
+       password: '{{ vcenter_password }}'
+       esxi_hostname: '{{ inventory_hostname }}'
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_host_scanhba-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   result              return confirmation of requested host and updated / refreshed storage system
+   dictionary always   Sample:
+                       {'esxi01.example.com': {'rescaned_hba': 'true', 'refreshed_storage': 'true'}}
+
+STATUS                   *vmware_host_scanhba-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Michael Eaton (@michaeldeaton)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_host_scanhba-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_host_scanhba_module.html

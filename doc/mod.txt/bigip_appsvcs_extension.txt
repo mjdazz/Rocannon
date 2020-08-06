@@ -1,0 +1,121 @@
+SYNOPSIS                   *bigip_appsvcs_extension*
+
+     • Manages application service deployments via the App Services Extension functionality in BIG-IP.
+
+PARAMETERS                   *bigip_appsvcs_extension-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+                                    Declaration of tenants configured on the system.
+                                    This parameter is most often used along with the file or template lookup plugins. Refer to the examples section for correct usage.
+                                    For anything advanced or with formatting consider using the template lookup.
+   content                          This can additionally be used for specifying application service configurations directly in YAML, however that is not an encouraged practice and, if used at all,
+   raw / required                   should only be used for the absolute smallest of configurations to prevent your Playbooks from becoming too large.
+                                    If you content includes encrypted values (such as ciphertexts, passphrases, etc), the returned changed value will always be true.
+                                    If you are using the to_nice_json filter, it will cause this module to fail because the purpose of that filter is to format the JSON to be human-readable and
+                                    this process includes inserting "extra characters that break JSON validators.
+   force             Choices:       Force updates a declaration.
+   boolean           • no ←         This parameter should be used in cases where your declaration includes items that are encrypted or in cases (such as WAF Policies) where you want a large reload
+                     • yes          to take place.
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:       When state is present, ensures the configuration exists.
+   string            • present ←    When state is absent, ensures that the configuration is removed.
+                     • absent
+                                    A list of tenants that you want to remove.
+   tenants                          This parameter is only relevant when state is absent. It will be ignored when state is present.
+   raw                              A value of all will remove all tenants.
+                                    Tenants can be specified as a list as well to remove only specific tenants.
+
+NOTES                   *bigip_appsvcs_extension-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_appsvcs_extension-examples*
+
+ - name: Deploy an app service configuration
+   bigip_appsvcs_extension:
+     content: "{{ lookup('file', '/path/to/appsvcs.json') }}"
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove all app service configurations
+   bigip_appsvcs_extension:
+     tenants: all
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove tenants T1 and T2 from app service configurations
+   bigip_appsvcs_extension:
+     tenants:
+       - T1
+       - T2
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_appsvcs_extension-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+    Key   Returned                                                                                    Description
+   action          The action performed.
+   string changed  Sample:
+                   deploy
+
+STATUS                   *bigip_appsvcs_extension-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_appsvcs_extension-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_appsvcs_extension_module.html

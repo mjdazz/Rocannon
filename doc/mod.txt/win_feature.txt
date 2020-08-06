@@ -1,33 +1,117 @@
-SYNOPSIS                           *win_feature*
+SYNOPSIS                   *win_feature*
 
-New in version 1.7.
+     • Installs or uninstalls Windows Roles or Features on Windows Server.
+     • This module uses the Add/Remove-WindowsFeature Cmdlets on Windows 2008 R2 and Install/Uninstall-WindowsFeature Cmdlets on Windows 2012, which are not available on client os machines.
 
-Installs or uninstalls Windows Roles or Features
+PARAMETERS                   *win_feature-parameters*
 
-EXAMPLES                           *win_feature-examples*
->
-    # This installs IIS.
-    # The names of features available for install can be run by running the following Powershell Command:
-    # PS C:\Users\Administrator> Import-Module ServerManager; Get-WindowsFeature
-    $ ansible -i hosts -m win_feature -a "name=Web-Server" all
-    $ ansible -i hosts -m win_feature -a "name=Web-Server,Web-Common-Http" all
-   
-   
-    # Playbook example
-    ---
-    - name: Install IIS
-      hosts: all
-      gather_facts: false
-      tasks:
-        - name: Install IIS
-          win_feature:
-            name: "Web-Server"
-            state: absent
-            restart: yes
-            include_sub_features: yes
-            include_management_tools: yes
-   
+          Parameter         Choices/Defaults                                                                         Comments
+   include_management_tools   Choices:       Adds the corresponding management tools to the specified feature.
+   boolean                    • no ←         Not supported in Windows 2008 R2 and will be ignored.
+                              • yes
+   include_sub_features       Choices:
+   boolean                    • no ←         Adds all subfeatures of the specified feature.
+                              • yes
+   name                                      Names of roles or features to install as a single feature or a comma-separated list of features.
+   list / required                           To list all available features use the PowerShell command Get-WindowsFeature.
+   source                                    Specify a source to install the feature from.
+   string                                    Not supported in Windows 2008 R2 and will be ignored.
+                                             Can either be {driveletter}:\sources\sxs or \\{IP}\share\sources\sxs.
+   state                      Choices:
+   string                     • absent       State of the features or roles on the system.
+                              • present ←
+
+SEE ALSO                   *win_feature-see also*
+
+   See also
+
+   win_chocolatey – Manage packages using chocolatey
+   The official documentation on the win_chocolatey module.
+
+   win_package – Installs/uninstalls an installable package
+   The official documentation on the win_package module.
+
+EXAMPLES                   *win_feature-examples*
+
+ - name: Install IIS (Web-Server only)
+   win_feature:
+     name: Web-Server
+     state: present
+
+ - name: Install IIS (Web-Server and Web-Common-Http)
+   win_feature:
+     name:
+     - Web-Server
+     - Web-Common-Http
+     state: present
+
+ - name: Install NET-Framework-Core from file
+   win_feature:
+     name: NET-Framework-Core
+     source: C:\Temp\iso\sources\sxs
+     state: present
+
+ - name: Install IIS Web-Server with sub features and management tools
+   win_feature:
+     name: Web-Server
+     state: present
+     include_sub_features: yes
+     include_management_tools: yes
+   register: win_feature
+
+ - name: Reboot if installing Web-Server feature requires it
+   win_reboot:
+   when: win_feature.reboot_required
+
+RETURN VALUES                   *win_feature-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key        Returned                                                                               Description
+   exitcode                   The stringified exit code from the feature installation/removal command.
+   string            always   Sample:
+                              Success
+   feature_result    success  List of features that were installed or removed.
+   complex
+     display_name             Feature display name.
+     string          always   Sample:
+                              Telnet Client
+     id                       A list of KB article IDs that apply to the update.
+     integer         always   Sample:
+                              44
+     message         always   Any messages returned from the feature subsystem that occurred during installation or removal of this feature.
+     list of strings
+     reboot_required          True when the target server requires a reboot as a result of installing or removing this feature.
+     boolean         always   Sample:
+                              True
+     restart_needed           DEPRECATED in Ansible 2.4 (refer to reboot_required instead). True when the target server requires a reboot as a result of installing or removing this feature.
+     boolean         always   Sample:
+                              True
+     skip_reason              The reason a feature installation or removal was skipped.
+     string          always   Sample:
+                              NotSkipped
+     success                  If the feature installation or removal was successful.
+     boolean         always   Sample:
+                              True
+   reboot_required            True when the target server requires a reboot to complete updates (no further updates can be installed until after a reboot).
+   boolean           success  Sample:
+                              True
+
+STATUS                   *win_feature-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Paul Durivage (@angstwad)
+     • Trond Hindenes (@trondhindenes)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *win_feature-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/win_feature_module.html
+https://docs.ansible.com/ansible/latest/modules/win_feature_module.html

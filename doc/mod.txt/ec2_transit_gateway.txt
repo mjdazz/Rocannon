@@ -1,0 +1,189 @@
+SYNOPSIS                   *ec2_transit_gateway*
+
+     • Creates AWS Transit Gateways
+     • Deletes AWS Transit Gateways
+     • Updates tags on existing transit gateways
+
+REQUIREMENTS                   *ec2_transit_gateway-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *ec2_transit_gateway-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   asn                                           A private Autonomous System Number (ASN) for the Amazon side of a BGP session. The range is 64512 to 65534 for 16-bit ASNs and 4200000000 to
+   -                                             4294967294 for 32-bit ASNs.
+   auto_associate                 Choices:
+   boolean                        • no           Enable or disable automatic association with the default association route table.
+                                  • yes ←
+   auto_attach                    Choices:
+   boolean                        • no ←         Enable or disable automatic acceptance of attachment requests.
+                                  • yes
+   auto_propagate                 Choices:
+   boolean                        • no           Enable or disable automatic propagation of routes to the default propagation route table.
+                                  • yes ←
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   description                                   The description of the transit gateway.
+   string
+   dns_support                    Choices:
+   boolean                        • no           Whether to enable AWS DNS support.
+                                  • yes ←
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_tags                     Choices:
+   boolean                        • no           Whether to purge existing tags not included with tags argument.
+                                  • yes ←
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:       present to ensure resource is created.
+   -                              • present ←    absent to remove resource.
+                                  • absent
+   tags                                          A dictionary of resource tags
+   -
+   transit_gateway_id                            The ID of the transit gateway.
+   string
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   vpn_ecmp_support               Choices:
+   boolean                        • no           Enable or disable Equal Cost Multipath Protocol support.
+                                  • yes ←
+   wait                         Default:         Whether to wait for status
+   -                            "yes"
+   wait_timeout                 Default:         number of seconds to wait for status
+   -                            300
+
+NOTES                   *ec2_transit_gateway-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_transit_gateway-examples*
+
+ - name: Create a new transit gateway using defaults
+   ec2_transit_gateway:
+     state: present
+     region: us-east-1
+     description: personal-testing
+   register: created_tgw
+
+ - name: Create a new transit gateway with options
+   ec2_transit_gateway:
+     asn: 64514
+     auto_associate: no
+     auto_propagate: no
+     dns_support: True
+     description: "nonprod transit gateway"
+     purge_tags: False
+     state: present
+     region: us-east-1
+     tags:
+       Name: nonprod transit gateway
+       status: testing
+
+ - name: Remove a transit gateway by description
+   ec2_transit_gateway:
+     state: absent
+     region: us-east-1
+     description: personal-testing
+
+ - name: Remove a transit gateway by id
+   ec2_transit_gateway:
+     state: absent
+     region: ap-southeast-2
+     transit_gateway_id: tgw-3a9aa123
+   register: deleted_tgw
+
+RETURN VALUES                   *ec2_transit_gateway-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                    Key                     Returned                                                                     Description
+   transit_gateway                        state=present The attributes of the transit gateway.
+   complex
+     creation_time                                      The creation time of the transit gateway.
+     string                               always        Sample:
+                                                        2019-03-06T17:13:51+00:00
+     description                                        The description of the transit gateway.
+     string                               always        Sample:
+                                                        my test tgw
+     options                              always        The options attributes of the transit gateway
+     complex
+                                                        A private Autonomous System Number (ASN) for the Amazon side of a BGP session. The range is 64512 to 65534 for 16-bit ASNs and 4200000000 to
+       amazon_side_asn                    always        4294967294 for 32-bit ASNs.
+       string                                           Sample:
+                                                        64512
+       association_default_route_table_id               The ID of the default association route table.
+       string                             Iwhen exists  Sample:
+                                                        tgw-rtb-abc123444
+       auto_accept_shared_attachements                  Indicates whether attachment requests are automatically accepted.
+       string                             always        Sample:
+                                                        disable
+       default_route_table_association                  Indicates whether resource attachments are automatically associated with the default association route table.
+       string                             always        Sample:
+                                                        enable
+       default_route_table_propagation                  Indicates whether resource attachments automatically propagate routes to the default propagation route table.
+       string                             always        Sample:
+                                                        disable
+       dns_support                                      Indicates whether DNS support is enabled.
+       string                             always        Sample:
+                                                        enable
+       propagation_default_route_table_id               The ID of the default propagation route table.
+       string                             when exists   Sample:
+                                                        tgw-rtb-def456777
+       vpn_ecmp_support                                 Indicates whether Equal Cost Multipath Protocol support is enabled.
+       string                             always        Sample:
+                                                        enable
+     owner_id                                           The account that owns the transit gateway.
+     string                               always        Sample:
+                                                        123456789012
+     state                                              The state of the transit gateway.
+     string                               always        Sample:
+                                                        pending
+     tags                                               A dictionary of resource tags
+     dictionary                           always        Sample:
+                                                        {'tags': {'Name': 'nonprod_tgw'}}
+     transit_gateway_arn                                The ID of the transit_gateway.
+     string                               always        Sample:
+                                                        tgw-3a9aa123
+     transit_gateway_id                                 The ID of the transit_gateway.
+     string                               always        Sample:
+                                                        tgw-3a9aa123
+
+STATUS                   *ec2_transit_gateway-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Bob Boldin (@BobBoldin)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_transit_gateway-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_transit_gateway_module.html

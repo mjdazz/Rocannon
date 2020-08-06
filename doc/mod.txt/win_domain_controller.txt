@@ -1,0 +1,115 @@
+SYNOPSIS                   *win_domain_controller*
+
+     • Ensure that a Windows Server 2012+ host is configured as a domain controller or demoted to member server.
+     • This module may require subsequent use of the win_reboot action if changes are made.
+
+PARAMETERS                   *win_domain_controller-parameters*
+
+         Parameter          Choices/Defaults                                                                           Comments
+   database_path                                 The path to a directory on a fixed disk of the Windows host where the domain database will be created..
+   path                                          If not set then the default path is %SYSTEMROOT%\NTDS.
+   added in 2.5
+   dns_domain_name                               When state is domain_controller, the DNS name of the domain for which the targeted Windows host should be a DC.
+   string
+   domain_admin_password                         Password for the specified domain_admin_user.
+   string / required
+   domain_admin_user                             Username of a domain admin for the target domain (necessary to promote or demote a domain controller).
+   string / required
+   local_admin_password                          Password to be assigned to the local Administrator user (required when state is member_server).
+   string
+   read_only               Choices:
+   boolean                 • no ←                Whether to install the domain controller as a read only replica for an existing domain.
+   added in 2.5            • yes
+   safe_mode_password                            Safe mode password for the domain controller (required when state is domain_controller).
+   string
+   site_name                                     Specifies the name of an existing site where you can place the new domain controller.
+   string                                        This option is required when read_only is yes.
+   added in 2.5
+   state                   Choices:
+   string                  • domain_controller   Whether the target host should be a domain controller or a member server.
+                           • member_server
+   sysvol_path                                   The path to a directory on a fixed disk of the Windows host where the Sysvol folder will be created.
+   path                                          If not set then the default path is %SYSTEMROOT%\SYSVOL.
+   added in 2.5
+
+SEE ALSO                   *win_domain_controller-see also*
+
+   See also
+
+   win_domain – Ensures the existence of a Windows domain
+   The official documentation on the win_domain module.
+
+   win_domain_computer – Manage computers in Active Directory
+   The official documentation on the win_domain_computer module.
+
+   win_domain_group – Creates, modifies or removes domain groups
+   The official documentation on the win_domain_group module.
+
+   win_domain_membership – Manage domain/workgroup membership for a Windows host
+   The official documentation on the win_domain_membership module.
+
+   win_domain_user – Manages Windows Active Directory user accounts
+   The official documentation on the win_domain_user module.
+
+EXAMPLES                   *win_domain_controller-examples*
+
+ - name: Ensure a server is a domain controller
+   win_domain_controller:
+     dns_domain_name: ansible.vagrant
+     domain_admin_user: [email protected]
+     domain_admin_password: password123!
+     safe_mode_password: password123!
+     state: domain_controller
+     log_path: C:\ansible_win_domain_controller.txt
+
+ # ensure a server is not a domain controller
+ # note that without an action wrapper, in the case where a DC is demoted,
+ # the task will fail with a 401 Unauthorized, because the domain credential
+ # becomes invalid to fetch the final output over WinRM. This requires win_async
+ # with credential switching (or other clever credential-switching
+ # mechanism to get the output and trigger the required reboot)
+ - win_domain_controller:
+     domain_admin_user: [email protected]
+     domain_admin_password: password123!
+     local_admin_password: password123!
+     state: member_server
+     log_path: C:\ansible_win_domain_controller.txt
+
+ - name: Promote server as a read only domain controller
+   win_domain_controller:
+     dns_domain_name: ansible.vagrant
+     domain_admin_user: [email protected]
+     domain_admin_password: password123!
+     safe_mode_password: password123!
+     state: domain_controller
+     read_only: yes
+     site_name: London
+
+RETURN VALUES                   *win_domain_controller-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   reboot_required          True if changes were made that require a reboot.
+   boolean         always   Sample:
+                            True
+
+STATUS                   *win_domain_controller-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_domain_controller-red hat support*
+
+     • Matt Davis (@nitzmahone)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_domain_controller-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_domain_controller_module.html

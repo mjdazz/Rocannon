@@ -1,0 +1,161 @@
+SYNOPSIS                   *os_image_info*
+
+     • Retrieve information about a image image from OpenStack.
+     • This module was called os_image_facts before Ansible 2.9, returning ansible_facts. Note that the os_image_info module no longer returns ansible_facts!
+
+   Aliases: os_image_facts
+
+REQUIREMENTS                   *os_image_info-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • openstacksdk
+     • openstacksdk >= 0.12.0
+     • python >= 2.7
+
+PARAMETERS                   *os_image_info-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   api_timeout                        How long should the socket layer wait before timing out for API calls. If this is omitted, nothing will be passed to the requests library.
+   integer
+                                      Dictionary containing auth information as needed by the cloud's auth plugin strategy. For the default password plugin, this would contain auth_url, username,
+   auth                               password, project_name and any information about domains (for example, os_user_domain_name or os_project_domain_name) if the cloud supports them. For other
+   dictionary                         plugins, this param will need to contain whatever parameters that auth plugin requires. This parameter is not needed if a named cloud is provided or OpenStack
+                                      OS_" environment variables are present.
+   auth_type                          Name of the auth plugin to use. If the cloud uses something other than password authentication, the name of the plugin should be indicated here and the
+   string                             contents of the auth parameter should be updated accordingly.
+   availability_zone                  Ignored. Present for backwards compatibility
+   -
+   ca_cert                            A path to a CA Cert bundle that can be used as part of verifying SSL API requests.
+   string                             aliases: cacert
+   client_cert                        A path to a client certificate to use as part of the SSL transaction.
+   string                             aliases: cert
+   client_key                         A path to a client key to use as part of the SSL transaction.
+   string                             aliases: key
+   cloud                              Named cloud or cloud config to operate against. If cloud is a string, it references a named cloud config as defined in an OpenStack clouds.yaml file. Provides
+   raw                                default values for auth and auth_type. This parameter is not needed if auth is provided or if OpenStack OS_" environment variables are present. If cloud is a
+                                      dict, it contains a complete cloud configuration like would be in a section of clouds.yaml.
+   image                              Name or ID of the image
+   -
+                       Choices:
+   interface           • admin        Endpoint URL type to fetch from the service catalog.
+   string              • internal     aliases: endpoint_type
+                       • public ←
+   properties
+   dictionary                         Dict of properties of the images used for query
+   added in 2.9
+   region_name                        Name of the region.
+   string
+   timeout           Default:         How long should ansible wait for the requested resource.
+   integer           180
+   validate_certs      Choices:       Whether or not SSL API requests should be verified.
+   boolean             • no ←         Before Ansible 2.3 this defaulted to yes.
+                       • yes          aliases: verify
+   wait                Choices:
+   boolean             • no           Should ansible wait until the requested resource is complete.
+                       • yes ←
+
+NOTES                   *os_image_info-notes*
+
+   Note
+
+     • The standard OpenStack environment variables, such as OS_USERNAME may be used instead of providing explicit values.
+     • Auth information is driven by openstacksdk, which means that values can come from a yaml config file in /etc/ansible/openstack.yaml, /etc/openstack/clouds.yaml or
+       ~/.config/openstack/clouds.yaml, then from standard environment variables, then finally by explicit parameters in plays. More information can be found at
+       https://docs.openstack.org/openstacksdk/
+
+EXAMPLES                   *os_image_info-examples*
+
+ - name: Gather information about a previously created image named image1
+   os_image_info:
+     auth:
+       auth_url: https://identity.example.com
+       username: user
+       password: password
+       project_name: someproject
+     image: image1
+   register: result
+
+ - name: Show openstack information
+   debug:
+     msg: "{{ result.openstack_image }}"
+
+ # Show all available Openstack images
+ - name: Retrieve all available Openstack images
+   os_image_info:
+   register: result
+
+ - name: Show images
+   debug:
+     msg: "{{ result.openstack_image }}"
+
+ # Show images matching requested properties
+ - name: Retrieve images having properties with desired values
+   os_image_facts:
+     properties:
+       some_property: some_value
+       OtherProp: OtherVal
+
+ - name: Show images
+   debug:
+     msg: "{{ result.openstack_image }}"
+
+RETURN VALUES                   *os_image_info-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                Returned                                                                               Description
+   openstack_image    always, but can be null has all the openstack information about the image
+   complex
+     checksum         success                 Checksum for the image.
+     string
+     container_format success                 Container format of the image.
+     string
+     created_at       success                 Image created at timestamp.
+     string
+     deleted          success                 Image deleted flag.
+     boolean
+     deleted_at       success                 Image deleted at timestamp.
+     string
+     disk_format      success                 Disk format of the image.
+     string
+     id               success                 Unique UUID.
+     string
+     is_public        success                 Is public flag of the image.
+     boolean
+     min_disk         success                 Min amount of disk space required for this image.
+     integer
+     min_ram          success                 Min amount of RAM required for this image.
+     integer
+     name             success                 Name given to the image.
+     string
+     owner            success                 Owner for the image.
+     string
+     properties       success                 Additional properties associated with the image.
+     dictionary
+     protected        success                 Image protected flag.
+     boolean
+     size             success                 Size of the image.
+     integer
+     status           success                 Image status.
+     string
+     updated_at       success                 Image updated at timestamp.
+     string
+
+STATUS                   *os_image_info-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Davide Agnello (@dagnello)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *os_image_info-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/os_image_info_module.html

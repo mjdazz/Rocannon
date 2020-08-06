@@ -1,0 +1,249 @@
+SYNOPSIS                   *cs_host*
+
+     • Create, update and remove hosts.
+
+REQUIREMENTS                   *cs_host-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_host-parameters*
+
+       Parameter     Choices/Defaults                                                                             Comments
+                       Choices:
+   allocation_state    • enabled       Allocation state of the host.
+   string              • disabled
+                       • maintenance
+                       Choices:        HTTP method used to query the API endpoint.
+   api_http_method     • get           If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string              • post          As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is get if not specified.
+   api_key                             API key of the CloudStack API.
+   string                              If not given, the CLOUDSTACK_KEY env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   api_region        Default:          Name of the ini section in the cloustack.ini file.
+   string            "cloudstack"      If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                          Secret key of the CloudStack API.
+   string                              If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+                                       HTTP timeout in seconds.
+   api_timeout                         If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                             As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is 10 seconds if not specified.
+   api_url                             URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                              If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   cluster                             Name of the cluster.
+   string
+   host_tags                           Tags of the host.
+   list                                aliases: host_tag
+   hypervisor                          Name of the cluster.
+   string                              Required if state=present and host does not yet exist.
+                                       Possible values are KVM, VMware, BareMetal, XenServer, LXC, HyperV, UCS, OVM, Simulator.
+   name                                Name of the host.
+   string / required                   aliases: ip_address
+   password                            Password for the host.
+   string                              Required if state=present and host does not yet exist.
+   pod                                 Name of the pod.
+   string                              Required if state=present and host does not yet exist.
+   state               Choices:
+   string              • present ←     State of the host.
+                       • absent
+   url                                 Url of the host used to create a host.
+   string                              If not provided, http:// and param name is used as url.
+                                       Only considered if state=present and host does not yet exist.
+   username                            Username for the host.
+   string                              Required if state=present and host does not yet exist.
+   zone                                Name of the zone in which the host should be deployed.
+   string                              If not set, default zone is used.
+
+NOTES                   *cs_host-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_host-examples*
+
+ - name: Ensure a host is present but disabled
+   cs_host:
+     name: pod01.zone01.example.com
+     cluster: vcenter.example.com/zone01/cluster01
+     pod: pod01
+     zone: zone01
+     hypervisor: VMware
+     allocation_state: disabled
+     host_tags:
+     - perf
+     - gpu
+   delegate_to: localhost
+
+ - name: Ensure an existing host is disabled
+   cs_host:
+     name: pod01.zone01.example.com
+     zone: zone01
+     allocation_state: disabled
+   delegate_to: localhost
+
+ - name: Ensure an existing host is enabled
+   cs_host:
+     name: pod01.zone01.example.com
+     zone: zone01
+     allocation_state: enabled
+   delegate_to: localhost
+
+ - name: Ensure a host is absent
+   cs_host:
+     name: pod01.zone01.example.com
+     zone: zone01
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_host-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key            Returned                                                                           Description
+   allocation_state:                  Allocation state of the host.
+   string                    success  Sample:
+                                      enabled
+   capabilities                       Capabilities of the host.
+   string                    success  Sample:
+                                      hvm
+   cluster                            Cluster of the host.
+   string                    success  Sample:
+                                      vcenter.example.com/zone/cluster01
+   cluster_type                       Type of the cluster of the host.
+   string                    success  Sample:
+                                      ExternalManaged
+   cpu_allocated                      Amount in percent of the host's CPU currently allocated.
+   string                    success  Sample:
+                                      166.25%
+   cpu_number                         Number of CPUs of the host.
+   string                    success  Sample:
+                                      24
+   cpu_sockets                        Number of CPU sockets of the host.
+   integer                   success  Sample:
+                                      2
+   cpu_speed                          CPU speed in Mhz
+   integer                   success  Sample:
+                                      1999
+   cpu_used                           Amount of the host's CPU currently used.
+   string                    success  Sample:
+                                      33.6%
+   cpu_with_overprovisioning          Amount of the host's CPU after applying the cpu.overprovisioning.factor.
+   string                    success  Sample:
+                                      959520.0
+   created                            Date when the host was created.
+   string                    success  Sample:
+                                      2015-05-03T15:05:51+0200
+   disconnected                       Date when the host was disconnected.
+   string                    success  Sample:
+                                      2015-05-03T15:05:51+0200
+   disk_size_allocated                Host's currently allocated disk size.
+   integer                   success  Sample:
+                                      2593
+   disk_size_total                    Total disk size of the host
+   integer                   success  Sample:
+                                      259300
+   events                             Events available for the host
+   string                    success  Sample:
+                                      Ping; HostDown; AgentConnected; AgentDisconnected; PingTimeout; ShutdownRequested; Remove; StartAgentRebalance; ManagementServerDown
+   gpu_group                 success  GPU cards present in the host.
+   list
+   ha_host                   success  Whether the host is a HA host.
+   boolean
+   has_enough_capacity                Whether the host has enough CPU and RAM capacity to migrate a VM to it.
+   boolean                   success  Sample:
+                                      True
+   host_tags                          Comma-separated list of tags for the host.
+   string                    success  Sample:
+                                      perf
+   host_type                          Type of the host.
+   string                    success  Sample:
+                                      Routing
+   host_version                       Version of the host.
+   string                    success  Sample:
+                                      4.5.2
+   hypervisor                         Host's hypervisor.
+   string                    success  Sample:
+                                      VMware
+   hypervisor_version                 Hypervisor version.
+   string                    success  Sample:
+                                      5.1
+   ip_address                         IP address of the host
+   string                    success  Sample:
+                                      10.10.10.1
+   is_local_storage_active   success  Whether the local storage is available or not.
+   boolean
+   last_pinged                        Date and time the host was last pinged.
+   string                    success  Sample:
+                                      1970-01-17T17:27:32+0100
+   management_server_id               Management server ID of the host.
+   integer                   success  Sample:
+                                      345050593418
+   memory_allocated                   Amount of the host's memory currently allocated.
+   integer                   success  Sample:
+                                      69793218560
+   memory_total                       Total of memory of the host.
+   integer                   success  Sample:
+                                      206085263360
+   memory_used                        Amount of the host's memory currently used.
+   integer                   success  Sample:
+                                      65504776192
+   name                               Name of the host.
+   string                    success  Sample:
+                                      esx32.example.com
+   network_kbs_read          success  Incoming network traffic on the host.
+   integer
+   network_kbs_write         success  Outgoing network traffic on the host.
+   integer
+   os_category                        OS category name of the host.
+   string                    success  Sample:
+                                      ...
+   out_of_band_management             Host out-of-band management information.
+   string                    success  Sample:
+                                      ...
+   pod                                Pod name of the host.
+   string                    success  Sample:
+                                      Pod01
+   removed                            Date and time the host was removed.
+   string                    success  Sample:
+                                      1970-01-17T17:27:32+0100
+   resource_state                     Resource state of the host.
+   string                    success  Sample:
+                                      Enabled
+   state                              State of the host.
+   string                    success  Sample:
+                                      Up
+   suitable_for_migration             Whether this host is suitable (has enough capacity and satisfies all conditions like hosttags, max guests VM limit, etc) to migrate a VM to it or not.
+   string                    success  Sample:
+                                      True
+   zone                               Zone of the host.
+   string                    success  Sample:
+                                      zone01
+
+STATUS                   *cs_host-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_host-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_host_module.html

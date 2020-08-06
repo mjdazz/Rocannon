@@ -1,0 +1,141 @@
+SYNOPSIS                   *ec2_vpc_net*
+
+     • Create, modify, and terminate AWS virtual private clouds.
+
+REQUIREMENTS                   *ec2_vpc_net-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *ec2_vpc_net-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   cidr_block                                    The primary CIDR of the VPC. After 2.5 a list of CIDRs can be provided. The first in the list will be used as the primary CIDR and is used in
+   - / required                                  conjunction with the name to ensure idempotence.
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   dhcp_opts_id                                  the id of the DHCP options to use for this vpc
+   -
+   dns_hostnames                  Choices:
+   boolean                        • no           Whether to enable AWS hostname support.
+                                  • yes ←
+   dns_support                    Choices:
+   boolean                        • no           Whether to enable AWS DNS support.
+                                  • yes ←
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   multi_ok                       Choices:       By default the module will not create another VPC if there is another VPC with the same name and CIDR block. Specify this as true if you want
+   boolean                        • no ←         duplicate VPCs created.
+                                  • yes
+   name                                          The name to give your VPC. This is used in combination with cidr_block to determine if a VPC already exists.
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_cidrs                    Choices:
+   boolean                        • no ←         Remove CIDRs that are associated with the VPC and are not specified in cidr_block.
+   added in 2.5                   • yes
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    The state of the VPC. Either absent or present.
+                                  • absent
+   tags                                          The tags you want attached to the VPC. This is independent of the name value, note if you pass a 'Name' key it would override the Name of the VPC if
+   -                                             it's different.
+                                                 aliases: resource_tags
+   tenancy                        Choices:
+   -                              • default ←    Whether to be default or dedicated tenancy. This cannot be changed after the VPC has been created.
+                                  • dedicated
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ec2_vpc_net-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vpc_net-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ - name: create a VPC with dedicated tenancy and a couple of tags
+   ec2_vpc_net:
+     name: Module_dev2
+     cidr_block: 10.10.0.0/16
+     region: us-east-1
+     tags:
+       module: ec2_vpc_net
+       this: works
+     tenancy: dedicated
+
+RETURN VALUES                   *ec2_vpc_net-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+               Key              Returned                                                                         Description
+   vpc                          always   info about the VPC that was created or deleted
+   complex
+     cidr_block                          The CIDR of the VPC
+     string                     always   Sample:
+                                         10.0.0.0/16
+     cidr_block_association_set          IPv4 CIDR blocks associated with the VPC
+     list                       success  Sample:
+                                         {'cidr_block_association_set': [{'association_id': 'vpc-cidr-assoc-97aeeefd', 'cidr_block': '20.0.0.0/24', 'cidr_block_state': {'state': 'associated'}}]}
+     classic_link_enabled       always   indicates whether ClassicLink is enabled
+     NoneType
+     dhcp_options_id                     the id of the DHCP options associated with this VPC
+     string                     always   Sample:
+                                         dopt-0fb8bd6b
+     id                                  VPC resource id
+     string                     always   Sample:
+                                         vpc-c2e00da5
+     instance_tenancy                    indicates whether VPC uses default or dedicated tenancy
+     string                     always   Sample:
+                                         default
+     is_default                 always   indicates whether this is the default VPC
+     boolean
+     state                               state of the VPC
+     string                     always   Sample:
+                                         available
+     tags                       always   tags attached to the VPC, includes name
+     complex
+                Name                     name tag for the VPC
+                string          always   Sample:
+                                         pk_vpc4
+
+STATUS                   *ec2_vpc_net-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *ec2_vpc_net-red hat support*
+
+     • Jonathan Davila (@defionscode)
+     • Sloane Hertel (@s-hertel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ec2_vpc_net-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ec2_vpc_net_module.html

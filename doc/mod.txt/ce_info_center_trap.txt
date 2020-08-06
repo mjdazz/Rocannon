@@ -1,0 +1,139 @@
+SYNOPSIS                   *ce_info_center_trap*
+
+     • Manages information center trap configurations on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_info_center_trap-parameters*
+
+      Parameter          Choices/Defaults                                                                             Comments
+   channel_id                                  Number of a channel. The value is an integer ranging from 0 to 9. The default value is 0.
+   -
+   module_name                                 Module name of the rule. The value is a string of 1 to 31 case-insensitive characters. The default value is default. Please use lower-case letter,
+   -                                           such as [aaa, acl, arp, bfd].
+   state              Choices:
+   -                  • present ←              Specify desired state of the resource.
+                      • absent
+                      Choices:
+   trap_buff_enable   • no_use ←               Whether a trap buffer is enabled to output information.
+   -                  • true
+                      • false
+   trap_buff_size                              Size of a trap buffer. The value is an integer ranging from 0 to 1024. The default value is 256.
+   -
+                      Choices:
+   trap_enable        • no_use ←               Whether a device is enabled to output alarms.
+   -                  • true
+                      • false
+                      Choices:
+                      • emergencies
+                      • alert
+   trap_level         • critical
+   -                  • error                  Trap level permitted to output.
+                      • warning
+                      • notification
+                      • informational
+                      • debugging
+                      Choices:
+                      • date_boot
+                      • date_second
+                      • date_tenthsecond
+   trap_time_stamp    • date_millisecond
+   -                  • shortdate_second       Timestamp format of alarm information.
+                      • shortdate_tenthsecond
+                      • shortdate_millisecond
+                      • formatdate_second
+                      • formatdate_tenthsecond
+                      • formatdate_millisecond
+
+NOTES                   *ce_info_center_trap-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_info_center_trap-examples*
+
+ - name: CloudEngine info center trap test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Config trap buffer"
+     ce_info_center_trap:
+       state: present
+       trap_buff_enable: true
+       trap_buff_size: 768
+       provider: "{{ cli }}"
+
+   - name: "Undo trap buffer"
+     ce_info_center_trap:
+       state: absent
+       trap_buff_enable: true
+       trap_buff_size: 768
+       provider: "{{ cli }}"
+
+   - name: "Config trap module log level"
+     ce_info_center_trap:
+       state: present
+       module_name: aaa
+       channel_id: 1
+       trap_enable: true
+       trap_level: error
+       provider: "{{ cli }}"
+
+   - name: "Undo trap module log level"
+     ce_info_center_trap:
+       state: absent
+       module_name: aaa
+       channel_id: 1
+       trap_enable: true
+       trap_level: error
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_info_center_trap-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of aaa params after module execution
+   dictionary always   Sample:
+                       {'icTrapBuffEn': 'true', 'trapBuffSize': '768'}
+   existing            k/v pairs of existing aaa server
+   dictionary always   Sample:
+                       {'icTrapBuffEn': 'false', 'trapBuffSize': '256'}
+   proposed            k/v pairs of parameters passed into module
+   dictionary always   Sample:
+                       {'state': 'present', 'trap_buff_enable': 'true', 'trap_buff_size': '768'}
+   updates             command sent to the device
+   list       always   Sample:
+                       ['info-center trapbuffer', 'info-center trapbuffer size 768']
+
+STATUS                   *ce_info_center_trap-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • wangdezhuang (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_info_center_trap-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_info_center_trap_module.html

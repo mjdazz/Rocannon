@@ -1,0 +1,356 @@
+SYNOPSIS                   *ovirt_storage_domain*
+
+     • Module to manage storage domains in oVirt/RHV
+
+REQUIREMENTS                   *ovirt_storage_domain-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.7
+     • ovirt-engine-sdk-python >= 4.3.0
+
+PARAMETERS                   *ovirt_storage_domain-parameters*
+
+             Parameter             Choices/Defaults                                                                      Comments
+   auth                                               Dictionary with values needed to create HTTP/HTTPS connection to oVirt:
+   dictionary / required
+                                                      A PEM file containing the trusted CA certificates.
+      ca_file                                         The certificate presented by the server will be verified using these CA certificates.
+      string                                          If ca_file parameter is not set, system wide CA certificate store is used.
+                                                      Default value is set by OVIRT_CAFILE environment variable.
+      headers                                         Dictionary of HTTP headers to be added to each API call.
+      dictionary
+      hostname                                        A string containing the hostname of the server, usually something like `server.example.com`.
+      string                                          Default value is set by OVIRT_HOSTNAME environment variable.
+                                                      Either url or hostname is required.
+      insecure                     Choices:
+      boolean                      • no               A boolean flag that indicates if the server TLS certificate and host name should be checked.
+                                   • yes
+      kerberos                     Choices:
+      boolean                      • no               A boolean flag indicating if Kerberos authentication should be used instead of the default basic authentication.
+                                   • yes
+      password                                        The password of the user.
+      string / required                               Default value is set by OVIRT_PASSWORD environment variable.
+      token                                           Token to be used instead of login with username/password.
+      string                                          Default value is set by OVIRT_TOKEN environment variable.
+      url                                             A string containing the API URL of the server, usually something like `https://server.example.com/ovirt-engine/api`.
+      string                                          Default value is set by OVIRT_URL environment variable.
+                                                      Either url or hostname is required.
+      username                                        The name of the user, something like [email protected].
+      string / required                               Default value is set by OVIRT_USERNAME environment variable.
+   backup                          Choices:
+   boolean                         • no               Boolean flag which indicates whether the storage domain is configured as backup or not.
+   added in 2.5                    • yes
+   comment                                            Comment of the storage domain.
+   -
+   critical_space_action_blocker
+   -                                                  Indicates the minimal free space the storage domain should contain in percentages.
+   added in 2.5
+   data_center                                        Data center name where storage domain should be attached.
+   -                                                  This parameter isn't idempotent, it's not possible to change data center of storage domain.
+   description                                        Description of the storage domain.
+   -
+   destroy                         Choices:           Logical remove of the storage domain. If true retains the storage domain's data for import.
+   boolean                         • no               This parameter is relevant only when state is absent.
+                                   • yes
+   discard_after_delete            Choices:           If True storage domain blocks will be discarded upon deletion. Enabled by default.
+   boolean                         • no               This parameter is relevant only for block based storage domains.
+   added in 2.5                    • yes
+                                   Choices:           Function of the storage domain.
+   domain_function                 • data ←           This parameter isn't idempotent, it's not possible to change domain function of storage domain.
+   -                               • iso              aliases: type
+                                   • export
+   fcp                                                Dictionary with values for fibre channel storage type:
+   -                                                  Note that these parameters are not idempotent.
+      lun_id                                          LUN id.
+      -
+      override_luns                Choices:
+      boolean                      • no               If True FCP storage domain LUNs will be overridden before adding.
+                                   • yes
+   fetch_nested                    Choices:           If True the module will fetch additional data from the API.
+   boolean                         • no               It will fetch IDs of the VMs disks, snapshots, etc. User can configure to fetch other attributes of the nested entities by specifying
+                                   • yes              nested_attributes.
+   format                          Choices:           If True storage domain will be formatted after removing it from oVirt/RHV.
+   boolean                         • no               This parameter is relevant only when state is absent.
+                                   • yes
+   glusterfs                                          Dictionary with values for GlusterFS storage type:
+   -                                                  Note that these parameters are not idempotent.
+      address                                         Address of the Gluster server. E.g.: myserver.mydomain.com
+      -
+      mount_options                                   Option which will be passed when mounting storage.
+      -
+      path                                            Path of the mount point. E.g.: /path/to/my/data
+      -
+   host                                               Host to be used to mount storage.
+   -
+   id
+   -                                                  Id of the storage domain to be imported.
+   added in 2.4
+   iscsi                                              Dictionary with values for iSCSI storage type:
+   -                                                  Note that these parameters are not idempotent.
+      address                                         Address of the iSCSI storage server.
+      -
+      lun_id                                          LUN id(s).
+      -
+      override_luns                Choices:
+      boolean                      • no               If True ISCSI storage domain luns will be overridden before adding.
+                                   • yes
+      password                                        A CHAP password for logging into a target.
+      -
+      port                                            Port of the iSCSI storage server.
+      -
+      target                                          The target IQN for the storage device.
+      -
+      target_lun_map
+      -                                               List of dictionary containing targets and LUNs.
+      added in 2.5
+      username                                        A CHAP user name for logging into a target.
+      -
+   localfs                                            Dictionary with values for localfs storage type:
+   -                                                  Note that these parameters are not idempotent.
+   added in 2.4
+      path                                            Path of the mount point. E.g.: /path/to/my/data
+      -
+   managed_block_storage                              Dictionary with values for managed block storage type
+   -                                                  Note: available from ovirt 4.3
+   added in 2.9
+      driver_options                                  The options to be passed when creating a storage domain using a cinder driver.
+      -                                               List of dictionary containing name and value of driver option
+      driver_sensitive_options                        Parameters containing sensitive information, to be passed when creating a storage domain using a cinder driver.
+      -                                               List of dictionary containing name and value of driver sensitive option
+   name                                               Name of the storage domain to manage. (Not required when state is imported)
+   -
+   nested_attributes                                  Specifies list of the attributes which should be fetched from the API.
+   list                                               This parameter apply only when fetch_nested is true.
+   nfs                                                Dictionary with values for NFS storage type:
+   -                                                  Note that these parameters are not idempotent.
+      address                                         Address of the NFS server. E.g.: myserver.mydomain.com
+      -
+      mount_options                                   Option which will be passed when mounting storage.
+      -
+      path                                            Path of the mount point. E.g.: /path/to/my/data
+      -
+      retrans                                         The number of times to retry a request before attempting further recovery actions. Range 0 to 65535.
+      -
+      timeout                                         The time in tenths of a second to wait for a response before retrying NFS requests. Range 0 to 65535.
+      -
+      version                                         NFS version. One of: auto, v3, v4 or v4_1.
+      -
+   poll_interval                 Default:             Number of the seconds the module waits until another poll request on entity status is sent.
+   integer                       3
+   posixfs                                            Dictionary with values for PosixFS storage type:
+   -                                                  Note that these parameters are not idempotent.
+      mount_options                                   Option which will be passed when mounting storage.
+      -
+      path                                            Path of the mount point. E.g.: /path/to/my/data
+      -
+      vfs_type                                        Virtual File System type.
+      -
+                                   Choices:
+                                   • present ←
+   state                           • absent           Should the storage domain be present/absent/maintenance/unattached/imported/update_ovf_store
+   -                               • maintenance      imported is supported since version 2.4.
+                                   • unattached       update_ovf_store is supported since version 2.5, currently if wait is (true), we don't wait for update.
+                                   • imported
+                                   • update_ovf_store
+   timeout                       Default:             The amount of time in seconds the module should wait for the instance to get into desired state.
+   integer                       180
+   wait                            Choices:
+   boolean                         • no               yes if the module should wait for the entity to get into desired state.
+                                   • yes ←
+   warning_low_space
+   -                                                  Indicates the minimum percentage of a free space in a storage domain to present a warning.
+   added in 2.5
+   wipe_after_delete               Choices:
+   boolean                         • no               Boolean flag which indicates whether the storage domain should wipe the data after delete.
+   added in 2.5                    • yes
+
+NOTES                   *ovirt_storage_domain-notes*
+
+   Note
+
+     • In order to use this module you have to install oVirt Python SDK. To ensure it’s installed with correct version you can create the following task: pip: name=ovirt-engine-sdk-python
+       version=4.3.0
+
+EXAMPLES                   *ovirt_storage_domain-examples*
+
+ # Examples don't contain auth parameter for simplicity,
+ # look at ovirt_auth module to see how to reuse authentication:
+
+ # Add data NFS storage domain
+ - ovirt_storage_domain:
+     name: data_nfs
+     host: myhost
+     data_center: mydatacenter
+     nfs:
+       address: 10.34.63.199
+       path: /path/data
+
+ # Add data NFS storage domain with id for data center
+ - ovirt_storage_domain:
+     name: data_nfs
+     host: myhost
+     data_center: 11111
+     nfs:
+       address: 10.34.63.199
+       path: /path/data
+       mount_options: noexec,nosuid
+
+ # Add data localfs storage domain
+ - ovirt_storage_domain:
+     name: data_localfs
+     host: myhost
+     data_center: mydatacenter
+     localfs:
+       path: /path/to/data
+
+ # Add data iSCSI storage domain:
+ - ovirt_storage_domain:
+     name: data_iscsi
+     host: myhost
+     data_center: mydatacenter
+     iscsi:
+       target: iqn.2016-08-09.domain-01:nickname
+       lun_id:
+        - 1IET_000d0001
+        - 1IET_000d0002
+       address: 10.34.63.204
+     discard_after_delete: True
+     backup: False
+     critical_space_action_blocker: 5
+     warning_low_space: 10
+
+ # Since Ansible 2.5 you can specify multiple targets for storage domain,
+ # Add data iSCSI storage domain with multiple targets:
+ - ovirt_storage_domain:
+     name: data_iscsi
+     host: myhost
+     data_center: mydatacenter
+     iscsi:
+       target_lun_map:
+         - target: iqn.2016-08-09.domain-01:nickname
+           lun_id: 1IET_000d0001
+         - target: iqn.2016-08-09.domain-02:nickname
+           lun_id: 1IET_000d0002
+       address: 10.34.63.204
+     discard_after_delete: True
+
+ # Add data glusterfs storage domain
+ -  ovirt_storage_domain:
+     name: glusterfs_1
+     host: myhost
+     data_center: mydatacenter
+     glusterfs:
+       address: 10.10.10.10
+       path: /path/data
+
+ # Create export NFS storage domain:
+ - ovirt_storage_domain:
+     name: myexportdomain
+     domain_function: export
+     host: myhost
+     data_center: mydatacenter
+     nfs:
+       address: 10.34.63.199
+       path: /path/export
+     wipe_after_delete: False
+     backup: True
+     critical_space_action_blocker: 2
+     warning_low_space: 5
+
+ # Import export NFS storage domain:
+ - ovirt_storage_domain:
+     state: imported
+     domain_function: export
+     host: myhost
+     data_center: mydatacenter
+     nfs:
+       address: 10.34.63.199
+       path: /path/export
+
+ # Import FCP storage domain:
+ - ovirt_storage_domain:
+     state: imported
+     name: data_fcp
+     host: myhost
+     data_center: mydatacenter
+     fcp: {}
+
+ # Update OVF_STORE:
+ - ovirt_storage_domain:
+     state: update_ovf_store
+     name: domain
+
+ # Create ISO NFS storage domain
+ - ovirt_storage_domain:
+     name: myiso
+     domain_function: iso
+     host: myhost
+     data_center: mydatacenter
+     nfs:
+       address: 10.34.63.199
+       path: /path/iso
+
+ # Create managed storage domain
+ # Available from ovirt 4.3 and ansible 2.9
+ - ovirt_storage_domain:
+     name: my_managed_domain
+     host: myhost
+     data_center: mydatacenter
+     managed_block_storage:
+       driver_options:
+         - name: rbd_pool
+           value: pool1
+         - name: rbd_user
+           value: admin
+         - name: volume_driver
+           value: cinder.volume.drivers.rbd.RBDDriver
+         - name: rbd_keyring_conf
+           value: /etc/ceph/keyring
+       driver_sensitive_options:
+         - name: secret_password
+           value: password
+
+ # Remove storage domain
+ - ovirt_storage_domain:
+     state: absent
+     name: mystorage_domain
+     format: true
+
+RETURN VALUES                   *ovirt_storage_domain-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+                  On
+                  success
+   id             if       ID of the storage domain which is managed
+   string         storage  Sample:
+                  domain   7de90f31-222c-436c-a1ca-7e655bd5b60c
+                  is
+                  found.
+                  On
+                  success
+   storage_domain if       Dictionary of all the storage domain attributes. Storage domain attributes can be found on your oVirt/RHV instance at following url:
+   dictionary     storage  http://ovirt.github.io/ovirt-engine-api-model/master/#types/storage_domain.
+                  domain
+                  is
+                  found.
+
+STATUS                   *ovirt_storage_domain-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ondra Machacek (@machacekondra)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ovirt_storage_domain-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ovirt_storage_domain_module.html

@@ -1,0 +1,176 @@
+SYNOPSIS                   *bigip_gtm_monitor_firepass*
+
+     • Manages F5 BIG-IP GTM FirePass monitors.
+
+PARAMETERS                   *bigip_gtm_monitor_firepass-parameters*
+
+        Parameter          Choices/Defaults                                                                           Comments
+   cipher_list                                 Specifies the list of ciphers for this monitor.
+   string                                      The items in the cipher list are separated with the colon : symbol.
+                                               When creating a new monitor, if this parameter is not specified, the default list is HIGH:!ADH.
+                                               Specifies the maximum percentage of licensed connections currently in use under which the monitor marks the Secure Access Manager system up.
+   concurrency_limit                           As an example, a setting of 95 percent means that the monitor marks the Secure Access Manager system up until 95 percent of licensed connections are
+   integer                                     in use.
+                                               When the number of in-use licensed connections exceeds 95 percent, the monitor marks the Secure Access Manager system down.
+                                               When creating a new monitor, if this parameter is not specified, the default is 95.
+                                               Specifies that the monitor allows more than one probe attempt per interval.
+   ignore_down_response   Choices:             When yes, specifies that the monitor ignores down responses for the duration of the monitor timeout. Once the monitor timeout is reached without the
+   boolean                • no                 system receiving an up response, the system marks the object down.
+                          • yes                When no, specifies that the monitor immediately marks an object down when it receives a down response.
+                                               When creating a new monitor, if this parameter is not provided, then the default value will be no.
+   interval                                    The interval specifying how frequently the monitor instance of this template will run.
+   integer                                     If this parameter is not provided when creating a new monitor, then the default value will be 30.
+                                               This value must be less than the timeout value.
+   ip                                          IP address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'.
+   string                                      If this value is an IP address, then a port number must be specified.
+                                               Specifies the number that the monitor uses to mark the Secure Access Manager system up or down.
+   max_load_average                            The system compares the Max Load Average setting against a one-minute average of the Secure Access Manager system load.
+   integer                                     When the Secure Access Manager system-load average falls within the specified Max Load Average, the monitor marks the Secure Access Manager system up.
+                                               When the average exceeds the setting, the monitor marks the system down.
+                                               When creating a new monitor, if this parameter is not specified, the default is 12.
+   name                                        Monitor name.
+   string / required
+   parent               Default:               The parent template of this monitor template. Once this value has been set, it cannot be changed. By default, this value is the tcp parent on the
+   string               "/Common/firepass_gtm" Common partition.
+   partition            Default:               Device partition to manage resources on.
+   string               "Common"
+   port                                        Port address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'. Note
+   string                                      that if specifying an IP address, a value between 1 and 65535 must be specified.
+   probe_timeout                               Specifies the number of seconds after which the system times out the probe request to the system.
+   integer                                     When creating a new monitor, if this parameter is not provided, then the default value will be 5.
+   provider
+   dictionary                                  A dict object containing connection details.
+   added in 2.5
+      auth_provider                            Configures the auth provider for to obtain authentication tokens from the remote device.
+      string                                   This option is really used when working with BIG-IQ devices.
+      password                                 The password for the user account used to connect to the BIG-IP.
+      string / required                        You may omit this option by setting the environment variable F5_PASSWORD.
+                                               aliases: pass, pwd
+      server                                   The BIG-IP host.
+      string / required                        You may omit this option by setting the environment variable F5_SERVER.
+      server_port       Default:               The BIG-IP server port.
+      integer           443                    You may omit this option by setting the environment variable F5_SERVER_PORT.
+      ssh_keyfile                              Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+      path                                     You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+      timeout                                  Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+      integer                                  before the operation is completed, the module will error.
+      transport           Choices:
+      string              • cli                Configures the transport connection to use when connecting to the remote device.
+                          • rest ←
+      user                                     The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+      string / required                        You may omit this option by setting the environment variable F5_USER.
+      validate_certs      Choices:             If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+      boolean             • no                 You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                          • yes ←
+   state                  Choices:             When present, ensures that the monitor exists.
+   string                 • present ←          When absent, ensures the monitor is removed.
+                          • absent
+   target_password                             Specifies the password, if the monitored target requires authentication.
+   string
+   target_username                             Specifies the user name, if the monitored target requires authentication.
+   string
+                                               The number of seconds in which the node or service must respond to the monitor request. If the target responds within the set time period, it is
+   timeout                                     considered up. If the target does not respond within the set time period, it is considered down. You can change this number to any number you want,
+   integer                                     however, it should be 3 times the interval number of seconds plus 1 second.
+                                               If this parameter is not provided when creating a new monitor, then the default value will be 90.
+   update_password        Choices:             always will update passwords if the target_password is specified.
+   string                 • always ←           on_create will only set the password for newly created monitors.
+                          • on_create
+
+NOTES                   *bigip_gtm_monitor_firepass-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_gtm_monitor_firepass-examples*
+
+ - name: Create a GTM FirePass monitor
+   bigip_gtm_monitor_firepass:
+     name: my_monitor
+     ip: 1.1.1.1
+     port: 80
+     state: present
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Remove FirePass Monitor
+   bigip_gtm_monitor_firepass:
+     name: my_monitor
+     state: absent
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Add FirePass monitor for all addresses, port 514
+   bigip_gtm_monitor_firepass:
+     name: my_monitor
+     port: 514
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_gtm_monitor_firepass-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   cipher_list                   The new value for the cipher list.
+   string               changed  Sample:
+                                 +3DES:+kEDH
+   concurrency_limit             The new value for the concurrency limit.
+   integer              changed  Sample:
+                                 95
+   ignore_down_response          Whether to ignore the down response or not.
+   boolean              changed  Sample:
+                                 True
+   interval                      The new interval in which to run the monitor check.
+   integer              changed  Sample:
+                                 2
+   ip                            The new IP of IP/port definition.
+   string               changed  Sample:
+                                 10.12.13.14
+   max_load_average              The new value for the max load average.
+   integer              changed  Sample:
+                                 12
+   parent                        New parent template of the monitor.
+   string               changed  Sample:
+                                 firepass_gtm
+   port                          The new port the monitor checks the resource on.
+   string               changed  Sample:
+                                 8080
+   probe_timeout                 The new timeout in which the system will timeout the monitor probe.
+   integer              changed  Sample:
+                                 10
+   timeout                       The new timeout in which the remote system must respond to the monitor.
+   integer              changed  Sample:
+                                 10
+
+STATUS                   *bigip_gtm_monitor_firepass-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_gtm_monitor_firepass-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_gtm_monitor_firepass_module.html

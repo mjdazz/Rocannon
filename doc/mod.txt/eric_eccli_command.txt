@@ -1,0 +1,92 @@
+SYNOPSIS                   *eric_eccli_command*
+
+     • Sends arbitrary commands to an ERICSSON eccli node and returns the results read from the device. This module includes an argument that will cause the module to wait for a specific condition
+       before returning or timing out if the condition is not met.
+     • This module also support running commands in configuration mode in raw command style.
+
+PARAMETERS                   *eric_eccli_command-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+   commands                   List of commands to send to the remote ECCLI device over the configured provider. The resulting output from the command is returned. If the wait_for argument is
+   list /                     provided, the module is not returned until the condition is satisfied or the number of retries has expired. If a command sent to the device requires answering a
+   required                   prompt, it is possible to pass a dict containing command, answer and prompt. Common answers are 'y' or "\r" (carriage return, must be double quotes). See examples.
+   interval  Default:         Configures the interval in seconds to wait between retries of the command. If the command does not pass the specified conditions, the interval indicates how long to
+   integer   1                wait before trying the command again.
+   match       Choices:       The match argument is used in conjunction with the wait_for argument to specify the match policy. Valid values are all or any. If the value is set to all then all
+   string      • any          conditionals in the wait_for must be satisfied. If the value is set to any then only one of the values must be satisfied.
+               • all ←
+   retries   Default:         Specifies the number of retries a command should by tried before it is considered failed. The command is run on the target device every retry and evaluated against the
+   integer   10               wait_for conditions.
+   wait_for                   List of conditions to evaluate against the output of the command. The task will wait for each condition to be true before moving forward. If the conditional is not
+   list                       true within the configured number of retries, the task fails. See examples.
+                              aliases: waitfor
+
+NOTES                   *eric_eccli_command-notes*
+
+   Note
+
+     • Tested against IPOS 19.3
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Ericsson devices see the Ericsson documents.
+     • Starting with Ansible 2.5 we recommend using connection: network_cli.
+     • For more information please see the ERIC_ECCLI Platform Options guide.
+
+EXAMPLES                   *eric_eccli_command-examples*
+
+ tasks:
+   - name: run show version on remote devices
+     eric_eccli_command:
+       commands: show version
+
+   - name: run show version and check to see if output contains IPOS
+     eric_eccli_command:
+       commands: show version
+       wait_for: result[0] contains IPOS
+
+   - name: run multiple commands on remote nodes
+     eric_eccli_command:
+       commands:
+         - show version
+         - show running-config interfaces
+
+   - name: run multiple commands and evaluate the output
+     eric_eccli_command:
+       commands:
+         - show version
+         - show running-config interfaces
+       wait_for:
+         - result[0] contains IPOS
+         - result[1] contains management
+
+RETURN VALUES                   *eric_eccli_command-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key                                 Returned                                                                               Description
+   failed_conditions                                                            The list of conditionals that have failed
+   list              failed                                                     Sample:
+                                                                                ['...', '...']
+   stdout                                                                       The set of responses from the commands
+   list              always apart from low level errors (such as action plugin) Sample:
+                                                                                ['...', '...']
+   stdout_lines                                                                 The value of stdout split into a list
+   list              always apart from low level errors (such as action plugin) Sample:
+                                                                                [['...', '...'], ['...'], ['...']]
+
+STATUS                   *eric_eccli_command-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Ericsson IPOS OAM team (@itercheng)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *eric_eccli_command-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/eric_eccli_command_module.html

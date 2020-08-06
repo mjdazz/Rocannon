@@ -1,0 +1,144 @@
+SYNOPSIS                   *manageiq_tenant*
+
+     • The manageiq_tenant module supports adding, updating and deleting tenants in ManageIQ.
+
+REQUIREMENTS                   *manageiq_tenant-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • manageiq-client
+     • manageiq-client https://github.com/ManageIQ/manageiq-api-client-python/
+
+PARAMETERS                   *manageiq_tenant-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   description           Default:         The tenant description.
+   - / required          null
+   manageiq_connection                    ManageIQ connection configuration information.
+   dictionary / required
+      ca_cert                             The path to a CA bundle file or directory with certificates. defaults to None.
+      path                                aliases: ca_bundle_path
+      password                            ManageIQ password. MIQ_PASSWORD env var if set. otherwise, required if no token is passed in.
+      string
+      token                               ManageIQ token. MIQ_TOKEN env var if set. otherwise, required if no username or password is passed in.
+      string
+      url                                 ManageIQ environment url. MIQ_URL env var if set. otherwise, it is required to pass it.
+      string / required
+      username                            ManageIQ username. MIQ_USERNAME env var if set. otherwise, required if no token is passed in.
+      string
+      validate_certs       Choices:       Whether SSL certificates should be verified for HTTPS requests. defaults to True.
+      boolean              • no           aliases: verify_ssl
+                           • yes ←
+   name                  Default:         The tenant name.
+   - / required          null
+   parent                Default:         The name of the parent tenant. If not supplied and no parent_id is supplied the root tenant is used.
+   -                     null
+   parent_id             Default:         The id of the parent tenant. If not supplied the root tenant is used.
+   -                     null             The parent_id takes president over parent when supplied
+                                          The tenant quotas.
+                                          All parameters case sensitive.
+                                          Valid attributes are:
+   quotas                Default:         - cpu_allocated (int): use null to remove the quota.
+   -                     null             - mem_allocated (GB): use null to remove the quota.
+                                          - storage_allocated (GB): use null to remove the quota.
+                                          - vms_allocated (int): use null to remove the quota.
+                                          - templates_allocated (int): use null to remove the quota.
+   state                   Choices:
+   -                       • absent       absent - tenant should not exist, present - tenant should be.
+                           • present ←
+
+EXAMPLES                   *manageiq_tenant-examples*
+
+ - name: Update the root tenant in ManageIQ
+   manageiq_tenant:
+     name: 'My Company'
+     description: 'My company name'
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name: Create a tenant in ManageIQ
+   manageiq_tenant:
+     name: 'Dep1'
+     description: 'Manufacturing department'
+     parent_id: 1
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name: Delete a tenant in ManageIQ
+   manageiq_tenant:
+     state: 'absent'
+     name: 'Dep1'
+     parent_id: 1
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+ - name: Set tenant quota for cpu_allocated, mem_allocated, remove quota for vms_allocated
+   manageiq_tenant:
+     name: 'Dep1'
+     parent_id: 1
+     quotas:
+       - cpu_allocated: 100
+       - mem_allocated: 50
+       - vms_allocated: null
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       username: 'admin'
+       password: 'smartvm'
+       validate_certs: False
+
+
+ - name: Delete a tenant in ManageIQ using a token
+   manageiq_tenant:
+     state: 'absent'
+     name: 'Dep1'
+     parent_id: 1
+     manageiq_connection:
+       url: 'http://127.0.0.1:3000'
+       token: 'sometoken'
+       validate_certs: False
+
+RETURN VALUES                   *manageiq_tenant-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key      Returned                                                                                 Description
+   tenant        success  The tenant.
+   complex
+     description success  The tenant description
+     string
+     id          success  The tenant id
+     integer
+     name        success  The tenant name
+     string
+     parent_id   success  The id of the parent tenant
+     integer
+     quotas               List of tenant quotas
+     list        success  Sample:
+                          {'cpu_allocated': 100, 'mem_allocated': 50}
+
+STATUS                   *manageiq_tenant-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Evert Mulder (@evertmulder)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *manageiq_tenant-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/manageiq_tenant_module.html

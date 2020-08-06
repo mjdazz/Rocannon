@@ -1,99 +1,198 @@
-SYNOPSIS                           *ec2_vol*
+SYNOPSIS                   *ec2_vol*
 
-New in version 1.1.
+     • creates an EBS volume and optionally attaches it to an instance. If both an instance ID and a device name is given and the instance has a device at the device name, then no volume is created
+       and no attachment is made. This module has a dependency on python-boto.
 
-creates an EBS volume and optionally attaches it to an instance. If both an instance ID and a device name is given and the instance has a device at the device name, then no volume is created and
-no attachment is made. This module has a dependency on python-boto.
+REQUIREMENTS                   *ec2_vol-requirements*
 
-EXAMPLES                           *ec2_vol-examples*
->
-    # Simple attachment action
-    - ec2_vol:
-        instance: XXXXXX
-        volume_size: 5
-        device_name: sdd
-   
-    # Example using custom iops params
-    - ec2_vol:
-        instance: XXXXXX
-        volume_size: 5
-        iops: 200
-        device_name: sdd
-   
-    # Example using snapshot id
-    - ec2_vol:
-        instance: XXXXXX
-        snapshot: "{{ snapshot }}"
-   
-    # Playbook example combined with instance launch
-    - ec2:
-        keypair: "{{ keypair }}"
-        image: "{{ image }}"
-        wait: yes
-        count: 3
-        register: ec2
-    - ec2_vol:
-        instance: "{{ item.id }} "
-        volume_size: 5
-        with_items: ec2.instances
-        register: ec2_vol
-   
-    # Example: Launch an instance and then add a volue if not already present
-    #   * Nothing will happen if the volume is already attached.
-    #   * Volume must exist in the same zone.
-   
-    - ec2:
-        keypair: "{{ keypair }}"
-        image: "{{ image }}"
-        zone: YYYYYY
-        id: my_instance
-        wait: yes
-        count: 1
-        register: ec2
-   
-    - ec2_vol:
-        instance: "{{ item.id }}"
-        name: my_existing_volume_Name_tag
-        device_name: /dev/xvdf
-        with_items: ec2.instances
-        register: ec2_vol
-   
-    # Remove a volume
-    - ec2_vol:
-        id: vol-XXXXXXXX
-        state: absent
-   
-    # Detach a volume
-    - ec2_vol:
-        id: vol-XXXXXXXX
-        instance: None
-   
-    # List volumes for an instance
-    - ec2_vol:
-        instance: i-XXXXXX
-        state: list
-   
-    # Create new volume using SSD storage
-    - ec2_vol:
-        instance: XXXXXX
-        volume_size: 50
-        volume_type: gp2
-        device_name: /dev/xvdf
-   
-      Note
-   
-      The following environment variables can be used AWS_ACCESS_KEY or EC2_ACCESS_KEY or AWS_ACCESS_KEY_ID, AWS_SECRET_KEY or EC2_SECRET_KEY or AWS_SECRET_ACCESS_KEY, AWS_REGION or EC2_REGION,
-      AWS_SECURITY_TOKEN
-   
-      Note
-   
-      Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See http://boto.readthedocs.org/en/latest/boto_config_tut.html
-   
-      Note
-   
-      AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
-   
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *ec2_vol-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   delete_on_termination          Choices:
+   boolean                        • no ←         When set to "yes", the volume will be deleted upon instance termination.
+                                  • yes
+   device_name                                   device id to override device mapping. Assumes /dev/sdf for Linux/UNIX and /dev/xvdf for Windows.
+   -
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   encrypted                      Choices:
+   boolean                        • no ←         Enable encryption at rest for this volume.
+                                  • yes
+   id                                            volume id if you wish to attach an existing volume (requires instance) or remove an existing volume
+   -
+   instance                                      instance ID if you wish to attach the volume. Since 1.9 you can set to None to detach.
+   -
+   iops                         Default:         the provisioned IOPs you want to associate with this volume (integer).
+   -                            100
+   kms_key_id                                    Specify the id of the KMS key to use.
+   -
+   name                                          volume Name tag if you wish to attach an existing volume (requires instance)
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   snapshot                                      snapshot ID on which to base the volume
+   -
+                                  Choices:
+   state                          • absent       whether to ensure the volume is present or absent, or to list existing volumes (The list option was added in version 1.8).
+   -                              • present ←
+                                  • list
+   tags                         Default:         tag:value pairs to add to the volume after creation
+   -                            {}
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   volume_size                                   size of volume (in GiB) to create.
+   -
+   volume_type                  Default:         Type of EBS volume; standard (magnetic), gp2 (SSD), io1 (Provisioned IOPS), st1 (Throughput Optimized HDD), sc1 (Cold HDD). "Standard" is the old
+   -                            "standard"       EBS default and continues to remain the Ansible default for backwards compatibility.
+   zone                                          zone in which to create the volume, if unset uses the zone the instance is in (if set)
+   -                                             aliases: aws_zone, ec2_zone
+
+NOTES                   *ec2_vol-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ec2_vol-examples*
+
+ # Simple attachment action
+ - ec2_vol:
+     instance: XXXXXX
+     volume_size: 5
+     device_name: sdd
+
+ # Example using custom iops params
+ - ec2_vol:
+     instance: XXXXXX
+     volume_size: 5
+     iops: 100
+     device_name: sdd
+
+ # Example using snapshot id
+ - ec2_vol:
+     instance: XXXXXX
+     snapshot: "{{ snapshot }}"
+
+ # Playbook example combined with instance launch
+ - ec2:
+     keypair: "{{ keypair }}"
+     image: "{{ image }}"
+     wait: yes
+     count: 3
+   register: ec2
+ - ec2_vol:
+     instance: "{{ item.id }}"
+     volume_size: 5
+   loop: "{{ ec2.instances }}"
+   register: ec2_vol
+
+ # Example: Launch an instance and then add a volume if not already attached
+ #   " Volume will be created with the given name if not already created.
+ #   " Nothing will happen if the volume is already attached.
+ #   " Requires Ansible 2.0
+
+ - ec2:
+     keypair: "{{ keypair }}"
+     image: "{{ image }}"
+     zone: YYYYYY
+     id: my_instance
+     wait: yes
+     count: 1
+   register: ec2
+
+ - ec2_vol:
+     instance: "{{ item.id }}"
+     name: my_existing_volume_Name_tag
+     device_name: /dev/xvdf
+   loop: "{{ ec2.instances }}"
+   register: ec2_vol
+
+ # Remove a volume
+ - ec2_vol:
+     id: vol-XXXXXXXX
+     state: absent
+
+ # Detach a volume (since 1.9)
+ - ec2_vol:
+     id: vol-XXXXXXXX
+     instance: None
+
+ # List volumes for an instance
+ - ec2_vol:
+     instance: i-XXXXXX
+     state: list
+
+ # Create new volume using SSD storage
+ - ec2_vol:
+     instance: XXXXXX
+     volume_size: 50
+     volume_type: gp2
+     device_name: /dev/xvdf
+
+ # Attach an existing volume to instance. The volume will be deleted upon instance termination.
+ - ec2_vol:
+     instance: XXXXXX
+     id: XXXXXX
+     device_name: /dev/sdf
+     delete_on_termination: yes
+
+RETURN VALUES                   *ec2_vol-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+   device      when     device name of attached volume
+   string      success  Sample:
+                        /def/sdf
+                        a dictionary containing detailed attributes of the volume
+   volume      when     Sample:
+   string      success  {'attachment_set': {'attach_time': '2015-10-23T00:22:29.000Z', 'deleteOnTermination': 'false', 'device': '/dev/sdf', 'instance_id': 'i-8356263c', 'status': 'attached'},
+                        'create_time': '2015-10-21T14:36:08.870Z', 'encrypted': False, 'id': 'vol-35b333d9', 'iops': None, 'size': 1, 'snapshot_id': '', 'status': 'in-use', 'tags': {'env': 'dev'},
+                        'type': 'standard', 'zone': 'us-east-1b'}
+   volume_id   when     the id of volume
+   string      success  Sample:
+                        vol-35b333d9
+   volume_type when     the volume type
+   string      success  Sample:
+                        standard
+
+STATUS                   *ec2_vol-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *ec2_vol-red hat support*
+
+     • Lester Wade (@lwade)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ec2_vol-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ec2_vol_module.html
+https://docs.ansible.com/ansible/latest/modules/ec2_vol_module.html

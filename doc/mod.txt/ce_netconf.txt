@@ -1,0 +1,115 @@
+SYNOPSIS                   *ce_netconf*
+
+     • Sends an arbitrary netconf command on HUAWEI CloudEngine switches.
+
+PARAMETERS                   *ce_netconf-parameters*
+
+    Parameter     Choices/Defaults                                                                               Comments
+   cfg_xml                           The config xml string.
+   - / required
+                  Choices:
+   rpc            • get
+   - / required   • edit-config      The type of rpc.
+                  • execute-action
+                  • execute-cli
+
+NOTES                   *ce_netconf-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Recommended connection is netconf.
+     • This module also works with local connections for legacy playbooks.
+
+EXAMPLES                   *ce_netconf-examples*
+
+ - name: CloudEngine netconf test
+   hosts: cloudengine
+   connection: local
+   gather_facts: no
+   vars:
+     cli:
+       host: "{{ inventory_hostname }}"
+       port: "{{ ansible_ssh_port }}"
+       username: "{{ username }}"
+       password: "{{ password }}"
+       transport: cli
+
+   tasks:
+
+   - name: "Netconf get operation"
+     ce_netconf:
+       rpc: get
+       cfg_xml: '<filter type="subtree">
+                   <vlan xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                     <vlans>
+                       <vlan>
+                         <vlanId>10</vlanId>
+                         <vlanif>
+                           <ifName></ifName>
+                           <cfgBand></cfgBand>
+                           <dampTime></dampTime>
+                         </vlanif>
+                       </vlan>
+                     </vlans>
+                   </vlan>
+                 </filter>'
+       provider: "{{ cli }}"
+
+   - name: "Netconf edit-config operation"
+     ce_netconf:
+       rpc: edit-config
+       cfg_xml: '<config>
+                     <aaa xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                       <authenticationSchemes>
+                         <authenticationScheme operation="create">
+                           <authenSchemeName>default_wdz</authenSchemeName>
+                           <firstAuthenMode>local</firstAuthenMode>
+                           <secondAuthenMode>invalid</secondAuthenMode>
+                         </authenticationScheme>
+                       </authenticationSchemes>
+                     </aaa>
+                    </config>'
+       provider: "{{ cli }}"
+
+   - name: "Netconf execute-action operation"
+     ce_netconf:
+       rpc: execute-action
+       cfg_xml: '<action>
+                      <l2mc xmlns="http://www.huawei.com/netconf/vrp" content-version="1.0" format-version="1.0">
+                        <l2McResetAllVlanStatis>
+                          <addrFamily>ipv4unicast</addrFamily>
+                        </l2McResetAllVlanStatis>
+                      </l2mc>
+                    </action>'
+       provider: "{{ cli }}"
+
+RETURN VALUES                   *ce_netconf-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed             check to see if a change was made on the device
+   boolean    always   Sample:
+                       True
+   end_state           k/v pairs of aaa params after module execution
+   dictionary always   Sample:
+                       {'result': ['ok']}
+
+STATUS                   *ce_netconf-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • wangdezhuang (@QijunPan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ce_netconf-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ce_netconf_module.html

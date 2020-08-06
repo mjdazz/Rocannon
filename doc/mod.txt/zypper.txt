@@ -1,21 +1,151 @@
-SYNOPSIS                           *zypper*
+SYNOPSIS                   *zypper*
 
-New in version 1.2.
+     • Manage packages on SUSE and openSUSE using the zypper and rpm tools.
 
-Manage packages on SUSE and openSUSE using the zypper and rpm tools.
+REQUIREMENTS                   *zypper-requirements*
 
-EXAMPLES                           *zypper-examples*
->
-    # Install "nmap"
-    - zypper: name=nmap state=present
-   
-    # Install apache2 with recommended packages
-    - zypper: name=apache2 state=present disable_recommends=no
-   
-    # Remove the "nmap" package
-    - zypper: name=nmap state=absent
-   
+   The below requirements are needed on the host that executes this module.
+
+     • zypper >= 1.0 # included in openSUSE >= 11.1 or SUSE Linux Enterprise Server/Desktop >= 11.0
+     • python-xml
+     • rpm
+
+PARAMETERS                   *zypper-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   disable_gpg_check       Choices:
+   boolean                 • no ←         Whether to disable to GPG signature checking of the package signature being installed. Has an effect only if state is present or latest.
+                           • yes
+   disable_recommends      Choices:
+   boolean                 • no           Corresponds to the --no-recommends option for zypper. Default behavior (yes) modifies zypper's default behavior; no does install recommended packages.
+                           • yes ←
+   extra_args                             Add additional options to zypper command.
+   -                                      Options should be supplied in a single line as if given in the command line.
+   added in 2.4
+   extra_args_precommand                  Add additional global target options to zypper.
+   -                                      Options should be supplied in a single line as if given in the command line.
+   added in 2.6
+   force                   Choices:
+   boolean                 • no ←         Adds --force option to zypper. Allows to downgrade packages and change vendor or architecture.
+                           • yes
+                                          Package name name or package specifier or a list of either.
+                                          Can include a version like name=1.0, name>3.4 or name<=2.7. If a version is given, oldpackage is implied and zypper is allowed to update the package within
+   name                                   the version range given.
+   - / required                           You can also pass a url or a local path to a rpm file.
+                                          When using state=latest, this can be '"', which updates all installed packages.
+                                          aliases: pkg
+   oldpackage              Choices:       Adds --oldpackage option to zypper. Allows to downgrade packages with less side-effects than force. This is implied as soon as a version is specified as
+   boolean                 • no ←         part of the package name.
+                           • yes
+                           Choices:
+   state                   • present ←    present will make sure the package is installed. latest will make sure the latest version of the package is installed. absent will make sure the specified
+   -                       • latest       package is not installed. dist-upgrade will make sure the latest version of all installed packages from all enabled repositories is installed.
+                           • absent       When using dist-upgrade, name should be '"'.
+                           • dist-upgrade
+                           Choices:
+                           • package ←
+   type                    • patch
+   -                       • pattern      The type of package to be operated on.
+                           • product
+                           • srcpackage
+                           • application
+   update_cache            Choices:       Run the equivalent of zypper refresh before the operation. Disabled in check mode.
+   boolean                 • no ←         aliases: refresh
+                           • yes
+
+NOTES                   *zypper-notes*
+
+   Note
+
+     • When used with a loop: each package will be processed individually, it is much more efficient to pass the list directly to the name option.
+
+EXAMPLES                   *zypper-examples*
+
+ # Install "nmap"
+ - zypper:
+     name: nmap
+     state: present
+
+ # Install apache2 with recommended packages
+ - zypper:
+     name: apache2
+     state: present
+     disable_recommends: no
+
+ # Apply a given patch
+ - zypper:
+     name: openSUSE-2016-128
+     state: present
+     type: patch
+
+ # Remove the "nmap" package
+ - zypper:
+     name: nmap
+     state: absent
+
+ # Install the nginx rpm from a remote repo
+ - zypper:
+     name: 'http://nginx.org/packages/sles/12/x86_64/RPMS/nginx-1.8.0-1.sles12.ngx.x86_64.rpm'
+     state: present
+
+ # Install local rpm file
+ - zypper:
+     name: /tmp/fancy-software.rpm
+     state: present
+
+ # Update all packages
+ - zypper:
+     name: '"'
+     state: latest
+
+ # Apply all available patches
+ - zypper:
+     name: '"'
+     state: latest
+     type: patch
+
+ # Perform a dist-upgrade with additional arguments
+ - zypper:
+     name: '"'
+     state: dist-upgrade
+     extra_args: '--no-allow-vendor-change --allow-arch-change'
+
+ # Refresh repositories and update package "openssl"
+ - zypper:
+     name: openssl
+     state: present
+     update_cache: yes
+
+ # Install specific version (possible comparisons: <, >, <=, >=, =)
+ - zypper:
+     name: 'docker>=1.10'
+     state: present
+
+ # Wait 20 seconds to acquire the lock before failing
+ - zypper:
+     name: mosh
+     state: present
+   environment:
+     ZYPP_LOCK_TIMEOUT: 20
+
+STATUS                   *zypper-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Patrick Callahan (@dirtyharrycallahan)
+     • Alexander Gubin (@alxgu)
+     • Thomas O’Donnell (@andytom)
+     • Robin Roth (@robinro)
+     • Andrii Radyk (@AnderEnder)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *zypper-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/zypper_module.html
+https://docs.ansible.com/ansible/latest/modules/zypper_module.html

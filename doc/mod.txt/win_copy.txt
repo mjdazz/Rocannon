@@ -1,0 +1,166 @@
+SYNOPSIS                   *win_copy*
+
+     • The win_copy module copies a file on the local box to remote windows locations.
+     • For non-Windows targets, use the copy module instead.
+
+PARAMETERS                   *win_copy-parameters*
+
+    Parameter   Choices/Defaults                                                                               Comments
+   backup         Choices:       Determine whether a backup should be created.
+   boolean        • no ←         When set to yes, create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+   added in 2.8   • yes          No backup is taken when remote_src=False and multiple files are being copied.
+   content                       When used instead of src, sets the contents of a file directly to the specified value.
+   string                        This is for simple values, for anything complex or with formatting please switch to the template module.
+   decrypt        Choices:
+   boolean        • no           This option controls the autodecryption of source files using vault.
+   added in 2.5   • yes ←
+                                 Remote absolute path where the file should be copied to.
+   dest                          If src is a directory, this must be a directory too.
+   path /                        Use \ for path separators or \\ when in "double quotes".
+   required                      If dest ends with \ then source or the contents of source will be copied to the directory without renaming.
+                                 If dest is a nonexistent path, it will only be created if dest ends with "/" or "\", or src is a directory.
+                                 If src and dest are files and if the parent directory of dest doesn't exist, then the task will fail.
+   force          Choices:       If set to yes, the file will only be transferred if the content is different than destination.
+   boolean        • no           If set to no, the file will only be transferred if the destination does not exist.
+                  • yes ←        If set to no, no checksuming of the content is performed which can help improve performance on larger files.
+   local_follow   Choices:
+   boolean        • no           This flag indicates that filesystem links in the source tree, if they exist, should be followed.
+   added in 2.4   • yes ←
+   remote_src     Choices:       If no, it will search for src at originating/master machine.
+   boolean        • no ←         If yes, it will go to the remote/target machine for the src.
+                  • yes
+                                 Local path to a file to copy to the remote server; can be absolute or relative.
+                                 If path is a directory, it is copied (including the source folder name) recursively to dest.
+   src                           If path is a directory and ends with "/", only the inside contents of that directory are copied to the destination. Otherwise, if it does not end with "/", the
+   path                          directory itself with all contents is copied.
+                                 If path is a file and dest ends with "\", the file is copied to the folder with the same filename.
+                                 Required unless using content.
+
+NOTES                   *win_copy-notes*
+
+   Note
+
+     • Currently win_copy does not support copying symbolic links from both local to remote and remote to remote.
+     • It is recommended that backslashes \ are used instead of / when dealing with remote paths.
+     • Because win_copy runs over WinRM, it is not a very efficient transfer mechanism. If sending large files consider hosting them on a web service and using win_get_url instead.
+
+SEE ALSO                   *win_copy-see also*
+
+   See also
+
+   assemble – Assemble configuration files from fragments
+   The official documentation on the assemble module.
+
+   copy – Copy files to remote locations
+   The official documentation on the copy module.
+
+   win_get_url – Downloads file from HTTP, HTTPS, or FTP to node
+   The official documentation on the win_get_url module.
+
+   win_robocopy – Synchronizes the contents of two directories using Robocopy
+   The official documentation on the win_robocopy module.
+
+EXAMPLES                   *win_copy-examples*
+
+ - name: Copy a single file
+   win_copy:
+     src: /srv/myfiles/foo.conf
+     dest: C:\Temp\renamed-foo.conf
+
+ - name: Copy a single file, but keep a backup
+   win_copy:
+     src: /srv/myfiles/foo.conf
+     dest: C:\Temp\renamed-foo.conf
+     backup: yes
+
+ - name: Copy a single file keeping the filename
+   win_copy:
+     src: /src/myfiles/foo.conf
+     dest: C:\Temp\
+
+ - name: Copy folder to C:\Temp (results in C:\Temp\temp_files)
+   win_copy:
+     src: files/temp_files
+     dest: C:\Temp
+
+ - name: Copy folder contents recursively
+   win_copy:
+     src: files/temp_files/
+     dest: C:\Temp
+
+ - name: Copy a single file where the source is on the remote host
+   win_copy:
+     src: C:\Temp\foo.txt
+     dest: C:\ansible\foo.txt
+     remote_src: yes
+
+ - name: Copy a folder recursively where the source is on the remote host
+   win_copy:
+     src: C:\Temp
+     dest: C:\ansible
+     remote_src: yes
+
+ - name: Set the contents of a file
+   win_copy:
+     content: abc123
+     dest: C:\Temp\foo.txt
+
+ - name: Copy a single file as another user
+   win_copy:
+     src: NuGet.config
+     dest: '%AppData%\NuGet\NuGet.config'
+   vars:
+     ansible_become_user: user
+     ansible_become_password: pass
+     # The tmp dir must be set when using win_copy as another user
+     # This ensures the become user will have permissions for the operation
+     # Make sure to specify a folder both the ansible_user and the become_user have access to (i.e not %TEMP% which is user specific and requires Admin)
+     ansible_remote_tmp: 'c:\tmp'
+
+RETURN VALUES                   *win_copy-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+          Key               Returned                                                                               Description
+   backup_file                              Name of the backup file that was created.
+   string            if backup=yes          Sample:
+                                            C:\Path\To\File.txt.11540.20150212-220915.bak
+   checksum                                 SHA1 checksum of the file after running copy.
+   string            success, src is a file Sample:
+                                            6e642bb8dd5c2e027bf21dd923337cbb4214f827
+   dest                                     Destination file/path.
+   string            changed                Sample:
+                                            C:\Temp\
+   operation                                Whether a single file copy took place or a folder copy.
+   string            success                Sample:
+                                            file_copy
+   original_basename                        Basename of the copied file.
+   string            changed, src is a file Sample:
+                                            foo.txt
+   size                                     Size of the target, after execution.
+   integer           changed, src is a file Sample:
+                                            1220
+   src                                      Source file used for the copy on the target machine.
+   string            changed                Sample:
+                                            /home/httpd/.ansible/tmp/ansible-tmp-1423796390.97-147729857856000/source
+
+STATUS                   *win_copy-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_copy-red hat support*
+
+     • Jon Hawkesworth (@jhawkesworth)
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_copy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_copy_module.html

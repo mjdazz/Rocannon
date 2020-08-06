@@ -1,0 +1,125 @@
+SYNOPSIS                   *opx_cps*
+
+     • Executes the given operation on the YANG object, using CPS API in the networking device running OpenSwitch (OPX). It uses the YANG models provided in
+       https://github.com/open-switch/opx-base-model.
+
+REQUIREMENTS                   *opx_cps-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • cps
+     • cps_object
+     • cps_utils
+
+PARAMETERS                   *opx_cps-parameters*
+
+    Parameter    Choices/Defaults                                                                               Comments
+   attr_data                       Attribute Yang path and their corresponding data.
+   -
+   attr_type                       Attribute Yang type.
+   -
+   commit_event   Choices:
+   boolean        • no ←           Attempts to force the auto-commit event to the specified yang object.
+                  • yes
+   db             Choices:
+   boolean        • no ←           Queries/Writes the specified yang path from/to the db.
+                  • yes
+   module_name                     Yang path to be configured.
+   -
+                  Choices:
+                  • delete
+   operation      • create ←       Operation to be performed on the object.
+   -              • set
+                  • action
+                  • get
+                  Choices:
+                  • target ←
+                  • observed
+   qualifier      • proposed       A qualifier provides the type of object data to retrieve or act on.
+   -              • realtime
+                  • registration
+                  • running
+                  • startup
+
+EXAMPLES                   *opx_cps-examples*
+
+ - name: Create VLAN
+   opx_cps:
+     module_name: "dell-base-if-cmn/if/interfaces/interface"
+     attr_data: {
+          "base-if-vlan/if/interfaces/interface/id": 230,
+          "if/interfaces/interface/name": "br230",
+          "if/interfaces/interface/type": "ianaift:l2vlan"
+     }
+     operation: "create"
+ - name: Get VLAN
+   opx_cps:
+     module_name: "dell-base-if-cmn/if/interfaces/interface"
+     attr_data: {
+          "if/interfaces/interface/name": "br230",
+     }
+     operation: "get"
+ - name: Modify some attributes in VLAN
+   opx_cps:
+     module_name: "dell-base-if-cmn/if/interfaces/interface"
+     attr_data: {
+          "cps/key_data":
+             { "if/interfaces/interface/name": "br230" },
+          "dell-if/if/interfaces/interface/untagged-ports": ["e101-008-0"],
+     }
+     operation: "set"
+ - name: Delete VLAN
+   opx_cps:
+     module_name: "dell-base-if-cmn/if/interfaces/interface"
+     attr_data: {
+          "if/interfaces/interface/name": "br230",
+     }
+     operation: "delete"
+
+RETURN VALUES                   *opx_cps-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key         Returned                                                                                Description
+                   when
+                   commit_event Denotes if auto-commit event is set
+   commit_event    is set to    Sample:
+   boolean         True in      True
+                   module
+                   options
+                                Returns the CPS Get output i.e. the running configuration before CPS operation of set/delete is performed
+                   when CPS     Sample:
+   cps_curr_config operations   [{'data': {'base-if-vlan/if/interfaces/interface/id': 230, 'cps/key_data': {'if/interfaces/interface/name': 'br230'},
+   dictionary      set, delete  'dell-base-if-cmn/if/interfaces/interface/if-index': 44, 'dell-if/if/interfaces/interface/learning-mode': 1, 'dell-if/if/interfaces/interface/mtu': 1532,
+                                'dell-if/if/interfaces/interface/phys-address': '', 'dell-if/if/interfaces/interface/vlan-type': 1, 'if/interfaces/interface/enabled': 0,
+                                'if/interfaces/interface/type': 'ianaift:l2vlan'}, 'key': 'target/dell-base-if-cmn/if/interfaces/interface'}]
+                   when db is   Denotes if CPS DB transaction was performed
+   db              set to True  Sample:
+   boolean         in module    True
+                   options
+   diff            when CPS     The actual configuration that will be pushed comparing the running configuration and input attributes
+   dictionary      operations   Sample:
+                   set, delete  {'cps/key_data': {'if/interfaces/interface/name': 'br230'}, 'dell-if/if/interfaces/interface/untagged-ports': ['e101-007-0']}
+                   when a CPS   Output from the CPS transaction. Output of CPS Get operation if CPS set/create/delete not done.
+   response        transaction  Sample:
+   list            is           [{'data': {'base-if-vlan/if/interfaces/interface/id': 230, 'cps/object-group/return-code': 0, 'dell-base-if-cmn/if/interfaces/interface/if-index': 46,
+                   successfully 'if/interfaces/interface/name': 'br230', 'if/interfaces/interface/type': 'ianaift:l2vlan'}, 'key': 'target/dell-base-if-cmn/if/interfaces/interface'}]
+                   performed.
+
+STATUS                   *opx_cps-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Senthil Kumar Ganesan (@skg-net)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *opx_cps-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/opx_cps_module.html

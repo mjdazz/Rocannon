@@ -1,0 +1,144 @@
+SYNOPSIS                   *junos_logging*
+
+     • This module provides declarative management of logging on Juniper JUNOS devices.
+
+REQUIREMENTS                   *junos_logging-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • ncclient (>=v0.5.2)
+
+PARAMETERS                   *junos_logging-parameters*
+
+      Parameter     Choices/Defaults                                                                             Comments
+   active             Choices:
+   boolean            • no           Specifies whether or not the configuration is active or deactivated
+                      • yes ←
+   aggregate                         List of logging definitions.
+   -
+                      Choices:
+   dest               • console
+   -                  • host         Destination of the logs.
+                      • file
+                      • user
+   facility                          Set logging facility.
+   -
+   files                             Number of files to be archived, this is applicable if value of dest is file. The acceptable value is in range from 1 to 1000.
+   -
+   level                             Set logging severity levels.
+   -
+   name                              If value of dest is file it indicates file-name, for user it indicates username and for host indicates the host name to be notified.
+   -
+                                     Deprecated
+                                     Starting with Ansible 2.5 we recommend using connection: network_cli or connection: netconf.
+   provider                          For more information please see the Junos OS Platform Options guide.
+   dictionary
+                                     ════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+                                     A dict object containing connection details.
+      host                           Specifies the DNS host name or address for connecting to the remote device over the specified transport. The value of host is used as the destination address
+      string /                       for the transport.
+      required
+      password                       Specifies the password to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+      string                         specified in the task, the value of environment variable ANSIBLE_NET_PASSWORD will be used instead.
+      port          Default:         Specifies the port to use when building the connection to the remote device. The port value will default to the well known SSH port of 22 (for transport=cli) or
+      integer       22               port 830 (for transport=netconf) device.
+      ssh_keyfile                    Specifies the SSH key to use to authenticate the connection to the remote device. This value is the path to the key used to authenticate the SSH session. If the
+      path                           value is not specified in the task, the value of environment variable ANSIBLE_NET_SSH_KEYFILE will be used instead.
+      timeout       Default:         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+      integer       10               operation is completed, the module will error.
+      username                       Configures the username to use to authenticate the connection to the remote device. This value is used to authenticate the SSH session. If the value is not
+      string                         specified in the task, the value of environment variable ANSIBLE_NET_USERNAME will be used instead.
+   rotate_frequency                  Rotate log frequency in minutes, this is applicable if value of dest is file. The acceptable value is in range of 1 to 59. This controls the frequency after
+   -                                 which log file is rotated.
+   size                              Size of the file in archive, this is applicable if value of dest is file. The acceptable value is in range from 65536 to 1073741824 bytes.
+   -
+   state              Choices:
+   -                  • present ←    State of the logging configuration.
+                      • absent
+
+NOTES                   *junos_logging-notes*
+
+   Note
+
+     • This module requires the netconf system service be enabled on the remote device being managed.
+     • Tested against vSRX JUNOS version 15.1X49-D15.4, vqfx-10000 JUNOS Version 15.1X53-D60.4.
+     • Recommended connection is netconf. See the Junos OS Platform Options.
+     • This module also works with local connections for legacy playbooks.
+     • For information on using CLI and netconf see the Junos OS Platform Options guide
+     • For more information on using Ansible to manage network devices see the Ansible Network Guide
+     • For more information on using Ansible to manage Juniper network devices see https://www.ansible.com/ansible-juniper.
+
+EXAMPLES                   *junos_logging-examples*
+
+ - name: configure console logging
+   junos_logging:
+     dest: console
+     facility: any
+     level: critical
+
+ - name: remove console logging configuration
+   junos_logging:
+     dest: console
+     state: absent
+
+ - name: configure file logging
+   junos_logging:
+     dest: file
+     name: test
+     facility: pfe
+     level: error
+
+ - name: configure logging parameter
+   junos_logging:
+     files: 30
+     size: 65536
+     rotate_frequency: 10
+
+ - name: Configure file logging using aggregate
+   junos_logging:
+     dest: file
+     aggregate:
+     - name: test-1
+       facility: pfe
+       level: critical
+     - name: test-2
+       facility: kernel
+       level: emergency
+     active: True
+
+ - name: Delete file logging using aggregate
+   junos_logging:
+     aggregate:
+     - { dest: file, name: test-1,  facility: pfe, level: critical }
+     - { dest: file, name: test-2,  facility: kernel, level: emergency }
+     state: absent
+
+RETURN VALUES                   *junos_logging-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key                              Returned                                                                                 Description
+   diff.prepared                                                           Configuration difference before and after applying change.
+   string        when configuration is changed and diff option is enabled. Sample:
+                                                                           [edit system syslog] + [edit system syslog] file interactive-commands { ... } + file test { + pfe critical; + }
+
+STATUS                   *junos_logging-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *junos_logging-red hat support*
+
+     • Ganesh Nalawade (@ganeshrn)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *junos_logging-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/junos_logging_module.html

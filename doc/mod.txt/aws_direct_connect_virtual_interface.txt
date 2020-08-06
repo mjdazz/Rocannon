@@ -1,0 +1,186 @@
+SYNOPSIS                   *aws_direct_connect_virtual_interface*
+
+     • Create, delete, or modify a Direct Connect public or private virtual interface.
+
+REQUIREMENTS                   *aws_direct_connect_virtual_interface-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *aws_direct_connect_virtual_interface-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   address_type                                  The type of IP address for the BGP peer.
+   -
+   amazon_address                                The amazon address CIDR with which to create the virtual interface.
+   -
+   authentication_key                            The authentication key for BGP configuration.
+   -
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   bgp_asn                      Default:         The autonomous system (AS) number for Border Gateway Protocol (BGP) configuration.
+   -                            65000
+   cidr                                          A list of route filter prefix CIDRs with which to create the public virtual interface.
+   -
+   customer_address                              The customer address CIDR with which to create the virtual interface.
+   -
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   id_to_associate                               The ID of the link aggregation group or connection to associate with the virtual interface.
+   -                                             aliases: link_aggregation_group_id, connection_id
+   name                                          The name of the virtual interface.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   public                         Choices:
+   boolean                        • no           The type of virtual interface.
+                                  • yes
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present      The desired state of the Direct Connect virtual interface.
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   virtual_gateway_id                            The virtual gateway ID required for creating a private virtual interface.
+   -
+   virtual_interface_id                          The virtual interface ID.
+   -
+   vlan                         Default:         The VLAN ID.
+   -                            100
+
+NOTES                   *aws_direct_connect_virtual_interface-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_direct_connect_virtual_interface-examples*
+
+ ---
+ - name: create an association between a LAG and connection
+   aws_direct_connect_virtual_interface:
+     state: present
+     name: "{{ name }}"
+     link_aggregation_group_id: LAG-XXXXXXXX
+     connection_id: dxcon-XXXXXXXX
+
+ - name: remove an association between a connection and virtual interface
+   aws_direct_connect_virtual_interface:
+     state: absent
+     connection_id: dxcon-XXXXXXXX
+     virtual_interface_id: dxv-XXXXXXXX
+
+RETURN VALUES                   *aws_direct_connect_virtual_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+             Key              Returned                                                                            Description
+   address_family                          The address family for the BGP peer.
+   string                  always          Sample:
+                                           ipv4
+   amazon_address                          IP address assigned to the Amazon interface.
+   string                  always          Sample:
+                                           169.254.255.1/30
+   asn                                     The autonomous system (AS) number for Border Gateway Protocol (BGP) configuration.
+   integer                 always          Sample:
+                                           65000
+   auth_key                                The authentication key for BGP configuration.
+   string                  always          Sample:
+                                           0xZ59Y1JZ2oDOSh6YriIlyRE
+   bgp_peers               always          A list of the BGP peers configured on this virtual interface.
+   complex
+        address_family                     The address family for the BGP peer.
+        string             always          Sample:
+                                           ipv4
+        amazon_address                     IP address assigned to the Amazon interface.
+        string             always          Sample:
+                                           169.254.255.1/30
+        asn                                The autonomous system (AS) number for Border Gateway Protocol (BGP) configuration.
+        integer            always          Sample:
+                                           65000
+        auth_key                           The authentication key for BGP configuration.
+        string             always          Sample:
+                                           0xZ59Y1JZ2oDOSh6YriIlyRE
+        bgp_peer_state                     The state of the BGP peer (verifying, pending, available)
+        string             always          Sample:
+                                           available
+        bgp_status                         The up/down state of the BGP peer.
+        string             always          Sample:
+                                           up
+        customer_address                   IP address assigned to the customer interface.
+        string             always          Sample:
+                                           169.254.255.2/30
+   changed                 always          Indicated if the virtual interface has been created/modified/deleted
+   boolean
+   connection_id                           The ID of the connection. This field is also used as the ID type for operations that use multiple connection types (LAG, interconnect, and/or connection).
+   string                  always          Sample:
+                                           dxcon-fgb175av
+   customer_address                        IP address assigned to the customer interface.
+   string                  always          Sample:
+                                           169.254.255.2/30
+   customer_router_config  always          Information for generating the customer router configuration.
+   string
+   location                                Where the connection is located.
+   string                  always          Sample:
+                                           EqDC2
+   owner_account                           The AWS account that will own the new virtual interface.
+   string                  always          Sample:
+                                           123456789012
+   route_filter_prefixes   always          A list of routes to be advertised to the AWS network in this region (public virtual interface).
+   complex
+        cidr                               A routes to be advertised to the AWS network in this region.
+        string             always          Sample:
+                                           54.227.92.216/30
+   virtual_gateway_id      when            The ID of the virtual private gateway to a VPC. This only applies to private virtual interfaces.
+   string                  public=False    Sample:
+                                           vgw-f3ce259a
+   virtual_interface_id                    The ID of the virtual interface.
+   string                  always          Sample:
+                                           dxvif-fh0w7cex
+   virtual_interface_name                  The name of the virtual interface assigned by the customer.
+   string                  always          Sample:
+                                           test_virtual_interface
+   virtual_interface_state                 State of the virtual interface (confirming, verifying, pending, available, down, rejected).
+   string                  always          Sample:
+                                           available
+   virtual_interface_type                  The type of virtual interface (private, public).
+   string                  always          Sample:
+                                           private
+   vlan                                    The VLAN ID.
+   integer                 always          Sample:
+                                           100
+
+STATUS                   *aws_direct_connect_virtual_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Sloane Hertel (@s-hertel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_direct_connect_virtual_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_direct_connect_virtual_interface_module.html

@@ -1,0 +1,178 @@
+SYNOPSIS                   *bigip_firewall_port_list*
+
+     • Manages the AFM port lists on a BIG-IP. This module can be used to add and remove port list entries.
+
+   Aliases: bigip_security_port_list
+
+PARAMETERS                   *bigip_firewall_port_list-parameters*
+
+      Parameter    Choices/Defaults                                                                             Comments
+   description                      Description of the port list
+   string
+   name
+   string /                         Specifies the name of the port list.
+   required
+   partition       Default:         Device partition to manage resources on.
+   string          "Common"
+   port_lists                       Simple list of existing port lists to add to this list. Port lists can be specified in either their fully qualified name (/Common/foo) or their short name (foo).
+   list                             If a short name is used, the partition argument will automatically be prepended to the short name.
+   port_ranges                      A list of port ranges where the range starts with a port number, is followed by a dash (-) and then a second number.
+   list                             If the first number is greater than the second number, the numbers will be reversed so-as to be properly formatted. ie, 90-78 would become 78-90.
+   ports                            Simple list of port values to add to the list
+   list
+   provider
+   dictionary                       A dict object containing connection details.
+   added in 2.5
+    auth_provider                   Configures the auth provider for to obtain authentication tokens from the remote device.
+    string                          This option is really used when working with BIG-IQ devices.
+    password                        The password for the user account used to connect to the BIG-IP.
+    string /                        You may omit this option by setting the environment variable F5_PASSWORD.
+    required                        aliases: pass, pwd
+    server                          The BIG-IP host.
+    string /                        You may omit this option by setting the environment variable F5_SERVER.
+    required
+    server_port    Default:         The BIG-IP server port.
+    integer        443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+    ssh_keyfile                     Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+    path                            You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+    timeout                         Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+    integer                         operation is completed, the module will error.
+    transport        Choices:
+    string           • cli          Configures the transport connection to use when connecting to the remote device.
+                     • rest ←
+    user                            The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+    string /                        You may omit this option by setting the environment variable F5_USER.
+    required
+    validate_certs   Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+    boolean          • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                     • yes ←
+   state             Choices:       When present, ensures that the address list and entries exists.
+   string            • present ←    When absent, ensures the address list is removed.
+                     • absent
+
+NOTES                   *bigip_firewall_port_list-notes*
+
+   Note
+
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_firewall_port_list-examples*
+
+ - name: Create a simple port list
+   bigip_firewall_port_list:
+     name: foo
+     ports:
+       - 80
+       - 443
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Override the above list of ports with a new list
+   bigip_firewall_port_list:
+     name: foo
+     ports:
+       - 3389
+       - 8080
+       - 25
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create port list with series of ranges
+   bigip_firewall_port_list:
+     name: foo
+     port_ranges:
+       - 25-30
+       - 80-500
+       - 50-78
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Use multiple types of port arguments
+   bigip_firewall_port_list:
+     name: foo
+     port_ranges:
+       - 25-30
+       - 80-500
+       - 50-78
+     ports:
+       - 8080
+       - 443
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove port list
+   bigip_firewall_port_list:
+     name: foo
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Create port list from a file with one port per line
+   bigip_firewall_port_list:
+     name: lot-of-ports
+     ports: "{{ lookup('file', 'my-large-port-list.txt').split('\n') }}"
+     state: present
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_firewall_port_list-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key     Returned                                                                                  Description
+   description          The new description of the port list.
+   string      changed  Sample:
+                        My port list
+   port_lists           The new list of port list names applied to the port list.
+   list        changed  Sample:
+                        ['/Common/list1', '/Common/list2']
+   port_ranges          The new list of port ranges applied to the port list.
+   list        changed  Sample:
+                        ['80-100', '200-8080']
+   ports                The new list of ports applied to the port list.
+   list        changed  Sample:
+                        [80, 443]
+
+STATUS                   *bigip_firewall_port_list-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_firewall_port_list-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_firewall_port_list_module.html

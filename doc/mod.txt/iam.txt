@@ -1,0 +1,167 @@
+SYNOPSIS                   *iam*
+
+     • Allows for the management of IAM users, user API keys, groups, roles.
+
+REQUIREMENTS                   *iam-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *iam-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   access_key_ids                                A list of the keys that you want impacted by the access_key_state parameter.
+   list
+                                  Choices:
+                                  • create
+                                  • remove
+   access_key_state               • active
+   string                         • inactive     When type is user, it creates, removes, deactivates or activates a user's access key(s). Note that actions apply only to keys specified.
+                                  • Create
+                                  • Remove
+                                  • Active
+                                  • Inactive
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   groups                                        A list of groups the user should belong to. When update, will gracefully remove groups not listed.
+   list
+                                  Choices:
+   iam_type                       • user         Type of IAM resource
+   string                         • group
+                                  • role
+   key_count                    Default:         When access_key_state is create it will ensure this quantity of keys are present. Defaults to 1.
+   integer                      1
+   name                                          Name of IAM resource to create or identify
+   string / required
+   new_name                                      When state is update, will replace name with new_name on IAM resource
+   string
+   new_path                                      When state is update, will replace the path with new_path on the IAM resource
+   string
+   password                                      When type is user and state is present, define the users login password. Also works with update. Note that always returns changed.
+   string
+   path                         Default:         When creating or updating, specify the desired path of the resource. If state is present, it will replace the current path to match what is passed
+   string                       "/"              in when they do not match.
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+                                  Choices:
+   state                          • present      Whether to create, delete or update the IAM resource. Note, roles cannot be updated.
+   string / required              • absent
+                                  • update
+   trust_policy                                  The inline (JSON or YAML) trust policy document that grants an entity permission to assume the role. Mutually exclusive with trust_policy_filepath.
+   dictionary
+   trust_policy_filepath                         The path to the trust policy document that grants an entity permission to assume the role. Mutually exclusive with trust_policy.
+   string
+   update_password                Choices:
+   string                         • always ←     always will update passwords if they differ. on_create will only set the password for newly created users.
+                                  • on_create
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *iam-notes*
+
+   Note
+
+     • Currently boto does not support the removal of Managed Policies, the module will error out if your user/group/role has managed policies when you try to do state=absent. They will need to be
+       removed manually.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *iam-examples*
+
+ # Basic user creation example
+ tasks:
+ - name: Create two new IAM users with API keys
+   iam:
+     iam_type: user
+     name: "{{ item }}"
+     state: present
+     password: "{{ temp_pass }}"
+     access_key_state: create
+   loop:
+     - jcleese
+     - mpython
+
+ # Advanced example, create two new groups and add the pre-existing user
+ # jdavila to both groups.
+ task:
+ - name: Create Two Groups, Mario and Luigi
+   iam:
+     iam_type: group
+     name: "{{ item }}"
+     state: present
+   loop:
+      - Mario
+      - Luigi
+   register: new_groups
+
+ - name:
+   iam:
+     iam_type: user
+     name: jdavila
+     state: update
+     groups: "{{ item.created_group.group_name }}"
+   loop: "{{ new_groups.results }}"
+
+ # Example of role with custom trust policy for Lambda service
+ - name: Create IAM role with custom trust relationship
+   iam:
+     iam_type: role
+     name: AAALambdaTestRole
+     state: present
+     trust_policy:
+       Version: '2012-10-17'
+       Statement:
+       - Action: sts:AssumeRole
+         Effect: Allow
+         Principal:
+           Service: lambda.amazonaws.com
+
+RETURN VALUES                   *iam-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key       Returned                                                                                  Description
+               if            the IAM.role dict returned by Boto
+   role_result iam_type=role Sample:
+   string      and           {'arn': 'arn:aws:iam::A1B2C3D4E5F6:role/my-new-role', 'assume_role_policy_document': '...truncated...', 'create_date': '2017-09-02T14:32:23Z', 'path': '/', 'role_id':
+               state=present 'AROAA1B2C3D4E5F6G7H8I', 'role_name': 'my-new-role'}
+               if            a list containing the name of the currently defined roles
+   roles       iam_type=role Sample:
+   list        and           ['my-new-role', 'my-existing-role-1', 'my-existing-role-2', 'my-existing-role-3', 'my-existing-role-...']
+               state=present
+
+STATUS                   *iam-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jonathan I. Davila (@defionscode)
+     • Paul Seiffert (@seiffert)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *iam-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/iam_module.html

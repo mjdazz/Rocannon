@@ -1,0 +1,158 @@
+SYNOPSIS                   *bigip_gtm_monitor_tcp_half_open*
+
+     • Manages F5 BIG-IP GTM tcp half-open monitors.
+
+PARAMETERS                   *bigip_gtm_monitor_tcp_half_open-parameters*
+
+        Parameter          Choices/Defaults                                                                           Comments
+                                                Specifies that the monitor allows more than one probe attempt per interval.
+   ignore_down_response   Choices:              When yes, specifies that the monitor ignores down responses for the duration of the monitor timeout. Once the monitor timeout is reached without the
+   boolean                • no                  system receiving an up response, the system marks the object down.
+                          • yes                 When no, specifies that the monitor immediately marks an object down when it receives a down response.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be no.
+   interval                                     Specifies, in seconds, the frequency at which the system issues the monitor check when either the resource is down or the status of the resource is
+   integer                                      unknown.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be 30. This value must be less than the timeout value.
+   ip                                           IP address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'.
+   string
+   name                                         Monitor name.
+   string / required
+   parent               Default:                The parent template of this monitor template. Once this value has been set, it cannot be changed. By default, this value is the tcp_half_open parent
+   string               "/Common/tcp_half_open" on the Common partition.
+   partition            Default:                Device partition to manage resources on.
+   string               "Common"
+   port                                         Port address part of the IP/port definition. If this parameter is not provided when creating a new monitor, then the default value will be '"'. Note
+   string                                       that if specifying an IP address, a value between 1 and 65535 must be specified
+   probe_attempts                               Specifies the number of times the system attempts to probe the host server, after which the system considers the host server down or unavailable.
+   integer                                      When creating a new monitor, if this parameter is not provided, then the default value will be 3.
+   probe_interval                               Specifies the number of seconds the big3d process waits before sending out a subsequent probe attempt when a probe fails and multiple probe attempts
+   integer                                      have been requested.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be 1.
+   probe_timeout                                Specifies the number of seconds after which the system times out the probe request to the system.
+   integer                                      When creating a new monitor, if this parameter is not provided, then the default value will be 5.
+   provider
+   dictionary                                   A dict object containing connection details.
+   added in 2.5
+     auth_provider                              Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                                     This option is really used when working with BIG-IQ devices.
+     password                                   The password for the user account used to connect to the BIG-IP.
+     string / required                          You may omit this option by setting the environment variable F5_PASSWORD.
+                                                aliases: pass, pwd
+     server                                     The BIG-IP host.
+     string / required                          You may omit this option by setting the environment variable F5_SERVER.
+     server_port        Default:                The BIG-IP server port.
+     integer            443                     You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                                Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                                       You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                                    Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded
+     integer                                    before the operation is completed, the module will error.
+     transport            Choices:
+     string               • cli                 Configures the transport connection to use when connecting to the remote device.
+                          • rest ←
+     user                                       The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string / required                          You may omit this option by setting the environment variable F5_USER.
+     validate_certs       Choices:              If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean              • no                  You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                          • yes ←
+   state                  Choices:              When present, ensures that the monitor exists.
+   string                 • present ←           When absent, ensures the monitor is removed.
+                          • absent
+                                                Specifies the number of seconds the target has in which to respond to the monitor request.
+   timeout                                      If the target responds within the set time period, it is considered up.
+   integer                                      If the target does not respond within the set time period, it is considered down.
+                                                When this value is set to 0 (zero), the system uses the interval from the parent monitor.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be 120.
+                                                Specifies whether the monitor operates in transparent mode.
+   transparent            Choices:              A monitor in transparent mode directs traffic through the associated pool members or nodes (usually a router or firewall) to the aliased destination
+   boolean                • no                  (that is, it probes the ip-port combination specified in the monitor).
+                          • yes                 If the monitor cannot successfully reach the aliased destination, the pool member or node through which the monitor traffic was sent is marked down.
+                                                When creating a new monitor, if this parameter is not provided, then the default value will be no.
+
+NOTES                   *bigip_gtm_monitor_tcp_half_open-notes*
+
+   Note
+
+     • Requires BIG-IP software version >= 12
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_gtm_monitor_tcp_half_open-examples*
+
+ - name: Create TCP half-open Monitor
+   bigip_gtm_monitor_tcp_half_open:
+     state: present
+     ip: 10.10.10.10
+     name: my_monitor
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Remove TCP half-open Monitor
+   bigip_gtm_monitor_tcp_half_open:
+     state: absent
+     name: my_monitor
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+ - name: Add half-open monitor for all addresses, port 514
+   bigip_gtm_monitor_tcp_half_open:
+     port: 514
+     name: my_monitor
+     provider:
+       user: admin
+       password: secret
+       server: lb.mydomain.com
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_gtm_monitor_tcp_half_open-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+   interval                The new interval in which to run the monitor check.
+   integer        changed  Sample:
+                           2
+   ip                      The new IP of IP/port definition.
+   string         changed  Sample:
+                           10.12.13.14
+   parent                  New parent template of the monitor.
+   string         changed  Sample:
+                           tcp_half_open
+   probe_attempts          The new number of attempts the system will make in checking the monitor probe.
+   integer        changed  Sample:
+                           10
+   probe_interval          The new interval in which the system will check the monitor probe.
+   integer        changed  Sample:
+                           10
+   probe_timeout           The new timeout in which the system will timeout the monitor probe.
+   integer        changed  Sample:
+                           10
+   timeout                 The new timeout in which the remote system must respond to the monitor.
+   integer        changed  Sample:
+                           10
+
+STATUS                   *bigip_gtm_monitor_tcp_half_open-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Tim Rupp (@caphrim007)
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_gtm_monitor_tcp_half_open-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_gtm_monitor_tcp_half_open_module.html

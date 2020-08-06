@@ -1,0 +1,147 @@
+SYNOPSIS                   *parted*
+
+     • This module allows configuring block device partition using the parted command line tool. For a full description of the fields and the options check the GNU parted manual.
+
+REQUIREMENTS                   *parted-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • This module requires parted version 1.8.3 and above.
+     • If the version of parted is below 3.1, it requires a Linux version running the sysfs file system /sys/.
+
+PARAMETERS                   *parted-parameters*
+
+   Parameter  Choices/Defaults                                                                                Comments
+                Choices:
+   align        • cylinder
+   string       • minimal      Set alignment for newly created partitions.
+                • none
+                • optimal ←
+   device
+   string /                    The block device (disk) where to operate.
+   required
+   flags                       A list of the flags that has to be set on the partition.
+   list
+                Choices:
+                • aix
+                • amiga
+                • bsd
+   label        • dvh
+   string       • gpt          Creates a new disk label.
+                • loop
+                • mac
+                • msdos ←
+                • pc98
+                • sun
+   name                        Sets the name for the partition number (GPT, Mac, MIPS and PC98 only).
+   string
+   number                      The number of the partition to work with or the number of the partition that will be created.
+   integer                     Required when performing any action on the disk, except fetching information.
+   part_end   Default:         Where the partition will end as offset from the beginning of the disk, that is, the "distance" from the start of the disk.
+   string     "100%"           The distance can be specified with all the units supported by parted (except compat) and it is case sensitive, e.g. 10GiB, 15%.
+   part_start Default:         Where the partition will start as offset from the beginning of the disk, that is, the "distance" from the start of the disk.
+   string     "0%"             The distance can be specified with all the units supported by parted (except compat) and it is case sensitive, e.g. 10GiB, 15%.
+                Choices:       May be specified only with 'msdos' or 'dvh' partition tables.
+   part_type    • extended     A name must be specified for a 'gpt' partition table.
+   string       • logical      Neither part_type nor name may be used with a 'sun' partition table.
+                • primary ←
+                Choices:
+   state        • absent       Whether to create or delete a partition.
+   string       • present      If set to info the module will only return the device information.
+                • info ←
+                Choices:
+                • s
+                • B
+                • KB
+                • KiB ←
+                • MB
+   unit         • MiB          Selects the current default unit that Parted will use to display locations and capacities on the disk and to interpret those given by the user if they are not
+   string       • GB           suffixed by an unit.
+                • GiB          When fetching information about a disk, it is always recommended to specify a unit.
+                • TB
+                • TiB
+                • %
+                • cyl
+                • chs
+                • compact
+
+NOTES                   *parted-notes*
+
+   Note
+
+     • When fetching information about a new disk and when the version of parted installed on the system is before version 3.1, the module queries the kernel through /sys/ to obtain disk
+       information. In this case the units CHS and CYL are not supported.
+
+EXAMPLES                   *parted-examples*
+
+ - name: Create a new primary partition
+   parted:
+     device: /dev/sdb
+     number: 1
+     state: present
+
+ - name: Remove partition number 1
+   parted:
+     device: /dev/sdb
+     number: 1
+     state: absent
+
+ - name: Create a new primary partition with a size of 1GiB
+   parted:
+     device: /dev/sdb
+     number: 1
+     state: present
+     part_end: 1GiB
+
+ - name: Create a new primary partition for LVM
+   parted:
+     device: /dev/sdb
+     number: 2
+     flags: [ lvm ]
+     state: present
+     part_start: 1GiB
+
+ # Example on how to read info and reuse it in subsequent task
+ - name: Read device information (always use unit when probing)
+   parted: device=/dev/sdb unit=MiB
+   register: sdb_info
+
+ - name: Remove all partitions from disk
+   parted:
+     device: /dev/sdb
+     number: '{{ item.num }}'
+     state: absent
+   loop: '{{ sdb_info.partitions }}'
+
+RETURN VALUES                   *parted-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+        Key       Returned                                                                                Description
+                           Current partition information
+   partition_info          Sample:
+   complex        success  {'disk': {'dev': '/dev/sdb', 'logical_block': 512, 'model': 'VMware Virtual disk', 'physical_block': 512, 'size': 5.0, 'table': 'msdos', 'unit': 'gib'}, 'partitions':
+                           [{'begin': 0.0, 'end': 1.0, 'flags': ['boot', 'lvm'], 'fstype': '', 'name': '', 'num': 1, 'size': 1.0}, {'begin': 1.0, 'end': 5.0, 'flags': [], 'fstype': '', 'name': '',
+                           'num': 2, 'size': 4.0}]}
+      device               Generic device information.
+      dictionary
+      partitions           List of device partitions.
+      list
+
+STATUS                   *parted-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Fabrizio Colonna (@ColOfAbRiX)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *parted-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/parted_module.html

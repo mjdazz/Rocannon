@@ -1,0 +1,136 @@
+SYNOPSIS                   *aws_waf_web_acl*
+
+     • Read the AWS documentation for WAF https://aws.amazon.com/documentation/waf/
+
+REQUIREMENTS                   *aws_waf_web_acl-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • boto
+
+PARAMETERS                   *aws_waf_web_acl-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+                                  Choices:
+   default_action                 • block        The action that you want AWS WAF to take when a request doesn't match the criteria specified in any of the Rule objects that are associated with the
+   -                              • allow        WebACL
+                                  • count
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+                                                 A friendly name or description for the metrics for this WebACL
+   metric_name                                   The name can contain only alphanumeric characters (A-Z, a-z, 0-9); the name can't contain whitespace.
+   -                                             You can't change metric_name after you create the WebACL
+                                                 Metric name will default to name with disallowed characters stripped out
+   name                                          Name of the Web Application Firewall ACL to manage
+   - / required
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   purge_rules                    Choices:
+   boolean                        • no ←         Whether to remove rules that aren't passed with rules.
+                                  • yes
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+                                                 A list of rules that the Web ACL will enforce.
+   rules                                         Each rule must contain name, action, priority keys.
+   -                                             Priorities must be unique, but not necessarily consecutive. Lower numbered priorities are evaluated first.
+                                                 The type key can be passed as rate_based, it defaults to regular
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   state                          Choices:
+   -                              • present ←    whether the Web ACL should be present or absent
+                                  • absent
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   waf_regional                   Choices:
+   boolean                        • no ←         Whether to use waf_regional module. Defaults to false.
+   added in 2.9                   • yes
+
+NOTES                   *aws_waf_web_acl-notes*
+
+   Note
+
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_waf_web_acl-examples*
+
+ - name: create web ACL
+   aws_waf_web_acl:
+     name: my_web_acl
+     rules:
+       - name: my_rule
+         priority: 1
+         action: block
+     default_action: block
+     purge_rules: yes
+     state: present
+
+ - name: delete the web acl
+   aws_waf_web_acl:
+     name: my_web_acl
+     state: absent
+
+RETURN VALUES                   *aws_waf_web_acl-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   web_acl          always   contents of the Web ACL
+   complex
+     default_action          Default action taken by the Web ACL if no rules match
+     dictionary     always   Sample:
+                             {'type': 'BLOCK'}
+     metric_name             Metric name used as an identifier
+     string         always   Sample:
+                             mywebacl
+     name                    Friendly name of the Web ACL
+     string         always   Sample:
+                             my web acl
+     rules          always   List of rules
+     complex
+         action              Action taken by the WAF when the rule matches
+         complex    always   Sample:
+                             {'type': 'ALLOW'}
+         priority            priority number of the rule (lower numbers are run first)
+         integer    always   Sample:
+                             2
+         rule_id             Rule ID
+         string     always   Sample:
+                             a6fc7ab5-287b-479f-8004-7fd0399daf75
+         type                Type of rule (either REGULAR or RATE_BASED)
+         string     always   Sample:
+                             REGULAR
+     web_acl_id              Unique identifier of Web ACL
+     string         always   Sample:
+                             10fff965-4b6b-46e2-9d78-24f6d2e2d21c
+
+STATUS                   *aws_waf_web_acl-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mike Mochan (@mmochan)
+     • Will Thames (@willthames)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_waf_web_acl-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_waf_web_acl_module.html

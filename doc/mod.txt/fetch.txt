@@ -1,23 +1,94 @@
-SYNOPSIS                           *fetch*
+SYNOPSIS                   *fetch*
 
-This module works like copy, but in reverse. It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname. Note that this module is written
-to transfer log files that might not be present, so a missing remote file won’t be an error unless fail_on_missing is set to ‘yes’.
+     • This module works like copy, but in reverse.
+     • It is used for fetching files from remote machines and storing them locally in a file tree, organized by hostname.
+     • Files that already exist at dest will be overwritten if they are different than the src.
+     • This module is also supported for Windows targets.
 
-EXAMPLES                           *fetch-examples*
->
-    # Store file into /tmp/fetched/host.example.com/tmp/somefile
-    - fetch: src=/tmp/somefile dest=/tmp/fetched
-   
-    # Specifying a path directly
-    - fetch: src=/tmp/somefile dest=/tmp/prefix-{{ ansible_hostname }} flat=yes
-   
-    # Specifying a destination path
-    - fetch: src=/tmp/uniquefile dest=/tmp/special/ flat=yes
-   
-    # Storing in a path relative to the playbook
-    - fetch: src=/tmp/uniquefile dest=special/prefix-{{ ansible_hostname }} flat=yes
-   
+PARAMETERS                   *fetch-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   dest                               A directory to save the file into.
+   - / required                       For example, if the dest directory is /backup a src file named /etc/profile on host host.example.com, would be saved into /backup/host.example.com/etc/profile.
+                                      The host name is based on the inventory name.
+   fail_on_missing     Choices:       When set to yes, the task will fail if the remote file cannot be read for any reason.
+   boolean             • no           Prior to Ansible 2.5, setting this would only fail if the source file was missing.
+                       • yes ←        The default was changed to yes in Ansible 2.5.
+                       Choices:       Allows you to override the default behavior of appending hostname/path/to/file to the destination.
+   flat                • no ←         If dest ends with '/', it will use the basename of the source file, similar to the copy module.
+   boolean             • yes          This can be useful if working with a single host, or if retrieving files that are uniquely named per host.
+                                      If using multiple hosts with the same filename, the file will be overwritten for each host.
+   src                                The file on the remote system to fetch.
+   - / required                       This must be a file, not a directory.
+                                      Recursive fetching may be supported in a later release.
+   validate_checksum   Choices:
+   boolean             • no           Verify that the source and destination checksums match after the files are fetched.
+                       • yes ←
+
+NOTES                   *fetch-notes*
+
+   Note
+
+     • When running fetch with become, the slurp module will also be used to fetch the contents of the file for determining the remote checksum. This effectively doubles the transfer size, and
+       depending on the file size can consume all available memory on the remote or local hosts causing a MemoryError. Due to this it is advisable to run this module without become whenever
+       possible.
+     • Prior to Ansible 2.5 this module would not fail if reading the remote file was impossible unless fail_on_missing was set.
+     • In Ansible 2.5 or later, playbook authors are encouraged to use fail_when or ignore_errors to get this ability. They may also explicitly set fail_on_missing to no to get the non-failing
+       behaviour.
+     • This module is also supported for Windows targets.
+
+SEE ALSO                   *fetch-see also*
+
+   See also
+
+   copy – Copy files to remote locations
+   The official documentation on the copy module.
+
+   slurp – Slurps a file from remote nodes
+   The official documentation on the slurp module.
+
+EXAMPLES                   *fetch-examples*
+
+ - name: Store file into /tmp/fetched/host.example.com/tmp/somefile
+   fetch:
+     src: /tmp/somefile
+     dest: /tmp/fetched
+
+ - name: Specifying a path directly
+   fetch:
+     src: /tmp/somefile
+     dest: /tmp/prefix-{{ inventory_hostname }}
+     flat: yes
+
+ - name: Specifying a destination path
+   fetch:
+     src: /tmp/uniquefile
+     dest: /tmp/special/
+     flat: yes
+
+ - name: Storing in a path relative to the playbook
+   fetch:
+     src: /tmp/uniquefile
+     dest: special/prefix-{{ inventory_hostname }}
+     flat: yes
+
+STATUS                   *fetch-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *fetch-red hat support*
+
+     • Ansible Core Team
+     • Michael DeHaan
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *fetch-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/fetch_module.html
+https://docs.ansible.com/ansible/latest/modules/fetch_module.html

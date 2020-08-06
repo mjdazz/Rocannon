@@ -1,60 +1,158 @@
-SYNOPSIS                           *ovirt*
+SYNOPSIS                   *ovirt*
 
-New in version 1.4.
+     • This module only supports oVirt/RHEV version 3. A newer module ovirt_vm supports oVirt/RHV version 4.
+     • Allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform.
 
-allows you to create new instances, either from scratch or an image, in addition to deleting or stopping instances on the oVirt/RHEV platform
+REQUIREMENTS                   *ovirt-requirements*
 
-EXAMPLES                           *ovirt-examples*
->
-    # Basic example provisioning from image.
-   
-    action: ovirt >
-        user=admin@internal
-        url=https://ovirt.example.com
-        instance_name=ansiblevm04
-        password=secret
-        image=centos_64
-        zone=cluster01
-        resource_type=template"
-   
-    # Full example to create new instance from scratch
-    action: ovirt >
-        instance_name=testansible
-        resource_type=new
-        instance_type=server
-        user=admin@internal
-        password=secret
-        url=https://ovirt.example.com
-        instance_disksize=10
-        zone=cluster01
-        region=datacenter1
-        instance_cpus=1
-        instance_nic=nic1
-        instance_network=rhevm
-        instance_mem=1000
-        disk_alloc=thin
-        sdomain=FIBER01
-        instance_cores=1
-        instance_os=rhel_6x64
-        disk_int=virtio"
-   
-    # stopping an instance
-    action: ovirt >
-        instance_name=testansible
-        state=stopped
-        user=admin@internal
-        password=secret
-        url=https://ovirt.example.com
-   
-    # starting an instance
-    action: ovirt >
-        instance_name=testansible
-        state=started
-        user=admin@internal
-        password=secret
-        url=https://ovirt.example.com
-   
+   The below requirements are needed on the host that executes this module.
+
+     • ovirt-engine-sdk-python
+
+PARAMETERS                   *ovirt-parameters*
+
+       Parameter        Choices/Defaults                                                                            Comments
+   disk_alloc          Choices:
+   -                   • preallocated       Define whether disk is thin or preallocated.
+                       • thin ←
+   disk_int            Choices:
+   -                   • ide                Interface type of the disk.
+                       • virtio ←
+   image                                    The template to use for the instance.
+   -
+   instance_cores    Default:               Define the instance's number of cores.
+   -                 1                      aliases: vmcores
+   instance_cpus     Default:               The instance's number of CPUs.
+   -                 1                      aliases: vmcpus
+   instance_disksize                        Size of the instance's disk in GB.
+   -                                        aliases: vm_disksize
+   instance_dns                             Define the instance's Primary DNS server.
+   -                                        aliases: dns
+   instance_domain                          Define the instance's Domain.
+   -                                        aliases: domain
+   instance_hostname                        Define the instance's Hostname.
+   -                                        aliases: hostname
+   instance_ip                              Define the instance's IP.
+   -                                        aliases: ip
+   instance_key                             Define the instance's Authorized key.
+   -                                        aliases: key
+   instance_mem                             The instance's amount of memory in MB.
+   -                                        aliases: vmmem
+   instance_name                            The name of the instance to use.
+   - / required                             aliases: vmname
+   instance_netmask                         Define the instance's Netmask.
+   -                                        aliases: netmask
+   instance_network  Default:               The logical network the machine should belong to.
+   -                 "rhevm"                aliases: vmnetwork
+   instance_nic                             The name of the network interface in oVirt/RHEV.
+   -                                        aliases: vmnic
+   instance_os                              Type of Operating System.
+   -                                        aliases: vmos
+   instance_rootpw                          Define the instance's Root password.
+   -                                        aliases: rootpw
+                       Choices:             Define whether the instance is a server, desktop or high_performance.
+   instance_type       • desktop            high_performance is supported since Ansible 2.5 and oVirt/RHV 4.2.
+   -                   • server ←           aliases: vmtype
+                       • high_performance
+   password                                 Password of the user to authenticate with.
+   - / required
+   region                                   The oVirt/RHEV datacenter where you want to deploy to.
+   -
+   resource_type       Choices:
+   -                   • new                Whether you want to deploy an image or create an instance from scratch.
+                       • template
+   sdomain                                  The Storage Domain where you want to create the instance's disk on.
+   -
+                       Choices:
+                       • absent
+   state               • present ←          Create, terminate or remove instances.
+   -                   • restarted
+                       • shutdown
+                       • started
+   url                                      The url of the oVirt instance.
+   - / required
+   user                                     The user to authenticate with.
+   - / required
+   zone                                     Deploy the image to this oVirt cluster.
+   -
+
+EXAMPLES                   *ovirt-examples*
+
+ - name: Basic example to provision from image
+   ovirt:
+     user: [email protected]
+     url: https://ovirt.example.com
+     instance_name: ansiblevm04
+     password: secret
+     image: centos_64
+     zone: cluster01
+     resource_type: template
+
+ - name: Full example to create new instance from scratch
+   ovirt:
+     instance_name: testansible
+     resource_type: new
+     instance_type: server
+     user: [email protected]
+     password: secret
+     url: https://ovirt.example.com
+     instance_disksize: 10
+     zone: cluster01
+     region: datacenter1
+     instance_cpus: 1
+     instance_nic: nic1
+     instance_network: rhevm
+     instance_mem: 1000
+     disk_alloc: thin
+     sdomain: FIBER01
+     instance_cores: 1
+     instance_os: rhel_6x64
+     disk_int: virtio
+
+ - name: Stopping an existing instance
+   ovirt:
+     instance_name: testansible
+     state: stopped
+     user: [email protected]
+     password: secret
+     url: https://ovirt.example.com
+
+ - name: Start an existing instance
+   ovirt:
+     instance_name: testansible
+     state: started
+     user: [email protected]
+     password: secret
+     url: https://ovirt.example.com
+
+ - name: Start an instance with cloud init information
+   ovirt:
+     instance_name: testansible
+     state: started
+     user: [email protected]
+     password: secret
+     url: https://ovirt.example.com
+     hostname: testansible
+     domain: ansible.local
+     ip: 192.0.2.100
+     netmask: 255.255.255.0
+     gateway: 192.0.2.1
+     rootpw: bigsecret
+
+STATUS                   *ovirt-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Vincent Van der Kussen (@vincentvdk)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
 MORE INFO                          *ovirt-moreinfo*
 >
 All arguments are omni-completed, but if you really want to see the online docs:
-http://docs.ansible.com/ovirt_module.html
+https://docs.ansible.com/ansible/latest/modules/ovirt_module.html

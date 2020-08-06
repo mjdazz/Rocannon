@@ -1,0 +1,244 @@
+SYNOPSIS                   *aws_s3*
+
+     • This module allows the user to manage S3 buckets and the objects within them. Includes support for creating and deleting both objects and buckets, retrieving objects as files or strings and
+       generating download links. This module has a dependency on boto3 and botocore.
+
+REQUIREMENTS                   *aws_s3-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *aws_s3-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key id. If not set then the value of the AWS_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   bucket                                        Bucket name.
+   - / required
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   dest                                          The destination file path when downloading an object/key with a GET operation.
+   -
+   dualstack                      Choices:       Enables Amazon S3 Dual-Stack Endpoints, allowing S3 communications using both IPv4 and IPv6.
+   boolean                        • no ←         Requires at least botocore version 1.4.45.
+   added in 2.7                   • yes
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   encrypt                        Choices:
+   boolean                        • no           When set for PUT mode, asks for server-side encryption.
+                                  • yes ←
+   encryption_kms_key_id
+   -                                             KMS key id to use when encrypting objects using aws:kms encryption. Ignored if encryption is not aws:kms
+   added in 2.7
+   encryption_mode                Choices:
+   -                              • AES256 ←     What encryption mode to use if encrypt is set
+   added in 2.7                   • aws:kms
+   expiration                   Default:         Time limit (in seconds) for the URL generated and returned by S3/Walrus when performing a mode=put or mode=geturl operation.
+   -                            600
+   headers                                       Custom headers for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
+   -
+   ignore_nonexistent_bucket      Choices:       Overrides initial bucket lookups in case bucket or iam policies are restrictive. Example: a user may have the GetObject permission but no other
+   boolean                        • no           permissions. In this case using the option mode: get will fail without specifying ignore_nonexistent_bucket: True.
+                                  • yes
+   marker                                        Specifies the key to start with when using list mode. Object keys are returned in alphabetical order, starting with key after the marker in order.
+   -
+   max_keys                     Default:         Max number of results to return in list mode, set this if you want to retrieve fewer than the default 1000 keys.
+   -                            1000
+   metadata                                      Metadata for PUT operation, as a dictionary of 'key=value' and 'key=value,key=value'.
+   -
+                                  Choices:
+                                  • get
+                                  • put
+   mode                           • delete       Switches the module behaviour between put (upload), get (download), geturl (return download url, Ansible 1.3+), getstr (download object as string
+   - / required                   • create       (1.3+)), list (list keys, Ansible 2.0+), create (bucket), delete (bucket), and delobj (delete object, Ansible 2.0+).
+                                  • geturl
+                                  • getstr
+                                  • delobj
+                                  • list
+   object                                        Keyname of the object inside the bucket. Can be used to create "virtual directories", see examples.
+   -
+                                                 Force overwrite either locally on the filesystem or remotely with the object/key. Used with PUT and GET operations. Boolean or one of [always,
+   overwrite                    Default:         never, different], true is equal to 'always' and false is equal to 'never', new in 2.0. When this is set to 'different', the md5 sum of the local
+   -                            "always"         file is compared with the 'ETag' of the object/key in S3. The ETag may or may not be an MD5 digest of the object data. See the ETag response header
+                                                 here https://docs.aws.amazon.com/AmazonS3/latest/API/RESTCommonResponseHeaders.html
+                                                 aliases: force
+   permission                   Default:         This option lets the user set the canned permissions on the object/bucket that are created. The permissions that can be set are 'private',
+   -                            "private"        'public-read', 'public-read-write', 'authenticated-read' for a bucket or 'private', 'public-read', 'public-read-write', 'aws-exec-read',
+                                                 'authenticated-read', 'bucket-owner-read', 'bucket-owner-full-control' for an object. Multiple permissions can be specified as a list.
+   prefix                       Default:         Limits the response to keys that begin with the specified prefix for list mode
+   -                            ""
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+                                                 AWS region to create the bucket in. If not set then the value of the AWS_REGION and EC2_REGION environment variables are checked, followed by the
+   region                                        aws_region and ec2_region settings in the Boto config file. If none of those are set the region defaults to the S3 Location: US Standard. Prior to
+   string                                        ansible 1.8 this parameter could be specified but had no effect.
+                                                 aliases: aws_region, ec2_region
+   retries                      Default:         On recoverable failure, how many times to retry before actually failing.
+   -                            0
+   rgw                            Choices:
+   boolean                        • no ←         Enable Ceph RGW S3 support. This option requires an explicit url via s3_url.
+                                  • yes
+   s3_url                                        S3 URL endpoint for usage with Ceph, Eucalyptus and fakes3 etc. Otherwise assumes AWS.
+   -                                             aliases: S3_URL
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   src                                           The source file path when performing a PUT operation.
+   -
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+   version                                       Version ID of the object inside the bucket. Can be used to get a specific version of a file if versioning is enabled in the target bucket.
+   -
+
+NOTES                   *aws_s3-notes*
+
+   Note
+
+     • In 2.4, this module has been renamed from s3 into aws_s3.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *aws_s3-examples*
+
+ - name: Simple PUT operation
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     src: /usr/local/myfile.txt
+     mode: put
+
+ - name: Simple PUT operation in Ceph RGW S3
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     src: /usr/local/myfile.txt
+     mode: put
+     rgw: true
+     s3_url: "http://localhost:8000"
+
+ - name: Simple GET operation
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     dest: /usr/local/myfile.txt
+     mode: get
+
+ - name: Get a specific version of an object.
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     version: 48c9ee5131af7a716edc22df9772aa6f
+     dest: /usr/local/myfile.txt
+     mode: get
+
+ - name: PUT/upload with metadata
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     src: /usr/local/myfile.txt
+     mode: put
+     metadata: 'Content-Encoding=gzip,Cache-Control=no-cache'
+
+ - name: PUT/upload with custom headers
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     src: /usr/local/myfile.txt
+     mode: put
+     headers: '[email protected]'
+
+ - name: List keys simple
+   aws_s3:
+     bucket: mybucket
+     mode: list
+
+ - name: List keys all options
+   aws_s3:
+     bucket: mybucket
+     mode: list
+     prefix: /my/desired/
+     marker: /my/desired/0023.txt
+     max_keys: 472
+
+ - name: Create an empty bucket
+   aws_s3:
+     bucket: mybucket
+     mode: create
+     permission: public-read
+
+ - name: Create a bucket with key as directory, in the EU region
+   aws_s3:
+     bucket: mybucket
+     object: /my/directory/path
+     mode: create
+     region: eu-west-1
+
+ - name: Delete a bucket and all contents
+   aws_s3:
+     bucket: mybucket
+     mode: delete
+
+ - name: GET an object but don't download if the file checksums match. New in 2.0
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     dest: /usr/local/myfile.txt
+     mode: get
+     overwrite: different
+
+ - name: Delete an object from a bucket
+   aws_s3:
+     bucket: mybucket
+     object: /my/desired/key.txt
+     mode: delobj
+
+RETURN VALUES                   *aws_s3-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key               Returned                                                                                    Description
+   contents                                 contents of the object as string
+   string   (for getstr operation)          Sample:
+                                            Hello, world!
+   expiry                                   number of seconds the presigned url is valid for
+   integer  (for geturl operation)          Sample:
+                                            600
+   msg                                      msg indicating the status of the operation
+   string   always                          Sample:
+                                            PUT operation complete
+   s3_keys                                  list of object keys
+   list     (for list operation)            Sample:
+                                            ['prefix1/', 'prefix1/key1', 'prefix1/key2']
+   url                                      url of the object
+   string   (for put and geturl operations) Sample:
+                                            https://my-bucket.s3.amazonaws.com/my-key.txt?AWSAccessKeyId=<access-key>&Expires=1506888865&Signature=<signature>
+
+STATUS                   *aws_s3-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *aws_s3-red hat support*
+
+     • Lester Wade (@lwade)
+     • Sloane Hertel (@s-hertel)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *aws_s3-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/aws_s3_module.html

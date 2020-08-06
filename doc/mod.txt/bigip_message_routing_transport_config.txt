@@ -1,0 +1,150 @@
+SYNOPSIS                   *bigip_message_routing_transport_config*
+
+     • Manages configuration for an outgoing connection in BIG-IP message routing.
+
+PARAMETERS                   *bigip_message_routing_transport_config-parameters*
+
+        Parameter       Choices/Defaults                                                                           Comments
+   description                           The user defined description of the transport config.
+   string
+   name                                  Specifies the name of the transport config to manage.
+   string / required
+   partition            Default:         Device partition to create transport-config object on.
+   string               "Common"
+   profiles                              Specifies a list profiles for the outgoing connection to use to direct and manage traffic.
+   list
+   provider
+   dictionary                            A dict object containing connection details.
+   added in 2.5
+     auth_provider                       Configures the auth provider for to obtain authentication tokens from the remote device.
+     string                              This option is really used when working with BIG-IQ devices.
+     password                            The password for the user account used to connect to the BIG-IP.
+     string / required                   You may omit this option by setting the environment variable F5_PASSWORD.
+                                         aliases: pass, pwd
+     server                              The BIG-IP host.
+     string / required                   You may omit this option by setting the environment variable F5_SERVER.
+     server_port        Default:         The BIG-IP server port.
+     integer            443              You may omit this option by setting the environment variable F5_SERVER_PORT.
+     ssh_keyfile                         Specifies the SSH keyfile to use to authenticate the connection to the remote device. This argument is only used for cli transports.
+     path                                You may omit this option by setting the environment variable ANSIBLE_NET_SSH_KEYFILE.
+     timeout                             Specifies the timeout in seconds for communicating with the network device for either connecting or sending commands. If the timeout is exceeded before the
+     integer                             operation is completed, the module will error.
+     transport            Choices:
+     string               • cli          Configures the transport connection to use when connecting to the remote device.
+                          • rest ←
+     user                                The username to connect to the BIG-IP with. This user must have administrative privileges on the device.
+     string / required                   You may omit this option by setting the environment variable F5_USER.
+     validate_certs       Choices:       If no, SSL certificates are not validated. Use this only on personally controlled sites using self-signed certificates.
+     boolean              • no           You may omit this option by setting the environment variable F5_VALIDATE_CERTS.
+                          • yes ←
+   rules                                 The iRules you want run on this transport config. iRules help automate the intercepting, processing, and routing of application traffic.
+   list
+   src_addr_translation                  Specifies the type of source address translation enabled for the transport config and the pool that the source address translation will use.
+   dictionary
+     pool                                Specifies the name of a LSN or SNAT pool used by the specified transport config.
+     string                              Name can also be specified in fullPath format: /Common/foobar
+                                         When type is none or automap the pool parameter will be replaced by none keyword, thus any defined pool parameter will be ignored.
+                          Choices:
+     type                 • snat         Specifies the type of source address translation associated with the specified transport config.
+     string               • none         When set to snat the pool parameter needs to contain a name for a valid LSN or SNAT pool.
+                          • automap
+   src_port                              Specifies the source port to be used for the connection being created.
+   integer                               If no value is specified an ephemeral port is chosen for the connection being created.
+                                         The accepted range is between 0 and 65535 inclusive.
+   state                  Choices:       When present, ensures that the transport-config object exists.
+   string                 • present ←    When absent, ensures the transport-config object is removed.
+                          • absent
+   type                   Choices:       Parameter used to specify the type of the transport-config object to manage.
+   string                 • generic ←    Default setting is generic with more options added in future.
+
+NOTES                   *bigip_message_routing_transport_config-notes*
+
+   Note
+
+     • Requires BIG-IP >= 14.0.0
+     • For more information on using Ansible to manage F5 Networks devices see https://www.ansible.com/integrations/networks/f5.
+     • Requires BIG-IP software version >= 12.
+     • The F5 modules only manipulate the running configuration of the F5 product. To ensure that BIG-IP specific configuration persists to disk, be sure to include at least one task that uses the
+       bigip_config module to save the running configuration. Refer to the module’s documentation for the correct usage of the module to save your running configuration.
+
+EXAMPLES                   *bigip_message_routing_transport_config-examples*
+
+ - name: Create generic transport config
+   bigip_message_routing_transport_config:
+     name: foo
+     profiles:
+       transport: genericmsg
+       tcp: tcp-lan-optimized
+     description: new_transport
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Modify generic transport config
+   bigip_message_routing_transport_config:
+     name: foo
+     rules:
+       - rule_1
+       - rule_2
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+ - name: Remove generic transport config
+   bigip_message_routing_transport_config:
+     name: foo
+     state: absent
+     provider:
+       password: secret
+       server: lb.mydomain.com
+       user: admin
+   delegate_to: localhost
+
+RETURN VALUES                   *bigip_message_routing_transport_config-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+           Key          Returned                                                                             Description
+   description                   The user defined description of the router profile.
+   string               changed  Sample:
+                                 My description
+   profiles                      The profiles for the outgoing connection .
+   list                 changed  Sample:
+                                 ['/Common/profile1', '/Common/profile2']
+   rules                         The iRules running on transport config.
+   list                 changed  Sample:
+                                 ['/Common/rule1', '/Common/rule2']
+   source_port                   The source port to be used for the connection being created.
+   integer              changed  Sample:
+                                 10041
+   src_addr_translation          The type of source address translation enabled for the transport config.
+   complex              changed  Sample:
+                                 hash/dictionary of values
+            pool                 The name of a LSN or SNAT pool used by the specified transport config.
+            string      changed  Sample:
+                                 /Common/pool1
+            type                 the type of source address translation associated with the specified transport config.
+            string      changed  Sample:
+                                 automap
+
+STATUS                   *bigip_message_routing_transport_config-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by an Ansible Partner. [certified]
+
+     • Wojciech Wypior (@wojtek0806)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *bigip_message_routing_transport_config-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/bigip_message_routing_transport_config_module.html

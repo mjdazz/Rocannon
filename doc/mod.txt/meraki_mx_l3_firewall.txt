@@ -1,0 +1,178 @@
+SYNOPSIS                   *meraki_mx_l3_firewall*
+
+     • Allows for creation, management, and visibility into layer 3 firewalls implemented on Meraki MX firewalls.
+
+PARAMETERS                   *meraki_mx_l3_firewall-parameters*
+
+           Parameter         Choices/Defaults                                                                         Comments
+   auth_key                                    Authentication key provided by the dashboard. Required if environmental variable MERAKI_KEY is not set.
+   string / required
+   host                      Default:          Hostname for Meraki dashboard.
+   string                    "api.meraki.com"  Can be used to access regional Meraki environments, such as China.
+   internal_error_retry_time Default:          Number of seconds to retry if server returns an internal server error.
+   integer                   60
+   net_id                                      ID of network which MX firewall is in.
+   -
+   net_name                                    Name of network which MX firewall is in.
+   -
+   org_id                                      ID of organization.
+   string
+   org_name                                    Name of organization.
+   string                                      aliases: organization
+   output_format               Choices:
+   string                      • snakecase ←   Instructs module whether response keys should be snake case (ex. net_id) or camel case (ex. netId).
+                               • camelcase
+   output_level                Choices:
+   string                      • debug         Set amount of debug output during module execution.
+                               • normal ←
+   rate_limit_retry_time     Default:          Number of seconds to retry if rate limiter is triggered.
+   integer                   165
+   rules                                       List of firewall rules.
+   -
+         comment                               Optional comment to describe the firewall rule.
+         -
+         dest_cidr                             Comma separated list of CIDR notation destination networks.
+         -
+         dest_port                             Comma separated list of destination port numbers to match against.
+         -
+         policy                Choices:
+         -                     • allow         Policy to apply if rule is hit.
+                               • deny
+                               Choices:
+         protocol              • any
+         -                     • icmp          Protocol to match against.
+                               • tcp
+                               • udp
+         src_cidr                              Comma separated list of CIDR notation source networks.
+         -
+         src_port                              Comma separated list of source port numbers to match against.
+         -
+         syslog_enabled                        Whether to log hints against the firewall rule.
+         -                                     Only applicable if a syslog server is specified against the network.
+   state                       Choices:
+   -                           • present ←     Create or modify an organization.
+                               • query
+   syslog_default_rule         Choices:        Whether to log hits against the default firewall rule.
+   boolean                     • no ←          Only applicable if a syslog server is specified against the network.
+                               • yes           This is not shown in response from Meraki. Instead, refer to the syslog_enabled value in the default rule.
+   timeout                   Default:          Time to timeout for HTTP requests.
+   integer                   30
+   use_https                   Choices:        If no, it will use HTTP. Otherwise it will use HTTPS.
+   boolean                     • no            Only useful for internal Meraki developers.
+                               • yes ←
+   use_proxy                   Choices:
+   boolean                     • no            If no, it will not use a proxy, even if one is defined in an environment variable on the target hosts.
+                               • yes
+   validate_certs              Choices:
+   boolean                     • no            Whether to validate HTTP certificates.
+                               • yes ←
+
+NOTES                   *meraki_mx_l3_firewall-notes*
+
+   Note
+
+     • Module assumes a complete list of firewall rules are passed as a parameter.
+     • If there is interest in this module allowing manipulation of a single firewall rule, please submit an issue against this module.
+     • More information about the Meraki API can be found at https://dashboard.meraki.com/api_docs.
+     • Some of the options are likely only used for developers within Meraki.
+     • As of Ansible 2.9, Meraki modules output keys as snake case. To use camel case, set the ANSIBLE_MERAKI_FORMAT environment variable to camelcase.
+     • Ansible’s Meraki modules will stop supporting camel case output in Ansible 2.13. Please update your playbooks.
+
+EXAMPLES                   *meraki_mx_l3_firewall-examples*
+
+ - name: Query firewall rules
+   meraki_mx_l3_firewall:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: query
+   delegate_to: localhost
+
+ - name: Set two firewall rules
+   meraki_mx_l3_firewall:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     rules:
+       - comment: Block traffic to server
+         src_cidr: 192.0.1.0/24
+         src_port: any
+         dest_cidr: 192.0.2.2/32
+         dest_port: any
+         protocol: any
+         policy: deny
+       - comment: Allow traffic to group of servers
+         src_cidr: 192.0.1.0/24
+         src_port: any
+         dest_cidr: 192.0.2.0/24
+         dest_port: any
+         protocol: any
+         policy: permit
+   delegate_to: localhost
+
+ - name: Set one firewall rule and enable logging of the default rule
+   meraki_mx_l3_firewall:
+     auth_key: abc123
+     org_name: YourOrg
+     net_name: YourNet
+     state: present
+     rules:
+       - comment: Block traffic to server
+         src_cidr: 192.0.1.0/24
+         src_port: any
+         dest_cidr: 192.0.2.2/32
+         dest_port: any
+         protocol: any
+         policy: deny
+     syslog_default_rule: yes
+   delegate_to: localhost
+
+RETURN VALUES                   *meraki_mx_l3_firewall-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key        Returned                                                                               Description
+   data             success  Firewall rules associated to network.
+   complex
+     comment                 Comment to describe the firewall rule.
+     string         always   Sample:
+                             Block traffic to server
+     dest_cidr               Comma separated list of CIDR notation destination networks.
+     string         always   Sample:
+                             192.0.1.1/32,192.0.1.2/32
+     dest_port               Comma separated list of destination ports.
+     string         always   Sample:
+                             80,443
+     policy         always   Action to take when rule is matched.
+     string
+     protocol                Network protocol for which to match against.
+     string         always   Sample:
+                             tcp
+     src_cidr                Comma separated list of CIDR notation source networks.
+     string         always   Sample:
+                             192.0.1.1/32,192.0.1.2/32
+     src_port                Comma separated list of source ports.
+     string         always   Sample:
+                             80,443
+     syslog_enabled          Whether to log to syslog when rule is matched.
+     boolean        always   Sample:
+                             True
+
+STATUS                   *meraki_mx_l3_firewall-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Kevin Breit (@kbreit)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *meraki_mx_l3_firewall-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/meraki_mx_l3_firewall_module.html

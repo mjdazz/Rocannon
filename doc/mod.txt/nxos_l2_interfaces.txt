@@ -1,0 +1,204 @@
+SYNOPSIS                   *nxos_l2_interfaces*
+
+     • This module manages Layer-2 interfaces attributes of NX-OS Interfaces.
+
+PARAMETERS                   *nxos_l2_interfaces-parameters*
+
+           Parameter          Choices/Defaults                                                                        Comments
+   config                                      A dictionary of Layer-2 interface options
+   list / elements=dictionary
+       access                                  Switchport mode access command to configure the interface as a Layer-2 access.
+       dictionary
+             vlan                              Configure given VLAN in access port. It's used as the access VLAN ID.
+             integer
+       name                                    Full name of interface, i.e. Ethernet1/1.
+       string / required
+       trunk                                   Switchport mode trunk command to configure the interface as a Layer-2 trunk.
+       dictionary
+             allowed_vlans                     List of allowed VLANs in a given trunk port. These are the only VLANs that will be configured on the trunk.
+             string
+             native_vlan                       Native VLAN to be configured in trunk port. It is used as the trunk native VLAN ID.
+             integer
+                                Choices:
+   state                        • merged ←
+   string                       • replaced     The state of the configuration after module completion.
+                                • overridden
+                                • deleted
+
+NOTES                   *nxos_l2_interfaces-notes*
+
+   Note
+
+     • Tested against NXOS 7.3.(0)D1(1) on VIRL
+
+EXAMPLES                   *nxos_l2_interfaces-examples*
+
+ # Using merged
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #   switchport access vlan 20
+ # interface Ethernet1/2
+ #   switchport trunk native vlan 20
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+ - name: Merge provided configuration with device configuration.
+   nxos_l2_interfaces:
+     config:
+       - name: Ethernet1/1
+         trunk:
+           native_vlan: 10
+           allowed_vlans: 2,4,15
+       - name: Ethernet1/2
+         access:
+           vlan: 30
+     state: merged
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ #   switchport trunk native vlan 10
+ #   switchport trunk allowed vlans 2,4,15
+ # interface Ethernet1/2
+ #   switchport access vlan 30
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+
+ # Using replaced
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #   switchport access vlan 20
+ # interface Ethernet1/2
+ #   switchport trunk native vlan 20
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+ - name: Replace device configuration of specified L2 interfaces with provided configuration.
+   nxos_l2_interfaces:
+     config:
+       - name: Ethernet1/1
+         trunk:
+           native_vlan: 20
+           trunk_vlans: 5-10, 15
+     state: replaced
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ #   switchport trunk native vlan 20
+ #   switchport trunk allowed vlan 5-10,15
+ # interface Ethernet1/2
+ #   switchport trunk native vlan 20
+ #   switchport mode trunk
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+
+ # Using overridden
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #   switchport access vlan 20
+ # interface Ethernet1/2
+ #   switchport trunk native vlan 20
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+ - name: Override device configuration of all L2 interfaces on device with provided configuration.
+   nxos_l2_interfaces:
+     config:
+       - name: Ethernet1/2
+         access:
+           vlan: 30
+     state: overridden
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ # interface Ethernet1/2
+ #   switchport access vlan 30
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+
+ # Using deleted
+
+ # Before state:
+ # -------------
+ #
+ # interface Ethernet1/1
+ #   switchport access vlan 20
+ # interface Ethernet1/2
+ #   switchport trunk native vlan 20
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+ - name: Delete L2 attributes of given interfaces (Note This won't delete the interface itself).
+   nxos_l2_interfaces:
+     config:
+       - name: Ethernet1/1
+       - name: Ethernet1/2
+     state: deleted
+
+ # After state:
+ # ------------
+ #
+ # interface Ethernet1/1
+ # interface Ethernet1/2
+ # interface mgmt0
+ #   ip address dhcp
+ #   ipv6 address auto-config
+
+RETURN VALUES                   *nxos_l2_interfaces-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+     Key      Returned                                                                                   Description
+   after                 The configuration as structured data after module completion.
+   list     when changed Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   before                The configuration as structured data prior to module invocation.
+   list     always       Sample:
+                         The configuration returned will always be in the same format of the parameters above.
+   commands              The set of commands pushed to the remote device.
+   list     always       Sample:
+                         ['command 1', 'command 2', 'command 3']
+
+STATUS                   *nxos_l2_interfaces-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Network Team. [network]
+
+RED HAT SUPPORT                   *nxos_l2_interfaces-red hat support*
+
+     • Trishna Guha (@trishnaguha)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *nxos_l2_interfaces-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/nxos_l2_interfaces_module.html

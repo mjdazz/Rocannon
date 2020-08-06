@@ -1,0 +1,90 @@
+SYNOPSIS                   *win_http_proxy*
+
+     • Used to set, remove, or import proxy settings for Windows HTTP Services WinHTTP.
+     • WinHTTP is a framework used by applications or services, typically .NET applications or non-interactive services, to make web requests.
+
+PARAMETERS                   *win_http_proxy-parameters*
+
+   Parameter Choices/Defaults                                                                                Comments
+                              A list of hosts that will bypass the set proxy when being accessed.
+   bypass                     Use <local> to match hostnames that are not fully qualified domain names. This is useful when needing to connect to intranet sites using just the hostname.
+   list                       Omit, set to null or an empty string/list to remove the bypass list.
+                              If this is set then proxy must also be set.
+                              A string or dict that specifies the proxy to be set.
+                              If setting a string, should be in the form hostname, hostname:port, or protocol=hostname:port.
+   proxy                      If the port is undefined, the default port for the protocol in use is used.
+   -                          If setting a dict, the keys should be the protocol and the values should be the hostname and/or port for that protocol.
+                              Valid protocols are http, https, ftp, and socks.
+                              Omit, set to null or an empty string to remove the proxy settings.
+                              Instead of manually specifying the proxy and/or bypass, set this to import the proxy from a set source like Internet Explorer.
+                              Using ie will import the Internet Explorer proxy settings for the current active network connection of the current user.
+   source      Choices:       Only IE's proxy URL and bypass list will be imported into WinHTTP.
+   string      • ie           This is like running netsh winhttp import proxy source=ie.
+                              The value is imported when the module runs and will not automatically be updated if the IE configuration changes in the future. The module will have to be run again to
+                              sync the latest changes.
+
+NOTES                   *win_http_proxy-notes*
+
+   Note
+
+     • This is not the same as the proxy settings set in Internet Explorer, also known as WinINet; use the win_inet_proxy module to manage that instead.
+     • These settings are set system wide and not per user, it will require Administrative privileges to run.
+
+SEE ALSO                   *win_http_proxy-see also*
+
+   See also
+
+   win_inet_proxy – Manages proxy settings for WinINet and Internet Explorer
+   The official documentation on the win_inet_proxy module.
+
+EXAMPLES                   *win_http_proxy-examples*
+
+ - name: Set a proxy to use for all protocols
+   win_http_proxy:
+     proxy: hostname
+
+ - name: Set a proxy with a specific port with a bypass list
+   win_http_proxy:
+     proxy: hostname:8080
+     bypass:
+     - server1
+     - server2
+     - <local>
+
+ - name: Set the proxy based on the IE proxy settings
+   win_http_proxy:
+     source: ie
+
+ - name: Set a proxy for specific protocols
+   win_http_proxy:
+     proxy:
+       http: hostname:8080
+       https: hostname:8443
+
+ - name: Set a proxy for specific protocols using a string
+   win_http_proxy:
+     proxy: http=hostname:8080;https=hostname:8443
+     bypass: server1,server2,<local>
+
+ - name: Remove any proxy settings
+   win_http_proxy:
+     proxy: ''
+     bypass: ''
+
+STATUS                   *win_http_proxy-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Jordan Borean (@jborean93)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_http_proxy-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_http_proxy_module.html

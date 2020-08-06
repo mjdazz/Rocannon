@@ -1,0 +1,117 @@
+SYNOPSIS                   *flowadm*
+
+     • Create/modify/remove networking bandwidth and associated resources for a type of traffic on a particular link.
+
+PARAMETERS                   *flowadm-parameters*
+
+   Parameter  Choices/Defaults                                                                                Comments
+   dsfield                     - Identifies the 8-bit differentiated services field (as defined in RFC 2474). The optional dsfield_mask is used to state the bits of interest in the differentiated
+   -                           services field when comparing with the dsfield value. Both values must be in hexadecimal.
+   link                        Specifiies a link to configure flow on.
+   -
+   local_ip                    Identifies a network flow by the local IP address.
+   -
+   local_port                  Identifies a service specified by the local port.
+   -
+   maxbw                       - Sets the full duplex bandwidth for the flow. The bandwidth is specified as an integer with one of the scale suffixes(K, M, or G for Kbps, Mbps, and Gbps). If no
+   -                           units are specified, the input value will be read as Mbps.
+   name                        - A flow is defined as a set of attributes based on Layer 3 and Layer 4 headers, which can be used to identify a protocol, service, or a zone.
+   - /                         aliases: flow
+   required
+                Choices:
+   priority     • low          Sets the relative priority for the flow.
+   -            • medium ←
+                • high
+   remote_ip                   Identifies a network flow by the remote IP address.
+   -
+                Choices:
+   state        • absent       Create/delete/enable/disable an IP address on the network interface.
+   -            • present ←
+                • resetted
+   temporary    Choices:
+   boolean      • no ←         Specifies that the configured flow is temporary. Temporary flows do not persist across reboots.
+                • yes
+   transport                   - Specifies a Layer 4 protocol to be used. It is typically used in combination with local_port to identify the service that needs special attention.
+   -
+
+EXAMPLES                   *flowadm-examples*
+
+ # Limit SSH traffic to 100M via vnic0 interface
+ - flowadm:
+     link: vnic0
+     flow: ssh_out
+     transport: tcp
+     local_port: 22
+     maxbw: 100M
+     state: present
+
+ # Reset flow properties
+ - flowadm:
+     name: dns
+     state: resetted
+
+ # Configure policy for EF PHB (DSCP value of 101110 from RFC 2598) with a bandwidth of 500 Mbps and a high priority.
+ - flowadm:
+     link: bge0
+     dsfield: '0x2e:0xfc'
+     maxbw: 500M
+     priority: high
+     flow: efphb-flow
+     state: present
+
+RETURN VALUES                   *flowadm-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key             Returned                                                                                  Description
+   dsfield                             flow's differentiated services value
+   string     if dsfield is defined    Sample:
+                                       0x2e:0xfc
+   link                                flow's link
+   string     if link is defined       Sample:
+                                       vnic0
+   local_Ip                            flow's local IP address
+   string     if local_ip is defined   Sample:
+                                       10.0.0.42
+   local_port                          flow's local port
+   integer    if local_port is defined Sample:
+                                       1337
+   maxbw                               flow's maximum bandwidth
+   string     if maxbw is defined      Sample:
+                                       100M
+   name                                flow name
+   string     always                   Sample:
+                                       http_drop
+   priority                            flow's priority
+   string     if priority is defined   Sample:
+                                       low
+   remote_Ip                           flow's remote IP address
+   string     if remote_ip is defined  Sample:
+                                       10.0.0.42
+   state                               state of the target
+   string     always                   Sample:
+                                       present
+   temporary                           flow's persistence
+   boolean    always                   Sample:
+                                       True
+   transport                           flow's transport
+   string     if transport is defined  Sample:
+                                       tcp
+
+STATUS                   *flowadm-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Adam Števko (@xen0l)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *flowadm-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/flowadm_module.html

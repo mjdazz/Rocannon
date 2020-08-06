@@ -1,0 +1,208 @@
+SYNOPSIS                   *cs_network_acl_rule*
+
+     • Add, update and remove network ACL rules.
+
+REQUIREMENTS                   *cs_network_acl_rule-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • cs >= 0.6.10
+
+PARAMETERS                   *cs_network_acl_rule-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   account                             Account the VPC is related to.
+   string
+   action_policy        Choices:       Action policy of the rule.
+   string               • allow ←      aliases: action
+                        • deny
+                        Choices:       HTTP method used to query the API endpoint.
+   api_http_method      • get          If not given, the CLOUDSTACK_METHOD env variable is considered.
+   string               • post         As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is get if not specified.
+   api_key                             API key of the CloudStack API.
+   string                              If not given, the CLOUDSTACK_KEY env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   api_region         Default:         Name of the ini section in the cloustack.ini file.
+   string             "cloudstack"     If not given, the CLOUDSTACK_REGION env variable is considered.
+   api_secret                          Secret key of the CloudStack API.
+   string                              If not set, the CLOUDSTACK_SECRET env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+                                       HTTP timeout in seconds.
+   api_timeout                         If not given, the CLOUDSTACK_TIMEOUT env variable is considered.
+   integer                             As the last option, the value is taken from the ini config file, also see the notes.
+                                       Fallback value is 10 seconds if not specified.
+   api_url                             URL of the CloudStack API e.g. https://cloud.example.com/client/api.
+   string                              If not given, the CLOUDSTACK_ENDPOINT env variable is considered.
+                                       As the last option, the value is taken from the ini config file, also see the notes.
+   cidrs              Default:         CIDRs of the rule.
+   list               ["0.0.0.0/0"]    aliases: cidr
+   domain                              Domain the VPC is related to.
+   string
+   end_port                            End port for this rule.
+   integer                             Considered if protocol=tcp or protocol=udp.
+                                       If not specified, equal start_port.
+   icmp_code                           Error code for this icmp message.
+   integer                             Considered if protocol=icmp.
+   icmp_type                           Type of the icmp message being sent.
+   integer                             Considered if protocol=icmp.
+   network_acl                         Name of the network ACL.
+   string / required                   aliases: acl
+   poll_async           Choices:
+   boolean              • no           Poll async jobs until job has finished.
+                        • yes ←
+   project                             Name of the project the VPC is related to.
+   string
+                        Choices:
+                        • tcp ←
+   protocol             • udp          Protocol of the rule
+   string               • icmp
+                        • all
+                        • by_number
+   protocol_number                     Protocol number from 1 to 256 required if protocol=by_number.
+   integer
+   rule_position                       The position of the network ACL rule.
+   integer / required                  aliases: number
+   start_port                          Start port for this rule.
+   integer                             Considered if protocol=tcp or protocol=udp.
+                                       aliases: port
+   state                Choices:
+   string               • present ←    State of the network ACL rule.
+                        • absent
+   tags                                List of tags. Tags are a list of dictionaries having keys key and value.
+   list                                If you want to delete all tags, set a empty list e.g. tags: [].
+                                       aliases: tag
+   traffic_type         Choices:       Traffic type of the rule.
+   string               • ingress ←    aliases: type
+                        • egress
+   vpc                                 VPC the network ACL is related to.
+   string / required
+   zone                                Name of the zone the VPC related to.
+   string                              If not set, default zone is used.
+
+NOTES                   *cs_network_acl_rule-notes*
+
+   Note
+
+     • Ansible uses the cs library’s configuration method if credentials are not provided by the arguments api_url, api_key, api_secret. Configuration is read from several locations, in the
+       following order. The CLOUDSTACK_ENDPOINT, CLOUDSTACK_KEY, CLOUDSTACK_SECRET and CLOUDSTACK_METHOD. CLOUDSTACK_TIMEOUT environment variables. A CLOUDSTACK_CONFIG environment variable pointing
+       to an .ini file. A cloudstack.ini file in the current working directory. A .cloudstack.ini file in the users home directory. Optionally multiple credentials and endpoints can be specified
+       using ini sections in cloudstack.ini. Use the argument api_region to select the section name, default section is cloudstack. See https://github.com/exoscale/cs for more information.
+     • A detailed guide about cloudstack modules can be found in the CloudStack Cloud Guide.
+     • This module supports check mode.
+
+EXAMPLES                   *cs_network_acl_rule-examples*
+
+ - name: create a network ACL rule, allow port 80 ingress
+   cs_network_acl_rule:
+     network_acl: web
+     rule_position: 1
+     vpc: my vpc
+     traffic_type: ingress
+     action_policy: allow
+     port: 80
+     cidr: 0.0.0.0/0
+   delegate_to: localhost
+
+ - name: create a network ACL rule, deny port range 8000-9000 ingress for 10.20.0.0/16 and 10.22.0.0/16
+   cs_network_acl_rule:
+     network_acl: web
+     rule_position: 1
+     vpc: my vpc
+     traffic_type: ingress
+     action_policy: deny
+     start_port: 8000
+     end_port: 9000
+     cidrs:
+     - 10.20.0.0/16
+     - 10.22.0.0/16
+   delegate_to: localhost
+
+ - name: remove a network ACL rule
+   cs_network_acl_rule:
+     network_acl: web
+     rule_position: 1
+     vpc: my vpc
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *cs_network_acl_rule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+         Key       Returned                                                                                Description
+   account                  Account the network ACL rule is related to.
+   string          success  Sample:
+                            example account
+   action_policy            Action policy of the network ACL rule.
+   string          success  Sample:
+                            deny
+   cidr                     CIDR of the network ACL rule.
+   string          success  Sample:
+                            0.0.0.0/0
+   cidrs                    CIDRs of the network ACL rule.
+   list            success  Sample:
+   added in 2.9             ['0.0.0.0/0']
+   domain                   Domain the network ACL rule is related to.
+   string          success  Sample:
+                            example domain
+   end_port                 End port of the network ACL rule.
+   integer         success  Sample:
+                            80
+   icmp_code                ICMP code of the network ACL rule.
+   integer         success  Sample:
+                            8
+   icmp_type       success  ICMP type of the network ACL rule.
+   integer
+   network_acl              Name of the network ACL.
+   string          success  Sample:
+                            customer acl
+   project                  Name of project the network ACL rule is related to.
+   string          success  Sample:
+                            Production
+   protocol                 Protocol of the network ACL rule.
+   string          success  Sample:
+                            tcp
+   protocol_number          Protocol number in case protocol is by number.
+   integer         success  Sample:
+                            8
+   rule_position            Position of the network ACL rule.
+   integer         success  Sample:
+                            1
+   start_port               Start port of the network ACL rule.
+   integer         success  Sample:
+                            80
+   state                    State of the network ACL rule.
+   string          success  Sample:
+                            Active
+   tags                     List of resource tags associated with the network ACL rule.
+   list            success  Sample:
+                            [ { "key": "foo", "value": "bar" } ]
+   traffic_type             Traffic type of the network ACL rule.
+   string          success  Sample:
+                            ingress
+   vpc                      VPC of the network ACL.
+   string          success  Sample:
+                            customer vpc
+   zone                     Zone the VPC is related to.
+   string          success  Sample:
+                            ch-gva-2
+
+STATUS                   *cs_network_acl_rule-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • René Moser (@resmo)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *cs_network_acl_rule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/cs_network_acl_rule_module.html

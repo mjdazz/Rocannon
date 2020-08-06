@@ -1,0 +1,467 @@
+SYNOPSIS                   *ecs_certificate*
+
+     • Create, reissue, and renew certificates with the Entrust Certificate Services (ECS) API.
+     • Requires credentials for the Entrust Certificate Services (ECS) API.
+     • In order to request a certificate, the domain and organization used in the certificate signing request must be already validated in the ECS system. It is not the responsibility of this
+       module to perform those steps.
+
+REQUIREMENTS                   *ecs_certificate-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • PyYAML >= 3.11
+     • cryptography >= 1.6
+
+PARAMETERS                   *ecs_certificate-parameters*
+
+              Parameter                                         Choices/Defaults                                                                     Comments
+   additional_emails                                                                                          A list of additional email addresses to receive the delivery notice and expiry
+   list / elements=string                                                                                     notification for the certificate.
+   backup                             Choices:
+   boolean                            • no ←                                                                  Whether a backup should be made for the certificate in path.
+                                      • yes
+                                                                                                              The date the certificate should be set to expire, in RFC3339 compliant date or
+                                                                                                              date-time format. For example, 2020-02-23, 2020-02-23T15:00:00.05Z.
+                                                                                                              cert_expiry is only supported for requests of request_type=new or request_type=renew.
+                                                                                                              If request_type=reissue, cert_expiry will be used for the first certificate issuance,
+                                                                                                              but subsequent issuances will have the same expiry as the initial certificate.
+   cert_expiry                                                                                                A reissued certificate will always have the same expiry as the original certificate.
+   string                                                                                                     Note that only the date (day, month, year) is supported for specifying the expiry date.
+                                                                                                              If you choose to specify an expiry time with the expiry date, the time will be adjusted
+                                                                                                              to Eastern Standard Time (EST). This could have the unintended effect of moving your
+                                                                                                              expiry date to the previous day.
+                                                                                                              Applies only to accounts with a pooling inventory model.
+                                                                                                              Only one of cert_expiry or cert_lifetime may be specified.
+                                                                                                              The lifetime of the certificate.
+                                                                                                              Applies to all certificates for accounts with a non-pooling inventory model.
+                                                                                                              cert_lifetime is only supported for requests of request_type=new or request_type=renew.
+                                      Choices:                                                                If request_type=reissue, cert_lifetime will be used for the first certificate issuance,
+   cert_lifetime                      • P1Y                                                                   but subsequent issuances will have the same expiry as the initial certificate.
+   string                             • P2Y                                                                   Applies to certificates of cert_type=CDS_INDIVIDUAL, CDS_GROUP, CDS_ENT_LITE,
+                                      • P3Y                                                                   CDS_ENT_PRO, SMIME_ENT for accounts with a pooling inventory model.
+                                                                                                              P1Y is a certificate with a 1 year lifetime.
+                                                                                                              P2Y is a certificate with a 2 year lifetime.
+                                                                                                              P3Y is a certificate with a 3 year lifetime.
+                                                                                                              Only one of cert_expiry or cert_lifetime may be specified.
+                                      Choices:
+                                      • STANDARD_SSL
+                                      • ADVANTAGE_SSL
+                                      • UC_SSL
+                                      • EV_SSL
+                                      • WILDCARD_SSL
+   cert_type                          • PRIVATE_SSL                                                           Specify the type of certificate requested.
+   string                             • PD_SSL                                                                If a certificate is being reissued or renewed, this parameter is ignored, and the
+                                      • CODE_SIGNING                                                          cert_type of the initial certificate is used.
+                                      • EV_CODE_SIGNING
+                                      • CDS_INDIVIDUAL
+                                      • CDS_GROUP
+                                      • CDS_ENT_LITE
+                                      • CDS_ENT_PRO
+                                      • SMIME_ENT
+                                                                                                              The client ID to submit the Certificate Signing Request under.
+                                                                                                              If no client ID is specified, the certificate will be submitted under the primary
+   client_id                        Default:                                                                  client with ID of 1.
+   integer                          1                                                                         When using a client other than the primary client, the org parameter cannot be
+                                                                                                              specified.
+                                                                                                              The issued certificate will have an organization value in the subject distinguished
+                                                                                                              name represented by the client.
+                                                                                                              Base-64 encoded Certificate Signing Request (CSR). csr is accepted with or without PEM
+                                                                                                              formatting around the Base-64 string.
+                                                                                                              If no csr is provided when request_type=reissue or request_type=renew, the certificate
+                                                                                                              will be generated with the same public key as the certificate being renewed or
+                                                                                                              reissued.
+   csr                                                                                                        If subject_alt_name is specified, it will override the subject alternate names in the
+   string                                                                                                     CSR.
+                                                                                                              If eku is specified, it will override the extended key usage in the CSR.
+                                                                                                              If ou is specified, it will override the organizational units "ou=" present in the
+                                                                                                              subject distinguished name of the CSR, if any.
+                                                                                                              The organization "O=" field from the CSR will not be used. It will be replaced in the
+                                                                                                              issued certificate by org if present, and if not present, the organization tied to
+                                                                                                              client_id.
+                                                                                                              In compliance with browser requirements, this certificate may be posted to the
+                                                                                                              Certificate Transparency (CT) logs. This is a best practice technique that helps domain
+                                                                                                              owners monitor certificates issued to their domains. Note that not all certificates are
+   ct_log                             Choices:                                                                eligible for CT logging.
+   boolean                            • no                                                                    If ct_log is not specified, the certificate uses the account default.
+                                      • yes                                                                   If ct_log is specified and the account settings allow it, ct_log overrides the account
+                                                                                                              default.
+                                                                                                              If ct_log is set to false, but the account settings are set to "always log", the
+                                                                                                              certificate generation will fail.
+   custom_fields                                                                                              Mapping of custom fields to associate with the certificate request and certificate.
+   dictionary                                                                                                 Only supported if custom fields are enabled for your account.
+                                                                                                              Each custom field specified must be a custom field you have defined for your account.
+                date1                                                                                         Custom date field.
+                string
+                date2                                                                                         Custom date field.
+                string
+                date3                                                                                         Custom date field.
+                string
+                date4                                                                                         Custom date field.
+                string
+                date5                                                                                         Custom date field.
+                string
+                dropdown1                                                                                     Custom dropdown field.
+                string
+                dropdown2                                                                                     Custom dropdown field.
+                string
+                dropdown3                                                                                     Custom dropdown field.
+                string
+                dropdown4                                                                                     Custom dropdown field.
+                string
+                dropdown5                                                                                     Custom dropdown field.
+                string
+                email1                                                                                        Custom email field.
+                string
+                email2                                                                                        Custom email field.
+                string
+                email3                                                                                        Custom email field.
+                string
+                email4                                                                                        Custom email field.
+                string
+                email5                                                                                        Custom email field.
+                string
+                number1                                                                                       Custom number field.
+                float
+                number2                                                                                       Custom number field.
+                float
+                number3                                                                                       Custom number field.
+                float
+                number4                                                                                       Custom number field.
+                float
+                number5                                                                                       Custom number field.
+                float
+                text1                                                                                         Custom text field (maximum 500 characters)
+                string
+                text10                                                                                        Custom text field (maximum 500 characters)
+                string
+                text11                                                                                        Custom text field (maximum 500 characters)
+                string
+                text12                                                                                        Custom text field (maximum 500 characters)
+                string
+                text13                                                                                        Custom text field (maximum 500 characters)
+                string
+                text14                                                                                        Custom text field (maximum 500 characters)
+                string
+                text15                                                                                        Custom text field (maximum 500 characters)
+                string
+                text2                                                                                         Custom text field (maximum 500 characters)
+                string
+                text3                                                                                         Custom text field (maximum 500 characters)
+                string
+                text4                                                                                         Custom text field (maximum 500 characters)
+                string
+                text5                                                                                         Custom text field (maximum 500 characters)
+                string
+                text6                                                                                         Custom text field (maximum 500 characters)
+                string
+                text7                                                                                         Custom text field (maximum 500 characters)
+                string
+                text8                                                                                         Custom text field (maximum 500 characters)
+                string
+                text9                                                                                         Custom text field (maximum 500 characters)
+                string
+                                      Choices:
+   eku                                • SERVER_AUTH                                                           If specified, overrides the key usage in the csr.
+   string                             • CLIENT_AUTH
+                                      • SERVER_AND_CLIENT_AUTH
+                                                                                                              The end user of the Code Signing certificate must generate and store the private key
+                                      Choices:                                                                for this request on cryptographically secure hardware to be compliant with the Entrust
+   end_user_key_storage_agreement     • no                                                                    CSP and Subscription agreement. If requesting a certificate of type CODE_SIGNING or
+   boolean                            • yes                                                                   EV_CODE_SIGNING, you must set end_user_key_storage_agreement to true if and only if you
+                                                                                                              acknowledge that you will inform the user of this requirement.
+                                                                                                              Applicable only to cert_type of values CODE_SIGNING and EV_CODE_SIGNING.
+   entrust_api_client_cert_key_path                                                                           The path to the key for the client certificate used to authenticate to the Entrust
+   path / required                                                                                            Certificate Services (ECS) API.
+   entrust_api_client_cert_path                                                                               The path to the client certificate used to authenticate to the Entrust Certificate
+   path / required                                                                                            Services (ECS) API.
+   entrust_api_key                                                                                            The key (password) for authentication to the Entrust Certificate Services (ECS) API.
+   string / required
+                                                                                                              The path to the specification file defining the Entrust Certificate Services (ECS) API
+   entrust_api_specification_path   Default:                                                                  configuration.
+   path                             "https://cloud.entrust.net/EntrustCloud/documentation/cms-api-2.1.0.yaml" You can use this to keep a local copy of the specification to avoid downloading it
+                                                                                                              every time the module is used.
+   entrust_api_user                                                                                           The username for authentication to the Entrust Certificate Services (ECS) API.
+   string / required
+                                                                                                              If force is used, a certificate is requested regardless of whether path points to an
+                                      Choices:                                                                existing valid certificate.
+   force                              • no ←                                                                  If request_type=renew, a forced renew will fail if the certificate being renewed has
+   boolean                            • yes                                                                   been issued within the past 30 days, regardless of the value of remaining_days or the
+                                                                                                              return value of cert_days - the ECS API does not support the "renew" operation for
+                                                                                                              certificates that are not at least 30 days old.
+   full_chain_path                                                                                            The destination path for the full certificate chain of the certificate, intermediates,
+   path                                                                                                       and roots.
+                                                                                                              Organization "O=" to include in the certificate.
+                                                                                                              If org is not specified, the organization from the client represented by client_id is
+   org                                                                                                        used.
+   string                                                                                                     Unless the cert_type is PD_SSL, this field may not be specified if the value of
+                                                                                                              client_id is not "1" (the primary client). non-primary clients, certificates may only
+                                                                                                              be issued with the organization of that client.
+                                                                                                              Organizational unit "OU=" to include in the certificate.
+                                                                                                              ou behavior is dependent on whether organizational units are enabled for your account.
+                                                                                                              If organizational unit support is disabled for your account, organizational units from
+                                                                                                              the csr and the ou parameter are ignored.
+                                                                                                              If both csr and ou are specified, the value in ou will override the OU fields present
+   ou                                                                                                         in the subject distinguished name in the csr
+   list / elements=string                                                                                     If neither csr nor ou are specified for a renew or reissue operation, the OU fields in
+                                                                                                              the initial certificate are reused.
+                                                                                                              An invalid OU from csr is ignored, but any invalid organizational units in ou will
+                                                                                                              result in an error indicating "Unapproved OU". The ou parameter can be used to force
+                                                                                                              failure if an unapproved organizational unit is provided.
+                                                                                                              A maximum of one OU may be specified for current products. Multiple OUs are reserved
+                                                                                                              for future products.
+                                                                                                              The destination path for the generated certificate as a PEM encoded cert.
+                                                                                                              If the certificate at this location is not an Entrust issued certificate, a new
+                                                                                                              certificate will always be requested even if the current certificate is technically
+   path                                                                                                       valid.
+   path / required                                                                                            If there is already an Entrust certificate at this location, whether it is replaced is
+                                                                                                              depends on the remaining_days calculation.
+                                                                                                              If an existing certificate is being replaced (see remaining_days, force, and
+                                                                                                              tracking_id), whether a new certificate is requested or the existing certificate is
+                                                                                                              renewed or reissued is based on request_type.
+                                                                                                              The number of days the certificate must have left being valid. If cert_days <
+                                                                                                              remaining_days then a new certificate will be obtained using request_type.
+                                                                                                              If request_type=renew, a renewal will fail if the certificate being renewed has been
+   remaining_days                   Default:                                                                  issued within the past 30 days, so do not set a remaining_days value that is within 30
+   integer                          30                                                                        days of the full lifetime of the certificate being acted upon. (e.g. if you are
+                                                                                                              requesting Certificates with a 90 day lifetime, do not set remaining_days to a value 60
+                                                                                                              or higher).
+                                                                                                              The force option may be used to ensure that a new certificate is always obtained.
+                                                                                                              The operation performed if tracking_id references a valid certificate to reissue, or
+                                                                                                              there is already a certificate present in path but either force is specified or
+                                                                                                              cert_days < remaining_days.
+                                                                                                              Specifying request_type=validate_only means the request will be validated against the
+                                                                                                              ECS API, but no certificate will be issued.
+                                                                                                              Specifying request_type=new means a certificate request will always be submitted and a
+                                                                                                              new certificate issued.
+                                                                                                              Specifying request_type=renew means that an existing certificate (specified by
+                                      Choices:                                                                tracking_id if present, otherwise path) will be renewed. If there is no certificate to
+                                      • new ←                                                                 renew, a new certificate is requested.
+   request_type                       • renew                                                                 Specifying request_type=reissue means that an existing certificate (specified by
+   string                             • reissue                                                               tracking_id if present, otherwise path) will be reissued. If there is no certificate to
+                                      • validate_only                                                         reissue, a new certificate is requested.
+                                                                                                              If a certificate was issued within the past 30 days, the 'renew' operation is not a
+                                                                                                              valid operation and will fail.
+                                                                                                              Note that reissue is an operation that will result in the revocation of the certificate
+                                                                                                              that is reissued, be cautious with it's use.
+                                                                                                              check_mode is only supported if request_type=new
+                                                                                                              For example, setting request_type=renew and remaining_days=30 and pointing to the same
+                                                                                                              certificate on multiple playbook runs means that on the first run new certificate will
+                                                                                                              be requested. It will then be left along on future runs until it is within 30 days of
+                                                                                                              expiry, then the ECS "renew" operation will be performed.
+   requester_email                                                                                            The requester email to associate with certificate tracking information and receive
+   string / required                                                                                          delivery and expiry notices for the certificate.
+   requester_name                                                                                             The requester name to associate with certificate tracking information.
+   string / required
+   requester_phone                                                                                            The requester phone number to associate with certificate tracking information.
+   string / required
+                                                                                                              The subject alternative name identifiers, as an array of values (applies to cert_type
+                                                                                                              with a value of STANDARD_SSL, ADVANTAGE_SSL, UC_SSL, EV_SSL, WILDCARD_SSL, PRIVATE_SSL,
+                                                                                                              and PD_SSL).
+                                                                                                              If you are requesting a new SSL certificate, and you pass a subject_alt_name parameter,
+   subject_alt_name                                                                                           any SAN names in the CSR are ignored. If no subjectAltName parameter is passed, the SAN
+   list / elements=string                                                                                     names in the CSR are used.
+                                                                                                              See request_type to understand more about SANs during reissues and renewals.
+                                                                                                              In the case of certificates of type STANDARD_SSL certificates, if the CN of the
+                                                                                                              certificate is <domain>.<tld> only the www.<domain>.<tld> value is accepted. If the CN
+                                                                                                              of the certificate is www.<domain>.<tld> only the <domain>.<tld> value is accepted.
+                                                                                                              The tracking ID of the certificate to reissue or renew.
+                                                                                                              tracking_id is invalid if request_type=new or request_type=validate_only.
+                                                                                                              If there is a certificate present in path and it is an ECS certificate, tracking_id
+                                                                                                              will be ignored.
+                                                                                                              If there is no certificate present in path or there is but it is from another provider,
+                                                                                                              the certificate represented by tracking_id will be renewed or reissued and saved to
+                                                                                                              path.
+   tracking_id                                                                                                If there is no certificate present in path and the force and remaining_days parameters
+   integer                                                                                                    do not indicate a new certificate is needed, the certificate referenced by tracking_id
+                                                                                                              certificate will be saved to path.
+                                                                                                              This can be used when a known certificate is not currently present on a server, but you
+                                                                                                              want to renew or reissue it to be managed by an ansible playbook. For example, if you
+                                                                                                              specify request_type=renew, tracking_id of an issued certificate, and path to a file
+                                                                                                              that does not exist, the first run of a task will download the certificate specified by
+                                                                                                              tracking_id (assuming it is still valid). Future runs of the task will (if applicable -
+                                                                                                              see force and remaining_days) renew the certificate now present in path.
+   tracking_info                                                                                              Free form tracking information to attach to the record for the certificate.
+   string
+
+NOTES                   *ecs_certificate-notes*
+
+   Note
+
+     • path must be specified as the output location of the certificate.
+
+SEE ALSO                   *ecs_certificate-see also*
+
+   See also
+
+   openssl_privatekey – Generate OpenSSL private keys
+   Can be used to create private keys (both for certificates and accounts).
+
+   openssl_csr – Generate OpenSSL Certificate Signing Request (CSR)
+   Can be used to create a Certificate Signing Request (CSR).
+
+EXAMPLES                   *ecs_certificate-examples*
+
+ - name: Request a new certificate from Entrust with bare minimum parameters.
+         Will request a new certificate if current one is valid but within 30
+         days of expiry. If replacing an existing file in path, will back it up.
+   ecs_certificate:
+     backup: true
+     path: /etc/ssl/crt/ansible.com.crt
+     full_chain_path: /etc/ssl/crt/ansible.com.chain.crt
+     csr: /etc/ssl/csr/ansible.com.csr
+     cert_type: EV_SSL
+     requester_name: Jo Doe
+     requester_email: [email protected]
+     requester_phone: 555-555-5555
+     entrust_api_user: apiusername
+     entrust_api_key: a^lv"32!cd9LnT
+     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
+
+ - name: If there is no certificate present in path, request a new certificate
+         of type EV_SSL. Otherwise, if there is an Entrust managed certificate
+         in path and it is within 63 days of expiration, request a renew of that
+         certificate.
+   ecs_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     csr: /etc/ssl/csr/ansible.com.csr
+     cert_type: EV_SSL
+     cert_expiry: '2020-08-20'
+     request_type: renew
+     remaining_days: 63
+     requester_name: Jo Doe
+     requester_email: [email protected]
+     requester_phone: 555-555-5555
+     entrust_api_user: apiusername
+     entrust_api_key: a^lv"32!cd9LnT
+     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
+
+ - name: If there is no certificate present in path, download certificate
+         specified by tracking_id if it is still valid. Otherwise, if the
+         certificate is within 79 days of expiration, request a renew of that
+         certificate and save it in path. This can be used to "migrate" a
+         certificate to be Ansible managed.
+   ecs_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     csr: /etc/ssl/csr/ansible.com.csr
+     tracking_id: 2378915
+     request_type: renew
+     remaining_days: 79
+     entrust_api_user: apiusername
+     entrust_api_key: a^lv"32!cd9LnT
+     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
+
+ - name: Force a reissue of the certificate specified by tracking_id.
+   ecs_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     force: true
+     tracking_id: 2378915
+     request_type: reissue
+     entrust_api_user: apiusername
+     entrust_api_key: a^lv"32!cd9LnT
+     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
+
+ - name: Request a new certificate with an alternative client. Note that the
+         issued certificate will have it's Subject Distinguished Name use the
+         organization details associated with that client, rather than what is
+         in the CSR.
+   ecs_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     csr: /etc/ssl/csr/ansible.com.csr
+     client_id: 2
+     requester_name: Jo Doe
+     requester_email: [email protected]
+     requester_phone: 555-555-5555
+     entrust_api_user: apiusername
+     entrust_api_key: a^lv"32!cd9LnT
+     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
+
+ - name: Request a new certificate with a number of CSR parameters overridden
+         and tracking information
+   ecs_certificate:
+     path: /etc/ssl/crt/ansible.com.crt
+     full_chain_path: /etc/ssl/crt/ansible.com.chain.crt
+     csr: /etc/ssl/csr/ansible.com.csr
+     subject_alt_name:
+       - ansible.testcertificates.com
+       - www.testcertificates.com
+     eku: SERVER_AND_CLIENT_AUTH
+     ct_log: true
+     org: Test Organization Inc.
+     ou:
+       - Administration
+     tracking_info: "Submitted via Ansible"
+     additional_emails:
+       - [email protected]
+       - [email protected]
+     custom_fields:
+       text1: Admin
+       text2: Invoice 25
+       number1: 342
+       date1: '2018-01-01'
+       email1: [email protected]
+       dropdown1: red
+     cert_expiry: '2020-08-15'
+     requester_name: Jo Doe
+     requester_email: [email protected]
+     requester_phone: 555-555-5555
+     entrust_api_user: apiusername
+     entrust_api_key: a^lv"32!cd9LnT
+     entrust_api_client_cert_path: /etc/ssl/entrust/ecs-client.crt
+     entrust_api_client_cert_key_path: /etc/ssl/entrust/ecs-client.key
+
+RETURN VALUES                   *ecs_certificate-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+            Key              Returned                                                                             Description
+   backup_file            changed and if  Name of backup file created for the certificate.
+   string                 backup is true  Sample:
+                                          /path/to/[email protected]:22~
+                          changed and if
+   backup_full_chain_file backup is true  Name of the backup file created for the certificate chain.
+   string                 and             Sample:
+                          full_chain_path /path/to/[email protected]:22~
+                          is set.
+   cert_days                              The number of days the certificate remains valid.
+   integer                success         Sample:
+                                          253
+   cert_details                           The full response JSON from the Get Certificate call of the ECS API.
+   dictionary             success         While the response contents are guaranteed to be forwards compatible with new ECS API releases, Entrust recommends that you do not make any playbooks take
+                                          actions based on the content of this field. However it may be useful for debugging, logging, or auditing purposes.
+                                          The certificate status in ECS.
+   cert_status                            Current possible values (which may be expanded in the future) are: ACTIVE, APPROVED, DEACTIVATED, DECLINED, EXPIRED, NA, PENDING, PENDING_QUORUM, READY,
+   string                 success         REISSUED, REISSUING, RENEWED, RENEWING, REVOKED, SUSPENDED
+                                          Sample:
+                                          ACTIVE
+   filename               changed or      The destination path for the generated certificate.
+   string                 success         Sample:
+                                          /etc/ssl/crt/www.ansible.com.crt
+   serial_number                          The serial number of the issued certificate.
+   integer                success         Sample:
+                                          1235262234164342
+   tracking_id                            The tracking ID to reference and track the certificate in ECS.
+   integer                success         Sample:
+                                          380079
+
+STATUS                   *ecs_certificate-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Chris Trufan (@ctrufan)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ecs_certificate-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ecs_certificate_module.html

@@ -1,0 +1,113 @@
+SYNOPSIS                   *sts_assume_role*
+
+     • Assume a role using AWS Security Token Service and obtain temporary credentials
+
+REQUIREMENTS                   *sts_assume_role-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • botocore
+     • python >= 2.6
+
+PARAMETERS                   *sts_assume_role-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                        aliases: ec2_access_key, access_key
+   aws_secret_key                                AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                        aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:       Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←         resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes          ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   duration_seconds                              The duration, in seconds, of the role session. The value can range from 900 seconds (15 minutes) to 43200 seconds (12 hours). The max depends on the
+   -                                             IAM role's sessions duration setting. By default, the value is set to 3600 seconds.
+   ec2_url                                       Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                        Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   external_id                                   A unique identifier that is used by third parties to assume a role in their customers' accounts.
+   -
+   mfa_serial_number                             The identification number of the MFA device that is associated with the user who is making the AssumeRole call.
+   -
+   mfa_token                                     The value provided by the MFA device, if the trust policy of the role being assumed requires MFA.
+   -
+   policy                                        Supplemental policy to use in addition to assumed role's policies.
+   -
+   profile                                       Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                        The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                        http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                 aliases: aws_region, ec2_region
+   role_arn                                      The Amazon Resource Name (ARN) of the role that the caller is assuming
+   - / required                                  https://docs.aws.amazon.com/IAM/latest/UserGuide/Using_Identifiers.html#Identifiers_ARNs.
+   role_session_name                             Name of the role's session - will be used by CloudTrail
+   - / required
+   security_token                                AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                        aliases: access_token
+   validate_certs                 Choices:
+   boolean                        • no           When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *sts_assume_role-notes*
+
+   Note
+
+     • In order to use the assumed role in a following playbook task you must pass the access_key, access_secret and access_token.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *sts_assume_role-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Assume an existing role (more details: https://docs.aws.amazon.com/STS/latest/APIReference/API_AssumeRole.html)
+ - sts_assume_role:
+     role_arn: "arn:aws:iam::123456789012:role/someRole"
+     role_session_name: "someRoleSession"
+   register: assumed_role
+
+ # Use the assumed role above to tag an instance in account 123456789012
+ - ec2_tag:
+     aws_access_key: "{{ assumed_role.sts_creds.access_key }}"
+     aws_secret_key: "{{ assumed_role.sts_creds.secret_key }}"
+     security_token: "{{ assumed_role.sts_creds.session_token }}"
+     resource: i-xyzxyz01
+     state: present
+     tags:
+       MyNewTag: value
+
+RETURN VALUES                   *sts_assume_role-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+   changed    always   True if obtaining the credentials succeeds
+   boolean
+                       The temporary security credentials, which include an access key ID, a secret access key, and a security (or session) token
+   sts_creds  always   Sample:
+   dictionary          {'access_key': 'XXXXXXXXXXXXXXXXXXXX', 'expiration': '2017-11-11T11:11:11+00:00', 'secret_key': 'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX', 'session_token':
+                       'XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX'}
+   sts_user            The Amazon Resource Name (ARN) and the assumed role ID
+   dictionary always   Sample:
+                       {'assumed_role_id': 'arn:aws:sts::123456789012:assumed-role/demo/Bob', 'arn': 'ARO123EXAMPLE123:Bob'}
+
+STATUS                   *sts_assume_role-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Boris Ekelchik (@bekelchik)
+     • Marek Piatek (@piontas)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sts_assume_role-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sts_assume_role_module.html

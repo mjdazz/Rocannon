@@ -1,0 +1,109 @@
+SYNOPSIS                   *xenserver_guest_powerstate*
+
+     • This module can be used to power on, power off, restart or suspend virtual machine and gracefully reboot or shutdown guest OS of virtual machine.
+
+REQUIREMENTS                   *xenserver_guest_powerstate-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • XenAPI
+
+PARAMETERS                   *xenserver_guest_powerstate-parameters*
+
+        Parameter         Choices/Defaults                                                                           Comments
+   hostname             Default:             The hostname or IP address of the XenServer host or XenServer pool master.
+   string               "localhost"          If the value is not specified in the task, the value of environment variable XENSERVER_HOST will be used instead.
+                                             aliases: host, pool
+                                             Name of the VM to manage.
+   name                                      VMs running on XenServer do not necessarily have unique names. The module will fail if multiple VMs with same name are found.
+   string / required                         In case of multiple VMs with same name, use uuid to uniquely specify VM to manage.
+                                             This parameter is case sensitive.
+                                             aliases: name_label
+   password                                  The password to use for connecting to XenServer.
+   string                                    If the value is not specified in the task, the value of environment variable XENSERVER_PASSWORD will be used instead.
+                                             aliases: pass, pwd
+                          Choices:
+                          • powered-on
+                          • powered-off      Specify the state VM should be in.
+   state                  • restarted        If state is set to value other than present, then VM is transitioned into required state and facts are returned.
+   string                 • shutdown-guest   If state is set to present, then VM is just checked for existence and facts are returned.
+                          • reboot-guest
+                          • suspended
+                          • present ←
+   state_change_timeout Default:             By default, module will wait indefinitely for VM to change state or acquire an IP address if wait_for_ip_address: yes.
+   integer              0                    If this parameter is set to positive value, the module will instead wait specified number of seconds for the state change.
+                                             In case of timeout, module will generate an error message.
+   username             Default:             The username to use for connecting to XenServer.
+   string               "root"               If the value is not specified in the task, the value of environment variable XENSERVER_USER will be used instead.
+                                             aliases: admin, user
+   uuid                                      UUID of the VM to manage if known. This is XenServer's unique identifier.
+   string                                    It is required if name is not unique.
+   validate_certs         Choices:           Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   boolean                • no               If the value is not specified in the task, the value of environment variable XENSERVER_VALIDATE_CERTS will be used instead.
+                          • yes ←
+   wait_for_ip_address    Choices:           Wait until XenServer detects an IP address for the VM.
+   boolean                • no ←             This requires XenServer Tools to be preinstalled on the VM to work properly.
+                          • yes
+
+NOTES                   *xenserver_guest_powerstate-notes*
+
+   Note
+
+     • Minimal supported version of XenServer is 5.6.
+     • Module was tested with XenServer 6.5, 7.1, 7.2, 7.6, Citrix Hypervisor 8.0, XCP-ng 7.6 and 8.0.
+     • To acquire XenAPI Python library, just run pip install XenAPI on your Ansible Control Node. The library can also be found inside Citrix Hypervisor/XenServer SDK (downloadable from Citrix
+       website). Copy the XenAPI.py file from the SDK to your Python site-packages on your Ansible Control Node to use it. Latest version of the library can also be acquired from GitHub:
+       https://raw.githubusercontent.com/xapi-project/xen-api/master/scripts/examples/python/XenAPI.py
+     • If no scheme is specified in hostname, module defaults to http:// because https:// is problematic in most setups. Make sure you are accessing XenServer host in trusted environment or use
+       https:// scheme explicitly.
+     • To use https:// scheme for hostname you have to either import host certificate to your OS certificate store or use validate_certs: no which requires XenAPI library from XenServer 7.2 SDK or
+       newer and Python 2.7.9 or newer.
+
+EXAMPLES                   *xenserver_guest_powerstate-examples*
+
+ - name: Power on VM
+   xenserver_guest_powerstate:
+     hostname: "{{ xenserver_hostname }}"
+     username: "{{ xenserver_username }}"
+     password: "{{ xenserver_password }}"
+     name: testvm_11
+     state: powered-on
+   delegate_to: localhost
+   register: facts
+
+RETURN VALUES                   *xenserver_guest_powerstate-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+                       Metadata about the VM
+                       Sample:
+                       {'cdrom': {'type': 'none'}, 'customization_agent': 'native', 'disks': [{'name': 'windows-template-testing-0', 'name_desc': '', 'os_device': 'xvda', 'size': 42949672960, 'sr':
+                       'Local storage', 'sr_uuid': '0af1245e-bdb0-ba33-1446-57a962ec4075', 'vbd_userdevice': '0'}, {'name': 'windows-template-testing-1', 'name_desc': '', 'os_device': 'xvdb',
+                       'size': 42949672960, 'sr': 'Local storage', 'sr_uuid': '0af1245e-bdb0-ba33-1446-57a962ec4075', 'vbd_userdevice': '1'}], 'domid': '56', 'folder': '', 'hardware': {'memory_mb':
+   instance   always   8192, 'num_cpu_cores_per_socket': 2, 'num_cpus': 4}, 'home_server': '', 'is_template': False, 'name': 'windows-template-testing', 'name_desc': '', 'networks': [{'gateway':
+   dictionary          '192.168.0.254', 'gateway6': 'fc00::fffe', 'ip': '192.168.0.200', 'ip6': ['fe80:0000:0000:0000:e9cb:625a:32c5:c291', 'fc00:0000:0000:0000:0000:0000:0000:0001'], 'mac':
+                       'ba:91:3a:48:20:76', 'mtu': '1500', 'name': 'Pool-wide network associated with eth1', 'netmask': '255.255.255.128', 'prefix': '25', 'prefix6': '64', 'vif_device': '0'}],
+                       'other_config': {'base_template_name': 'Windows Server 2016 (64-bit)', 'import_task': 'OpaqueRef:e43eb71c-45d6-5351-09ff-96e4fb7d0fa5', 'install-methods': 'cdrom', 'instant':
+                       'true', 'mac_seed': 'f83e8d8a-cfdc-b105-b054-ef5cb416b77e'}, 'platform': {'acpi': '1', 'apic': 'true', 'cores-per-socket': '2', 'device_id': '0002', 'hpet': 'true', 'nx':
+                       'true', 'pae': 'true', 'timeoffset': '-25200', 'vga': 'std', 'videoram': '8', 'viridian': 'true', 'viridian_reference_tsc': 'true', 'viridian_time_ref_count': 'true'},
+                       'state': 'poweredon', 'uuid': 'e3c0b2d5-5f05-424e-479c-d3df8b3e7cda', 'xenstore_data': {'vm-data': ''}}
+
+STATUS                   *xenserver_guest_powerstate-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Bojan Vitnik (@bvitnik) <bvitnik@mainstream.rs>
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *xenserver_guest_powerstate-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/xenserver_guest_powerstate_module.html

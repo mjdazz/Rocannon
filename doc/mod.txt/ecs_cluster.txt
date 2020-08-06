@@ -1,0 +1,118 @@
+SYNOPSIS                   *ecs_cluster*
+
+     • Creates or terminates ecs clusters.
+
+REQUIREMENTS                   *ecs_cluster-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • boto
+     • boto3
+     • python >= 2.6
+
+PARAMETERS                   *ecs_cluster-parameters*
+
+            Parameter           Choices/Defaults                                                                       Comments
+   aws_access_key                                 AWS access key. If not set then the value of the AWS_ACCESS_KEY_ID, AWS_ACCESS_KEY or EC2_ACCESS_KEY environment variable is used.
+   string                                         aliases: ec2_access_key, access_key
+   aws_secret_key                                 AWS secret key. If not set then the value of the AWS_SECRET_ACCESS_KEY, AWS_SECRET_KEY, or EC2_SECRET_KEY environment variable is used.
+   string                                         aliases: ec2_secret_key, secret_key
+   debug_botocore_endpoint_logs   Choices:        Use a botocore.endpoint logger to parse the unique (rather than total) "resource:action" API calls made during a task, outputing the set to the
+   boolean                        • no ←          resource_actions key in the task results. Use the aws_resource_action callback to output to total list made during a playbook. The
+   added in 2.8                   • yes           ANSIBLE_DEBUG_BOTOCORE_LOGS environment variable may also be used.
+   delay                                          Number of seconds to wait
+   -
+   ec2_url                                        Url to use to connect to EC2 or your Eucalyptus cloud (by default the module will use EC2 endpoints). Ignored for modules where region is required.
+   string                                         Must be specified for all other modules if region is not used. If not set then the value of the EC2_URL environment variable, if any, is used.
+   name                                           The cluster name
+   - / required
+   profile                                        Uses a boto profile. Only works with boto >= 2.24.0.
+   string
+   region                                         The AWS region to use. If not specified then the value of the AWS_REGION or EC2_REGION environment variable, if any, is used. See
+   string                                         http://docs.aws.amazon.com/general/latest/gr/rande.html#ec2_region
+                                                  aliases: aws_region, ec2_region
+   repeat                                         The number of times to wait for the cluster to have an instance
+   -
+   security_token                                 AWS STS security token. If not set then the value of the AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN environment variable is used.
+   string                                         aliases: access_token
+                                  Choices:
+   state                          • present       The desired state of the cluster
+   - / required                   • absent
+                                  • has_instances
+   validate_certs                 Choices:
+   boolean                        • no            When set to "no", SSL certificates will not be validated for boto versions >= 2.6.0.
+                                  • yes ←
+
+NOTES                   *ecs_cluster-notes*
+
+   Note
+
+     • When deleting a cluster, the information returned is the state of the cluster prior to deletion.
+     • It will also wait for a cluster to have instances registered to it.
+     • If parameters are not set within the module, the following environment variables can be used in decreasing order of precedence AWS_URL or EC2_URL, AWS_ACCESS_KEY_ID or AWS_ACCESS_KEY or
+       EC2_ACCESS_KEY, AWS_SECRET_ACCESS_KEY or AWS_SECRET_KEY or EC2_SECRET_KEY, AWS_SECURITY_TOKEN or EC2_SECURITY_TOKEN, AWS_REGION or EC2_REGION
+     • Ansible uses the boto configuration file (typically ~/.boto) if no credentials are provided. See https://boto.readthedocs.io/en/latest/boto_config_tut.html
+     • AWS_REGION or EC2_REGION can be typically be used to specify the AWS region, when required, but this can also be configured in the boto config file
+
+EXAMPLES                   *ecs_cluster-examples*
+
+ # Note: These examples do not set authentication details, see the AWS Guide for details.
+
+ # Cluster creation
+ - ecs_cluster:
+     name: default
+     state: present
+
+ # Cluster deletion
+ - ecs_cluster:
+     name: default
+     state: absent
+
+ - name: Wait for register
+   ecs_cluster:
+     name: "{{ new_cluster }}"
+     state: has_instances
+     delay: 10
+     repeat: 10
+   register: task_output
+
+RETURN VALUES                   *ecs_cluster-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+                  Key                     Returned                                                                       Description
+   activeServicesCount               0 if a new cluster how many services are active in this cluster
+   integer
+   clusterArn                                           the ARN of the cluster just created
+   string                            0 if a new cluster Sample:
+                                                        arn:aws:ecs:us-west-2:172139249013:cluster/test-cluster-mfshcdok
+   clusterName                                          name of the cluster just created (should match the input argument)
+   string                            always             Sample:
+                                                        test-cluster-mfshcdok
+   pendingTasksCount                 0 if a new cluster how many tasks are waiting to run in this cluster
+   integer
+   registeredContainerInstancesCount 0 if a new cluster how many container instances are available in this cluster
+   integer
+   runningTasksCount                 0 if a new cluster how many tasks are running in this cluster
+   integer
+   status                                               the status of the new cluster
+   string                            always             Sample:
+                                                        ACTIVE
+
+STATUS                   *ecs_cluster-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mark Chance (@Java1Guy)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *ecs_cluster-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/ecs_cluster_module.html

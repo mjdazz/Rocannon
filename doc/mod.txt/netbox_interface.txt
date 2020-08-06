@@ -1,0 +1,162 @@
+SYNOPSIS                   *netbox_interface*
+
+     • Creates or removes interfaces from Netbox
+
+REQUIREMENTS                   *netbox_interface-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • pynetbox
+
+PARAMETERS                   *netbox_interface-parameters*
+
+       Parameter      Choices/Defaults                                                                            Comments
+   data                                Defines the prefix configuration
+   - / required
+    description                        The description of the prefix
+    string
+    device                             Name of the device the interface will be associated with (case-sensitive)
+    string / required
+    enabled             Choices:
+    boolean             • no           Sets whether interface shows enabled or disabled
+                        • yes
+    form_factor                        Form factor of the interface: ex. 1000Base-T (1GE), Virtual, 10GBASE-T (10GE) This has to be specified exactly as what is found within UI
+    string
+    lag                                Parent LAG interface will be a member of
+    dictionary
+    mac_address                        The MAC address of the interface
+    string
+    mgmt_only           Choices:
+    boolean             • no           This interface is used only for out-of-band management
+                        • yes
+                        Choices:
+    mode                • Access       The mode of the interface
+    string              • Tagged
+                        • Tagged All
+    mtu                                The MTU of the interface
+    string
+    name                               Name of the interface to be created
+    string / required
+    tagged_vlans                       A list of tagged VLANS to be assigned to interface. Mode must be set to either Tagged or Tagged All
+    list
+    tags                               Any tags that the prefix may need to be associated with
+    list
+    untagged_vlan                      The untagged VLAN to be assigned to interface
+    dictionary
+   netbox_token                        The token created within Netbox to authorize API access
+   string / required
+   netbox_url                          URL of the Netbox instance resolvable by Ansible control host
+   string / required
+   state                Choices:
+   string               • absent       Use present or absent for adding or removing.
+                        • present ←
+   validate_certs       Choices:
+   boolean              • no           If no, SSL certificates will not be validated. This should only be used on personally controlled sites using self-signed certificates.
+                        • yes ←
+
+NOTES                   *netbox_interface-notes*
+
+   Note
+
+     • Tags should be defined as a YAML list
+     • This should be ran with connection local and hosts localhost
+
+EXAMPLES                   *netbox_interface-examples*
+
+ - name: "Test Netbox interface module"
+   connection: local
+   hosts: localhost
+   gather_facts: False
+   tasks:
+     - name: Create interface within Netbox with only required information
+       netbox_interface:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           device: test100
+           name: GigabitEthernet1
+         state: present
+     - name: Delete interface within netbox
+       netbox_interface:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           device: test100
+           name: GigabitEthernet1
+         state: absent
+     - name: Create LAG with several specified options
+       netbox_interface:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           device: test100
+           name: port-channel1
+           form_factor: Link Aggregation Group (LAG)
+           mtu: 1600
+           mgmt_only: false
+           mode: Access
+         state: present
+     - name: Create interface and assign it to parent LAG
+       netbox_interface:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           device: test100
+           name: GigabitEthernet1
+           enabled: false
+           form_factor: 1000Base-t (1GE)
+           lag:
+             name: port-channel1
+           mtu: 1600
+           mgmt_only: false
+           mode: Access
+         state: present
+     - name: Create interface as a trunk port
+       netbox_interface:
+         netbox_url: http://netbox.local
+         netbox_token: thisIsMyToken
+         data:
+           device: test100
+           name: GigabitEthernet25
+           enabled: false
+           form_factor: 1000Base-t (1GE)
+           untagged_vlan:
+             name: Wireless
+             site: Test Site
+           tagged_vlans:
+             - name: Data
+               site: Test Site
+             - name: VoIP
+               site: Test Site
+           mtu: 1600
+           mgmt_only: true
+           mode: Tagged
+         state: present
+
+RETURN VALUES                   *netbox_interface-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key      Returned                                                                                   Description
+   interface  on creation Serialized object as created or already existent within Netbox
+   dictionary
+   msg        always      Message indicating failure or info about what has been achieved
+   string
+
+STATUS                   *netbox_interface-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Mikhail Yohman (@FragmentedPacket)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *netbox_interface-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/netbox_interface_module.html

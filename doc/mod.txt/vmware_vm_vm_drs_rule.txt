@@ -1,0 +1,136 @@
+SYNOPSIS                   *vmware_vm_vm_drs_rule*
+
+     • This module can be used to configure VMware DRS Affinity rule for virtual machine in given cluster.
+
+REQUIREMENTS                   *vmware_vm_vm_drs_rule-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • PyVmomi
+
+PARAMETERS                   *vmware_vm_vm_drs_rule-parameters*
+
+       Parameter     Choices/Defaults                                                                            Comments
+   affinity_rule       Choices:       If set to True, the DRS rule will be an Affinity rule.
+   boolean             • no           If set to False, the DRS rule will be an Anti-Affinity rule.
+                       • yes ←        Effective only if state is set to present.
+   cluster_name                       Desired cluster name where virtual machines are present for the DRS rule.
+   string / required
+   drs_rule_name                      The name of the DRS rule to manage.
+   string / required
+   enabled             Choices:       If set to True, the DRS rule will be enabled.
+   boolean             • no ←         Effective only if state is set to present.
+                       • yes
+   hostname                           The hostname or IP address of the vSphere vCenter or ESXi server.
+   string                             If the value is not specified in the task, the value of environment variable VMWARE_HOST will be used instead.
+                                      Environment variable support added in Ansible 2.6.
+   mandatory           Choices:       If set to True, the DRS rule will be mandatory.
+   boolean             • no ←         Effective only if state is set to present.
+                       • yes
+                                      The password of the vSphere vCenter or ESXi server.
+   password                           If the value is not specified in the task, the value of environment variable VMWARE_PASSWORD will be used instead.
+   string                             Environment variable support added in Ansible 2.6.
+                                      aliases: pass, pwd
+   port              Default:         The port number of the vSphere vCenter or ESXi server.
+   integer           443              If the value is not specified in the task, the value of environment variable VMWARE_PORT will be used instead.
+   added in 2.5                       Environment variable support added in Ansible 2.6.
+   proxy_host                         Address of a proxy that will receive all HTTPS requests and relay them.
+   string                             The format is a hostname or a IP.
+   added in 2.9                       If the value is not specified in the task, the value of environment variable VMWARE_PROXY_HOST will be used instead.
+                                      This feature depends on a version of pyvmomi greater than v6.7.1.2018.12
+   proxy_port                         Port of the HTTP proxy that will receive all HTTPS requests and relay them.
+   integer                            If the value is not specified in the task, the value of environment variable VMWARE_PROXY_PORT will be used instead.
+   added in 2.9
+   state               Choices:       If set to present, then the DRS rule is created if not present.
+   string              • present ←    If set to present, then the DRS rule is already present, it updates to the given configurations.
+                       • absent       If set to absent, then the DRS rule is deleted if present.
+                                      The username of the vSphere vCenter or ESXi server.
+   username                           If the value is not specified in the task, the value of environment variable VMWARE_USER will be used instead.
+   string                             Environment variable support added in Ansible 2.6.
+                                      aliases: admin, user
+                       Choices:       Allows connection when SSL certificates are not valid. Set to false when certificates are not trusted.
+   validate_certs      • no           If the value is not specified in the task, the value of environment variable VMWARE_VALIDATE_CERTS will be used instead.
+   boolean             • yes ←        Environment variable support added in Ansible 2.6.
+                                      If set to yes, please make sure Python >= 2.7.9 is installed on the given machine.
+   vms                                List of virtual machines name for which DRS rule needs to be applied.
+   list                               Required if state is set to present.
+
+NOTES                   *vmware_vm_vm_drs_rule-notes*
+
+   Note
+
+     • Tested on vSphere 6.5
+
+EXAMPLES                   *vmware_vm_vm_drs_rule-examples*
+
+ - name: Create DRS Affinity Rule for VM-VM
+   vmware_vm_vm_drs_rule:
+     hostname: "{{ esxi_server }}"
+     username: "{{ esxi_username }}"
+     password: "{{ esxi_password }}"
+     cluster_name: "{{ cluster_name }}"
+     validate_certs: no
+     vms:
+         - vm1
+         - vm2
+     drs_rule_name: vm1-vm2-affinity-rule-001
+     enabled: True
+     mandatory: True
+     affinity_rule: True
+   delegate_to: localhost
+
+ - name: Create DRS Anti-Affinity Rule for VM-VM
+   vmware_vm_vm_drs_rule:
+     hostname: "{{ esxi_server }}"
+     username: "{{ esxi_username }}"
+     password: "{{ esxi_password }}"
+     cluster_name: "{{ cluster_name }}"
+     validate_certs: no
+     enabled: True
+     vms:
+         - vm1
+         - vm2
+     drs_rule_name: vm1-vm2-affinity-rule-001
+     mandatory: True
+     affinity_rule: False
+   delegate_to: localhost
+
+ - name: Delete DRS Affinity Rule for VM-VM
+   vmware_vm_vm_drs_rule:
+     hostname: "{{ esxi_server }}"
+     username: "{{ esxi_username }}"
+     password: "{{ esxi_password }}"
+     cluster_name: "{{ cluster_name }}"
+     validate_certs: no
+     drs_rule_name: vm1-vm2-affinity-rule-001
+     state: absent
+   delegate_to: localhost
+
+RETURN VALUES                   *vmware_vm_vm_drs_rule-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+      Key     Returned                                                                                  Description
+              when     metadata about DRS VM and VM rule
+   result     state is Sample:
+   dictionary present  {'rule_enabled': False, 'rule_key': 20, 'rule_mandatory': True, 'rule_name': 'drs_rule_0014', 'rule_uuid': '525f3bc0-253f-825a-418e-2ec93bffc9ae', 'rule_vms': ['VM_65',
+                       'VM_146']}
+
+STATUS                   *vmware_vm_vm_drs_rule-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Abhijeet Kasurde (@Akasurde)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *vmware_vm_vm_drs_rule-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/vmware_vm_vm_drs_rule_module.html

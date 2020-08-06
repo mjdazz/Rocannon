@@ -1,0 +1,74 @@
+SYNOPSIS                   *sensu_silence*
+
+     • Create and clear (delete) a silence entries via the Sensu API for subscriptions and checks.
+
+PARAMETERS                   *sensu_silence-parameters*
+
+       Parameter        Choices/Defaults                                                                            Comments
+   check                                    Specifies the check which the silence entry applies to.
+   -
+   creator                                  Specifies the entity responsible for this entry.
+   -
+   expire                                   If specified, the silence entry will be automatically cleared after this number of seconds.
+   -
+   expire_on_resolve   Choices:
+   boolean             • no                 If specified as true, the silence entry will be automatically cleared once the condition it is silencing is resolved.
+                       • yes
+   reason                                   If specified, this free-form string is used to provide context or rationale for the reason this silence entry was created.
+   -
+   state               Choices:
+   - / required        • present ←          Specifies to create or clear (delete) a silence entry via the Sensu API
+                       • absent
+   subscription      Default:               Specifies the subscription which the silence entry applies to.
+   - / required      []                     To create a silence entry for a client prepend client: to client name. Example - client:server1.example.dev
+   url               Default:               Specifies the URL of the Sensu monitoring host server.
+   -                 "http://127.0.01:4567"
+
+EXAMPLES                   *sensu_silence-examples*
+
+ # Silence ALL checks for a given client
+ - name: Silence server1.example.dev
+   sensu_silence:
+     subscription: client:server1.example.dev
+     creator: "{{ ansible_user_id }}"
+     reason: Performing maintenance
+
+ # Silence specific check for a client
+ - name: Silence CPU_Usage check for server1.example.dev
+   sensu_silence:
+     subscription: client:server1.example.dev
+     check: CPU_Usage
+     creator: "{{ ansible_user_id }}"
+     reason: Investigation alert issue
+
+ # Silence multiple clients from a dict
+   silence:
+     server1.example.dev:
+       reason: 'Deployment in progress'
+     server2.example.dev:
+       reason: 'Deployment in progress'
+
+ - name: Silence several clients from a dict
+   sensu_silence:
+     subscription: "client:{{ item.key }}"
+     reason: "{{ item.value.reason }}"
+     creator: "{{ ansible_user_id }}"
+   with_dict: "{{ silence }}"
+
+STATUS                   *sensu_silence-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Steven Bambling (@smbambling)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *sensu_silence-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/sensu_silence_module.html

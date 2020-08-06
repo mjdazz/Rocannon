@@ -1,0 +1,323 @@
+SYNOPSIS                   *gcp_storage_bucket*
+
+     • The Buckets resource represents a bucket in Google Cloud Storage. There is a single global namespace shared by all buckets. For more information, see Bucket Name Requirements.
+     • Buckets contain objects which can be accessed by their own methods. In addition to the acl property, buckets contain bucketAccessControls, for use in fine-grained manipulation of an existing
+       bucket’s access controls.
+     • A bucket is always owned by the project team owners group.
+
+REQUIREMENTS                   *gcp_storage_bucket-requirements*
+
+   The below requirements are needed on the host that executes this module.
+
+     • python >= 2.6
+     • requests >= 2.18.4
+     • google-auth >= 1.3.0
+
+PARAMETERS                   *gcp_storage_bucket-parameters*
+
+             Parameter            Choices/Defaults                                                                      Comments
+   acl                                              Access controls on the bucket.
+   list
+                                                    The name of the bucket.
+      bucket                                        This field represents a link to a Bucket resource in GCP. It can be specified in two ways. First, you can place a dictionary with key 'name' and
+      dictionary / required                         value of your resource's name Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket task and then set this bucket field
+                                                    to "{{ name-of-resource }}"
+                                                    The entity holding the permission, in one of the following forms: user-userId user-email group-groupId group-email domain-domain
+      entity                                        project-team-projectId allUsers allAuthenticatedUsers Examples: The user [email protected] would be [email protected]
+      string / required                             The group [email protected] would be [email protected]
+                                                    To refer to all members of the Google Apps for Business domain example.com, the entity would be domain-example.com.
+      entity_id                                     The ID for the entity.
+      string
+      project_team                                  The project team associated with the entity.
+      dictionary
+        project_number                              The project team associated with the entity.
+        string
+        team                                        The team.
+        string                                      Some valid choices include: "editors", "owners", "viewers"
+      role                                          The access permission for the entity.
+      string                                        Some valid choices include: "OWNER", "READER", "WRITER"
+                                   Choices:
+   auth_kind                       • application    The type of credential used.
+   string / required               • machineaccount
+                                   • serviceaccount
+   cors                                             The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+   list
+      max_age_seconds                               The value, in seconds, to return in the Access-Control-Max-Age header used in preflight responses.
+      integer
+      method                                        The list of HTTP methods on which to include CORS response headers, (GET, OPTIONS, POST, etc) Note: """ is permitted in the list of methods, and
+      list                                          means "any method".
+      origin                                        The list of Origins eligible to receive CORS response headers.
+      list                                          Note: """ is permitted in the list of origins, and means "any Origin".
+      response_header                               The list of HTTP headers other than the simple response headers to give permission for the user-agent to share across domains.
+      list
+   default_object_acl
+   list                                             Default access controls to apply to new objects when no ACL is provided.
+   added in 2.7
+                                                    The name of the bucket.
+      bucket                                        This field represents a link to a Bucket resource in GCP. It can be specified in two ways. First, you can place a dictionary with key 'name' and
+      dictionary / required                         value of your resource's name Alternatively, you can add `register: name-of-resource` to a gcp_storage_bucket task and then set this bucket field
+                                                    to "{{ name-of-resource }}"
+      entity                                        The entity holding the permission, in one of the following forms: " user-{{userId}} " user-{{email}} (such as "[email protected]") "
+      string / required                             group-{{groupId}} " group-{{email}} (such as "[email protected]") " domain-{{domain}} (such as "domain-example.com") " project-team-{{projectId}}
+                                                    " allUsers " allAuthenticatedUsers .
+      object                                        The name of the object, if applied to an object.
+      string
+      role                                          The access permission for the entity.
+      string / required                             Some valid choices include: "OWNER", "READER"
+   env_type                                         Specifies which Ansible environment you're running this module within.
+   string                                           This should not be set unless you know what you're doing.
+                                                    This only alters the User Agent string for any API requests.
+   lifecycle                                        The bucket's lifecycle configuration.
+   dictionary                                       See https://developers.google.com/storage/docs/lifecycle for more information.
+      rule                                          A lifecycle management rule, which is made of an action to take and the condition(s) under which the action will be taken.
+      list
+        action                                      The action to take.
+        dictionary
+          storage_class                             Target storage class. Required iff the type of the action is SetStorageClass.
+          string
+          type                                      Type of the action. Currently, only Delete and SetStorageClass are supported.
+          string                                    Some valid choices include: "Delete", "SetStorageClass"
+        condition                                   The condition(s) under which the action will be taken.
+        dictionary
+          age_days                                  Age of an object (in days). This condition is satisfied when an object reaches the specified age.
+          integer
+          created_before                            A date in RFC 3339 format with only the date part (for instance, "2013-01-15"). This condition is satisfied when an object is created before
+          string                                    midnight of the specified date in UTC.
+          is_live                  Choices:         Relevant only for versioned objects. If the value is true, this condition matches live objects; if the value is false, it matches archived
+          boolean                  • no             objects.
+                                   • yes
+          matches_storage_class                     Objects having any of the storage classes specified by this condition will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE,
+          list                                      COLDLINE, STANDARD, and DURABLE_REDUCED_AVAILABILITY.
+          num_newer_versions                        Relevant only for versioned objects. If the value is N, this condition is satisfied when there are at least N versions (including the live
+          integer                                   version) newer than this version of the object.
+   location                                         The location of the bucket. Object data for objects in the bucket resides in physical storage within this region. Defaults to US. See the
+   string                                           developer's guide for the authoritative list.
+   logging                                          The bucket's logging configuration, which defines the destination bucket and optional name prefix for the current bucket's logs.
+   dictionary
+      log_bucket                                    The destination bucket where the current bucket's logs should be placed.
+      string
+      log_object_prefix                             A prefix for log object names.
+      string
+   metageneration                                   The metadata generation of this bucket.
+   integer
+   name                                             The name of the bucket.
+   string
+   owner                                            The owner of the bucket. This is always the project team's owner group.
+   dictionary
+      entity                                        The entity, in the form project-owner-projectId.
+      string
+                                                    Apply a predefined set of default object access controls to this bucket.
+                                                    Acceptable values are: - "authenticatedRead": Object owner gets OWNER access, and allAuthenticatedUsers get READER access.
+                                                    - "bucketOwnerFullControl": Object owner gets OWNER access, and project team owners get OWNER access.
+   predefined_default_object_acl                    - "bucketOwnerRead": Object owner gets OWNER access, and project team owners get READER access.
+   string                                           - "private": Object owner gets OWNER access.
+                                                    - "projectPrivate": Object owner gets OWNER access, and project team members get access according to their roles.
+                                                    - "publicRead": Object owner gets OWNER access, and allUsers get READER access.
+                                                    Some valid choices include: "authenticatedRead", "bucketOwnerFullControl", "bucketOwnerRead", "private", "projectPrivate", "publicRead"
+   project                                          A valid API project identifier.
+   string
+   scopes                                           Array of scopes to be used.
+   list
+   service_account_contents                         The contents of a Service Account JSON file, either in a dictionary or as a JSON string that represents it.
+   jsonarg
+   service_account_email                            An optional service account email address if machineaccount is selected and the user does not wish to use the default email.
+   string
+   service_account_file                             The path of a Service Account JSON file if serviceaccount is selected as type.
+   path
+   state                           Choices:
+   string                          • present ←      Whether the given object should exist in GCP
+                                   • absent
+                                                    The bucket's default storage class, used whenever no storageClass is specified for a newly-created object. This defines how objects in the bucket
+   storage_class                                    are stored and determines the SLA and the cost of storage.
+   string                                           Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY. If this value is not specified when the
+                                                    bucket is created, it will default to STANDARD. For more information, see storage classes.
+                                                    Some valid choices include: "MULTI_REGIONAL", "REGIONAL", "STANDARD", "NEARLINE", "COLDLINE", "DURABLE_REDUCED_AVAILABILITY"
+   versioning                                       The bucket's versioning configuration.
+   dictionary
+      enabled                      Choices:
+      boolean                      • no             While set to true, versioning is fully enabled for this bucket.
+                                   • yes
+   website                                          The bucket's website configuration, controlling how the service behaves when accessing bucket contents as a web site. See the Static Website
+   dictionary                                       Examples for more information.
+      main_page_suffix                              If the requested object path is missing, the service will ensure the path has a trailing '/', append this suffix, and attempt to retrieve the
+      string                                        resulting object. This allows the creation of index.html objects to represent directory pages.
+      not_found_page                                If the requested object path is missing, and any mainPageSuffix object is missing, if applicable, the service will return the named object from
+      string                                        this bucket as the content for a 404 Not Found result.
+
+NOTES                   *gcp_storage_bucket-notes*
+
+   Note
+
+     • for authentication, you can set service_account_file using the c(gcp_service_account_file) env variable.
+     • for authentication, you can set service_account_contents using the c(GCP_SERVICE_ACCOUNT_CONTENTS) env variable.
+     • For authentication, you can set service_account_email using the GCP_SERVICE_ACCOUNT_EMAIL env variable.
+     • For authentication, you can set auth_kind using the GCP_AUTH_KIND env variable.
+     • For authentication, you can set scopes using the GCP_SCOPES env variable.
+     • Environment variables values will only be used if the playbook values are not set.
+     • The service_account_email and service_account_file options are mutually exclusive.
+
+EXAMPLES                   *gcp_storage_bucket-examples*
+
+ - name: create a bucket
+   gcp_storage_bucket:
+     name: ansible-storage-module
+     project: test_project
+     auth_kind: serviceaccount
+     service_account_file: "/tmp/auth.pem"
+     state: present
+
+RETURN VALUES                   *gcp_storage_bucket-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+              Key             Returned                                                                          Description
+   acl                        success  Access controls on the bucket.
+   complex
+      bucket                  success  The name of the bucket.
+      dictionary
+      domain                  success  The domain associated with the entity.
+      string
+      email                   success  The email address associated with the entity.
+      string
+                                       The entity holding the permission, in one of the following forms: user-userId user-email group-groupId group-email domain-domain project-team-projectId
+      entity                  success  allUsers allAuthenticatedUsers Examples: The user [email protected] would be [email protected]
+      string                           The group [email protected] would be [email protected]
+                                       To refer to all members of the Google Apps for Business domain example.com, the entity would be domain-example.com.
+      entityId                success  The ID for the entity.
+      string
+      id                      success  The ID of the access-control entry.
+      string
+      projectTeam             success  The project team associated with the entity.
+      complex
+        projectNumber         success  The project team associated with the entity.
+        string
+        team                  success  The team.
+        string
+      role                    success  The access permission for the entity.
+      string
+   cors                       success  The bucket's Cross-Origin Resource Sharing (CORS) configuration.
+   complex
+      maxAgeSeconds           success  The value, in seconds, to return in the Access-Control-Max-Age header used in preflight responses.
+      integer
+      method                  success  The list of HTTP methods on which to include CORS response headers, (GET, OPTIONS, POST, etc) Note: """ is permitted in the list of methods, and means "any
+      list                             method".
+      origin                  success  The list of Origins eligible to receive CORS response headers.
+      list                             Note: """ is permitted in the list of origins, and means "any Origin".
+      responseHeader          success  The list of HTTP headers other than the simple response headers to give permission for the user-agent to share across domains.
+      list
+   defaultObjectAcl           success  Default access controls to apply to new objects when no ACL is provided.
+   complex
+      bucket                  success  The name of the bucket.
+      dictionary
+      domain                  success  The domain associated with the entity.
+      string
+      email                   success  The email address associated with the entity.
+      string
+      entity                           The entity holding the permission, in one of the following forms: " user-{{userId}} " user-{{email}} (such as "[email protected]") " group-{{groupId}} "
+      string                  success  group-{{email}} (such as "[email protected]") " domain-{{domain}} (such as "domain-example.com") " project-team-{{projectId}} " allUsers "
+                                       allAuthenticatedUsers .
+      entityId                success  The ID for the entity.
+      string
+      generation              success  The content generation of the object, if applied to an object.
+      integer
+      id                      success  The ID of the access-control entry.
+      string
+      object                  success  The name of the object, if applied to an object.
+      string
+      projectTeam             success  The project team associated with the entity.
+      complex
+        projectNumber         success  The project team associated with the entity.
+        string
+        team                  success  The team.
+        string
+      role                    success  The access permission for the entity.
+      string
+   id                         success  The ID of the bucket. For buckets, the id and name properties are the same.
+   string
+   lifecycle                  success  The bucket's lifecycle configuration.
+   complex                             See https://developers.google.com/storage/docs/lifecycle for more information.
+      rule                    success  A lifecycle management rule, which is made of an action to take and the condition(s) under which the action will be taken.
+      complex
+        action                success  The action to take.
+        complex
+          storageClass        success  Target storage class. Required iff the type of the action is SetStorageClass.
+          string
+          type                success  Type of the action. Currently, only Delete and SetStorageClass are supported.
+          string
+        condition             success  The condition(s) under which the action will be taken.
+        complex
+          ageDays             success  Age of an object (in days). This condition is satisfied when an object reaches the specified age.
+          integer
+          createdBefore       success  A date in RFC 3339 format with only the date part (for instance, "2013-01-15"). This condition is satisfied when an object is created before midnight of the
+          string                       specified date in UTC.
+          isLive              success  Relevant only for versioned objects. If the value is true, this condition matches live objects; if the value is false, it matches archived objects.
+          boolean
+          matchesStorageClass success  Objects having any of the storage classes specified by this condition will be matched. Values include MULTI_REGIONAL, REGIONAL, NEARLINE, COLDLINE, STANDARD,
+          list                         and DURABLE_REDUCED_AVAILABILITY.
+          numNewerVersions    success  Relevant only for versioned objects. If the value is N, this condition is satisfied when there are at least N versions (including the live version) newer than
+          integer                      this version of the object.
+   location                   success  The location of the bucket. Object data for objects in the bucket resides in physical storage within this region. Defaults to US. See the developer's guide
+   string                              for the authoritative list.
+   logging                    success  The bucket's logging configuration, which defines the destination bucket and optional name prefix for the current bucket's logs.
+   complex
+      logBucket               success  The destination bucket where the current bucket's logs should be placed.
+      string
+      logObjectPrefix         success  A prefix for log object names.
+      string
+   metageneration             success  The metadata generation of this bucket.
+   integer
+   name                       success  The name of the bucket.
+   string
+   owner                      success  The owner of the bucket. This is always the project team's owner group.
+   complex
+      entity                  success  The entity, in the form project-owner-projectId.
+      string
+      entityId                success  The ID for the entity.
+      string
+                                       Apply a predefined set of default object access controls to this bucket.
+                                       Acceptable values are: - "authenticatedRead": Object owner gets OWNER access, and allAuthenticatedUsers get READER access.
+   predefinedDefaultObjectAcl          - "bucketOwnerFullControl": Object owner gets OWNER access, and project team owners get OWNER access.
+   string                     success  - "bucketOwnerRead": Object owner gets OWNER access, and project team owners get READER access.
+                                       - "private": Object owner gets OWNER access.
+                                       - "projectPrivate": Object owner gets OWNER access, and project team members get access according to their roles.
+                                       - "publicRead": Object owner gets OWNER access, and allUsers get READER access.
+   project                    success  A valid API project identifier.
+   string
+   projectNumber              success  The project number of the project the bucket belongs to.
+   integer
+                                       The bucket's default storage class, used whenever no storageClass is specified for a newly-created object. This defines how objects in the bucket are stored
+   storageClass               success  and determines the SLA and the cost of storage.
+   string                              Values include MULTI_REGIONAL, REGIONAL, STANDARD, NEARLINE, COLDLINE, and DURABLE_REDUCED_AVAILABILITY. If this value is not specified when the bucket is
+                                       created, it will default to STANDARD. For more information, see storage classes.
+   timeCreated                success  The creation time of the bucket in RFC 3339 format.
+   string
+   updated                    success  The modification time of the bucket in RFC 3339 format.
+   string
+   versioning                 success  The bucket's versioning configuration.
+   complex
+      enabled                 success  While set to true, versioning is fully enabled for this bucket.
+      boolean
+   website                    success  The bucket's website configuration, controlling how the service behaves when accessing bucket contents as a web site. See the Static Website Examples for more
+   complex                             information.
+      mainPageSuffix          success  If the requested object path is missing, the service will ensure the path has a trailing '/', append this suffix, and attempt to retrieve the resulting
+      string                           object. This allows the creation of index.html objects to represent directory pages.
+      notFoundPage            success  If the requested object path is missing, and any mainPageSuffix object is missing, if applicable, the service will return the named object from this bucket as
+      string                           the content for a 404 Not Found result.
+
+STATUS                   *gcp_storage_bucket-status*
+
+     • This module is not guaranteed to have a backwards compatible interface. [preview]
+     • This module is maintained by the Ansible Community. [community]
+
+     • Google Inc. (@googlecloudplatform)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *gcp_storage_bucket-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/gcp_storage_bucket_module.html

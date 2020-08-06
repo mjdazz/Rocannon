@@ -1,0 +1,124 @@
+SYNOPSIS                   *win_template*
+
+     • Templates are processed by the Jinja2 templating language.
+     • Documentation on the template formatting can be found in the Template Designer Documentation.
+     • Additional variables listed below can be used in templates.
+     • ansible_managed (configurable via the defaults section of ansible.cfg) contains a string which can be used to describe the template name, host, modification time of the template file and the
+       owner uid.
+     • template_host contains the node name of the template’s machine.
+     • template_uid is the numeric user id of the owner.
+     • template_path is the path of the template.
+     • template_fullpath is the absolute path of the template.
+     • template_destpath is the path of the template on the remote system (added in 2.8).
+     • template_run_date is the date that the template was rendered.
+
+PARAMETERS                   *win_template-parameters*
+
+         Parameter       Choices/Defaults                                                                          Comments
+   backup                  Choices:       Determine whether a backup should be created.
+   boolean                 • no ←         When set to yes, create a backup file including the timestamp information so you can get the original file back if you somehow clobbered it incorrectly.
+   added in 2.8            • yes
+   block_end_string      Default:
+   string                "%}"             The string marking the end of a block.
+   added in 2.4
+   block_start_string    Default:
+   string                "{%"             The string marking the beginning of a block.
+   added in 2.4
+   dest                                   Location to render the template to on the remote machine.
+   path / required
+   force                   Choices:       Determine when the file is being transferred if the destination already exists.
+   boolean                 • no           When set to yes, replace the remote file when contents are different than the source.
+   added in 2.4            • yes ←        When set to no, the file will only be transferred if the destination does not exist.
+   lstrip_blocks           Choices:       Determine when leading spaces and tabs should be stripped.
+   boolean                 • no ←         When set to yes leading spaces and tabs are stripped from the start of a line to a block.
+   added in 2.6            • yes          This functionality requires Jinja 2.7 or newer.
+   newline_sequence        Choices:
+   string                  • \n           Specify the newline sequence to use for templating files.
+   added in 2.4            • \r
+                           • \r\n ←
+   output_encoding       Default:         Overrides the encoding used to write the template file defined by dest.
+   string                "utf-8"          It defaults to utf-8, but any encoding supported by python can be used.
+   added in 2.7                           The source template file must always be encoded using utf-8, for homogeneity.
+   src                                    Path of a Jinja2 formatted template on the Ansible controller.
+   path / required                        This can be a relative or an absolute path.
+                                          The file must be encoded with utf-8 but output_encoding can be used to control the encoding of the output template.
+   trim_blocks             Choices:       Determine when newlines should be removed from blocks.
+   boolean                 • no           When set to yes the first newline after a block is removed (block, not variable tag!).
+   added in 2.4            • yes ←
+   variable_end_string   Default:
+   string                "}}"             The string marking the end of a print statement.
+   added in 2.4
+   variable_start_string Default:
+   string                "{{"             The string marking the beginning of a print statement.
+   added in 2.4
+
+NOTES                   *win_template-notes*
+
+   Note
+
+     • Beware fetching files from windows machines when creating templates because certain tools, such as Powershell ISE, and regedit’s export facility add a Byte Order Mark as the first character
+       of the file, which can cause tracebacks.
+     • You can use the win_copy module with the content: option if you prefer the template inline, as part of the playbook.
+     • For Linux you can use template which uses ‘\n’ as newline_sequence by default.
+     • Including a string that uses a date in the template will result in the template being marked ‘changed’ each time.
+     • Since Ansible 0.9, templates are loaded with trim_blocks=True.
+     • Also, you can override jinja2 settings by adding a special header to template file. i.e. #jinja2:variable_start_string:'[%', variable_end_string:'%]', trim_blocks: False which changes the
+       variable interpolation markers to [% var %] instead of {{ var }}. This is the best way to prevent evaluation of things that look like, but should not be Jinja2.
+     • Using raw/endraw in Jinja2 will not work as you expect because templates in Ansible are recursively evaluated.
+     • To find Byte Order Marks in files, use Format-Hex <file> -Count 16 on Windows, and use od -a -t x1 -N 16 <file> on Linux.
+
+SEE ALSO                   *win_template-see also*
+
+   See also
+
+   win_copy – Copies files to remote locations on windows hosts
+   The official documentation on the win_copy module.
+
+   copy – Copy files to remote locations
+   The official documentation on the copy module.
+
+   template – Template a file out to a remote server
+   The official documentation on the template module.
+
+EXAMPLES                   *win_template-examples*
+
+ - name: Create a file from a Jinja2 template
+   win_template:
+     src: /mytemplates/file.conf.j2
+     dest: C:\Temp\file.conf
+
+ - name: Create a Unix-style file from a Jinja2 template
+   win_template:
+     src: unix/config.conf.j2
+     dest: C:\share\unix\config.conf
+     newline_sequence: '\n'
+     backup: yes
+
+RETURN VALUES                   *win_template-return values*
+
+   Common return values are documented here, the following are the fields unique to this module:
+
+       Key       Returned                                                                                  Description
+   backup_file               Name of the backup file that was created.
+   string      if backup=yes Sample:
+                             C:\Path\To\File.txt.11540.20150212-220915.bak
+
+STATUS                   *win_template-status*
+
+     • This module is guaranteed to have backward compatible interface changes going forward. [stableinterface]
+     • This module is maintained by the Ansible Core Team. [core]
+
+RED HAT SUPPORT                   *win_template-red hat support*
+
+     • Jon Hawkesworth (@jhawkesworth)
+
+   Hint
+
+   If you notice any issues in this documentation, you can edit this document to improve it.
+
+   ══════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════════
+
+MORE INFO                          *win_template-moreinfo*
+>
+All arguments are omni-completed, but if you really want to see the online docs:
+https://docs.ansible.com/ansible/latest/modules/win_template_module.html
