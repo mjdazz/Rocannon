@@ -21,21 +21,19 @@ else
 fi
 
 vimhelp() {
-  mkdir -p ../doc/mod.txt
-  while read mod; do
-    modtxt=../doc/mod.txt/$mod.txt
-    modtmphtml=../tmp/$mod.html
-    modtmp=../tmp/$mod.txt.tmp
-    url=https://docs.ansible.com/ansible/latest/modules/${mod}_module.html
-    print "Dumping and creating docs for $mod"
+    modtxt=../doc/mod.txt/$1.txt
+    modtmphtml=../tmp/$1.html
+    modtmp=../tmp/$1.txt.tmp
+    url=https://docs.ansible.com/ansible/latest/modules/${1}_module.html
+    print "Dumping and creating docs for $1"
     if [[ ! -f $modtmphtml ]]; then
-      print "Downloading html (and sleeping) for $mod"
+      print "Downloading html (and sleeping) for $1"
       wget $url -O $modtmphtml
       sleep 5
     fi
     dump $modtmphtml >|$modtmp
     ## Synopsis
-    #print "SYNOPSIS                           *$mod*\n" >|$modtxt
+    #print "SYNOPSIS                           *$1*\n" >|$modtxt
     #sed -nr '/^Synopsis¶/,/^Options¶/ p' $modtmp |
     #  sed -n '3,$p' |sed '$d' |
     #  sed -r 's/^\s+//' >>$modtxt
@@ -44,18 +42,18 @@ vimhelp() {
     #sed -nr '/^Examples¶/,/^This is a.* Module¶/ p' $modtmp |
     #  sed -n '3,$p' |sed '$d' |
     #  sed -r 's/^/   /' >>$modtxt
-    titles=$(cat ../tmp/$mod.txt.tmp | grep ¶ | sed -r 's/^  //g' | sed -r 's/^          .*//' | sed -r '/^$/d' | sed 's/¶//g')
+    titles=$(cat ../tmp/$1.txt.tmp | grep ¶ | sed -r 's/^  //g' | sed -r 's/^          .*//' | sed -r '/^$/d' | sed 's/¶//g')
     titles=("${(f)titles}")
 
-    rm $modtxt
+    rm -f $modtxt
     touch $modtxt
     for ((i = 1 ; i <= ${#titles[@]} ; i++)); do
       if (( $i == 1 )); then
-        print "${titles[$i]:u}                   *$mod*\n" >>$modtxt
+        print "${titles[$i]:u}                   *$1*\n" >>$modtxt
         sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
           sed -n '3,$p' | sed '$d' | sed 's/\*/"/g' >>$modtxt
       elif (($i > 1 && $i < ${#titles[@]} )); then
-        print "${titles[$i]:u}                   *$mod-${titles[$i]:l}*\n" >>$modtxt
+        print "${titles[$i]:u}                   *$1-${titles[$i]:l}*\n" >>$modtxt
         sed -nr "/^${titles[$i]}/,/^\ {0,2}${titles[$((i+1))]}/ p" $modtmp |
           sed -n '3,$p' | sed '$d' | sed 's/\*/"/g' >>$modtxt
       else
@@ -65,11 +63,10 @@ vimhelp() {
     done
 
 
-    print "MORE INFO                          *$mod-moreinfo*\n>" >>$modtxt
+    print "MORE INFO                          *$1-moreinfo*\n>" >>$modtxt
     print "All arguments are omni-completed, but if you really want to see the online docs:" >>$modtxt
     print $url >>$modtxt
     #rm $modtmp $modtmphtml
-  done <$allmods
 }
 
 # state completions
@@ -86,7 +83,14 @@ statecompl() {
   print " \\\ }" >>$statesvim
 }
 
-vimhelp
+mkdir -p ../doc/mod.txt
+while read mod; do
+  vimhelp $mod &
+  sleep 0.2
+done <$allmods
+
+wait $(jobs -p)
+
 statecompl
 
 print 'Generating all vim docs'
