@@ -28,7 +28,7 @@ vimhelp() {
     print "Dumping and creating docs for $1"
     if [[ ! -f $modtmphtml ]]; then
       print "Downloading html (and sleeping) for $1"
-      wget $url -O $modtmphtml
+      wget --quiet $url -O $modtmphtml
       sleep 5
     fi
     dump $modtmphtml >|$modtmp
