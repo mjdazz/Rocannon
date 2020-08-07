@@ -30,3 +30,7 @@ vim --noplugin -u /dev/null -s txt2optargs.vim args.txt
 ### Action Syntax
 print 'Wrote ansAction syntax to ../syntax/actions.vim'
 vim --noplugin -u /dev/null -s txt2syn.vim actions.txt
+
+### Create dictionary for ansible key words
+ansible localhost -m setup | sed 's/localhost | SUCCESS => //' | jq --raw-output '.ansible_facts | keys[]' > ../dict/anskeywords.txt
+print 'Wrote dictionary to ../dict/anskeywords.txt'
